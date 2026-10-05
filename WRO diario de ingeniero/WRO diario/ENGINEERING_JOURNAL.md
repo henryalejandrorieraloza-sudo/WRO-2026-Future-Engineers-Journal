@@ -14,7 +14,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 
 1. [Hardware I work with](#1-hardware-i-work-with)
 2. [Phase 1 — Turning-direction logic with Sharp sensors (15–21 Sept)](#2-phase-1--turning-direction-logic-with-sharp-sensors-1521-september-2026)
-3. [Phase 2 — National final day (22 Sept)](#3-phase-2--national-final-day-22-september-2026)
+3. [Phase 2 — (22 Sept)](#3-phase-2--national-final-day-22-september-2026)
 4. [Phase 3 — New algorithm and TOF sensors (1–3 Oct)](#4-phase-3--new-algorithm-and-tof-sensors-13-october-2026)
 5. [Phase 4 — Camera for the Obstacle Challenge (3–4 Oct)](#5-phase-4--camera-for-the-obstacle-challenge-34-october-2026)
 6. [Phase 5 — Pillar detection finished (Sun 4 Oct)](#6-phase-5--pillar-detection-finished-sunday-4-october-2026)
