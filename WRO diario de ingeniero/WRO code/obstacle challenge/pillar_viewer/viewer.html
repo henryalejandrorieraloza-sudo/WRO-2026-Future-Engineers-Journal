@@ -1,0 +1,867 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>Pillar Vision Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: instrument bench — live stage + decision readout on top, the algorithm's
+     four stages as a strip below, then blob table and tuning controls. */
+  :root{
+    --bg:#eceff2;          /* bench grey with a cool bias */
+    --panel:#fbfcfd;
+    --ink:#16202b;
+    --sub:#5a6675;
+    --rule:#d4dae1;
+    --accent:#1d5d8c;      /* instrument blue, for controls only */
+    --accent-ink:#ffffff;
+    --pill-red:#d42a3d;
+    --pill-green:#138a43;
+    --ok:#138a43;
+    --warn:#a8670c;
+    --bad:#c0352b;
+    --stage:#0d1218;
+    --font-display:"Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+    --font-body:"IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --font-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#11161c; --panel:#182029; --ink:#e6ebf0; --sub:#9aa7b5; --rule:#2a3541;
+      --accent:#5fa2d6; --accent-ink:#08131d; --pill-red:#ff5d6c; --pill-green:#3fd17f;
+      --ok:#3fd17f; --warn:#e9a93b; --bad:#ff6b5e; --stage:#06090c; color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#11161c; --panel:#182029; --ink:#e6ebf0; --sub:#9aa7b5; --rule:#2a3541;
+    --accent:#5fa2d6; --accent-ink:#08131d; --pill-red:#ff5d6c; --pill-green:#3fd17f;
+    --ok:#3fd17f; --warn:#e9a93b; --bad:#ff6b5e; --stage:#06090c; color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--font-body);
+       padding-inline:16px;padding-block:18px 48px}
+  .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  h1,h2{font-family:var(--font-display);margin:0;letter-spacing:.02em;text-wrap:balance}
+  h1{font-size:26px;line-height:1.1}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em}
+  .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  .sub{color:var(--sub)}
+
+  header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+  header p{margin:2px 0 0;color:var(--sub);max-width:70ch}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button{font:600 13.5px/1 var(--font-body);padding:10px 14px;border-radius:7px;border:1px solid var(--rule);
+         background:var(--panel);color:var(--ink);cursor:pointer}
+  button:hover{border-color:var(--sub)}
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  button:disabled{opacity:.45;cursor:default}
+
+  .statusbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:7px;font:600 12px/1 var(--font-mono);padding:7px 10px;border-radius:999px;
+        border:1px solid var(--rule);background:var(--panel);color:var(--sub);text-transform:uppercase;letter-spacing:.04em}
+  .chip i{width:8px;height:8px;border-radius:50%;background:var(--sub);display:inline-block}
+  .chip.ok{color:var(--ok)} .chip.ok i{background:var(--ok)}
+  .chip.warn{color:var(--warn)} .chip.warn i{background:var(--warn)}
+  .chip.bad{color:var(--bad)} .chip.bad i{background:var(--bad)}
+  .notice{border:1px solid var(--warn);color:var(--ink);background:var(--panel);border-radius:9px;padding:10px 12px;font-size:13.5px}
+  .notice b{color:var(--warn)}
+
+  .top{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:860px){.top{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px;min-width:0}
+
+  .stage{position:relative;width:100%;max-width:100%;aspect-ratio:4/3;background:var(--stage);border-radius:8px;overflow:hidden}
+  .stage canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .fsbtn{position:absolute;right:10px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;
+         font:600 12.5px/1 var(--font-body);padding:8px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.35);
+         background:rgba(8,12,16,.72);color:#eef3f8;cursor:pointer}
+  .fsbtn:hover{background:rgba(8,12,16,.9);border-color:rgba(255,255,255,.6)}
+  .fsbtn svg{width:14px;height:14px}
+  .fsinfo{display:none}
+  /* Full screen: the picture fills the screen (keeping 4:3) with the decision on top */
+  .stage:fullscreen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh;max-width:none;background:#000;
+                    display:flex;align-items:center;justify-content:center}
+  .stage:fullscreen canvas{width:auto;height:auto;max-width:100vw;max-height:100vh;aspect-ratio:4/3}
+  @media (min-aspect-ratio:4/3){.stage:fullscreen canvas{height:100vh;width:auto}}
+  @media (max-aspect-ratio:4/3){.stage:fullscreen canvas{width:100vw;height:auto}}
+  .stage:fullscreen .fsinfo{display:flex;flex-direction:column;gap:4px;position:absolute;left:16px;bottom:16px;z-index:2;
+                    padding:12px 16px;border-radius:10px;background:rgba(8,12,16,.75);color:#eef3f8;max-width:46ch}
+  .fsinfo .fsdec{font:700 34px/1.05 var(--font-display);letter-spacing:.02em}
+  .fsinfo .fssub{font:500 14px/1.4 var(--font-mono)}
+  .fsinfo .fsdec.red{color:#ff5d6c} .fsinfo .fsdec.green{color:#3fd17f} .fsinfo .fsdec.none{color:#b9c3cf}
+  .layers{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px;color:var(--sub)}
+  .layers label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+  .layers input[type=range]{width:96px}
+  .zones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+  @media (max-width:560px){.zones{grid-template-columns:1fr}}
+  .zones label{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;font-size:13px;min-width:0}
+  .zones input[type=range]{width:100%;min-width:0}
+  .zones output{font-size:12px;color:var(--ink);min-width:7.5ch;text-align:right}
+  .zname{font:600 11px/1 var(--font-body);text-transform:uppercase;letter-spacing:.07em}
+  .zname.side{color:var(--sub)} .zname.top{color:var(--warn)} .zname.med{color:var(--accent)} .zname.near{color:var(--pill-red)}
+  .zhint{grid-column:1/-1;margin:0;font-size:12.5px}
+  #main.grab{cursor:ns-resize}
+
+  .decision{font:700 30px/1.05 var(--font-display);letter-spacing:.02em;margin:6px 0 4px}
+  .decision.red{color:var(--pill-red)} .decision.green{color:var(--pill-green)} .decision.none{color:var(--sub)}
+  dl{display:grid;grid-template-columns:auto auto;gap:0;margin:12px 0 0}
+  dt,dd{padding:6px 0;border-bottom:1px solid var(--rule);margin:0}
+  dt{color:var(--sub);font-size:13px}
+  dd{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px}
+  dl > :nth-last-child(-n+2){border-bottom:none}
+  .k{font:600 11px/1 var(--font-body);text-transform:uppercase;letter-spacing:.09em;color:var(--sub);margin:16px 0 6px}
+  .hover{font-family:var(--font-mono);font-size:12.5px;min-height:40px;line-height:1.55}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1px solid var(--rule)}
+
+  .strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  @media (max-width:860px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .step canvas{width:100%;max-width:100%;aspect-ratio:4/3;display:block;border-radius:6px;background:var(--stage);image-rendering:pixelated}
+  .step h3{font:700 13px/1.2 var(--font-display);letter-spacing:.03em;margin:8px 0 2px;display:flex;gap:6px;align-items:baseline}
+  .step h3 span{font-family:var(--font-mono);font-weight:500;color:var(--accent);font-size:12px}
+  .step p{margin:0;font-size:12.5px;color:var(--sub);line-height:1.45}
+  .step code{font-family:var(--font-mono);font-size:12px;color:var(--ink)}
+
+  .bottom{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:860px){.bottom{grid-template-columns:1fr}}
+  .tablewrap{overflow-x:auto;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{text-align:left;font:600 11px/1 var(--font-body);text-transform:uppercase;letter-spacing:.07em;color:var(--sub);padding:7px 8px;border-bottom:1px solid var(--rule)}
+  td{padding:6px 8px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;font:600 11px/1 var(--font-body);padding:4px 7px;border-radius:5px;border:1px solid var(--rule);color:var(--sub)}
+  .tag.win{border-color:var(--accent);color:var(--accent)}
+  .tag.split{border-color:var(--warn);color:var(--warn)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:0}
+
+  .tune{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 12px;margin-top:8px}
+  .tune label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--sub)}
+  .tune input[type=number]{font:500 13px var(--font-mono);padding:6px 6px;border-radius:6px;border:1px solid var(--rule);background:var(--bg);color:var(--ink);width:100%}
+  .tune .pair{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:8px;align-items:center}
+  .tune input[type=range]{width:100%;min-width:0;accent-color:var(--accent)}
+  .tune .changed{color:var(--warn)}
+  .tune fieldset{border:none;margin:0;padding:0;display:contents}
+  .group{grid-column:1/-1;font:600 12px/1 var(--font-body);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+  .group.red{color:var(--pill-red)} .group.green{color:var(--pill-green)} .group.other{color:var(--sub)}
+  .tunebar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+  textarea#copyBox{width:100%;min-height:150px;margin-top:10px;font:12px/1.5 var(--font-mono);background:var(--bg);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:8px}
+  pre#log{margin:0;max-height:96px;overflow:auto;font:12px/1.5 var(--font-mono);color:var(--sub);white-space:pre-wrap}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Pillar Vision Lab</h1>
+      <p>Live picture from the ESP32S3-CAM with the same steps as <span class="mono">closest_pillar_test</span>: colors, blobs, the split of touching pillars and the closest-pillar decision. The page re-runs the Arduino algorithm on every picture and checks it gives the same answer as the camera.</p>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btnConnect" type="button">Connect camera</button>
+      <button id="btnDisconnect" type="button" disabled>Disconnect</button>
+      <button id="btnDemo" type="button">Demo picture</button>
+    </div>
+  </header>
+
+  <div class="statusbar">
+    <span class="chip" id="chipConn"><i></i><span>Demo picture</span></span>
+    <span class="chip" id="chipMatch"><i></i><span>—</span></span>
+    <span class="chip" id="chipFps"><i></i><span>— fps</span></span>
+  </div>
+  <div class="notice" id="noSerial" hidden><b>USB is blocked here.</b> This browser or this window can't open USB ports. Open <span class="mono">viewer.html</span> from your <span class="mono">WRO code → obstacle challenge → pillar_viewer</span> folder in Google Chrome or Microsoft Edge (Safari can't do it).</div>
+
+  <section class="top">
+    <div class="panel">
+      <div class="stage" id="stage"><canvas id="main" width="640" height="480" aria-label="Camera picture with detection layers"></canvas>
+        <div class="fsinfo" aria-live="polite"><div class="fsdec none" id="fsDec">—</div><div class="fssub" id="fsSub">—</div><div class="fssub" id="fsChips">—</div></div>
+        <button type="button" class="fsbtn" id="btnFull" title="Full screen (F)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M1.5 5.5v-4h4M10.5 1.5h4v4M14.5 10.5v4h-4M5.5 14.5h-4v-4"/></svg><span>Full screen</span></button>
+      </div>
+      <div class="layers" role="group" aria-label="Layers">
+        <label><input type="checkbox" id="lyPic" checked> Picture</label>
+        <label><input type="checkbox" id="lyMask" checked> Colors</label>
+        <label><input type="range" id="lyAlpha" min="0" max="100" value="55" aria-label="Color opacity"></label>
+        <label><input type="checkbox" id="lyBlobs" checked> All blobs</label>
+        <label><input type="checkbox" id="lyNoise" checked> Noise</label>
+        <label><input type="checkbox" id="lySplit" checked> Split logic</label>
+        <label><input type="checkbox" id="lyGuides" checked> Guides</label>
+      </div>
+      <div class="zones" role="group" aria-label="Zones">
+        <label for="zTop"><span class="zname top">Ignore top</span><input type="range" id="zTop" min="0" max="119"><output id="zTopV" class="mono"></output></label>
+        <label for="zNear"><span class="zname near">Near (band end)</span><input type="range" id="zNear" min="1" max="119"><output id="zNearV" class="mono"></output></label>
+        <label for="zSide"><span class="zname side">Side zone</span><input type="range" id="zSide" min="0" max="79"><output id="zSideV" class="mono"></output></label>
+        <p class="sub zhint">Pillars are only searched in the band between the yellow line (ignore top) and the red NEAR line (counted in rows up from the bottom edge); drag either line on the picture. Side zone: a pillar whose centre is within ± this many pixels of the middle is CENTER. A red pillar is on the correct side once it is left of the zone, a green one once it is right of it: green halo = correct side, red halo = not yet.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Closest pillar</h2>
+      <div class="decision none" id="decision">—</div>
+      <div class="sub" id="decisionSub">—</div>
+      <dl>
+        <dt>Position in picture</dt><dd id="dWhere">—</dd>
+        <dt>x (−80 left … +79 right)</dt><dd id="dX">—</dd>
+        <dt>On the correct side</dt><dd id="dSide">—</dd>
+        <dt>Bottom row (bigger = closer)</dt><dd id="dBottom">—</dd>
+        <dt>Height × width</dt><dd id="dSize">—</dd>
+        <dt>Pixels</dt><dd id="dPx">—</dd>
+        <dt>Split from a bigger blob</dt><dd id="dSplit">—</dd>
+        <dt>Blobs found / noise</dt><dd id="dBlobs">—</dd>
+        <dt>Arduino says</dt><dd id="dEsp">—</dd>
+      </dl>
+      <div class="k">Pixel under the mouse</div>
+      <div class="hover" id="hover">Move over the picture to read RGB and H S V, and how the page and the Arduino classify that pixel.</div>
+      <div class="k">Board messages</div>
+      <pre id="log">—</pre>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>The algorithm, step by step</h2>
+    <div class="strip" style="margin-top:10px">
+      <div class="step"><canvas id="s1" width="320" height="240"></canvas>
+        <h3><span>1</span>Picture</h3><p>160×120 RGB565 from the camera, read with <code>readPixel()</code> (mirror / flip applied).</p></div>
+      <div class="step"><canvas id="s2" width="320" height="240"></canvas>
+        <h3><span>2</span>Colors</h3><p>Every pixel to HSV and <code>classify()</code>: red, green or nothing.</p></div>
+      <div class="step"><canvas id="s3" width="320" height="240"></canvas>
+        <h3><span>3</span>Blobs</h3><p>BFS joins touching pixels of one color. Under <code>MIN_PIXELS</code> is noise (grey dashes).</p></div>
+      <div class="step"><canvas id="s4" width="320" height="240"></canvas>
+        <h3><span>4</span>Closest</h3><p><code>frontPillarOfBlob()</code> keeps the front part, <code>isCloser()</code> picks the lowest bottom.</p></div>
+    </div>
+  </section>
+
+  <section class="bottom">
+    <div class="panel">
+      <h2>Blobs in this picture</h2>
+      <div class="tablewrap"><table id="blobTable"></table></div>
+    </div>
+    <div class="panel">
+      <h2>Thresholds</h2>
+      <p class="sub" style="margin:6px 0 0">Every parameter of the Arduino code. They start with the robot's values; move them to try new values live (changed ones turn orange). The page remembers them in this browser. The robot keeps its own values until you press <b>Copy as Arduino code</b> and paste the lines into the sketch.</p>
+      <form class="tune" id="tune" onsubmit="return false">
+        <div class="group red">Red</div>
+        <label for="tRedLo">Hue ≥ (wraps)<input id="tRedLo" type="number" min="0" max="359"></label>
+        <label for="tRedHi">or Hue ≤<input id="tRedHi" type="number" min="0" max="359"></label>
+        <label for="tRedS">Min saturation<input id="tRedS" type="number" min="0" max="255"></label>
+        <label for="tRedV">Min value<input id="tRedV" type="number" min="0" max="255"></label>
+        <div class="group green">Green</div>
+        <label for="tGrLo">Hue from<input id="tGrLo" type="number" min="0" max="359"></label>
+        <label for="tGrHi">Hue to<input id="tGrHi" type="number" min="0" max="359"></label>
+        <label for="tGrS">Min saturation<input id="tGrS" type="number" min="0" max="255"></label>
+        <label for="tGrV">Min value<input id="tGrV" type="number" min="0" max="255"></label>
+        <div class="group other">Blobs</div>
+        <label for="tMin">MIN_PIXELS<input id="tMin" type="number" min="1" max="1000"></label>
+        <label for="tTol">BOTTOM_TOL<input id="tTol" type="number" min="0" max="60"></label>
+        <label for="tTop">IGNORE_TOP_ROWS<input id="tTop" type="number" min="0" max="118"></label>
+        <label for="tNear">NEAR_ROWS (band end)<input id="tNear" type="number" min="1" max="119"></label>
+      </form>
+      <div class="tunebar">
+        <button id="btnReset" type="button">Reset to Arduino values</button>
+        <button id="btnCopy" type="button">Copy as Arduino code</button>
+        <span class="sub" id="copyMsg" aria-live="polite"></span>
+      </div>
+      <textarea id="copyBox" readonly hidden aria-label="Arduino lines"></textarea>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ===== Arduino constants (closest_pillar_test / pillar_viewer) =====
+  const ARDUINO = { redLo:340, redHi:15, redS:100, redV:60, grLo:80, grHi:160, grS:80, grV:50,
+                    minPx:30, tol:4, top:53, near:41 };
+  // Search band: rows P.top .. (120 - P.near - 1). Rows above (ignore top) and from the
+  // NEAR line down are ignored, the same as IGNORE_TOP_ROWS / NEAR_ROWS in the Arduino code.
+  let SIDE_ZONE = 28;
+  const ARDUINO_ZONES = { side: 28 };
+  let NEAR_ROWS = 41, NEAR_BOTTOM = 79;
+  function syncBand() {
+    P.top = Math.max(0, Math.min(118, P.top));
+    P.near = Math.max(1, Math.min(119 - P.top, P.near));      // band is always at least 1 row tall
+    NEAR_ROWS = P.near; NEAR_BOTTOM = 120 - P.near;
+  }
+  const NONE = 0, RED = 1, GREEN = 2;
+  const MAGIC = [0xAA, 0x55, 0xC3, 0x3C], HEADER = 25;
+  // Red: pass it on its right -> it must end up on the LEFT of the picture (x < -SIDE_ZONE).
+  // Green: pass it on its left -> it must end up on the RIGHT (x > SIDE_ZONE).
+  function centerX(p) { return Math.trunc(p.sumX / p.count) - 80; }
+  function onCorrectSide(p) { const x = centerX(p); return p.color === RED ? x < -SIDE_ZONE : x > SIDE_ZONE; }
+
+  const $ = id => document.getElementById(id);
+  let P = { ...ARDUINO };
+  let frame = null;        // {W,H,mirror,flip,pic,espMask,esp:{...},camFps,demo}
+  let result = null;       // the page's own run of the algorithm
+  let viewerFrames = 0, viewerFps = 0, fpsT0 = performance.now();
+
+  // ===== Same math as the sketch =====
+  function rgbAt(f, x, y) {
+    const rx = f.mirror ? f.W - 1 - x : x, ry = f.flip ? f.H - 1 - y : y;
+    const i = (ry * f.W + rx) * 2, p = (f.pic[i] << 8) | f.pic[i + 1];
+    return [((p >> 11) & 0x1F) << 3, ((p >> 5) & 0x3F) << 2, (p & 0x1F) << 3];
+  }
+  function hsv(r, g, b) {                       // C integer division truncates toward zero
+    const maxC = Math.max(r, g, b), minC = Math.min(r, g, b), d = maxC - minC;
+    const v = maxC, s = maxC === 0 ? 0 : Math.trunc(d * 255 / maxC);
+    let h = 0;
+    if (d !== 0) {
+      if (maxC === r) h = Math.trunc(60 * (g - b) / d);
+      else if (maxC === g) h = Math.trunc(60 * (b - r) / d) + 120;
+      else h = Math.trunc(60 * (r - g) / d) + 240;
+      if (h < 0) h += 360;
+    }
+    return [h, s, v];
+  }
+  function classify(h, s, v) {
+    const redHue = h >= P.redLo || h <= P.redHi;
+    if (redHue && s >= P.redS && v >= P.redV) return RED;
+    const grHue = h >= P.grLo && h <= P.grHi;
+    if (grHue && s >= P.grS && v >= P.grV) return GREEN;
+    return NONE;
+  }
+
+  // buildClassMap + findClosestPillar + frontPillarOfBlob + isCloser, recording every step
+  function analyze(f) {
+    const W = f.W, H = f.H, N = W * H;
+    const cls = new Uint8Array(N);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (y < P.top || y >= H - P.near) continue;      // outside the search band
+      const [r, g, b] = rgbAt(f, x, y), [h, s, v] = hsv(r, g, b);
+      cls[y * W + x] = classify(h, s, v);
+    }
+    const label = new Int32Array(N).fill(-1);
+    const visited = new Uint8Array(N), qx = new Int16Array(N), qy = new Int16Array(N);
+    const colTop = new Int16Array(W), colBottom = new Int16Array(W), colCount = new Int32Array(W);
+    const blobs = [];
+    let closest = null;
+    const isCloser = (a, b) => !b || (a.bottom !== b.bottom ? a.bottom > b.bottom : a.count > b.count);
+
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const color = cls[y * W + x];
+      if (color === NONE || visited[y * W + x]) continue;
+      colTop.fill(H); colBottom.fill(-1); colCount.fill(0);
+      let minX = x, maxX = x, minY = y, maxY = y, total = 0, head = 0, tail = 0;
+      const id = blobs.length;
+      qx[tail] = x; qy[tail] = y; tail++; visited[y * W + x] = 1;
+      while (head < tail) {
+        const cx = qx[head], cy = qy[head]; head++;
+        total++; colCount[cx]++; label[cy * W + cx] = id;
+        if (cy < colTop[cx]) colTop[cx] = cy;
+        if (cy > colBottom[cx]) colBottom[cx] = cy;
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        const nb = [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]];
+        for (const [nx, ny] of nb) {
+          if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+          const j = ny * W + nx;
+          if (visited[j] || cls[j] !== color) continue;
+          visited[j] = 1; qx[tail] = nx; qy[tail] = ny; tail++;
+        }
+      }
+      const blob = { id, color, minX, maxX, minY, maxY, total, noise: total < P.minPx, front: null,
+                     bottoms: Array.from(colBottom.slice(minX, maxX + 1)) };
+      blobs.push(blob);
+      if (blob.noise) continue;
+
+      // frontPillarOfBlob()
+      let best = -1;
+      for (let c = minX; c <= maxX; c++) if (colCount[c] > 0 && (best < 0 || colBottom[c] > colBottom[best])) best = c;
+      const lowest = colBottom[best];
+      let left = best, right = best;
+      while (left - 1 >= minX && colCount[left - 1] > 0 && colBottom[left - 1] >= lowest - P.tol) left--;
+      while (right + 1 <= maxX && colCount[right + 1] > 0 && colBottom[right + 1] >= lowest - P.tol) right++;
+      let top = H, count = 0, sumX = 0;
+      for (let c = left; c <= right; c++) { if (colTop[c] < top) top = colTop[c]; count += colCount[c]; sumX += c * colCount[c]; }
+      const fp = { color, left, right, top, bottom: lowest, count, sumX, blobId: id,
+                   found: count >= P.minPx, wasSplit: left > minX || right < maxX };
+      blob.front = fp;
+      if (fp.found && isCloser(fp, closest)) closest = fp;
+    }
+    return { cls, label, blobs, closest };
+  }
+
+  // ===== Comparison with the Arduino's own answer =====
+  function espClass(i) { return (frame.espMask[i >> 2] >> ((i & 3) * 2)) & 3; }
+  function compare() {
+    const tuned = Object.keys(ARDUINO).some(k => ARDUINO[k] !== P[k]);
+    if (tuned) return { state: "warn", text: "Tuning — comparison paused" };
+    let diff = 0;
+    for (let i = 0; i < frame.W * frame.H; i++) if (result.cls[i] !== espClass(i)) diff++;
+    const c = result.closest, e = frame.esp;
+    const sameClosest = (!c && !e.found) || (c && e.found && c.color === e.color && c.left === e.left &&
+      c.right === e.right && c.top === e.top && c.bottom === e.bottom && c.count === e.count && c.wasSplit === e.split);
+    if (diff === 0 && sameClosest) return { state: "ok", text: "Matches the Arduino" };
+    return { state: "bad", text: (diff ? diff + " pixels differ" : "Same colors") + (sameClosest ? "" : " · closest differs") };
+  }
+
+  // ===== Drawing =====
+  const RED_RGB = [255, 40, 60], GREEN_RGB = [30, 225, 100];
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  function paint(canvas, mode) {
+    const f = frame, W = f.W, H = f.H, scale = canvas.width / W;
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(W, H);
+    const a = +$("lyAlpha").value / 100;
+    const showPic = mode === "main" ? $("lyPic").checked : (mode === "s1" || mode === "s4");
+    const showMask = mode === "main" ? $("lyMask").checked : (mode === "s2" || mode === "s3");
+    const maskAlpha = mode === "main" ? (showPic ? a : 1) : 1;
+    const win = result.closest;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      let [r, g, b] = showPic ? rgbAt(f, x, y) : [0, 0, 0];
+      if (mode === "s4" && win) {                       // dim everything except the winner
+        const inWin = result.label[i] === win.blobId && x >= win.left && x <= win.right;
+        if (!inWin) { r *= .35; g *= .35; b *= .35; }
+        else { const c = win.color === RED ? RED_RGB : GREEN_RGB; r = r * .3 + c[0] * .7; g = g * .3 + c[1] * .7; b = b * .3 + c[2] * .7; }
+      }
+      const c = result.cls[i];
+      if (showMask && c) {
+        const col = c === RED ? RED_RGB : GREEN_RGB;
+        let k = maskAlpha;
+        const bl = result.blobs[result.label[i]];
+        const dropped = bl && bl.front && (x < bl.front.left || x > bl.front.right);
+        const showSplit = mode === "main" ? $("lySplit").checked : mode === "s3";
+        if (dropped && showSplit && ((x + y) & 2)) k *= 0.25;          // hatch: the part behind
+        r = r * (1 - k) + col[0] * k; g = g * (1 - k) + col[1] * k; b = b * (1 - k) + col[2] * k;
+      }
+      const o = i * 4; img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b; img.data[o + 3] = 255;
+    }
+    const tmp = paint.tmp || (paint.tmp = document.createElement("canvas"));
+    tmp.width = W; tmp.height = H; tmp.getContext("2d").putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+
+    const box = (x0, y0, x1, y1, color, width, dash) => {
+      ctx.setLineDash(dash || []); ctx.lineWidth = width; ctx.strokeStyle = color;
+      ctx.strokeRect(x0 * scale + .5, y0 * scale + .5, (x1 - x0 + 1) * scale - 1, (y1 - y0 + 1) * scale - 1);
+      ctx.setLineDash([]);
+    };
+    const text = (s, x, y, bg, fg, size) => {
+      ctx.font = `600 ${size}px "IBM Plex Mono", monospace`;
+      const w = ctx.measureText(s).width + 8;
+      ctx.fillStyle = bg; ctx.fillRect(x, y, w, size + 6);
+      ctx.fillStyle = fg; ctx.fillText(s, x + 4, y + size + 1);
+    };
+
+    const showBlobs = mode === "main" ? $("lyBlobs").checked : mode === "s3";
+    const showNoise = mode === "main" ? $("lyNoise").checked : mode === "s3";
+    const showGuides = mode === "main" && $("lyGuides").checked;
+    const showSplit = mode === "main" && $("lySplit").checked;
+    const fs = mode === "main" ? 12 : 9;
+
+    if (mode !== "s1") {                          // rows the Arduino ignores (above and below the band)
+      const nb = 120 - P.near;
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      if (P.top > 0) ctx.fillRect(0, 0, W * scale, P.top * scale);
+      ctx.fillRect(0, nb * scale, W * scale, (H - nb) * scale);
+      ctx.lineWidth = mode === "main" ? 3 : 1.5;
+      ctx.strokeStyle = "#ffd166"; ctx.beginPath(); ctx.moveTo(0, P.top * scale); ctx.lineTo(W * scale, P.top * scale); ctx.stroke();
+      ctx.strokeStyle = "#ff6b7a"; ctx.beginPath(); ctx.moveTo(0, nb * scale); ctx.lineTo(W * scale, nb * scale); ctx.stroke();
+      if (mode === "main") {
+        if (P.top > 0) text("IGNORED 0–" + (P.top - 1), W * scale - 120, P.top * scale - 24, "rgba(0,0,0,.7)", "#ffd166", 11);
+        text("NEAR: IGNORED " + nb + "–119", W * scale - 168, nb * scale + 6, "rgba(0,0,0,.7)", "#ff8a96", 11);
+      }
+    }
+    if (showGuides) {
+      // side-zone lines (thick): between them the pillar is CENTER
+      ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 4; ctx.setLineDash([10, 6]);
+      for (const gx of [W / 2 - SIDE_ZONE, W / 2 + SIDE_ZONE]) { ctx.beginPath(); ctx.moveTo(gx * scale, 0); ctx.lineTo(gx * scale, H * scale); ctx.stroke(); }
+      ctx.setLineDash([]);
+      text("LEFT", 6, 6, "rgba(0,0,0,.55)", "#dfe6ee", 11);
+      text("CENTER", (W / 2) * scale - 26, 6, "rgba(0,0,0,.55)", "#dfe6ee", 11);
+      text("RIGHT", W * scale - 46, 6, "rgba(0,0,0,.55)", "#dfe6ee", 11);
+    } else if (mode === "s4") {
+      ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+      for (const gx of [W / 2 - SIDE_ZONE, W / 2 + SIDE_ZONE]) { ctx.beginPath(); ctx.moveTo(gx * scale, 0); ctx.lineTo(gx * scale, H * scale); ctx.stroke(); }
+      ctx.setLineDash([]);
+    }
+
+    // Halo around every detected pillar: green = already on the side it must be, red = not yet
+    const halo = (fp, strong) => {
+      const ok = onCorrectSide(fp), col = ok ? "rgba(40,235,120,.95)" : "rgba(255,55,70,.95)";
+      const pad = (strong ? 5 : 3) * (scale / 4);
+      ctx.save();
+      ctx.shadowColor = col; ctx.shadowBlur = (strong ? 26 : 14) * (scale / 4);
+      ctx.strokeStyle = col; ctx.lineWidth = (strong ? 7 : 4) * (scale / 4);
+      ctx.strokeRect(fp.left * scale - pad, fp.top * scale - pad, (fp.right - fp.left + 1) * scale + 2 * pad, (fp.bottom - fp.top + 1) * scale + 2 * pad);
+      ctx.restore();
+    };
+    if (mode === "main" || mode === "s4") {
+      for (const bl of result.blobs) if (bl.front && bl.front.found && (!win || bl.id !== win.blobId)) halo(bl.front, false);
+      if (win) halo(win, true);
+    }
+
+    for (const bl of result.blobs) {
+      if (bl.noise) { if (showNoise) box(bl.minX, bl.minY, bl.maxX, bl.maxY, "rgba(200,205,212,.85)", 1, [3, 3]); continue; }
+      if (showBlobs && (!win || bl.id !== win.blobId || mode !== "s4")) {
+        box(bl.minX, bl.minY, bl.maxX, bl.maxY, bl.color === RED ? "rgba(255,120,130,.95)" : "rgba(120,240,160,.95)", 1.5);
+        if (mode !== "s4") text(bl.total + " px", bl.minX * scale, Math.max(0, bl.minY * scale - fs - 7), "rgba(0,0,0,.6)", "#fff", fs);
+      }
+      if (showSplit && bl.front && bl.front.wasSplit) {
+        // column bottoms of this blob + the tolerance line used to cut it
+        ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 2; ctx.beginPath();
+        bl.bottoms.forEach((bt, k) => { if (bt < 0) return; const px = (bl.minX + k + .5) * scale, py = (bt + 1) * scale; k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+        ctx.stroke();
+        const cut = (bl.front.bottom - P.tol) * scale;
+        ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(bl.minX * scale, cut); ctx.lineTo((bl.maxX + 1) * scale, cut); ctx.stroke(); ctx.setLineDash([]);
+        text("cut: bottom − " + P.tol, (bl.maxX + 1) * scale + 4, cut - 10, "rgba(0,0,0,.65)", "#ffd166", 11);
+      }
+    }
+
+    if (win && mode !== "s1" && mode !== "s2") {
+      const col = win.color === RED ? "#ff3b4e" : "#2be37f";
+      box(win.left, win.top, win.right, win.bottom, "#ffffff", mode === "main" ? 4 : 3);
+      box(win.left, win.top, win.right, win.bottom, col, mode === "main" ? 2 : 1.5);
+      if (mode === "main") {
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(0, (win.bottom + 1) * scale); ctx.lineTo(W * scale, (win.bottom + 1) * scale); ctx.stroke();
+      }
+      const lbl = win.color === RED ? "RED → GO RIGHT" : "GREEN → GO LEFT";
+      const ly = win.top * scale > 26 ? win.top * scale - (fs + 10) : (win.bottom + 1) * scale + 4;
+      text(lbl, win.left * scale, ly, col, "#06110a", mode === "main" ? 14 : 10);
+    }
+  }
+
+  function paintAll() {
+    if (!frame) return;
+    paint($("main"), "main");
+    paint($("s1"), "s1"); paint($("s2"), "s2"); paint($("s3"), "s3"); paint($("s4"), "s4");
+  }
+
+  function setChip(id, state, txt) {
+    const el = $(id); el.className = "chip" + (state ? " " + state : ""); el.querySelector("span").textContent = txt;
+  }
+
+  function updatePanel() {
+    const c = result.closest, d = $("decision");
+    if (!c) {
+      d.textContent = "No pillar"; d.className = "decision none";
+      $("decisionSub").textContent = "GO STRAIGHT — nothing to dodge";
+      ["dWhere", "dX", "dBottom", "dSize", "dPx", "dSplit", "dSide"].forEach(id => $(id).textContent = "—");
+      $("dSide").style.color = "";
+    } else {
+      const red = c.color === RED;
+      const x = Math.trunc(c.sumX / c.count) - frame.W / 2;
+      const ok = onCorrectSide(c);
+      d.textContent = red ? "RED → GO RIGHT" : "GREEN → GO LEFT";
+      d.className = "decision " + (red ? "red" : "green");
+      $("decisionSub").textContent = (red ? "Pass it on its right" : "Pass it on its left") + " · " + (ok ? "already on the correct side" : "not on the correct side yet");
+      $("dSide").textContent = ok ? "yes (green halo)" : "no (red halo)";
+      $("dSide").style.color = ok ? "var(--ok)" : "var(--bad)";
+      $("dWhere").textContent = x < -SIDE_ZONE ? "LEFT" : x > SIDE_ZONE ? "RIGHT" : "CENTER";
+      $("dX").textContent = x;
+      $("dBottom").textContent = c.bottom;
+      $("dSize").textContent = (c.bottom - c.top + 1) + " × " + (c.right - c.left + 1);
+      $("dPx").textContent = c.count;
+      $("dSplit").textContent = c.wasSplit ? "yes" : "no";
+    }
+    const noise = result.blobs.filter(b => b.noise).length;
+    $("dBlobs").textContent = (result.blobs.length - noise) + " / " + noise;
+    const e = frame.esp;
+    $("dEsp").textContent = e.found ? (e.color === RED ? "RED" : "GREEN") + " · bottom " + e.bottom : "no pillar";
+
+    const cmp = compare();
+    setChip("chipMatch", cmp.state, cmp.text);
+    $("fsDec").textContent = d.textContent; $("fsDec").className = "fsdec " + (c ? (c.color === RED ? "red" : "green") : "none");
+    $("fsSub").textContent = $("decisionSub").textContent;
+    $("fsChips").textContent = cmp.text + " · " + (frame.demo ? "demo picture" : "cam " + frame.camFps.toFixed(1) + " fps");
+    setChip("chipFps", "", frame.demo ? "demo" : "cam " + frame.camFps.toFixed(1) + " · page " + viewerFps.toFixed(1) + " fps");
+
+    // blob table
+    const rows = result.blobs.slice().sort((a, b) => (b.front ? b.front.bottom : -1) - (a.front ? a.front.bottom : -1) || b.total - a.total)
+      .slice(0, 14).map(bl => {
+        const win = c && c.blobId === bl.id;
+        const status = bl.noise ? '<span class="tag">noise &lt; ' + P.minPx + '</span>'
+          : win ? '<span class="tag win">closest</span>' + (bl.front.wasSplit ? ' <span class="tag split">split</span>' : '')
+          : bl.front.wasSplit ? '<span class="tag split">split</span>' : '<span class="tag">candidate</span>';
+        const colr = bl.color === RED ? "var(--pill-red)" : "var(--pill-green)";
+        const fb = bl.front ? bl.front.bottom : bl.maxY;
+        return `<tr><td><span class="dot" style="background:${colr}"></span>${bl.color === RED ? "red" : "green"}</td>
+          <td>${bl.total}</td><td>${bl.front ? bl.front.count : "—"}</td><td>x ${bl.minX}–${bl.maxX}, y ${bl.minY}–${bl.maxY}</td>
+          <td>${fb}</td><td>${status}</td></tr>`;
+      }).join("");
+    $("blobTable").innerHTML = '<thead><tr><th>Color</th><th>Blob px</th><th>Front px</th><th>Box</th><th>Bottom</th><th>Result</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="6" style="color:var(--sub)">No red or green pixels in this picture.</td></tr>') + '</tbody>';
+  }
+
+  function process() {
+    if (!frame) return;
+    syncBand();
+    result = analyze(frame);
+    paintAll();
+    updatePanel();
+    syncZoneUI();
+  }
+
+  // ===== Zone sliders (ignore top / medium / near) =====
+  function syncZoneUI() {
+    $("zTop").value = P.top;  $("zTopV").textContent = "rows 0–" + Math.max(0, P.top - 1);
+    if (P.top === 0) $("zTopV").textContent = "none";
+    $("zNear").value = NEAR_ROWS;  $("zNearV").textContent = NEAR_ROWS + " (rows ≥" + NEAR_BOTTOM + " off)";
+    $("zSide").value = SIDE_ZONE; $("zSideV").textContent = "± " + SIDE_ZONE + " px";
+    $("tTop").value = P.top; syncRanges(); markChanged(); saveSettings();
+  }
+  $("zTop").addEventListener("input", () => { P.top = +$("zTop").value; process(); });
+  $("zNear").addEventListener("input", () => { P.near = +$("zNear").value; process(); });
+  $("zSide").addEventListener("input", () => { SIDE_ZONE = +$("zSide").value; process(); });
+
+  // Drag the lines directly on the picture
+  let dragging = null;
+  function rowAt(e) {
+    const r = $("main").getBoundingClientRect();
+    return Math.round((e.clientY - r.top) / r.height * (frame ? frame.H : 120));
+  }
+  function lineNear(row) {
+    const cands = [["top", P.top], ["near", NEAR_BOTTOM]];
+    let best = null, bd = 4;
+    for (const [k, v] of cands) { const d = Math.abs(row - v); if (d < bd) { bd = d; best = k; } }
+    return best;
+  }
+  $("main").addEventListener("pointerdown", e => {
+    if (!frame) return;
+    dragging = lineNear(rowAt(e));
+    if (dragging) { $("main").setPointerCapture(e.pointerId); e.preventDefault(); }
+  });
+  $("main").addEventListener("pointermove", e => {
+    if (!frame) return;
+    const row = Math.max(0, Math.min(119, rowAt(e)));
+    if (!dragging) { $("main").classList.toggle("grab", !!lineNear(row)); return; }
+    if (dragging === "top") P.top = Math.min(row, 118 - 0);
+    else P.near = 120 - row;
+    process();
+  });
+  const stopDrag = () => { dragging = null; };
+  $("main").addEventListener("pointerup", stopDrag);
+  $("main").addEventListener("pointercancel", stopDrag);
+
+  // ===== Full screen (button, F key, or double-click the picture; Esc leaves) =====
+  function toggleFull() {
+    const st = $("stage");
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (st.requestFullscreen) st.requestFullscreen().catch(() => log("Full screen is not allowed in this window. Use the copy in your WRO code folder."));
+    } catch (e) { log("Full screen is not available here."); }
+  }
+  $("btnFull").addEventListener("click", toggleFull);
+  $("main").addEventListener("dblclick", toggleFull);
+  document.addEventListener("keydown", e => {
+    if ((e.key === "f" || e.key === "F") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); toggleFull(); }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    const on = !!document.fullscreenElement;
+    $("btnFull").querySelector("span").textContent = on ? "Exit full screen" : "Full screen";
+  });
+
+  // ===== Hover readout =====
+  $("main").addEventListener("mousemove", e => {
+    if (!frame) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) / r.width * frame.W), y = Math.floor((e.clientY - r.top) / r.height * frame.H);
+    if (x < 0 || y < 0 || x >= frame.W || y >= frame.H) return;
+    const [R, G, B] = rgbAt(frame, x, y), [h, s, v] = hsv(R, G, B);
+    const name = c => ["nothing", "RED", "GREEN", "?"][c];
+    const i = y * frame.W + x;
+    $("hover").innerHTML = `<span class="sw" style="background:rgb(${R},${G},${B})"></span>x ${x} · y ${y} · RGB ${R},${G},${B}<br>H ${h} · S ${s} · V ${v} → page: <b>${name(result.cls[i])}</b> · Arduino: <b>${name(espClass(i))}</b>`;
+  });
+
+  // ===== Layers + tuning controls =====
+  ["lyPic", "lyMask", "lyAlpha", "lyBlobs", "lyNoise", "lySplit", "lyGuides"].forEach(id => $(id).addEventListener("input", paintAll));
+  const TUNE = { tRedLo: "redLo", tRedHi: "redHi", tRedS: "redS", tRedV: "redV", tGrLo: "grLo", tGrHi: "grHi",
+                 tGrS: "grS", tGrV: "grV", tMin: "minPx", tTol: "tol", tTop: "top", tNear: "near" };
+  // Each number box gets a slider in front of it (same min / max); both move together.
+  for (const [id, k] of Object.entries(TUNE)) {
+    const num = $(id), lab = num.closest("label");
+    const rng = document.createElement("input");
+    rng.type = "range"; rng.id = id + "R"; rng.min = num.min; rng.max = num.max; rng.step = 1;
+    rng.setAttribute("aria-label", lab.firstChild.textContent.trim());
+    const pair = document.createElement("div"); pair.className = "pair";
+    lab.insertBefore(pair, num); pair.appendChild(rng); pair.appendChild(num);
+    const apply = v => { v = parseInt(v, 10); if (Number.isNaN(v)) return;
+      v = Math.max(+num.min, Math.min(+num.max, v)); P[k] = v; process(); };
+    num.addEventListener("input", () => apply(num.value));
+    rng.addEventListener("input", () => apply(rng.value));
+  }
+  function syncRanges() { for (const [id, k] of Object.entries(TUNE)) { $(id + "R").value = P[k]; if (document.activeElement !== $(id)) $(id).value = P[k]; } }
+  function fillTune() { for (const [id, k] of Object.entries(TUNE)) $(id).value = P[k]; syncRanges(); }
+  function markChanged() {
+    for (const [id, k] of Object.entries(TUNE)) $(id).closest("label").classList.toggle("changed", P[k] !== ARDUINO[k]);
+    $("zNear").closest("label").classList.toggle("changed", P.near !== ARDUINO.near);
+    $("zSide").closest("label").classList.toggle("changed", SIDE_ZONE !== ARDUINO_ZONES.side);
+    $("zTop").closest("label").classList.toggle("changed", P.top !== ARDUINO.top);
+  }
+  const STORE_KEY = "pillarVisionLab.settings.v2";
+  function saveSettings() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ P, side: SIDE_ZONE })); } catch (e) {}
+  }
+  function loadSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+      if (!s) return;
+      for (const k of Object.keys(ARDUINO)) if (typeof s.P[k] === "number") P[k] = s.P[k];
+      if (typeof s.side === "number") SIDE_ZONE = s.side;
+    } catch (e) {}
+  }
+  $("btnReset").onclick = () => { P = { ...ARDUINO }; SIDE_ZONE = ARDUINO_ZONES.side;
+    fillTune(); process(); $("copyMsg").textContent = ""; };
+  $("btnCopy").onclick = async () => {
+    const lines =
+`const int RED_HUE_LOW    = ${P.redLo};
+const int RED_HUE_HIGH   = ${P.redHi};
+const int RED_MIN_SAT    = ${P.redS};
+const int RED_MIN_VAL    = ${P.redV};
+
+const int GREEN_HUE_LOW  = ${P.grLo};
+const int GREEN_HUE_HIGH = ${P.grHi};
+const int GREEN_MIN_SAT  = ${P.grS};
+const int GREEN_MIN_VAL  = ${P.grV};
+
+const int  MIN_PIXELS      = ${P.minPx};
+const int  IGNORE_TOP_ROWS = ${P.top};
+const int  BOTTOM_TOL      = ${P.tol};
+const int  NEAR_ROWS       = ${P.near};   // rows from H - NEAR_ROWS (${120 - P.near}) down are ignored: search band = rows ${P.top}-${119 - P.near}
+const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside it on the pass side = correct side`;
+    const box = $("copyBox"); box.value = lines; box.hidden = false;
+    try { await navigator.clipboard.writeText(lines); $("copyMsg").textContent = "Copied. Paste over the same lines in the sketch."; }
+    catch (e) { box.focus(); box.select(); $("copyMsg").textContent = "Select-all is ready: press ⌘C to copy."; }
+  };
+
+  // ===== USB (Web Serial) =====
+  let port = null, reader = null, keepReading = false, buf = new Uint8Array(0), textTail = "";
+  let bytesIn = 0, gotFrame = false;
+  const serialOK = "serial" in navigator;
+  if (!serialOK) { $("noSerial").hidden = false; $("btnConnect").disabled = true; }
+
+  $("btnConnect").onclick = async () => {
+    try {
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 115200, bufferSize: 1 << 16 });
+      // Tell the board someone is listening (DTR on), like the Arduino Serial Monitor does.
+      // RTS stays off so the ESP32-S3 is not reset.
+      try { await port.setSignals({ dataTerminalReady: true, requestToSend: false }); } catch (e) {}
+    } catch (e) {
+      if (e && (e.name === "SecurityError" || /permission|policy|allowed/i.test(e.message || ""))) $("noSerial").hidden = false;
+      log("Could not open the port: " + (e && e.message ? e.message : e));
+      port = null; return;
+    }
+    setChip("chipConn", "ok", "Camera connected · waiting for pictures");
+    $("btnConnect").disabled = true; $("btnDisconnect").disabled = false;
+    keepReading = true; bytesIn = 0; readLoop();
+    setTimeout(() => {
+      if (!port) return;
+      if (bytesIn === 0) log("Connected, but nothing arrived from the camera in 4 s. Check that pillar_viewer.ino is the sketch uploaded, then press Disconnect, unplug and replug the camera, reload the page and connect again.");
+      else if (!gotFrame) log("Data is arriving (" + bytesIn + " bytes) but no complete picture yet.");
+    }, 4000);
+  };
+  $("btnDisconnect").onclick = disconnect;
+  $("btnDemo").onclick = () => { if (port) disconnect(); loadDemo(); };
+
+  async function disconnect() {
+    keepReading = false;
+    try { if (reader) await reader.cancel(); } catch (e) {}
+    try { if (port) await port.close(); } catch (e) {}
+    port = null; reader = null;
+    setChip("chipConn", "", "Not connected");
+    $("btnConnect").disabled = !serialOK; $("btnDisconnect").disabled = true;
+  }
+  async function readLoop() {
+    while (port && port.readable && keepReading) {
+      reader = port.readable.getReader();
+      try {
+        for (;;) { const { value, done } = await reader.read(); if (done) break; if (value) { bytesIn += value.length; append(value); parse(); } }
+      } catch (e) { log("Read error: " + e.message + " (board reset or unplugged?)"); }
+      finally { reader.releaseLock(); }
+      if (keepReading) await new Promise(r => setTimeout(r, 300));
+    }
+    if (keepReading) disconnect();
+  }
+  function append(chunk) {
+    const n = new Uint8Array(buf.length + chunk.length); n.set(buf); n.set(chunk, buf.length); buf = n;
+    if (buf.length > 600000) buf = buf.slice(buf.length - 200000);
+  }
+  function findMagic() {
+    for (let i = 0; i + 3 < buf.length; i++)
+      if (buf[i] === MAGIC[0] && buf[i + 1] === MAGIC[1] && buf[i + 2] === MAGIC[2] && buf[i + 3] === MAGIC[3]) return i;
+    return -1;
+  }
+  function parse() {
+    for (;;) {
+      const m = findMagic();
+      if (m < 0) { if (buf.length > 3) { showText(buf.subarray(0, buf.length - 3)); buf = buf.slice(buf.length - 3); } return; }
+      if (m > 0) { showText(buf.subarray(0, m)); buf = buf.slice(m); }
+      if (buf.length < HEADER) return;
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const W = dv.getUint16(5, true), H = dv.getUint16(7, true);
+      if (buf[4] !== 1 || !W || !H || W > 640 || H > 480) { buf = buf.slice(4); continue; }
+      const picBytes = W * H * 2, maskBytes = Math.ceil(W * H / 4), total = HEADER + picBytes + maskBytes;
+      if (buf.length < total) return;
+      const f = {
+        W, H, mirror: !!(buf[9] & 1), flip: !!(buf[9] & 2), demo: false,
+        esp: { found: buf[10] === 1, color: buf[11], left: dv.getInt16(12, true), right: dv.getInt16(14, true),
+               top: dv.getInt16(16, true), bottom: dv.getInt16(18, true), count: dv.getUint16(20, true), split: buf[22] === 1 },
+        camFps: dv.getUint16(23, true) / 10,
+        pic: buf.slice(HEADER, HEADER + picBytes), espMask: buf.slice(HEADER + picBytes, total)
+      };
+      buf = buf.slice(total);
+      onFrame(f);
+    }
+  }
+  function onFrame(f) {
+    frame = f; gotFrame = true;
+    viewerFrames++;
+    const now = performance.now();
+    if (now - fpsT0 >= 1000) { viewerFps = viewerFrames * 1000 / (now - fpsT0); viewerFrames = 0; fpsT0 = now; }
+    setChip("chipConn", "ok", "Camera connected · live");
+    process();
+  }
+  function showText(bytes) {
+    let s = "";
+    for (const b of bytes) if (b === 10 || b === 13 || (b >= 32 && b < 127)) s += String.fromCharCode(b);
+    if (!s.trim()) return;
+    textTail += s; const lines = textTail.split(/\r?\n/); textTail = lines.pop();
+    lines.filter(l => l.trim()).forEach(log);
+  }
+  function log(line) {
+    const el = $("log"); const prev = el.textContent === "—" ? "" : el.textContent;
+    el.textContent = (prev + line + "\n").split("\n").slice(-30).join("\n"); el.scrollTop = el.scrollHeight;
+  }
+  if (serialOK) navigator.serial.addEventListener("disconnect", () => { if (port) { log("Camera unplugged."); disconnect(); } });
+
+  // ===== Demo picture (so the page shows the whole pipeline before connecting) =====
+  function loadDemo() {
+    const W = 160, H = 120, pic = new Uint8Array(W * H * 2);
+    const put = (x, y, r, g, b) => { const p = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3); pic[(y * W + x) * 2] = p >> 8; pic[(y * W + x) * 2 + 1] = p & 255; };
+    let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (y < 34) { const k = 40 + rnd() * 10; put(x, y, k, k, k + 4); }                       // black wall
+      else { const k = 170 + y * .6 + rnd() * 14; put(x, y, k, k - 2, k - 8); }                  // white mat
+    }
+    const pillar = (x0, y0, w, h, rgb) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+      const sh = x < x0 + w * .3 ? .8 : 1; put(x, y, rgb[0] * sh + rnd() * 10, rgb[1] * sh + rnd() * 10, rgb[2] * sh + rnd() * 10); } };
+    pillar(104, 44, 9, 18, [40, 170, 60]);      // far green, behind…
+    pillar(92, 52, 14, 30, [45, 180, 65]);      // …and a closer green touching it -> split
+    pillar(28, 58, 18, 40, [215, 35, 50]);      // close red: the winner
+    for (let k = 0; k < 6; k++) put(140 + k, 100, 220, 30, 40);   // a few red specks: noise
+    for (let k = 0; k < 3; k++) put(60 + k, 110, 40, 190, 70);
+    const f = { W, H, mirror: false, flip: false, demo: true, pic, camFps: 0, espMask: null, esp: null };
+    frame = f;
+    const saved = P; P = { ...ARDUINO };
+    const r = analyze(f); P = saved;
+    const mask = new Uint8Array(W * H / 4);
+    for (let i = 0; i < W * H; i++) mask[i >> 2] |= r.cls[i] << ((i & 3) * 2);
+    f.espMask = mask;
+    const c = r.closest;
+    f.esp = c ? { found: true, color: c.color, left: c.left, right: c.right, top: c.top, bottom: c.bottom, count: c.count, split: c.wasSplit }
+              : { found: false, color: 0, left: 0, right: 0, top: 0, bottom: 0, count: 0, split: false };
+    setChip("chipConn", "warn", "Demo picture — connect the camera for live video");
+    process();
+  }
+
+  loadSettings();
+  fillTune();
+  loadDemo();
+})();
+</script>
+
+</body></html>
