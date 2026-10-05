@@ -126,7 +126,7 @@ At the end of this phase I agreed on the general structure of the program:
 
 ---
 
-## 3. Phase 2 — National final day (22 September 2026)
+## 3. Phase 2 — (22 September 2026)
 
 On the day of the national final I was still working on the code, including motor and servo tests.
 
