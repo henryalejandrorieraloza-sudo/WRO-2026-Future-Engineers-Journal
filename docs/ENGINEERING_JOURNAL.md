@@ -14,7 +14,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 
 1. [Hardware I work with](#1-hardware-i-work-with)
 2. [Phase 1 — Turning-direction logic with Sharp sensors (15–21 Sept)](#2-phase-1--turning-direction-logic-with-sharp-sensors-1521-september-2026)
-3. [Phase 2 — National final day (22 Sept)](#3-phase-2--national-final-day-22-september-2026)
+3. [Phase 2 — (22 Sept)](#3-phase-2--22-september-2026)
 4. [Phase 3 — New algorithm and TOF sensors (1–3 Oct)](#4-phase-3--new-algorithm-and-tof-sensors-13-october-2026)
 5. [Phase 4 — Camera for the Obstacle Challenge (3–4 Oct)](#5-phase-4--camera-for-the-obstacle-challenge-34-october-2026)
 6. [Phase 5 — Pillar detection finished (Sun 4 Oct)](#6-phase-5--pillar-detection-finished-sunday-4-october-2026)
@@ -127,7 +127,7 @@ At the end of this phase I agreed on the general structure of the program:
 
 ---
 
-## 3. Phase 2 — National final day (22 September 2026)
+## 3. Phase 2 — (22 September 2026)
 
 On the day of the national final I was still working on the code, including motor and servo tests.
 
@@ -529,7 +529,7 @@ After uploading in BOOT mode, press **RESET** once so the new program starts.
 #### Problem 27 — The published web page could not use USB ✅
 - **What I observed:** the online version of the page said "USB is blocked here".
 - **Cause:** the published page runs inside a protected frame that does not allow access to USB ports. Safari does not support the Web Serial API at all.
-- **Solution:** open `viewer.html` from the `WRO code → obstacle challenge → pillar_viewer` folder in **Google Chrome** or **Microsoft Edge**.
+- **Solution:** open `viewer.html` from the [`src/obstacle-challenge/pillar_viewer`](../src/obstacle-challenge/pillar_viewer) folder in **Google Chrome** or **Microsoft Edge**.
 
 #### Problem 28 — The sketch file was emptied while it was open in the Arduino IDE ✅
 - **What I observed:** `pillar_viewer.ino` was found almost empty after it had been updated from outside the editor while it was still open in the Arduino IDE.
@@ -634,7 +634,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **What I observed:** the servo did not reach the full left/right angles; in some tests it moved only toward one side.
 - **Probable cause:** the Ackermann linkage of the new chassis is **too tight** (too much friction), so the servo does not have the force to move it through the whole range. A second possible cause is that the servo arm was mounted far from the middle of its range, so one direction is almost at the servo's end stop.
 - **Why I did not force it:** a servo that pushes against a blocked mechanism heats up and can strip its gears. This already happened to the previous servo (Problem 17).
-- **What I prepared:** `servo_calibration.ino` (in *probar hardware*). From the Serial Monitor I type an angle (or `a` / `d` to move 1°) and the servo holds it, so I can find the real centre and the limits without forcing anything.
+- **What I prepared:** `servo_calibration.ino` ([`src/hardware-tests/servo_calibration`](../src/hardware-tests/servo_calibration)). From the Serial Monitor I type an angle (or `a` / `d` to move 1°) and the servo holds it, so I can find the real centre and the limits without forcing anything.
 - **Next steps:** my teammate loosens the linkage; mount the servo arm with the servo at **90°** and the wheels straight, so there is the same range to both sides; then measure centre and limits, leaving 2–3° of margin before each mechanical stop.
 
 #### Problem 30 — A wire of the right TOF sensor came unsoldered 🔄
@@ -657,7 +657,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **New safety rule:** to upload code, the battery is **off** and only the USB powers the Nano. Battery on only for driving tests, with the USB disconnected.
 
 #### Problem 32 — The first driving test could not be run 🔄
-- **The test:** `drive_until_left_open.ino` (in *probar hardware*). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
+- **The test:** `drive_until_left_open.ino` ([`src/hardware-tests/drive_until_left_open`](../src/hardware-tests/drive_until_left_open)). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
 - **Why it was not run:** the Nano failed during the upload (Problem 31), and the steering was not working (Problem 29).
 - **Next step:** run it as soon as the Nano and the steering are fixed.
 
