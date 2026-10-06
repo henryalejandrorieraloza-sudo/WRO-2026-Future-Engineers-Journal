@@ -27,11 +27,15 @@ const int PRINT_ORDER[NUM_SENSORS] = {3, 2, 0, 1};
 const VL53L1X::DistanceMode DISTANCE_MODE = VL53L1X::Long;
 const uint32_t TIMING_BUDGET_US = 100000;  // 100 ms per measurement (more = less noise)
 
-// Cone size (ROI). Each value goes from 4 (narrowest, ~15 deg) to 16 (widest, ~27 deg).
-// HEIGHT 4 = the cone touches less floor and escapes less over the wall.
+// Cone size (ROI): how many of the 16 x 16 receivers are used.
+// Chosen by experiment on 5 Oct 2026 (journal section 8.2): for each height we
+// measured the difference "wall at 60 cm" vs "no wall"; height 6 gave the
+// largest difference (64), heights >= 10 almost none (the cone sees the floor).
+// Note: ST's datasheet gives 4 x 4 as the minimum ROI; width 1 worked best in
+// our tests but is outside the official range, so it will be re-checked with width 4.
 // If readings get WORSE, the module is mounted rotated 90 deg: swap the two numbers.
-const uint8_t ROI_WIDTH  = 4;   // horizontal
-const uint8_t ROI_HEIGHT = 13;    // vertical
+const uint8_t ROI_WIDTH  = 1;   // horizontal
+const uint8_t ROI_HEIGHT = 6;   // vertical
 
 // "signal fail" = the light that came back was weak (angled wall, dark surface).
 // The distance is usually still good, so we accept it. The median filter removes bad ones.
