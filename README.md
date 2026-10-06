@@ -23,9 +23,10 @@ This repository holds all the code, the engineering journal and the supporting f
 5. [Software architecture](#software-architecture)
 6. [Open Challenge strategy](#open-challenge-strategy)
 7. [Obstacle Challenge strategy](#obstacle-challenge-strategy)
-8. [How to build, compile and upload the code](#how-to-build-compile-and-upload-the-code)
-9. [Testing workflow](#testing-workflow)
-10. [Team](#team)
+8. [Web tools](#web-tools)
+9. [How to build, compile and upload the code](#how-to-build-compile-and-upload-the-code)
+10. [Testing workflow](#testing-workflow)
+11. [Team](#team)
 
 ---
 
@@ -39,7 +40,9 @@ This repository holds all the code, the engineering journal and the supporting f
 │   └── images/                ← plots and pictures used in the journal
 └── src/                       ← all code (see src/README.md)
     ├── hardware-tests/        ← one sketch per component (TOF, gyro, motor, servo, camera)
-    └── obstacle-challenge/    ← pillar detection + Pillar Vision Lab web tool
+    ├── obstacle-challenge/    ← pillar detection + Pillar Vision Lab web tool
+    └── tools/
+        └── scenario-roulette/ ← draws official WRO 2026 track scenarios to test on
 ```
 
 Each Arduino sketch lives in a folder with the same name as its `.ino` file, as the Arduino IDE requires. A full table of every sketch is in [src/README.md](src/README.md).
@@ -156,6 +159,17 @@ Only a horizontal band of the picture is searched (rows 53–78 of 120): the cam
 **Pillar Vision Lab** ([src/obstacle-challenge/pillar_viewer](src/obstacle-challenge/pillar_viewer)) is our calibration tool: a web page that receives every picture over USB, shows the colour mask, runs the same algorithm in JavaScript, checks that it matches the camera board exactly, and lets us tune every parameter live.
 
 Next: floor-line detection (orange/blue), parking-lot detection (magenta) and the camera → Nano link.
+
+---
+
+## Web tools
+
+Both tools are single HTML files with no installation; they run in the browser.
+
+| Tool | Open online | Code | What it does |
+|---|---|---|---|
+| **Pillar Vision Lab** | [open](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html) | [viewer.html](src/obstacle-challenge/pillar_viewer/viewer.html) | Connects to the camera over USB (Web Serial, Chrome / Edge), shows what it sees with the colour mask on top, runs the same detection in JavaScript and checks it matches the board, and lets us tune every parameter live |
+| **WRO 2026 Scenario Roulette** | [open](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/tools/scenario-roulette/) | [index.html](src/tools/scenario-roulette/index.html) | Draws random but valid Open / Obstacle scenarios with the official procedure (coins, die, 36-card deck), draws the field to scale with every pillar on its seat, and logs our Open Challenge attempts with the official score. Checked on 600 generated scenarios with 0 rule violations (journal §7) |
 
 ---
 

@@ -560,6 +560,8 @@ Because of this, the next software steps are the ones that can be tested without
 
 To test the robot on realistic tracks we built a web page that **draws random scenarios exactly as the judges do**, following the official procedure: coin tosses, a die and the 36-card deck.
 
+**Code:** [`src/tools/scenario-roulette/index.html`](../src/tools/scenario-roulette/index.html) · **Open online:** [WRO 2026 Scenario Roulette](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/tools/scenario-roulette/)
+
 **What it does:**
 - **Open Challenge:** driving direction, start section, start zone, and the width of each straight (1000 or 600 mm).
 - **Obstacle Challenge:** driving direction, start and parking section, the straight with the single pillar, and one card for each of the other 3 straights.

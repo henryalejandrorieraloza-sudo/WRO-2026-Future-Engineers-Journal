@@ -1,0 +1,1283 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>WRO 2026 Roulette</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --ink:#161b22;
+    --sub:#4b5563;
+    --paper:#f3f1ea;
+    --card:#ffffff;
+    --line:#dcd7ca;
+    --accent:#c8531f;
+    --accent-ink:#ffffff;
+    --blue:#1f4e96;
+    --pillar-red:#d3273b;
+    --pillar-green:#1f9d4a;
+    --magenta:#c92ec9;
+    --chip-bg:#ece7d8;
+    --good:#1f9d4a;
+    --shadow:0 1px 2px rgba(20,15,5,.06), 0 8px 24px -12px rgba(20,15,5,.18);
+    --mat:#ffffff; --wall:#16181d; --island:#e9e6dc; --grid:#9aa0a8; --seat-ring:#b9cf2a;
+    --line-orange:#f07a1c; --line-blue:#2546a8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#eee9dd; --sub:#b3ab99; --paper:#171512; --card:#211e1a; --line:#3a352c;
+      --accent:#e77a3f; --accent-ink:#1b1206; --blue:#6f9fe8;
+      --pillar-red:#ef5568; --pillar-green:#4fd57f; --magenta:#ea72ea; --good:#4fd57f;
+      --chip-bg:#2b2721; --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+      --mat:#f4f2ec; --wall:#0b0c0f; --island:#3a352c; --grid:#8c929a; --seat-ring:#9fb320; --line-orange:#f0802a; --line-blue:#3a63d4;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#eee9dd; --sub:#b3ab99; --paper:#171512; --card:#211e1a; --line:#3a352c;
+    --accent:#e77a3f; --accent-ink:#1b1206; --blue:#6f9fe8;
+    --pillar-red:#ef5568; --pillar-green:#4fd57f; --magenta:#ea72ea; --good:#4fd57f;
+    --chip-bg:#2b2721; --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+      --mat:#f4f2ec; --wall:#0b0c0f; --island:#3a352c; --grid:#8c929a; --seat-ring:#9fb320; --line-orange:#f0802a; --line-blue:#3a63d4;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Work Sans',system-ui,sans-serif;
+    padding:24px 16px 64px; padding-block:24px 64px;
+  }
+  .wrap{max-width:1040px;margin:0 auto;}
+
+  h1,h2,h3{font-family:'Rajdhani',system-ui,sans-serif; letter-spacing:.02em; margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  header.top{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 16px; margin-bottom:6px;}
+  header.top h1{font-size:clamp(28px,5vw,38px); font-weight:700; text-transform:uppercase;}
+  header.top .tag{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--sub); background:var(--chip-bg); border:1px solid var(--line); padding:3px 8px; border-radius:999px;}
+  p.lede{color:var(--sub); margin:4px 0 24px; max-width:64ch; line-height:1.5;}
+
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    box-shadow:var(--shadow); padding:20px;
+  }
+  .panel + .panel{margin-top:20px;}
+
+  .controls{display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; margin-bottom:20px;}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--sub); font-weight:600;}
+  .seg{display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .seg button{
+    font-family:'Rajdhani',sans-serif; font-weight:600; font-size:15px; letter-spacing:.02em;
+    padding:9px 16px; border:none; background:var(--card); color:var(--ink); cursor:pointer;
+    border-right:1px solid var(--line);
+  }
+  .seg button:last-child{border-right:none;}
+  .seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink);}
+  .seg button:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
+
+  input[type="text"], input[type="number"], select{
+    font-family:'IBM Plex Mono',monospace; font-size:14px; padding:8px 10px;
+    border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); width:130px;
+  }
+
+  .btn-primary{
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; letter-spacing:.02em;
+    background:var(--accent); color:var(--accent-ink); border:none; border-radius:10px;
+    padding:11px 22px; cursor:pointer; text-transform:uppercase;
+  }
+  .btn-primary:active{transform:translateY(1px);}
+  .btn-secundario{
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:.02em;
+    background:var(--ink); color:var(--paper); border:none; border-radius:8px;
+    padding:9px 16px; cursor:pointer; text-transform:uppercase;
+  }
+  .btn-ghost{
+    font-family:'Work Sans',sans-serif; font-size:13px; color:var(--sub); background:transparent;
+    border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer;
+  }
+  .btn-x{
+    font-family:'Work Sans',sans-serif; font-size:12px; color:var(--sub); background:transparent;
+    border:1px solid var(--line); border-radius:6px; padding:2px 7px; cursor:pointer;
+  }
+
+  .resultado{display:grid; grid-template-columns:minmax(0,0.85fr) minmax(0,1.25fr); gap:20px; margin-top:20px; align-items:start;}
+  @media (max-width:760px){ .resultado{grid-template-columns:1fr;} }
+
+  .head-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px;}
+  .pill{
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; text-transform:uppercase;
+    letter-spacing:.04em; padding:5px 12px; border-radius:999px; border:1px solid var(--line);
+    background:var(--chip-bg); color:var(--ink);
+  }
+  .pill.tipo-open{background:var(--blue); color:#fff; border-color:transparent;}
+  .pill.tipo-obstacle{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
+
+  ol.pasos{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px;}
+  ol.pasos > li{display:flex; gap:12px; align-items:flex-start;}
+  .num{
+    flex:none; width:26px; height:26px; border-radius:50%; background:var(--ink); color:var(--paper);
+    font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; margin-top:1px;
+  }
+  .paso-txt{line-height:1.5; font-size:15px;}
+  .paso-txt b{font-weight:600;}
+  .sub-lista{margin:8px 0 0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+  .sub-lista li{
+    font-size:14px; line-height:1.45; padding:8px 10px; border-radius:8px; background:var(--paper);
+    border:1px solid var(--line); display:flex; gap:8px; align-items:flex-start;
+  }
+  .dot{flex:none; width:10px; height:10px; border-radius:50%; margin-top:5px;}
+  .dot.green{background:var(--pillar-green);}
+  .dot.red{background:var(--pillar-red);}
+
+  .diagrama{display:flex; flex-direction:column; align-items:center; gap:10px;}
+  .diagrama svg{width:100%; max-width:620px; height:auto; display:block;}
+  .leyenda{display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; font-size:11.5px; color:var(--sub);}
+  .leyenda span{display:inline-flex; align-items:center; gap:5px;}
+  .leyenda i{width:10px; height:10px; border-radius:50%; display:inline-block; flex:none;}
+  .leyenda i.linea{width:14px; height:3px; border-radius:2px;}
+  .nota-regla{font-size:12px; color:var(--sub); text-align:center; margin:2px 0 0; max-width:60ch; line-height:1.45;}
+
+  details.tiradas{margin-top:16px; border-top:1px dashed var(--line); padding-top:10px;}
+  details.tiradas summary{cursor:pointer; font-size:13px; color:var(--sub); font-weight:600;}
+  .tiradas-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin-top:10px; font-size:12px;}
+  .tiradas-grid div{background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:6px 8px;}
+  .tiradas-grid .k{color:var(--sub); display:block; font-size:10px; text-transform:uppercase; letter-spacing:.05em;}
+
+  .aviso{
+    margin-top:18px; font-size:13px; color:var(--sub); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; background:var(--paper); line-height:1.5;
+  }
+  .aviso b{color:var(--ink);}
+
+  .hist-item{
+    display:flex; justify-content:space-between; gap:10px; align-items:center; padding:9px 4px;
+    border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .hist-item:last-child{border-bottom:none;}
+  .hist-item .hd{color:var(--sub); font-family:'IBM Plex Mono',monospace; font-size:11px;}
+
+  /* --- Open Challenge attempt log --- */
+  .form-intento{
+    margin-top:18px; border-top:1px dashed var(--line); padding-top:16px;
+  }
+  .form-intento h3{font-size:15px; margin-bottom:10px;}
+  .form-grid{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;}
+  .check-row{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--sub); padding-bottom:8px;}
+  .check-row input{width:auto;}
+  .puntaje-preview{
+    margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--paper);
+    border:1px solid var(--line); font-size:13px; display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center;
+  }
+  .puntaje-preview .total{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:var(--accent);}
+  .puntaje-preview .desglose{color:var(--sub); font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  .campo-ayuda{margin-top:6px;}
+  .campo-ayuda summary{cursor:pointer; font-size:11.5px; color:var(--blue); font-weight:600; list-style:none;}
+  .campo-ayuda summary::-webkit-details-marker{display:none;}
+  .campo-ayuda summary:before{content:"ⓘ "; }
+  .campo-ayuda p{font-size:12.5px; color:var(--sub); line-height:1.5; margin:6px 0 0; max-width:52ch;}
+
+  table.tabla-intentos{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:4px;}
+  table.tabla-intentos th{
+    text-align:left; font-family:'Rajdhani',sans-serif; font-size:11px; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--sub); padding:6px 8px; border-bottom:1px solid var(--line);
+  }
+  table.tabla-intentos td{padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  table.tabla-intentos tr:last-child td{border-bottom:none;}
+  table.tabla-intentos .num-col{font-family:'IBM Plex Mono',monospace; text-align:center;}
+  .tabla-wrap{overflow-x:auto;}
+  .ok-si{color:var(--good); font-weight:700;}
+  .ok-no{color:var(--sub);}
+
+  .chart-head{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .chart-wrap{position:relative;}
+  .chart-tooltip{
+    position:absolute; pointer-events:none; background:var(--ink); color:var(--paper);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; padding:5px 8px; border-radius:6px;
+    transform:translate(-50%,-115%); white-space:nowrap; opacity:0; transition:opacity .1s;
+  }
+  .chart-tooltip.visible{opacity:1;}
+
+  .open-banner{
+    margin-top:20px; padding:12px 14px; border-radius:10px; background:var(--chip-bg);
+    border:1px solid var(--line); font-size:13px; color:var(--sub);
+  }
+
+  footer.credit{margin-top:28px; font-size:12px; color:var(--sub); text-align:center;}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>🎲 WRO 2026 Roulette</h1>
+    <span class="tag">Future Engineers · Self-Driving Cars</span>
+  </header>
+  <p class="lede">
+    Draws a physically buildable track scenario following the official Appendix A procedure
+    (coin tosses, a die and the 36-card deck), and keeps a log of your Open Challenge attempts
+    so you can see how your score improves with each robot model.
+  </p>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="field">
+        <label id="lblTipo">Challenge type</label>
+        <div class="seg" role="group" aria-labelledby="lblTipo">
+          <button id="btnOpen" type="button" aria-pressed="false">Open</button>
+          <button id="btnObstacle" type="button" aria-pressed="false">Obstacle</button>
+          <button id="btnRandom" type="button" aria-pressed="true">Random</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="seed">Seed (optional)</label>
+        <input type="text" id="seed" inputmode="numeric" placeholder="e.g. 42">
+      </div>
+      <div class="field">
+        <label for="largoRobot">Robot length (cm)</label>
+        <input type="number" id="largoRobot" min="1" step="0.5" placeholder="20">
+      </div>
+      <button class="btn-primary" id="btnGenerar" type="button">🎲 Generate scenario</button>
+    </div>
+
+    <div id="resultado"></div>
+
+    <div class="aviso" id="avisoSupuestos">
+      <b>How the draw follows the rulebook:</b> the field is drawn to scale from the official 2026
+      playfield file (section lines at 1000 / 1500 / 2000 mm, seat rows at 400 and 600 mm from the
+      outer wall, orange/blue corner lines). Checked against the figures: start section and
+      single-sign section by the coin pairs of Figures 7a / 8b (heads-heads = 1, tails-heads = 7,
+      heads-tails = 3, tails-tails = 5); corridor widths tossed from the start section clockwise
+      (Figure 7b); start zones as in Figure 7c, where zones 1 and 4 touch the inner wall and are
+      re-rolled on a narrow start straight; the single sign on the middle seat of the outer row,
+      which is exactly why card 9 or 10 (the same seat) is removed; one card for each of the
+      other 3 straights, laid with its thick line on the inner wall; the parking lot against the
+      outer wall starting at the section line where the clockwise direction enters (Figure 8d),
+      with that section's pillars moved to the inner row (Figure 8e). Only the driving-direction
+      draw isn't described, so it's a coin toss. National organizers can adapt these rules.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="head-row" style="justify-content:space-between;">
+      <h2 style="font-size:18px;">Open Challenge progress</h2>
+      <button class="btn-ghost" id="btnBorrarIntentos" type="button">Clear attempts log</button>
+    </div>
+    <p style="color:var(--sub); font-size:13px; margin:0 0 14px;">
+      Scoring is logged for Open Challenge only (it's optional — you can save an attempt without
+      grading it). Each line on the chart groups your attempts by robot model, in the order you
+      tried them.
+    </p>
+
+    <div class="chart-head">
+      <div class="field" style="margin:0;">
+        <label for="filtroModelo">Robot model</label>
+        <select id="filtroModelo"></select>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <div id="grafico"></div>
+      <div class="chart-tooltip" id="chartTooltip"></div>
+    </div>
+
+    <div class="tabla-wrap">
+      <table class="tabla-intentos" id="tablaIntentos"></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="head-row" style="justify-content:space-between;">
+      <h2 style="font-size:18px;">Generated scenarios history</h2>
+      <button class="btn-ghost" id="btnBorrarHist" type="button">Clear history</button>
+    </div>
+    <div id="historial"></div>
+  </div>
+
+  <footer class="credit">Generated locally in your browser · nothing is sent to any server.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // Fixed layout of the 8-section oval (clockwise, starting at the North
+  // straight). STRAIGHTS and CORNERS alternate around the loop.
+  // ---------------------------------------------------------------------
+  var SECTIONS = {1:"North Straight",2:"Northeast Corner",3:"East Straight",4:"Southeast Corner",
+                   5:"South Straight",6:"Southwest Corner",7:"West Straight",8:"Northwest Corner"};
+  var STRAIGHTS = [1,3,5,7];
+  var CORNERS = [2,4,6,8];
+  var EDGE_OF = {1:"top",3:"right",5:"bottom",7:"left"};
+
+  function nextClockwise(list, current){
+    var i = list.indexOf(current);
+    return list[(i+1) % list.length];
+  }
+
+  // ---------------------------------------------------------------------
+  // 36-card deck (Figure 8c), transcribed card by card from the rulebook.
+  // L/C/R = left edge / middle / right edge of the card, read with the card's
+  // thick line (inner wall) on top; row 1 = upper dashed row (600 mm from the
+  // outer wall), row 2 = lower dashed row (400 mm from the outer wall).
+  // ---------------------------------------------------------------------
+  var L="L", C="C", R="R", GREEN="green", RED="red";
+  var DECK_36 = {
+    1:[[L,1,GREEN]], 2:[[L,1,RED]], 3:[[C,1,GREEN]], 4:[[C,1,RED]], 5:[[R,1,GREEN]], 6:[[R,1,RED]],
+    7:[[L,2,GREEN]], 8:[[L,2,RED]], 9:[[C,2,GREEN]], 10:[[C,2,RED]],
+    11:[[R,1,GREEN]], 12:[[R,1,RED]],
+    13:[[L,2,GREEN],[R,1,GREEN]], 14:[[L,2,GREEN],[R,1,RED]], 15:[[L,2,RED],[R,1,GREEN]],
+    16:[[L,2,GREEN],[R,1,RED]], 17:[[L,2,RED],[R,1,GREEN]], 18:[[L,2,RED],[R,1,RED]],
+    19:[[L,1,GREEN],[R,2,GREEN]], 20:[[L,1,GREEN],[R,2,RED]],
+    21:[[L,1,RED],[R,2,GREEN]], 22:[[L,1,GREEN],[R,2,RED]], 23:[[L,1,RED],[R,2,GREEN]], 24:[[L,1,RED],[R,2,RED]],
+    25:[[L,1,GREEN],[R,1,GREEN]], 26:[[L,1,GREEN],[R,1,RED]], 27:[[L,1,RED],[R,1,GREEN]],
+    28:[[L,1,GREEN],[R,1,RED]], 29:[[L,1,RED],[R,1,GREEN]], 30:[[L,1,RED],[R,1,RED]],
+    31:[[L,2,GREEN],[R,2,GREEN]], 32:[[L,2,GREEN],[R,2,RED]], 33:[[L,2,RED],[R,2,GREEN]],
+    34:[[L,2,GREEN],[R,2,RED]], 35:[[L,2,RED],[R,2,GREEN]], 36:[[L,2,RED],[R,2,RED]]
+  };
+
+
+  // ---------------------------------------------------------------------
+  // RNG: mulberry32, seedable with --seed so a scenario can be repeated.
+  // ---------------------------------------------------------------------
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hashSeed(str){
+    var h = 1779033703 ^ str.length;
+    for (var i=0;i<str.length;i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return h >>> 0;
+    };
+  }
+  function crearRng(seedText){
+    if (seedText && seedText.trim() !== ""){
+      return mulberry32(hashSeed(seedText.trim())());
+    }
+    return Math.random;
+  }
+
+  function tossCoin(rng){ return rng() < 0.5 ? "heads" : "tails"; }
+  function rollDie(rng){ return 1 + Math.floor(rng()*6); }
+  function shuffle(rng, arr){
+    var a = arr.slice();
+    for (var i=a.length-1;i>0;i--){
+      var j = Math.floor(rng()*(i+1));
+      var t = a[i]; a[i]=a[j]; a[j]=t;
+    }
+    return a;
+  }
+
+  function coinPairToSection(t1,t2,opciones){
+    if (t1==="heads" && t2==="heads") return opciones[0];
+    if (t1==="tails" && t2==="heads") return opciones[1];
+    if (t1==="heads" && t2==="tails") return opciones[2];
+    return opciones[3];
+  }
+
+  function drawDirection(rng){
+    var t = tossCoin(rng);
+    return {direction: t==="heads" ? "clockwise" : "counterclockwise", toss:t};
+  }
+
+  // ---------------------------------------------------------------------
+  // OPEN CHALLENGE
+  // ---------------------------------------------------------------------
+  function generateOpen(rng){
+    var dirInfo = drawDirection(rng);
+    var t1 = tossCoin(rng), t2 = tossCoin(rng);
+    var startSection = coinPairToSection(t1,t2,[1,7,3,5]);
+
+    var widths = {};
+    var widthTosses = [];
+    var current = startSection;
+    for (var k=0;k<4;k++){
+      var t = tossCoin(rng);
+      widthTosses.push({section:current, toss:t});
+      widths[current] = (t==="heads") ? "wide" : "narrow";
+      current = nextClockwise(STRAIGHTS, current);
+    }
+
+    var isNarrow = widths[startSection] === "narrow";
+    // Figure 7c: zones 1 and 4 are the column next to the inner wall
+    // (600-1000 mm from the outer wall), so they are inside the wall when
+    // the start straight is narrow and the die is rolled again.
+    var invalidZones = isNarrow ? [1,4] : [];
+    var dieAttempts = [];
+    var zone;
+    while(true){
+      var d = rollDie(rng);
+      dieAttempts.push(d);
+      if (invalidZones.indexOf(d) === -1){ zone = d; break; }
+      if (dieAttempts.length > 50) { zone = d; break; }
+    }
+
+    return {
+      type:"open",
+      direction: dirInfo.direction,
+      startSection: startSection,
+      startZone: zone,
+      widths: widths,
+      detail:{
+        directionToss: dirInfo.toss,
+        startSectionTosses:[t1,t2],
+        widthTosses: widthTosses,
+        dieAttempts: dieAttempts
+      }
+    };
+  }
+
+  // ---------------------------------------------------------------------
+  // OBSTACLE CHALLENGE
+  // ---------------------------------------------------------------------
+  function generateObstacle(rng){
+    var dirInfo = drawDirection(rng);
+    var t1 = tossCoin(rng), t2 = tossCoin(rng);
+    var singlePillarSection = coinPairToSection(t1,t2,[1,7,3,5]);
+
+    var tColor = tossCoin(rng);
+    var singleColor = (tColor === "heads") ? GREEN : RED;
+
+    var removedCard = (singleColor === GREEN) ? 9 : 10;
+    var cardNumbers = Object.keys(DECK_36).map(Number).filter(function(n){return n!==removedCard;});
+    cardNumbers = shuffle(rng, cardNumbers);
+
+    var pillarsBySection = {};
+    STRAIGHTS.forEach(function(s){ pillarsBySection[s] = []; });
+    // Figure 8b: the single sign stands on the middle seat of the outer row.
+    pillarsBySection[singlePillarSection] = [[C,2,singleColor]];
+
+    // One card per remaining straight, clockwise after the single-sign one.
+    var assignedCards = {};
+    var cur = singlePillarSection;
+    for (var i=0;i<3;i++){
+      cur = nextClockwise(STRAIGHTS, cur);
+      var cardNum = cardNumbers[i];
+      pillarsBySection[cur] = DECK_36[cardNum].map(function(p){return p.slice();});
+      assignedCards[cur] = cardNum;
+    }
+
+    var tp1 = tossCoin(rng), tp2 = tossCoin(rng);
+    var parkingSection = coinPairToSection(tp1,tp2,[1,7,3,5]);
+
+    var pillarsRelocated = false;
+    var current = pillarsBySection[parkingSection];
+    if (current.length){
+      var moved = current.map(function(p){ return [p[0], 1, p[2]]; });
+      if (JSON.stringify(moved) !== JSON.stringify(current)) pillarsRelocated = true;
+      pillarsBySection[parkingSection] = moved;
+    }
+
+    return {
+      type:"obstacle",
+      direction: dirInfo.direction,
+      singlePillarSection: singlePillarSection,
+      singleColor: singleColor,
+      assignedCards: assignedCards,
+      pillarsBySection: pillarsBySection,
+      parkingSection: parkingSection,
+      pillarsRelocated: pillarsRelocated,
+      detail:{
+        directionToss: dirInfo.toss,
+        singlePillarTosses:[t1,t2],
+        singleColorToss: tColor,
+        removedCard: removedCard,
+        parkingTosses:[tp1,tp2]
+      }
+    };
+  }
+
+  // ---------------------------------------------------------------------
+  // Official Open Challenge scoring (rulebook, section 10):
+  //  1.1 up to 24 pts (1 per section driven correctly, 3 laps x 8)
+  //  1.2 up to 3 pts (1 per completed lap)
+  //  1.3   3 flat pts if it finished 3 laps stopped in the finish section
+  // Max total: 30 points.
+  // ---------------------------------------------------------------------
+  function calcOpenScore(laps, sectionsOk, finishedInSection){
+    laps = Math.max(0, Math.min(3, Math.round(laps||0)));
+    sectionsOk = Math.max(0, Math.min(24, Math.round(sectionsOk||0)));
+    var p11 = sectionsOk;
+    var p12 = laps;
+    var p13 = (laps===3 && finishedInSection) ? 3 : 0;
+    return {p11:p11, p12:p12, p13:p13, total:p11+p12+p13};
+  }
+
+  // ---------------------------------------------------------------------
+  // Config, history and attempts in localStorage (this-browser
+  // conveniences only: not shared across devices, not read by Claude).
+  // ---------------------------------------------------------------------
+  function readJSON(key, fallback){
+    try{
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+  function readConfig(){ return readJSON("wro_config", {}); }
+  function writeConfig(cfg){ writeJSON("wro_config", cfg); }
+  function readHistory(){ return readJSON("wro_historial", []); }
+  function writeHistory(h){ writeJSON("wro_historial", h.slice(-50)); }
+  function readAttempts(){ return readJSON("wro_intentos", []); }
+  function writeAttempts(a){ writeJSON("wro_intentos", a.slice(-300)); }
+
+  function sameAsLast(hist, type, scenario){
+    for (var i=hist.length-1;i>=0;i--){
+      if (hist[i].type === type){
+        return JSON.stringify(hist[i].scenario) === JSON.stringify(scenario);
+      }
+    }
+    return false;
+  }
+
+  // ---------------------------------------------------------------------
+  // Render: step-by-step text
+  // ---------------------------------------------------------------------
+  function pillDot(color){
+    return '<span class="dot ' + color + '"></span>';
+  }
+  function sideWord(col){ return col===L?"left":(col===C?"center":"right"); }
+
+  function renderOpen(e){
+    var html = '';
+    html += '<div class="head-row">';
+    html += '<span class="pill tipo-open">Open Challenge</span>';
+    html += '<span class="pill">' + e.direction.toUpperCase() + '</span>';
+    html += '</div>';
+
+    html += '<ol class="pasos">';
+    html += '<li><span class="num">1</span><span class="paso-txt">Driving direction: <b>' + e.direction.toUpperCase() + '</b>.</span></li>';
+    html += '<li><span class="num">2</span><span class="paso-txt">Place the robot in <b>section ' + e.startSection + ' (' + SECTIONS[e.startSection] + ')</b>, ' +
+      'in starting zone <b>#' + e.startZone + '</b> of that straight\'s 6-zone grid (see diagram). ' +
+      'Point the front wheels toward the next corner in the ' + e.direction + ' direction.</span></li>';
+    html += '<li><span class="num">3</span><span class="paso-txt">Set the width of the 4 straight sections:</span></li>';
+    html += '</ol>';
+
+    html += '<ul class="sub-lista">';
+    STRAIGHTS.forEach(function(s){
+      var mark = (s===e.startSection) ? ' — start here' : '';
+      var label = (e.widths[s]==="wide") ? "Wide (1000 mm)" : "Narrow (600 mm)";
+      html += '<li><b>Section ' + s + ' (' + SECTIONS[s] + ')' + mark + ':</b>&nbsp;' + label + '</li>';
+    });
+    html += '</ul>';
+
+    html += tossesOpenHtml(e);
+    return html;
+  }
+
+  function renderObstacle(e, robotLenCm){
+    var html = '';
+    html += '<div class="head-row">';
+    html += '<span class="pill tipo-obstacle">Obstacle Challenge</span>';
+    html += '<span class="pill">' + e.direction.toUpperCase() + '</span>';
+    html += '</div>';
+
+    html += '<ol class="pasos">';
+    html += '<li><span class="num">1</span><span class="paso-txt">Driving direction: <b>' + e.direction.toUpperCase() + '</b>.</span></li>';
+    html += '<li><span class="num">2</span><span class="paso-txt">Start &amp; parking section: <b>section ' + e.parkingSection + ' (' + SECTIONS[e.parkingSection] + ')</b>. ' +
+      'Point the front wheels toward the next corner in the ' + e.direction + ' direction. ' +
+      'The team chooses whether to start inside the parking box or in the middle zone above it.</span></li>';
+    html += '<li><span class="num">3</span><span class="paso-txt">Single-pillar straight: <b>section ' + e.singlePillarSection + ' (' + SECTIONS[e.singlePillarSection] + ')</b>, ' +
+      'color <b>' + e.singleColor.toUpperCase() + '</b>. The other 3 straights get one card each (clockwise from it).</span></li>';
+    html += '<li><span class="num">4</span><span class="paso-txt">Place each pillar on its seat (the diagram is to scale):</span></li>';
+    html += '</ol>';
+
+    html += '<ul class="sub-lista">';
+    STRAIGHTS.forEach(function(s){
+      var pillars = e.pillarsBySection[s];
+      var mark = (s===e.parkingSection) ? ' — parking' : '';
+      if (e.assignedCards && e.assignedCards[s]) mark += ' · card #' + e.assignedCards[s];
+      if (!pillars.length){
+        html += '<li><b>Section ' + s + ' (' + SECTIONS[s] + ')' + mark + ':</b>&nbsp;no pillars.</li>';
+        return;
+      }
+      var parts = pillars.map(function(p){
+        return pillDot(p[2]) + '<span><b>' + p[2].toUpperCase() + '</b> — ' + seatPlaceText(s, p) + '</span>';
+      });
+      html += '<li style="flex-direction:column; align-items:stretch;"><b style="margin-bottom:4px;">Section ' + s + ' (' + SECTIONS[s] + ')' + mark + ':</b>' +
+        '<div style="display:flex;flex-direction:column;gap:5px;">' + parts.map(function(t){return '<div style="display:flex;align-items:center;gap:6px;">'+t+'</div>';}).join('') + '</div></li>';
+    });
+    html += '</ul>';
+
+    if (e.pillarsRelocated){
+      html += '<p style="font-size:13px;color:var(--sub);margin-top:10px;">Note: the pillars in the parking section were moved next to the inner wall (they can\'t sit inside the parking box).</p>';
+    }
+
+    var lot = robotLenCm ? (1.5*robotLenCm).toFixed(1) : "—";
+    html += '<p style="font-size:13px;color:var(--sub);margin-top:6px;">Parking box: <b>' + lot + ' cm</b> long' +
+      (robotLenCm ? ' (1.5 × ' + robotLenCm + ' cm robot length)' : ' (enter your robot length above)') +
+      ' × 20 cm wide against the outer wall, marked by 2 magenta pieces 20×2×10 cm. The first piece goes right next to the ' + SHORT[cornerAtEnd(e.parkingSection,0)] + '-corner section line; the second one ' + lot + ' cm further along.</p>';
+
+    html += tossesObstacleHtml(e);
+    return html;
+  }
+
+  function tossesOpenHtml(e){
+    var d = e.detail;
+    var html = '<details class="tiradas"><summary>See raw tosses (to verify the draw)</summary><div class="tiradas-grid">';
+    html += '<div><span class="k">Direction</span>' + d.directionToss + '</div>';
+    html += '<div><span class="k">Start section</span>' + d.startSectionTosses.join(' - ') + '</div>';
+    d.widthTosses.forEach(function(x){
+      html += '<div><span class="k">Width section ' + x.section + '</span>' + x.toss + '</div>';
+    });
+    html += '<div><span class="k">Zone die roll(s)</span>' + d.dieAttempts.join(' → ') + '</div>';
+    html += '</div></details>';
+    return html;
+  }
+  function tossesObstacleHtml(e){
+    var d = e.detail;
+    var html = '<details class="tiradas"><summary>See raw tosses (to verify the draw)</summary><div class="tiradas-grid">';
+    html += '<div><span class="k">Direction</span>' + d.directionToss + '</div>';
+    html += '<div><span class="k">Single-pillar section</span>' + d.singlePillarTosses.join(' - ') + '</div>';
+    html += '<div><span class="k">Single pillar color</span>' + d.singleColorToss + '</div>';
+    html += '<div><span class="k">Card removed from deck</span>#' + d.removedCard + '</div>';
+    Object.keys(e.assignedCards).forEach(function(s){
+      html += '<div><span class="k">Card section ' + s + '</span>#' + e.assignedCards[s] + '</div>';
+    });
+    html += '<div><span class="k">Parking</span>' + d.parkingTosses.join(' - ') + '</div>';
+    html += '</div></details>';
+    return html;
+  }
+
+  // ---------------------------------------------------------------------
+  // Attempt-logging form (Open Challenge only)
+  // ---------------------------------------------------------------------
+  function renderFormIntento(e, currentModel){
+    var html = '<div class="form-intento">';
+    html += '<h3>Log this attempt\'s result</h3>';
+    html += '<div class="form-grid">';
+    html += '<div class="field"><label for="intModelo">Robot model</label>' +
+      '<input type="text" id="intModelo" list="listaModelos" placeholder="e.g. v3-camera" value="' + (currentModel||'').replace(/"/g,'&quot;') + '"></div>';
+    html += '<div class="field"><label for="intVueltas">Completed laps (0-3)</label>' +
+      '<select id="intVueltas"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>';
+    html += '<div class="field"><label for="intSecciones">Sections driven correctly (0-24)</label>' +
+      '<input type="number" id="intSecciones" min="0" max="24" step="1" value="0"></div>';
+    html += '<div class="check-row"><input type="checkbox" id="intMeta" disabled><label for="intMeta">Stopped in the finish section</label></div>';
+    html += '<button class="btn-secundario" id="btnGuardarIntento" type="button">Save attempt</button>';
+    html += '</div>';
+    html += '<details class="campo-ayuda"><summary>What counts as a "section driven correctly"?</summary>' +
+      '<p>Official rule 1.1: 1 point for each of the 8 sections (4 straights + 4 corners) the robot drives ' +
+      'through correctly, in the drawn direction, without leaving the track or touching the outer wall — ' +
+      'across all 3 laps, so the max is 24 (3 × 8). It counts the starting section, but not the finish ' +
+      'section or the section right after it. It doesn\'t have to equal laps × 8: if the robot did fine for ' +
+      'a few sections and then went off mid-lap, just count the sections that actually went well. If you\'d ' +
+      'rather not track it that precisely, laps × 8 is a reasonable estimate.</p></details>';
+    html += '<div class="puntaje-preview" id="puntajePreview"></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function updateScorePreview(){
+    var laps = parseInt(document.getElementById("intVueltas").value, 10);
+    var sections = parseInt(document.getElementById("intSecciones").value, 10) || 0;
+    var chkMeta = document.getElementById("intMeta");
+    chkMeta.disabled = (laps !== 3);
+    if (laps !== 3) chkMeta.checked = false;
+    var p = calcOpenScore(laps, sections, chkMeta.checked);
+    document.getElementById("puntajePreview").innerHTML =
+      '<span class="total">' + p.total + ' / 30</span>' +
+      '<span class="desglose">1.1 sections: ' + p.p11 + '/24 &nbsp;·&nbsp; 1.2 laps: ' + p.p12 + '/3 &nbsp;·&nbsp; 1.3 finish: ' + p.p13 + '/3</span>';
+  }
+
+  // ---------------------------------------------------------------------
+  // TO-SCALE FIELD DRAWING (units = millimetres)
+  //
+  // Traced from the official 2026 playfield file and the rulebook figures.
+  // Origin = top-left inner corner of the outer wall; x grows to the right,
+  // y grows down; the racetrack is 3000 x 3000 mm.
+  //   - Section boundaries (dashed) at 1000 / 1500 / 2000 mm.
+  //   - Inside every straight, 2 dashed rows at 400 mm and 600 mm from the
+  //     outer wall. Their crossings with the 1000 / 1500 / 2000 lines are the
+  //     6 traffic-sign seats (4 "T" at the section ends + 2 "X" in the middle),
+  //     each a 50 x 50 mm square inside an 85 mm circle.
+  //   - Every corner has an orange and a blue line (20 mm) that start at the
+  //     inner corner and reach the outer wall 577 mm (1000·tan30°) away.
+  //
+  // Placing a point on a straight: t in [0,1] along it, always following the
+  // field's clockwise physical direction; d = distance from the OUTER wall.
+  // ---------------------------------------------------------------------
+  var FIELD = 3000;
+  var OFF30 = 577.35;
+  var SEAT_T = {L:1, C:0.5, R:0};   // card's left edge = clockwise-downstream end
+  var SEAT_D = {1:600, 2:400};      // row 1 = inner row (600 mm from outer wall), row 2 = outer row (400 mm)
+  var ROW_NAME = {1:"inner row · 600 mm from the outer wall", 2:"outer row · 400 mm from the outer wall"};
+  var SHORT = {1:"N",2:"NE",3:"E",4:"SE",5:"S",6:"SW",7:"W",8:"NW"};
+
+  function fp(section, t, d){
+    if (section===1) return [1000 + 1000*t, d];
+    if (section===3) return [FIELD - d, 1000 + 1000*t];
+    if (section===5) return [2000 - 1000*t, FIELD - d];
+    return [d, 2000 - 1000*t]; // 7 (West)
+  }
+  function cellRect(section, t0, t1, d0, d1){
+    return [fp(section,t0,d0), fp(section,t1,d0), fp(section,t1,d1), fp(section,t0,d1)];
+  }
+  function polygon(points, extra){
+    return '<polygon points="' + points.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ') + '" ' + (extra||'') + '/>';
+  }
+  // Corner section that sits at the t=0 / t=1 end of a straight.
+  function cornerAtEnd(section, t){
+    if (t===1) return section===7 ? 8 : section+1;
+    return section===1 ? 8 : section-1;
+  }
+  function seatPlaceText(section, p){
+    var t = SEAT_T[p[0]];
+    var along = (t===0.5) ? "middle seat (1500 line)" : ("seat at the " + SHORT[cornerAtEnd(section,t)] + "-corner end");
+    return along + ", " + ROW_NAME[p[1]];
+  }
+
+  var CORNER_LINES = [
+    {c:"blue",   a:[1000,1000], b:[1000-OFF30,0]},
+    {c:"orange", a:[1000,1000], b:[0,1000-OFF30]},
+    {c:"orange", a:[2000,1000], b:[2000+OFF30,0]},
+    {c:"blue",   a:[2000,1000], b:[FIELD,1000-OFF30]},
+    {c:"orange", a:[2000,2000], b:[FIELD,2000+OFF30]},
+    {c:"blue",   a:[2000,2000], b:[2000+OFF30,FIELD]},
+    {c:"blue",   a:[1000,2000], b:[0,2000+OFF30]},
+    {c:"orange", a:[1000,2000], b:[1000-OFF30,FIELD]}
+  ];
+
+  var BADGE_POS = {1:[1500,-330],3:[3330,1500],5:[1500,3330],7:[-420,1500],
+                   2:[3330,-330],4:[3330,3330],6:[-420,3330],8:[-420,-330]};
+
+  function svgHeader(desc){
+    return '<svg viewBox="-520 -430 3960 3880" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+desc+'">' +
+      '<defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--blue)"/></marker></defs>';
+  }
+
+  // Mat, grid, rows, corner lines, seats, rulers and section badges.
+  function fieldBase(activeSection){
+    var s = '';
+    // Outer wall (black, 10 cm high) + white mat.
+    s += '<rect x="-60" y="-60" width="'+(FIELD+120)+'" height="'+(FIELD+120)+'" rx="8" fill="var(--wall)"/>';
+    s += '<rect x="0" y="0" width="'+FIELD+'" height="'+FIELD+'" fill="var(--mat)"/>';
+
+    // Section grid (dashed, full length like on the printed mat).
+    [1000,1500,2000].forEach(function(v){
+      var main = (v!==1500);
+      var st = 'stroke="var(--grid)" stroke-width="'+(main?7:5)+'" stroke-dasharray="28 22"';
+      s += '<line x1="'+v+'" y1="0" x2="'+v+'" y2="'+FIELD+'" '+st+'/>';
+      s += '<line x1="0" y1="'+v+'" x2="'+FIELD+'" y2="'+v+'" '+st+'/>';
+    });
+    // Seat rows inside each straight (400 and 600 mm from the outer wall).
+    STRAIGHTS.forEach(function(sec){
+      [400,600].forEach(function(d){
+        var a = fp(sec,0,d), b = fp(sec,1,d);
+        s += '<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="var(--grid)" stroke-width="5" stroke-dasharray="16 16"/>';
+      });
+    });
+    // Orange / blue corner lines.
+    CORNER_LINES.forEach(function(L2){
+      s += '<line x1="'+L2.a[0]+'" y1="'+L2.a[1]+'" x2="'+L2.b[0]+'" y2="'+L2.b[1]+'" stroke="var(--line-'+L2.c+')" stroke-width="22" stroke-linecap="butt"/>';
+    });
+    // 24 seats: 50 mm square + 85 mm circle.
+    STRAIGHTS.forEach(function(sec){
+      [0,0.5,1].forEach(function(t){
+        [400,600].forEach(function(d){
+          var p = fp(sec,t,d);
+          s += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="42.5" fill="none" stroke="var(--seat-ring)" stroke-width="6"/>';
+          s += '<rect x="'+(p[0]-25)+'" y="'+(p[1]-25)+'" width="50" height="50" fill="none" stroke="var(--grid)" stroke-width="6"/>';
+        });
+      });
+    });
+    // Rulers (top and left) with the key distances.
+    var ticks = [0,400,600,1000,1500,2000,3000];
+    ticks.forEach(function(v){
+      var big = (v===0||v===1000||v===1500||v===2000||v===3000);
+      var len = big ? 70 : 40;
+      s += '<line x1="'+v+'" y1="-60" x2="'+v+'" y2="'+(-60-len)+'" stroke="var(--sub)" stroke-width="6"/>';
+      s += '<line x1="-60" y1="'+v+'" x2="'+(-60-len)+'" y2="'+v+'" stroke="var(--sub)" stroke-width="6"/>';
+      var col = big ? "var(--sub)" : "var(--accent)";
+      var fs = big ? 62 : 52;
+      s += '<text x="'+v+'" y="-150" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="'+fs+'" font-weight="600" fill="'+col+'">'+v+'</text>';
+      if (v!==0) s += '<text x="-150" y="'+(v+20)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="'+fs+'" font-weight="600" fill="'+col+'">'+v+'</text>';
+    });
+    // Section badges.
+    for (var sec=1; sec<=8; sec++){
+      var bp = BADGE_POS[sec];
+      var on = (sec===activeSection);
+      s += '<circle cx="'+bp[0]+'" cy="'+bp[1]+'" r="78" fill="'+(on?"var(--accent)":"var(--card)")+'" stroke="'+(on?"var(--accent)":"var(--line)")+'" stroke-width="8"/>';
+      s += '<text x="'+bp[0]+'" y="'+(bp[1]+30)+'" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="88" font-weight="700" fill="'+(on?"var(--accent-ink)":"var(--ink)")+'">'+sec+'</text>';
+    }
+    return s;
+  }
+
+  // Inner walls (island). bounds = {l,r,t,b} in mm.
+  function islandSvg(b){
+    return '<rect x="'+b.l+'" y="'+b.t+'" width="'+(b.r-b.l)+'" height="'+(b.b-b.t)+'" fill="var(--island)" stroke="var(--wall)" stroke-width="34"/>';
+  }
+
+  function directionArrow(direction, cx, cy){
+    var out = '';
+    var cw = direction==="clockwise";
+    var r0 = 190;
+    var a0 = -40*Math.PI/180, a1 = 220*Math.PI/180;
+    if (!cw){ a0 = 220*Math.PI/180; a1 = -40*Math.PI/180; }
+    var x0 = cx + r0*Math.cos(a0), y0 = cy + r0*Math.sin(a0);
+    var x1 = cx + r0*Math.cos(a1), y1 = cy + r0*Math.sin(a1);
+    out += '<path d="M '+x0.toFixed(1)+' '+y0.toFixed(1)+' A '+r0+' '+r0+' 0 1 '+(cw?1:0)+' '+x1.toFixed(1)+' '+y1.toFixed(1)+'" fill="none" stroke="var(--blue)" stroke-width="30" marker-end="url(#arrowhead)"/>';
+    out += '<text x="'+cx+'" y="'+(cy+330)+'" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="74" font-weight="700" fill="var(--blue)">'+direction.toUpperCase()+'</text>';
+    return out;
+  }
+
+  function pillarSvg(p, color){
+    var fill = color===GREEN ? "var(--pillar-green)" : "var(--pillar-red)";
+    return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="78" fill="'+fill+'" fill-opacity="0.18"/>' +
+      '<rect x="'+(p[0]-25)+'" y="'+(p[1]-25)+'" width="50" height="50" fill="'+fill+'" stroke="var(--ink)" stroke-width="7"/>';
+  }
+
+  // --- Open Challenge: inner walls per width, start-zone grid, robot. ---
+  function diagramOpen(e){
+    var narrow = function(s){ return e.widths[s]==="narrow"; };
+    var isl = {
+      t: narrow(1) ? 600 : 1000,
+      r: narrow(3) ? 2400 : 2000,
+      b: narrow(5) ? 2400 : 2000,
+      l: narrow(7) ? 600 : 1000
+    };
+    var svg = svgHeader('To-scale field: inner walls, start section and start zone');
+    svg += fieldBase(e.startSection);
+
+    // Start-zone grid (Figure 7c, drawn there on the East straight):
+    // zone 1/4 = column next to the inner wall (600-1000 mm from the outer
+    // wall), 2/5 = middle (400-600), 3/6 = next to the outer wall (0-400);
+    // 1-3 = first half in the clockwise sense, 4-6 = second half.
+    var sec = e.startSection;
+    var rows = [[0,0.5],[0.5,1]];
+    var cols = [[600,1000],[400,600],[0,400]];
+    for (var f=0; f<2; f++){
+      for (var c=0; c<3; c++){
+        var zone = f*3 + c + 1;
+        var cell = cellRect(sec, rows[f][0], rows[f][1], cols[c][0], cols[c][1]);
+        var sel = (zone === e.startZone);
+        svg += polygon(cell, 'fill="var(--accent)" fill-opacity="'+(sel?0.30:0.06)+'" stroke="var(--accent)" stroke-width="'+(sel?12:5)+'"');
+        var ct = fp(sec, (rows[f][0]+rows[f][1])/2, (cols[c][0]+cols[c][1])/2);
+        svg += '<text x="'+ct[0]+'" y="'+(ct[1]+26)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="76" font-weight="700" fill="var(--accent)" opacity="'+(sel?1:0.55)+'">'+zone+'</text>';
+      }
+    }
+
+    svg += islandSvg(isl);
+
+    // Width label on each straight, just inside the inner wall.
+    STRAIGHTS.forEach(function(s2){
+      var n = narrow(s2);
+      var p = fp(s2, 0.5, (n?600:1000) + 120);
+      var col = n ? "var(--accent)" : "var(--ink)";
+      var anchor = (s2===3) ? "end" : (s2===7 ? "start" : "middle");
+      var dy = (s2===1) ? 40 : (s2===5 ? 10 : 22);
+      svg += '<text x="'+p[0]+'" y="'+(p[1]+dy)+'" text-anchor="'+anchor+'" font-family="IBM Plex Mono, monospace" font-size="66" font-weight="700" fill="'+col+'">'+(n?"600 mm":"1000 mm")+'</text>';
+    });
+
+    svg += directionArrow(e.direction, (isl.l+isl.r)/2, (isl.t+isl.b)/2 - 60);
+
+    // Robot (≈ 300 x 200 mm) in the drawn zone, nose toward the next corner.
+    var f0 = (e.startZone<=3) ? 0 : 1;
+    var c0 = (e.startZone-1) % 3;
+    var tc = (rows[f0][0]+rows[f0][1])/2, dc = (cols[c0][0]+cols[c0][1])/2;
+    var sign = (e.direction==="clockwise") ? 1 : -1;
+    var halfL = 0.15 * sign, halfW = 100;
+    var body = cellRect(sec, tc-halfL, tc+halfL, dc-halfW, dc+halfW);
+    svg += polygon(body, 'fill="var(--ink)" fill-opacity="0.85" stroke="var(--card)" stroke-width="8"');
+    var nose = fp(sec, tc+halfL+0.06*sign, dc), b1 = fp(sec, tc+halfL-0.04*sign, dc-70), b2 = fp(sec, tc+halfL-0.04*sign, dc+70);
+    svg += polygon([nose,b1,b2], 'fill="var(--accent)" stroke="var(--card)" stroke-width="6"');
+
+    svg += '</svg>';
+    return svg;
+  }
+
+  // --- Obstacle Challenge: pillars on their seats + parking lot. ---
+  function diagramObstacle(e, robotLenCm){
+    var svg = svgHeader('To-scale field with pillars on their seats and the parking lot');
+    svg += fieldBase(e.parkingSection);
+    svg += islandSvg({l:1000,r:2000,t:1000,b:2000});
+    svg += directionArrow(e.direction, 1500, 1440);
+
+    // Parking lot: 200 mm deep against the outer wall; the first magenta
+    // piece sits right next to the section line at the clockwise-upstream
+    // end (Figure 4), the second one 1.5 × robot length further along.
+    var lenMm = (robotLenCm ? robotLenCm : 20) * 15;
+    var ps = e.parkingSection;
+    var tA = 0.02, tB = 0.02 + lenMm/1000;
+    svg += polygon(cellRect(ps, tA, tB, 0, 200), 'fill="var(--magenta)" fill-opacity="0.13" stroke="var(--magenta)" stroke-width="5" stroke-dasharray="20 14"');
+    svg += polygon(cellRect(ps, 0, 0.02, 0, 200), 'fill="var(--magenta)" stroke="var(--magenta)" stroke-width="14"');
+    svg += polygon(cellRect(ps, tB, tB+0.02, 0, 200), 'fill="var(--magenta)" stroke="var(--magenta)" stroke-width="14"');
+
+    // Pillars.
+    var single = e.singlePillarSection || e.singlePillarCorner;
+    STRAIGHTS.forEach(function(s){
+      (e.pillarsBySection[s]||[]).forEach(function(p){
+        var pt = fp(s, SEAT_T[p[0]], SEAT_D[p[1]]);
+        svg += pillarSvg(pt, p[2]);
+        if (s===single && p[0]===C && e.pillarsBySection[s].length===1){
+          svg += '<circle cx="'+pt[0]+'" cy="'+pt[1]+'" r="120" fill="none" stroke="var(--ink)" stroke-width="8" stroke-dasharray="18 14"/>';
+        }
+      });
+    });
+
+    svg += '</svg>';
+    return svg;
+  }
+
+  function legendObstacle(){
+    return '<div class="leyenda">' +
+      '<span><i style="background:var(--pillar-green);border-radius:1px;"></i>Green pillar (pass on its left)</span>' +
+      '<span><i style="background:var(--pillar-red);border-radius:1px;"></i>Red pillar (pass on its right)</span>' +
+      '<span><i style="background:transparent;border:2px dashed var(--ink);"></i>Single-pillar section</span>' +
+      '<span><i class="linea" style="background:var(--magenta);"></i>Parking pieces</span>' +
+      '<span><i style="background:transparent;border:1.5px solid var(--seat-ring);border-radius:50%;"></i>Empty seat</span>' +
+      '<span><i class="linea" style="background:var(--line-orange);"></i><i class="linea" style="background:var(--line-blue);"></i>Corner lines</span>' +
+      '</div>' + rulerNote();
+  }
+  function rulerNote(){
+    return '<p class="nota-regla">Rulers in mm from the outer wall. Seats sit on the 1000 / 1500 / 2000 lines, in two rows at <b>400</b> and <b>600&nbsp;mm</b> from the outer wall.</p>';
+  }
+  function legendOpen(){
+    return '<div class="leyenda">' +
+      '<span><i class="linea" style="background:var(--ink);"></i>Inner wall, wide (1000&nbsp;mm)</span>' +
+      '<span><i class="linea" style="background:var(--accent);"></i>Narrow (600&nbsp;mm)</span>' +
+      '<span><i style="background:var(--accent);border-radius:2px;"></i>Start zone + robot heading</span>' +
+      '<span><i class="linea" style="background:var(--line-orange);"></i><i class="linea" style="background:var(--line-blue);"></i>Corner lines</span>' +
+      '</div>' + rulerNote();
+  }
+
+  // ---------------------------------------------------------------------
+  // Line chart: score progress by robot model
+  // ---------------------------------------------------------------------
+  var CHART_W = 640, CHART_H = 220, CHART_PAD_L = 34, CHART_PAD_R = 14, CHART_PAD_T = 14, CHART_PAD_B = 26;
+
+  function renderChart(filteredAttempts){
+    var el = document.getElementById("grafico");
+    var scored = filteredAttempts.filter(function(i){ return i.score; });
+    if (!scored.length){
+      el.innerHTML = '<p style="color:var(--sub); font-size:13px; padding:24px 0; text-align:center;">' +
+        'No scored attempts for this model yet. Generate an Open Challenge, run it, and log the result above.</p>';
+      return;
+    }
+    var plotW = CHART_W - CHART_PAD_L - CHART_PAD_R;
+    var plotH = CHART_H - CHART_PAD_T - CHART_PAD_B;
+    var n = scored.length;
+    function xAt(i){ return CHART_PAD_L + (n===1 ? plotW/2 : (i/(n-1))*plotW); }
+    function yAt(v){ return CHART_PAD_T + plotH - (v/30)*plotH; }
+
+    var svg = '<svg viewBox="0 0 '+CHART_W+' '+CHART_H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Score progress" style="width:100%;height:auto;">';
+
+    [0,10,20,30].forEach(function(v){
+      var y = yAt(v);
+      svg += '<line x1="'+CHART_PAD_L+'" y1="'+y+'" x2="'+(CHART_W-CHART_PAD_R)+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>';
+      svg += '<text x="'+(CHART_PAD_L-8)+'" y="'+(y+3)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--sub)">'+v+'</text>';
+    });
+
+    var pathD = scored.map(function(it,i){ return (i===0?"M":"L") + xAt(i).toFixed(1) + "," + yAt(it.score.total).toFixed(1); }).join(" ");
+    svg += '<path d="'+pathD+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    scored.forEach(function(it,i){
+      var x = xAt(i), y = yAt(it.score.total);
+      svg += '<circle cx="'+x+'" cy="'+y+'" r="4" fill="var(--accent)" stroke="var(--card)" stroke-width="1.5"/>';
+      svg += '<circle class="hitpoint" data-i="'+i+'" cx="'+x+'" cy="'+y+'" r="10" fill="transparent"/>';
+    });
+
+    [0, n-1].forEach(function(i){
+      if (i<0) return;
+      var it = scored[i];
+      var x = xAt(i), y = yAt(it.score.total);
+      svg += '<text x="'+x+'" y="'+(y-10)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="var(--ink)">'+it.score.total+'</text>';
+    });
+
+    svg += '</svg>';
+    el.innerHTML = svg;
+
+    var tooltip = document.getElementById("chartTooltip");
+    var wrap = document.getElementById("chartWrap");
+    el.querySelectorAll(".hitpoint").forEach(function(hp){
+      hp.addEventListener("mouseenter", function(){
+        var i = parseInt(hp.getAttribute("data-i"),10);
+        var it = scored[i];
+        var dateTxt = new Date(it.date).toLocaleDateString('en-US');
+        tooltip.textContent = dateTxt + ' · ' + it.score.total + '/30';
+        var rect = hp.getBoundingClientRect();
+        var wrapRect = wrap.getBoundingClientRect();
+        tooltip.style.left = (rect.left - wrapRect.left + rect.width/2) + "px";
+        tooltip.style.top = (rect.top - wrapRect.top) + "px";
+        tooltip.classList.add("visible");
+      });
+      hp.addEventListener("mouseleave", function(){ tooltip.classList.remove("visible"); });
+    });
+  }
+
+  function renderModelFilter(attempts, currentSelection){
+    var models = [];
+    attempts.forEach(function(i){
+      if (i.model && models.indexOf(i.model) === -1) models.push(i.model);
+    });
+    var sel = document.getElementById("filtroModelo");
+    var options = ['<option value="__all__">All models</option>'].concat(
+      models.map(function(m){ return '<option value="'+m.replace(/"/g,'&quot;')+'">'+m+'</option>'; })
+    );
+    sel.innerHTML = options.join('');
+    if (currentSelection && (currentSelection==="__all__" || models.indexOf(currentSelection)!==-1)){
+      sel.value = currentSelection;
+    }
+    return models;
+  }
+
+  function renderAttemptsTable(attempts){
+    var table = document.getElementById("tablaIntentos");
+    if (!attempts.length){
+      table.innerHTML = '<tr><td style="color:var(--sub); padding:14px 4px;">You haven\'t logged any attempts yet.</td></tr>';
+      return;
+    }
+    var rows = attempts.slice().reverse().map(function(it){
+      var dateTxt = new Date(it.date).toLocaleString('en-US');
+      var summary = 'Section ' + it.startSection + ' · ' + it.direction;
+      var scoreTxt = it.score ? (it.score.total + '/30') : '—';
+      var finishTxt = it.score ? (it.score.p13 ? '<span class="ok-si">✓</span>' : '<span class="ok-no">✕</span>') : '—';
+      return '<tr>' +
+        '<td class="mono" style="font-size:11px;color:var(--sub);">'+dateTxt+'</td>' +
+        '<td>'+(it.model || '—')+'</td>' +
+        '<td class="mono" style="font-size:11.5px;">'+summary+'</td>' +
+        '<td class="num-col">'+(it.score ? it.score.p12+'/3' : '—')+'</td>' +
+        '<td class="num-col">'+scoreTxt+'</td>' +
+        '<td class="num-col">'+finishTxt+'</td>' +
+        '<td><button class="btn-x" data-id="'+it.id+'">✕</button></td>' +
+        '</tr>';
+    }).join('');
+    table.innerHTML =
+      '<thead><tr><th>Date</th><th>Model</th><th>Scenario</th><th>Laps</th><th>Score</th><th>Finish</th><th></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>';
+    table.querySelectorAll(".btn-x").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-id");
+        var remaining = readAttempts().filter(function(it){ return String(it.id)!==String(id); });
+        writeAttempts(remaining);
+        paintAttempts();
+      });
+    });
+  }
+
+  function paintAttempts(){
+    var attempts = readAttempts();
+    var previousSelection = document.getElementById("filtroModelo").value;
+    renderModelFilter(attempts, previousSelection || (attempts.length ? attempts[attempts.length-1].model : "__all__"));
+    var filter = document.getElementById("filtroModelo").value || "__all__";
+    var filtered = (filter==="__all__") ? attempts : attempts.filter(function(i){ return i.model===filter; });
+    renderChart(filtered);
+    renderAttemptsTable(attempts);
+  }
+
+  // ---------------------------------------------------------------------
+  // UI orchestration
+  // ---------------------------------------------------------------------
+  var elResultado = document.getElementById("resultado");
+  var elHistorial = document.getElementById("historial");
+  var elSeed = document.getElementById("seed");
+  var elLargo = document.getElementById("largoRobot");
+  var selectedType = "random";
+  var lastOpenScenario = null;
+
+  var cfg = readConfig();
+  if (cfg.robotLenCm) elLargo.value = cfg.robotLenCm;
+
+  function setType(t){
+    selectedType = t;
+    ["btnOpen","btnObstacle","btnRandom"].forEach(function(id){
+      document.getElementById(id).setAttribute("aria-pressed", "false");
+    });
+    var map = {open:"btnOpen", obstacle:"btnObstacle", random:"btnRandom"};
+    document.getElementById(map[t]).setAttribute("aria-pressed", "true");
+  }
+  document.getElementById("btnOpen").addEventListener("click", function(){ setType("open"); });
+  document.getElementById("btnObstacle").addEventListener("click", function(){ setType("obstacle"); });
+  document.getElementById("btnRandom").addEventListener("click", function(){ setType("random"); });
+
+  function refreshModelDatalist(){
+    var existing = document.getElementById("listaModelos");
+    if (existing) existing.remove();
+    var dl = document.createElement("datalist");
+    dl.id = "listaModelos";
+    var seen = {};
+    readAttempts().forEach(function(it){
+      if (it.model && !seen[it.model]){
+        seen[it.model] = true;
+        var opt = document.createElement("option");
+        opt.value = it.model;
+        dl.appendChild(opt);
+      }
+    });
+    document.body.appendChild(dl);
+  }
+
+  function paintResult(type, e){
+    var robotLenCm = parseFloat(elLargo.value) || null;
+    var typeTag = (selectedType==="random") ? ' <span class="pill" style="background:transparent;">(random → ' + (type==="open"?"Open":"Obstacle") + ')</span>' : '';
+    var html = '<div class="resultado">';
+    html += '<div>';
+    if (type==="open"){
+      html += renderOpen(e) + typeTag;
+    } else {
+      html += renderObstacle(e, robotLenCm) + typeTag;
+    }
+    html += '</div>';
+    html += '<div class="diagrama">';
+    html += (type==="open") ? diagramOpen(e) : diagramObstacle(e, robotLenCm);
+    html += (type==="open") ? legendOpen() : legendObstacle();
+    html += '</div>';
+    html += '</div>';
+
+    if (type === "open"){
+      lastOpenScenario = e;
+      var localCfg = readConfig();
+      html += renderFormIntento(e, localCfg.currentModel);
+    } else {
+      lastOpenScenario = null;
+      html += '<div class="open-banner">Attempt logging &amp; scoring is available for Open Challenge only — generate an Open scenario to log a result.</div>';
+    }
+
+    elResultado.innerHTML = html;
+
+    if (type === "open"){
+      refreshModelDatalist();
+      document.getElementById("intVueltas").addEventListener("change", updateScorePreview);
+      document.getElementById("intSecciones").addEventListener("input", updateScorePreview);
+      document.getElementById("intMeta").addEventListener("change", updateScorePreview);
+      updateScorePreview();
+      document.getElementById("btnGuardarIntento").addEventListener("click", saveCurrentAttempt);
+    }
+  }
+
+  function saveCurrentAttempt(){
+    if (!lastOpenScenario) return;
+    var model = document.getElementById("intModelo").value.trim();
+    var laps = parseInt(document.getElementById("intVueltas").value, 10);
+    var sections = parseInt(document.getElementById("intSecciones").value, 10) || 0;
+    var finished = document.getElementById("intMeta").checked;
+    var score = calcOpenScore(laps, sections, finished);
+
+    var attempts = readAttempts();
+    attempts.push({
+      id: Date.now() + "_" + Math.floor(Math.random()*1000),
+      date: new Date().toISOString(),
+      model: model || "(no model)",
+      direction: lastOpenScenario.direction,
+      startSection: lastOpenScenario.startSection,
+      score: score
+    });
+    writeAttempts(attempts);
+
+    if (model){
+      var localCfg = readConfig();
+      localCfg.currentModel = model;
+      writeConfig(localCfg);
+    }
+
+    var btn = document.getElementById("btnGuardarIntento");
+    var originalText = btn.textContent;
+    btn.textContent = "Saved ✓";
+    setTimeout(function(){ btn.textContent = originalText; }, 1400);
+
+    paintAttempts();
+  }
+
+  function paintHistory(){
+    var hist = readHistory();
+    if (!hist.length){
+      elHistorial.innerHTML = '<p style="color:var(--sub);font-size:13px;">You haven\'t generated any scenario yet.</p>';
+      return;
+    }
+    var html = '';
+    hist.slice().reverse().forEach(function(h){
+      var dateTxt = new Date(h.date).toLocaleString('en-US');
+      var summary = (h.type==="open")
+        ? ('Start section ' + h.scenario.startSection + ', ' + h.scenario.direction)
+        : ('Parking section ' + h.scenario.parkingSection + ', single pillar in ' + (h.scenario.singlePillarSection || h.scenario.singlePillarCorner) + ', ' + h.scenario.direction);
+      html += '<div class="hist-item"><span>' +
+        '<span class="pill ' + (h.type==="open"?"tipo-open":"tipo-obstacle") + '" style="font-size:11px;padding:2px 8px;">' + (h.type==="open"?"Open":"Obstacle") + '</span> ' +
+        summary + '</span><span class="hd">' + dateTxt + '</span></div>';
+    });
+    elHistorial.innerHTML = html;
+  }
+
+  function generate(){
+    var seedTxt = elSeed.value;
+    var rng = crearRng(seedTxt);
+    var type = selectedType;
+    if (type === "random") type = (rng() < 0.5) ? "open" : "obstacle";
+
+    var hist = readHistory();
+    var e, attempts = 0;
+    do{
+      e = (type==="open") ? generateOpen(rng) : generateObstacle(rng);
+      attempts++;
+    } while (!seedTxt && attempts <= 20 && sameAsLast(hist, type, e));
+
+    paintResult(type, e);
+
+    var robotLenCm = parseFloat(elLargo.value);
+    if (robotLenCm){
+      cfg.robotLenCm = robotLenCm;
+      writeConfig(cfg);
+    }
+
+    hist.push({date: new Date().toISOString(), type: type, seed: seedTxt || null, scenario: e});
+    writeHistory(hist);
+    paintHistory();
+  }
+
+  document.getElementById("btnGenerar").addEventListener("click", generate);
+  document.getElementById("btnBorrarHist").addEventListener("click", function(){
+    writeHistory([]);
+    paintHistory();
+  });
+  document.getElementById("btnBorrarIntentos").addEventListener("click", function(){
+    writeAttempts([]);
+    paintAttempts();
+  });
+  document.getElementById("filtroModelo").addEventListener("change", paintAttempts);
+
+  // Resting state: a real generated example so the page isn't empty on
+  // load (Open, so the scoring form and a sample chart are visible too).
+  (function initialState(){
+    var rngDemo = mulberry32(20260917);
+    var demo = generateOpen(rngDemo);
+    paintResult("open", demo);
+    paintHistory();
+
+    // If there are no saved attempts yet, seed a few sample points so the
+    // chart shows what real progress looks like (clearly example data,
+    // dated a few weeks back).
+    if (!readAttempts().length){
+      var base = Date.now() - 21*86400000;
+      var sample = [
+        {laps:1, sections:9,  finished:false, model:"v1-line", days:0},
+        {laps:2, sections:15, finished:false, model:"v1-line", days:4},
+        {laps:2, sections:18, finished:false, model:"v1-line", days:8},
+        {laps:3, sections:22, finished:true,  model:"v2-camera", days:13},
+        {laps:3, sections:24, finished:true,  model:"v2-camera", days:17},
+        {laps:3, sections:24, finished:true,  model:"v2-camera", days:21}
+      ].map(function(m,idx){
+        return {
+          id:"demo_"+idx,
+          date:new Date(base + m.days*86400000).toISOString(),
+          model:m.model,
+          direction: idx%2===0 ? "clockwise":"counterclockwise",
+          startSection: STRAIGHTS[idx%4],
+          score: calcOpenScore(m.laps, m.sections, m.finished)
+        };
+      });
+      writeAttempts(sample);
+    }
+    paintAttempts();
+  })();
+
+})();
+</script>
+
+</body></html>

@@ -28,7 +28,13 @@ One sketch per component, used to validate each part of the car on its own befor
 | File | Board | What it does |
 |---|---|---|
 | [`pillar_viewer/pillar_viewer.ino`](obstacle-challenge/pillar_viewer) | ESP32-S3 CAM | Pillar detection (HSV colour classification + blob search, closest pillar, correct-side check). Sends every picture and its colour mask over USB |
-| [`pillar_viewer/viewer.html`](obstacle-challenge/pillar_viewer/viewer.html) | PC (Chrome / Edge) | **Pillar Vision Lab**: shows what the camera sees, runs the same algorithm in JavaScript and checks it against the board, and lets us tune every parameter live. Open the local file, press *Connect* and choose the camera port (close the Arduino Serial Monitor first) |
+| [`pillar_viewer/viewer.html`](obstacle-challenge/pillar_viewer/viewer.html) | PC (Chrome / Edge) | **Pillar Vision Lab**: shows what the camera sees, runs the same algorithm in JavaScript and checks it against the board, and lets us tune every parameter live. Open it [online](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html) or as a local file, press *Connect* and choose the camera port (close the Arduino Serial Monitor first) |
+
+## tools
+
+| File | What it does |
+|---|---|
+| [`scenario-roulette/index.html`](tools/scenario-roulette/index.html) | **WRO 2026 Scenario Roulette** ([open online](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/tools/scenario-roulette/)): draws valid Open / Obstacle track scenarios with the official procedure and draws the field to scale, so we can set up realistic tests. Also logs Open Challenge attempts with the official score |
 
 ## Arduino IDE settings
 
