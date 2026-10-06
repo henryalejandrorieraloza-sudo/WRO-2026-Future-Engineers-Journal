@@ -31,22 +31,15 @@ This repository holds all the code, the engineering journal and the supporting f
 
 ## Repository structure
 
-The repository follows the official [WRO Future Engineers template](https://github.com/World-Robot-Olympiad-Association/wro2022-fe-template).
-
 ```
 .
 ├── README.md                  ← this file: overview, wiring, build instructions
 ├── docs/
 │   ├── ENGINEERING_JOURNAL.md ← day-by-day engineering process, problems and decisions
 │   └── images/                ← plots and pictures used in the journal
-├── src/                       ← all code (see src/README.md)
-│   ├── hardware-tests/        ← one sketch per component (TOF, gyro, motor, servo, camera)
-│   └── obstacle-challenge/    ← pillar detection + Pillar Vision Lab web tool
-├── models/                    ← 3D-printing / laser-cutting files of the chassis
-├── schemes/                   ← wiring diagrams
-├── t-photos/                  ← team photos
-├── v-photos/                  ← vehicle photos (6 sides)
-└── video/                     ← links to the driving videos
+└── src/                       ← all code (see src/README.md)
+    ├── hardware-tests/        ← one sketch per component (TOF, gyro, motor, servo, camera)
+    └── obstacle-challenge/    ← pillar detection + Pillar Vision Lab web tool
 ```
 
 Each Arduino sketch lives in a folder with the same name as its `.ino` file, as the Arduino IDE requires. A full table of every sketch is in [src/README.md](src/README.md).
@@ -78,7 +71,7 @@ The journal records every problem we found (32 so far), how we solved it and why
 
 ### Power
 
-- The car runs from its own on-board battery; the power budget and the wiring diagram will be added in [schemes/](schemes).
+- The car runs from its own on-board battery.
 - The input/output pins of the Nano ESP32 work at **3.3 V** and are **not 5 V tolerant**, so no 5 V or battery voltage may reach them; the battery may only go to the board's power input.
 - **Safety rule** (from journal Problem 31): code is uploaded with the battery **off**, powered only by USB; the battery is switched on only for driving tests, with the USB disconnected.
 
@@ -218,4 +211,4 @@ Every result, failure and decision is written down in the [engineering journal](
 ## Team
 
 - **Henry Riera Loza** — software and electronics (code, sensors, vision, this repository).
-- Mechanical design and chassis — teammate; the chassis files go in [models/](models).
+- Mechanical design and chassis — teammate.

@@ -30,10 +30,6 @@ One sketch per component, used to validate each part of the car on its own befor
 | [`pillar_viewer/pillar_viewer.ino`](obstacle-challenge/pillar_viewer) | ESP32-S3 CAM | Pillar detection (HSV colour classification + blob search, closest pillar, correct-side check). Sends every picture and its colour mask over USB |
 | [`pillar_viewer/viewer.html`](obstacle-challenge/pillar_viewer/viewer.html) | PC (Chrome / Edge) | **Pillar Vision Lab**: shows what the camera sees, runs the same algorithm in JavaScript and checks it against the board, and lets us tune every parameter live. Open the local file, press *Connect* and choose the camera port (close the Arduino Serial Monitor first) |
 
-## open-challenge
-
-The Open Challenge program (3-state machine: straight driving with gyro heading, corner detection with the side TOF sensors, turn by gyro angle, stop after 12 corners) is being integrated on the new chassis. Its design is described in section 4.2 of the [engineering journal](../docs/ENGINEERING_JOURNAL.md).
-
 ## Arduino IDE settings
 
 **Nano ESP32:** *Tools → Board → Arduino ESP32 Boards → Arduino Nano ESP32*.
