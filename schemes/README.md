@@ -151,7 +151,7 @@ Values from the datasheets (typical = normal driving; peak = worst case, all at 
 
 | Sensor | Placement | Reasoning (field geometry) |
 |---|---|---|
-| TOF FRONT | Front centre, facing forward | Emergency stop and corner backup. Corridors are 100 cm wide (or 60 cm when the inner walls are close), so the front wall is visible well before the car must turn |
+| TOF FRONT | Front centre, facing forward | Distance to the wall ahead, as a safety check and for parking. Corners are detected by the side sensors (Open) or the floor lines (Obstacle), not by the front sensor |
 | TOF LEFT / RIGHT | Sides, perpendicular to the car | Measure the distance to each wall. A sudden jump in one side reading means that wall has ended: a corner. Placed **about 2 cm higher** on the second chassis so the beam does not pass over the 10 cm wall (journal Problem 16) |
 | TOF BACK | Rear centre | Distance to the wall behind, used to know the position along a straight section |
 | BMI160 | Flat on the PCB, near the car's centre | Only yaw is used; mounting it flat makes the Z axis the turning axis |

@@ -208,7 +208,7 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 
 | Sensor | Placement | Why |
 |---|---|---|
-| **TOF FRONT** | Front centre | Emergency stop and corner backup |
+| **TOF FRONT** | Front centre | Distance to the wall ahead (safety check and parking) |
 | **TOF LEFT / RIGHT** | Both sides, perpendicular | Distance to each wall; a sudden jump means the wall ended → corner. Raised ~2 cm so the beam does not pass over the 10 cm wall |
 | **TOF BACK** | Rear centre | Position along a straight section |
 | **BMI160** | Flat on the PCB | Yaw (Z axis) for straight driving and exact 90° turns |
