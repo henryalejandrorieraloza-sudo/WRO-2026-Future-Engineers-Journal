@@ -2,7 +2,7 @@
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
 > **Period covered:** 15 September – 5 October 2026
-> **Note:** this journal covers my part of the project (programming, sensors and electronics). The mechanical design and chassis are documented by my teammate.
+> **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
 
@@ -31,7 +31,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 | Part | Component | Connection |
 |---|---|---|
 | Main controller | Arduino Nano ESP32 (with headers) | — |
-| Drive motor | N20 DC 12 V with encoder, drives the rear wheels through a differential | TB6612FNG driver: PWMA = D6, AIN1 = D7, AIN2 = D8, STBY = D5 (provisional, to confirm) |
+| Drive motor | N20 DC 12 V with encoder, drives the rear wheels through a differential | TB6612FNG driver: PWMA = D6, AIN1 = D7, AIN2 = D8, STBY = tied to +5 V on the PCB (confirmed from the schematic; the D5 line in the test code is not needed) |
 | Steering | Ackermann on the front wheels, servo MG90 180° (replaced the SG90) | Signal on D9 |
 | Distance sensors | 4 × TOF400C (VL53L1X chip) — replaced 4 × Sharp GP2Y0A21YK0F | I²C SDA = A4, SCL = A5 · XSHUT: FRONT = A1, BACK = A0, RIGHT = A2, LEFT = A3 |
 | Gyroscope | BMI160 | I²C SDA = A4, SCL = A5 (same bus as the TOF sensors) |
@@ -710,7 +710,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 18 | Generic camera example crashed | Manufacturer's example, 8 MB settings | ✅ |
 | 19 | Upload stuck at "Connecting..." | BOOT + RESET | ✅ |
 | 20 | Camera web page did not load | Drop Wi-Fi; detection through Serial | ✅ |
-| 21 | STBY pin of the motor driver not confirmed | Check on the car (D5 provisional) | ❓ |
+| 21 | STBY pin of the motor driver not confirmed | PCB schematic shows STBY tied to +5 V: the driver is always enabled | ✅ |
 | 22 | False green strips and "FB-SIZE" errors | Re-insert the camera flex cable | ✅ |
 | 23 | Camera mounted upside down | Mirror + flip in the code (rotate 180°) | ✅ |
 | 24 | Web page received only 64 bytes | USB output buffer to 16 KB + DTR from the page | ✅ |
@@ -733,7 +733,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Repeat the ROI test with heights 7, 8 and 9, and with width 4, before fixing the final values.
 - [ ] Run `drive_until_left_open` (first driving test).
 - [x] Raise the TOF sensors (~2 cm higher): they detect the walls much better ✅
-- [ ] Confirm the STBY pin of the motor driver.
+- [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
 - [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
 - [ ] Test the Open Challenge on the track and tune KP, KD and the jump threshold.
 - [x] Camera Block 1: pillar detection tested and calibrated (section 6).
