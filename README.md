@@ -272,63 +272,108 @@ flowchart LR
 
 ## 8. Open Challenge strategy
 
-### 8.1 State machine
+### 8.1 Idea
+
+The car learns its distances to the walls at the start, keeps those distances all the way so it never drifts, and detects each corner as a **sudden jump** in a side distance: the inner wall has ended, so the car turns toward that side until the gyroscope says it has rotated exactly 90°. A counter stops the car after the 12th corner (3 laps × 4 corners).
+
+### 8.2 State machine
 
 ```mermaid
 stateDiagram-v2
     [*] --> WAITING
-    WAITING --> STRAIGHT: gyro calibrated + start button
-    STRAIGHT --> TURNING: side distance jumps (wall ended)
-    STRAIGHT --> TURNING: FRONT < 150 mm (emergency backup)
-    TURNING --> STRAIGHT: gyro reads 90° · corners++ · new distance references
-    TURNING --> FINISHED: corners == 12
-    FINISHED --> [*]: motor short brake
+    WAITING --> STRAIGHT: start button, read L_ref and R_ref
+    STRAIGHT --> TURNING: side distance jumps, turn to that side
+    TURNING --> STRAIGHT: 90 deg turned, corners < 12
+    TURNING --> FINAL_STRAIGHT: 90 deg turned, corners = 12
+    FINAL_STRAIGHT --> FINISHED: short distance driven
+    FINISHED --> [*]: short brake
 ```
 
-| State | Behaviour |
+| State | What the car does |
 |---|---|
-| **WAITING** | 200 gyro samples at rest → offset. Wait for the start button |
-| **STRAIGHT** | Hold the gyro heading (multiple of 90°) and hold the left/right distances measured at the start of this straight with a PD controller: `error = (L − L_ref) − (R − R_ref)`, `steer = Kp·error + Kd·d(error)/dt` (initial Kp = 0.8, Kd = 0.3) |
-| **TURNING** | Steering to the limit on the corner side, motor running; turn until the gyro has rotated 90° from the heading at the start of the turn; distance sensors are ignored during the turn |
-| **FINISHED** | After 12 corners (4 per lap × 3 laps) the car brakes in the starting section |
+| **WAITING** | Calibrates the gyroscope at rest (200 samples → offset). When the start button is pressed, it averages several readings of the LEFT and RIGHT TOF sensors and stores them as the **reference distances** `L_ref` and `R_ref` |
+| **STRAIGHT** | Motor forward. The steering keeps the heading of the current straight (a multiple of 90° from the gyro) **and** keeps the side distance equal to its reference with a PD controller. Every cycle it compares each side reading with the previous one to look for a sudden jump |
+| **TURNING** | Servo to its limit on the corner side, motor running. The car turns until the gyro heading has changed **exactly 90°** from the heading of the previous straight. Then the servo returns to its measured centre and `corners` increases by one |
+| **FINAL_STRAIGHT** | After the 12th corner the car drives straight a short, tuned distance (measured with the encoder) so the whole car is inside the starting section |
+| **FINISHED** | Motor short brake (both TB6612FNG inputs HIGH); the car stays stopped |
 
-### 8.2 Why these decisions
+### 8.3 Keeping the same distance to the walls
 
-- **The car does not centre itself between the walls.** The inner walls move every round, so the "centre" changes from one section to the next. Holding the distances measured at the beginning of each straight keeps the car parallel to the walls wherever it ended the previous turn.
-- **Corners are detected by a sudden jump in a side distance, not by the front wall.** When the inner wall ends, the side reading jumps from tens of centimetres to more than a metre. This is detected earlier than the front wall and also tells us which way to turn, so the driving direction of the round (clockwise or counter-clockwise) is learned at the first corner. This method was developed and validated with hand tests (journal §2.4); a fixed-reference variant tested worse and was reverted (journal Problem 4).
-- **Turns are measured by angle, not by time.** A turn by time changes with battery voltage and speed; a turn by gyro angle is always 90°.
+- `L_ref` and `R_ref` are measured **once, at the start**, where the car is placed parallel to the walls.
+- In STRAIGHT the lateral error is `error = distance − reference` and the steering correction is `Kp · error + Kd · d(error)/dt`, added to the gyro heading correction (initial values Kp = 0.8, Kd = 0.3, to be tuned on the track).
+- **Which wall is followed:** before the first corner, both side walls are used. The first jump tells the turning direction of the round. From then on the car follows the **outer wall** at its reference distance, because the outer wall of the field is at the same position in all four sections, while the inner wall can be at a different distance in each section (corridors of 100 cm or 60 cm). Keeping the same distance to the outer wall therefore keeps the car on the same path in every section and every lap, without drifting.
+- **Why a PD controller with the gyro:** the gyro alone keeps the car parallel to the walls but cannot see a slow sideways drift; the distance alone reacts late to a change of angle. Together, the gyro holds the angle and the distance term removes the drift. The derivative term reacts to how fast the error is changing, which damps the zig-zag that a proportional-only controller tends to produce because the steering always reacts with some delay.
 
-### 8.3 Edge cases
+### 8.4 Corner detection: sudden jump
+
+- Every cycle (TOF period 100 ms), each side reading is compared with the previous one. If a side distance **increases by more than `JUMP_THRESHOLD`** (initial value 150 mm), that wall has ended: the car is at a corner and turns toward that side.
+- The sensors use the measurement area we chose by experiment, **ROI_WIDTH = 1 and ROI_HEIGHT = 6** (journal §8.2). With this ROI the difference between "wall at 60 cm" and "no wall" was the largest of all the heights tested (64 vs 1–57 for the others), so the jump at the end of a wall is clear and the beam does not pass over the 10 cm wall.
+- **Why a jump and not the front wall:** the side wall ends before the front wall gets close, so the car can start its turn earlier and with more room. The jump also tells which way to turn, so the car does not need to know in advance whether the round is clockwise or counter-clockwise. This method was developed with hand tests and validated (journal §2.4); comparing absolute left/right distances gave false decisions beyond 50 cm (journal §2.3).
+
+### 8.5 Turning by gyro angle
+
+The turn ends when the heading has changed exactly 90°, not after a fixed time. A turn by time would change with the battery voltage and the speed; a turn by angle is the same every time. The target heading is absolute (0°, 90°, 180°, 270°, …), so small errors in one corner do not accumulate over the 12 corners.
+
+### 8.6 Edge cases
 
 | Case | Handling |
 |---|---|
-| Narrow (60 cm) corridor | Same logic; the distance references adapt to each straight |
-| Start position anywhere in the start section | References are taken at the start, not assumed |
-| A TOF reading is invalid or noisy | Median filter; invalid readings are skipped |
-| A corner is missed | FRONT < 150 mm forces the turn |
-| Gyro drift over 3 laps | Offset calibration at rest before every run; heading targets are absolute multiples of 90° |
+| Car starts at any position inside the starting section | `L_ref` / `R_ref` are measured at the start, never assumed |
+| Corridor of 60 cm instead of 100 cm | After the first corner the car follows the outer wall, whose position never changes |
+| False jump right after a turn (the sensor sees past the end of the inner wall while the car straightens) | Jump detection is ignored for a short distance after each turn |
+| A single noisy TOF reading looks like a jump | Median filter of the last 5 valid readings before comparing |
+| Gyro drift over 3 laps | Offset calibration at rest before every run; absolute heading targets |
+| Stopping inside the starting section | After the 12th turn the car drives a tuned, encoder-measured distance and brakes actively |
 
 ---
 
 ## 9. Obstacle Challenge strategy
 
-### 9.1 Pillar detection (finished and tested on the robot)
+### 9.1 Idea
+
+The car steers so that the closest pillar ends up in the **correct third of the camera image**, keeps driving, and uses the **orange and blue floor lines** to know when it has reached a corner: it turns 90° with the gyroscope and increases the corner counter. Parking is still being designed.
+
+### 9.2 Pillar detection (finished and tested on the robot)
 
 1. Take a 160 × 120 RGB565 picture, about 25 times per second.
 2. Convert each pixel to **HSV** and classify it as RED (hue ≥ 340° or ≤ 15°), GREEN (hue 80–160°) or nothing, with minimum saturation and brightness so the white walls and the grey mat are rejected.
 3. Group pixels into blobs with a **BFS flood fill**; blobs under 30 pixels are noise; a shape filter keeps only blobs taller than wide.
 4. If two pillars of the same colour touch in the picture, split them and keep the **front** one.
-5. The **closest pillar** is the one whose base is lowest in the picture. Red → pass on its right; green → pass on its left. The pillar is on the correct side once it leaves the central zone (±28 px) on that side.
+5. The **closest pillar** is the one whose base is lowest in the picture.
 
 Only rows 53–78 of the picture are searched: the camera's wide view can see red or green objects outside the field and read them as pillars.
 
-### 9.2 Pillar Vision Lab
+### 9.3 Passing pillars: the "correct third" rule
 
-<a href="https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html">Pillar Vision Lab</a> is the calibration tool we built: a web page that receives every picture over USB (Web Serial), draws the colour mask on top, runs the same algorithm in JavaScript, checks that its result matches the camera board, and lets us tune every parameter live. It turned threshold tuning from guessing into measuring.
+The 160-pixel-wide image is divided into three equal thirds (≈ 53 px each).
 
-### 9.3 Driving plan
+| Closest pillar | Rule | Target in the image |
+|---|---|---|
+| 🟥 Red | Pass on its **right** → the pillar must stay on the car's left | **Left third** |
+| 🟩 Green | Pass on its **left** → the pillar must stay on the car's right | **Right third** |
 
-The robot does not need to know the driving direction in advance: the side to pass is decided from the robot's own point of view (red → keep the pillar on the left of the car, green → on the right), and the turning direction is learned at the first corner, as in the Open Challenge. The orange and blue floor lines will be detected by the same camera to time the turns, together with the TOF sensors. Parking is planned after the three laps work reliably.
+- While the pillar is **not** in its target third, the servo steers the car away from it (red → steer right, green → steer left).
+- Once the pillar is **inside** the target third, the servo returns toward the centre and the car keeps driving straight past it.
+- When the pillar leaves the bottom of the image (it has been passed), the next closest pillar becomes the target; if there is none, the car returns to the heading of the current straight.
+
+**Why this rule:** the horizontal position of the pillar in the image is directly the angle between the car's direction and the pillar, so no distance estimation or camera calibration is needed. Keeping a red pillar in the left third means the car's path passes to its right with lateral clearance, and the same for green on the other side. The rule matches the "correct side" check already built and tested in the detection code (central zone ±28 px ≈ the middle third). It is also simple enough to tune and explain, which matters with the time left before the competition.
+
+**Safety rule:** the side TOF sensors have priority over the pillar rule. If a side wall is closer than a minimum distance, the car steers away from the wall even if the pillar is not yet in its third.
+
+### 9.4 Corners: floor lines and counter
+
+- Each corner of the field has an orange line and a blue line on the floor. The camera detects them with the same HSV method as the pillars.
+- When the **first line of a corner** is detected, the car turns until the gyro heading has changed 90° (same turning method as the Open Challenge) and increases the corner counter. The second line of the same corner is ignored.
+- The turning direction is learned at the first corner, from the side that is open, and kept for the rest of the round.
+- **Why lines and not the TOF jump used in the Open Challenge:** in this challenge the side TOF sensors can also see pillars, which would create false jumps. The floor lines are fixed by the rules, always at the corners, and the camera is already looking at the floor in front of the car.
+
+### 9.5 After 12 corners: parking
+
+After the 12th corner the three laps are complete. **The parking manoeuvre is still being designed**; the options we are studying (finding the magenta parking-lot walls with the camera and the side TOF sensors) will be documented here and in the engineering journal once they are tested.
+
+### 9.6 Pillar Vision Lab
+
+<a href="https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html">Pillar Vision Lab</a> is the calibration tool we built: a web page that receives every picture over USB (Web Serial), draws the colour mask on top, runs the same algorithm in JavaScript, checks that its result matches the camera board, and lets us tune every parameter live. It turned threshold tuning from guessing into measuring, and it is how we will tune the floor-line colours too.
 
 ---
 
@@ -351,6 +396,9 @@ The robot does not need to know the driving direction in advance: the side to pa
 | TOF400C (VL53L1X) | Sharp infrared | Sharp unreliable beyond 50–60 cm in our tests (journal Problem 3) |
 | Binary "wall / open" and jump detection | Comparing left vs right distances | Comparing magnitudes beyond 50 cm gave false decisions (journal §2.3) |
 | Moving reference for jump detection | Fixed reference | The fixed version tested worse on the track (journal Problem 4) |
+| Following the outer wall at its start distance | Centring between the walls | The inner walls move every round, so the centre changes; the outer wall never moves |
+| Floor lines for corners in the Obstacle Challenge | Side TOF jumps | Pillars near the walls could create false jumps; the lines are fixed by the rules |
+| "Correct third" of the image to pass pillars | Estimating pillar distance and planning a path | Bearing is read directly from the image, no calibration needed, simple to tune and explain |
 | Our own BMI160 driver | DFRobot library | The library returned only zeros, without errors (journal Problem 14) |
 | Hand-generated servo pulse | ESP32Servo / LEDC | Libraries did not work with our board core (journal Problem 6) |
 | MG90 metal-gear servo | SG90 | SG90 moved in its mount (journal Problem 8) |
@@ -446,7 +494,10 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | Pillar detection | ✅ Finished and tested on the robot |
 | Steering on chassis 2 | 🔄 Linkage adjustment and calibration |
 | Open Challenge program on chassis 2 | 🔄 Integration |
-| Floor lines, camera → Nano UART link, parking | ⏳ Next |
+| Open Challenge final-straight and stop after 12 corners | 🔄 Integration |
+| Obstacle: correct-third steering, floor-line corners | ⏳ Next |
+| Camera → Nano UART link | ⏳ Next |
+| Parking | 🧠 Being designed |
 
 ---
 

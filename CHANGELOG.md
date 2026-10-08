@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v0.5 — 7 October · Final strategy
+- Open Challenge: distance references measured once at the start and kept with a PD controller (outer wall after the first corner); corners by sudden jump with the TOF ROI 1 × 6; 90° turns by gyroscope; after the 12th corner a short final straight and active brake.
+- Obstacle Challenge: steer until the closest pillar is in the correct third of the image; corners detected by the floor lines with a 90° gyro turn and a corner counter. Parking still being designed.
+- Journal §8.5 records what changed and why.
+
 ## v0.4 — 7 October · Complete documentation
 - Merged the electrical documentation of the team into this repository: PCB schematic, wiring diagram, PCB photos, PCB manufacturing process, datasheets and component pictures (`schemes/`, `other/`).
 - Added a power budget with run-time and discharge-rate analysis, and a failure-point table.

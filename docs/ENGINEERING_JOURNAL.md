@@ -674,6 +674,31 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 
 ---
 
+### 8.5 Final strategy defined (Wednesday 7 October 2026)
+
+After the tests on the new chassis we fixed the strategy for both challenges. The full description, with diagrams, is in the [main README §8 and §9](../README.md#8-open-challenge-strategy).
+
+**Open Challenge — what changed and why**
+
+| Before (1 October) | Now (7 October) | Why |
+|---|---|---|
+| New distance references at the start of every straight | References `L_ref` / `R_ref` measured **once at the start**; after the first corner the car keeps the same distance to the **outer wall** | The outer wall never moves, so the same distance gives the same path in every section and every lap; the inner wall can be at 60 or 100 cm |
+| Jump threshold with the old sensor setup | Jump detection with the ROI found by experiment (**ROI_WIDTH = 1, ROI_HEIGHT = 6**, §8.2) | That ROI gave the largest difference between wall and no wall, so the jump is clear |
+| FRONT sensor as emergency backup for corners | Corners only by the side jump | Keep one clear corner rule that we can tune and test |
+| Stop immediately after 12 corners | After the 12th turn: **drive a short distance, then brake** | The whole car must end inside the starting section |
+| — | Jump detection ignored for a short distance after each turn | Avoid counting the same corner twice while the car straightens |
+
+The turn always ends when the gyroscope says the car has rotated **exactly 90°**.
+
+**Obstacle Challenge — new strategy**
+
+- Steer until the closest pillar is in the **correct third of the image** (red → left third, so the car passes on its right; green → right third), then keep driving.
+- When the camera detects a **floor line** at a corner, turn 90° with the gyroscope and increase the corner counter. We use the lines instead of the TOF jump because pillars near the walls could create false jumps.
+- The side TOF sensors have priority: if a wall is too close, steer away from it.
+- **Parking:** still being designed.
+
+**Next:** implement both strategies on the Nano, tune `JUMP_THRESHOLD`, Kp/Kd and the final-straight distance on the track, and add floor-line detection to the camera code.
+
 ## 9. Rules research
 
 I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our approach is allowed:
