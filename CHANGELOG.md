@@ -2,6 +2,12 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v0.6 — 15 October · Pinion-and-rack steering on the classic Nano
+- Steering changed from Ackermann to a parallel pinion-and-rack mechanism driven by the MG90 servo. Provisional values: centre 120°, left limit 180°, right limit 50° (left is now the larger angle).
+- Main board is now a classic Arduino Nano (ATmega328P) after the Nano ESP32 was damaged.
+- Added `servo_only_test` (steering sweep), `wall_follow_nearest_pid` (keep the distance to the nearest wall, 10-reading reference) and `wall_keep_both_pid` (keep both start distances).
+- Tested settings on the new chassis: `MOTOR_REVERSED = true`, `INVERT_STEER = true`, `MAX_VALID_MM = 2000`.
+
 ## v0.5 — 7 October · Final strategy
 - Open Challenge: distance references measured once at the start and kept with a PD controller (outer wall after the first corner); corners by sudden jump with the TOF ROI 1 × 6; 90° turns by gyroscope; after the 12th corner a short final straight and active brake.
 - Obstacle Challenge: steer until the closest pillar is in the correct third of the image; corners detected by the floor lines with a 90° gyro turn and a corner counter. Parking still being designed.
