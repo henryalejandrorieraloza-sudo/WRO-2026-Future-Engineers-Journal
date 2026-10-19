@@ -10,6 +10,7 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
 | [`wiring_diagram.png`](wiring_diagram.png) | Every external connection between the PCB and the components |
 | [`physical_wiring.jpeg`](physical_wiring.jpeg) | The same wiring on the real car |
 | [`pcb_front.jpeg`](pcb_front.jpeg), [`pcb_back.jpeg`](pcb_back.jpeg) | Manufactured PCB, both sides |
+| [`pcb_soldered_top.jpg`](pcb_soldered_top.jpg), [`pcb_soldered_back.jpg`](pcb_soldered_back.jpg) | PCB with all modules soldered, as mounted on chassis v3 |
 | [`pcb-blocks/`](pcb-blocks) | Close-ups of each functional block of the PCB layout |
 | [`datasheets/`](datasheets) | Datasheets of all electronic components |
 | Online PCB project | [OSHWLab — Team X67 PCB](https://oshwlab.com/edu560/project_ehytvvog) (open it to order or modify the board) |
@@ -20,19 +21,20 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
 
 | Component | Image | Qty | Role | Why we chose it |
 |---|---|---|---|---|
-| **Arduino Nano ESP32** | <img src="../other/components/arduino_nano_esp32.jpg" width="140"> | 1 | Main controller: sensors, control loops, motor and servo | Dual-core 240 MHz ESP32-S3, 512 KB SRAM, small Nano footprint. Fast enough for gyro integration and PID at a high loop rate. 3.3 V logic |
+| **Arduino Nano** (classic, ATmega328P) | — | 1 | Main controller: sensors, control loops, motor and servo | Same footprint and pinout as the Nano ESP32 the PCB was designed for, so it drops into the same headers. 5 V logic, standard `Servo.h` and `Wire` libraries. It replaced the Nano ESP32 after that board was damaged (journal Problem 31) |
+| *Arduino Nano ESP32* (original choice) | <img src="../other/components/arduino_nano_esp32.jpg" width="140"> | — | Main controller of chassis 1 and 2 | Dual-core 240 MHz ESP32-S3, 512 KB SRAM. Retired after it overheated during an upload |
 | **ESP32-S3-CAM** (emakefun) | <img src="../other/components/esp32s3-cam.jpg" width="140"> | 1 | Vision board | ESP32-S3 with 8 MB PSRAM (needed for camera frame buffers) and native USB. Keeps image processing off the main controller |
 | **OV2640** camera | <img src="../other/components/ov2640.jpg" width="140"> | 1 | Colour images for pillar detection | 2 MP CMOS sensor, 68° field of view, supported natively by the ESP32 camera driver |
 | **TOF400C** (VL53L1X) | <img src="../other/components/tof400c.jpg" width="140"> | 4 | Distance to the walls: front, back, left, right | Laser time-of-flight, up to 4 m, 27° field of view, programmable measurement area (ROI). Replaced Sharp infrared sensors (see section 5) |
 | **BMI160** IMU | <img src="../other/components/bmi160.jpg" width="140"> | 1 | Heading (yaw) from the gyroscope | 6-axis IMU on the same I²C bus as the TOF sensors; low noise and low current |
 | **TB6612FNG** driver | <img src="../other/components/tb6612fng.jpg" width="140"> | 1 | Speed and direction of the drive motor | MOSFET H-bridge (much lower losses than an L298N), PWM control and an active short-brake mode for precise stops |
 | **CN3903** buck converter | <img src="../other/components/buck_converter.jpg" width="140"> | 1 | 11.4 V → 5 V, up to 3 A | Switching regulator: far less heat than a linear regulator when dropping ~6 V |
-| **Steering servo** (MG90, metal gear) | <img src="../other/components/servo.jpg" width="140"> | 1 | Ackermann steering | The PCB was designed for an SG90; it was replaced by the pin-compatible MG90 because the SG90 moved inside its mount (journal Problem 8) |
+| **Steering servo** (MG90, metal gear) | <img src="../other/components/servo.jpg" width="140"> | 1 | Rack-and-pinion steering | The PCB was designed for an SG90; it was replaced by the pin-compatible MG90 (metal gears) because the SG90 moved inside its mount (journal Problem 8) |
 | **N20 DC motor with Hall encoder**, 1000 rpm | <img src="../other/components/n20_motor_encoder.jpg" width="140"> | 1 | Rear-wheel drive through a differential | Very small and light, 12 V, built-in encoder for distance/speed feedback |
 | **GNB 3S 380 mAh HV LiPo** (11.4 V, 4.33 Wh, 90C) | <img src="../other/components/battery.jpg" width="140"> | 1 | Power source | Lightest pack that powers the 12 V motor directly with enough capacity for many rounds (see power budget) |
 | **Start button** | <img src="../other/components/start_button.jpg" width="140"> | 1 | Starts the run (rules require a single start button) | — |
 | **Power switch** | — | 1 | Main power on/off (required by the rules) | Between the battery and the PCB |
-| **Custom tyres** | <img src="../other/components/custom_tire.jpeg" width="140"> | 4 | Grip | 41 mm diameter, 5 mm silicone tread |
+| **Custom tyres** | <img src="../other/components/custom_tire.jpeg" width="140"> | 4 | Grip | 41 mm diameter, C25 silicone rubber cast in printed moulds ([how we make them](../models/README.md#4-custom-silicone-tyres)) |
 
 ---
 
@@ -42,11 +44,11 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
   <img src="schematic.png" alt="PCB schematic" width="800">
 </div>
 
-The schematic is organised in functional blocks:
+The schematic is organised in functional blocks. It was drawn for the Nano ESP32; the classic Arduino Nano now used has the same pin positions, so the board is unchanged.
 
 | Block | Connections |
 |---|---|
-| **Arduino Nano ESP32** | VIN from the battery rail (VCC) · D0/D1 = UART to the camera board · D2/D3 = encoder C2/C1 · D6/D7/D8 = PWMA/AIN1/AIN2 · D9 = servo · D10 = start button · A4/A5 = I²C SDA/SCL · A0/A1/A2/A3 = XSHUT of the BACK/FRONT/RIGHT/LEFT TOF sensors |
+| **Arduino Nano** (footprint drawn as Nano ESP32) | VIN from the battery rail (VCC) · D0/D1 = UART to the camera board · D2/D3 = encoder C2/C1 · D6/D7/D8 = PWMA/AIN1/AIN2 · D9 = servo · D10 = start button · A4/A5 = I²C SDA/SCL · A0/A1/A2/A3 = XSHUT of the BACK/FRONT/RIGHT/LEFT TOF sensors |
 | **Power stage** | Battery (VCC, 11.4 V) → power switch → CN3903 buck → +5 V rail |
 | **Distance sensors** | 4 × 3-pin connectors (XSHUT, +5 V, GND); SDA/SCL of all TOF sensors share the I²C bus with the BMI160 |
 | **TB6612FNG** | VM = battery, VCC = +5 V, **STBY tied to +5 V** (driver always enabled, no MCU pin needed), channel A only (single motor) |
@@ -67,7 +69,7 @@ The schematic is organised in functional blocks:
   <em>Top: every external connection of the PCB. Bottom: the same wiring on the real car.</em>
 </div>
 
-**Pin map summary (Arduino Nano ESP32)**
+**Pin map summary (Arduino Nano)**
 
 | Device | Signal | Pin |
 |---|---|---|
@@ -80,7 +82,7 @@ The schematic is organised in functional blocks:
 | I²C bus (4 × TOF + BMI160) | SDA / SCL | A4 / A5 |
 | TOF BACK / FRONT / RIGHT / LEFT | XSHUT | A0 / A1 / A2 / A3 |
 
-The Nano ESP32 I/O pins work at **3.3 V and are not 5 V tolerant**. Only the board's VIN pin receives the battery voltage.
+Only the Nano's VIN pin receives the battery voltage. The classic Nano works with 5 V logic; the TOF400C modules are powered from its 3.3 V pin (section 4).
 
 ---
 
@@ -94,10 +96,9 @@ The Nano ESP32 I/O pins work at **3.3 V and are not 5 V tolerant**. Only the boa
    [power switch]
         │
         ├────────────► TB6612FNG VM ─────► N20 drive motor
-        ├────────────► Arduino Nano ESP32 VIN (on-board regulator → 3.3 V)
+        ├────────────► Arduino Nano VIN ─► on-board 5 V regulator ─► 3.3 V pin ─► 4 × TOF400C
         │
         └─► CN3903 buck 5 V / 3 A ─► +5 V rail ─┬─► ESP32-S3-CAM (→ 3.3 V for OV2640)
-                                                ├─► 4 × TOF400C
                                                 ├─► BMI160
                                                 ├─► TB6612FNG logic (VCC, STBY)
                                                 ├─► Steering servo
@@ -109,6 +110,7 @@ The Nano ESP32 I/O pins work at **3.3 V and are not 5 V tolerant**. Only the boa
 - **The motor takes the battery voltage directly.** The N20 is rated for 12 V, so a second regulator would only add losses and weight.
 - **The servo has the largest current peaks on the 5 V rail** (up to ~650 mA at stall). A 3 A buck leaves a wide margin, so a servo stall does not pull the rail down and reset the camera board or the sensors.
 - **A switching (buck) regulator instead of a linear one:** dropping 11.4 V to 5 V at 0.5 A in a linear regulator would waste ~3.2 W as heat, more than all the electronics use.
+- **The TOF sensors take 3.3 V from the Nano.** This keeps the sensors' I²C pull-ups at 3.3 V and takes their laser pulses off the rail that feeds the servo, so a servo current peak cannot disturb a distance measurement. The cost is that their current now passes through the Nano's small on-board regulators (see the budget and the failure points below).
 - **One common ground** for all boards; the camera board and the Nano share it so the UART link has a clean reference.
 
 ### 4.2 Power budget
@@ -118,28 +120,33 @@ Values from the datasheets (typical = normal driving; peak = worst case, all at 
 | Load | Rail | Typical | Peak | Typical power | Peak power |
 |---|---|---|---|---|---|
 | N20 drive motor | 11.4 V | 50 mA | 350 mA | 0.57 W | 3.99 W |
-| Arduino Nano ESP32 | 11.4 V (VIN) | ~35 mA | ~105 mA | 0.40 W | 1.20 W |
+| Arduino Nano (ATmega328P) | 11.4 V (VIN, linear regulator) | ~20 mA | ~30 mA | 0.23 W | 0.34 W |
+| 4 × TOF400C | 3.3 V from the Nano (through its linear regulators, so the battery supplies the same current at 11.4 V) | 40 mA | 80 mA | 0.46 W | 0.91 W |
 | ESP32-S3-CAM + OV2640 | 5 V | 100 mA | 310 mA | 0.50 W | 1.55 W |
-| 4 × TOF400C | 5 V | 40 mA | 80 mA | 0.20 W | 0.40 W |
 | BMI160 | 5 V | 1 mA | 1.5 mA | 0.005 W | 0.008 W |
 | TB6612FNG logic | 5 V | 2 mA | 10 mA | 0.01 W | 0.05 W |
 | Steering servo | 5 V | 100 mA | 650 mA (stall) | 0.50 W | 3.25 W |
-| **5 V rail total** | 5 V | **243 mA** | **1.05 A** | 1.22 W | 5.26 W |
-| Buck losses (≈ 85 % efficiency) | — | — | — | 0.21 W | 0.93 W |
-| **Total from battery** | 11.4 V | **≈ 0.21 A** | **≈ 1.0 A** | **≈ 2.4 W** | **≈ 11.4 W** |
+| **5 V buck rail total** | 5 V | **203 mA** | **0.97 A** | 1.02 W | 4.86 W |
+| Buck losses (≈ 85 % efficiency) | — | — | — | 0.18 W | 0.86 W |
+| **Total from battery** | 11.4 V | **≈ 0.22 A** | **≈ 0.96 A** | **≈ 2.5 W** | **≈ 11.0 W** |
+
+The TOF row is counted on the battery side: a linear regulator passes the same current it delivers, so the 4 sensors cost 40 mA × 11.4 V ≈ 0.46 W from the battery, of which only 40 mA × 3.3 V ≈ 0.13 W reaches the sensors and the rest becomes heat in the Nano's regulators. Moving the sensors off the 5 V buck rail (previous design) costs about 0.2 W more at typical load; we accept it because it is small next to the motor and the servo.
 
 **What the numbers tell us**
 
-- **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.4 ≈ **1.4 h**; even at a continuous worst case it is ≈ **18 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
-- **Discharge rate:** the 1.0 A peak is ≈ 2.6 C, far below the battery's 90C rating, so voltage sag at the motor is small.
-- **Buck margin:** the 5 V rail peaks at ~1.05 A of the CN3903's 3 A, so the regulator never runs near its limit.
+- **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.5 ≈ **1.4 h**; even at a continuous worst case it is ≈ **19 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
+- **Discharge rate:** the ≈ 1.0 A peak is ≈ 2.5 C, far below the battery's 90C rating, so voltage sag at the motor is small.
+- **Buck margin:** the 5 V rail peaks at ~0.97 A of the CN3903's 3 A, so the regulator never runs near its limit.
+- **Nano regulator heat:** the Nano's 5 V linear regulator drops 11.4 V → 5 V for the Nano and the TOF sensors: (11.4 − 5) V × 60 mA ≈ **0.4 W** typical, ≈ 0.7 W at peak. It gets warm but stays within what a small regulator can dissipate in open air.
 - **Charging:** ≈ 45–50 min with a balance charger (IMAX B6AC) at 0.4 A (≈ 1C).
 
 ### 4.3 Failure points we considered
 
 | Risk | What could happen | Mitigation |
 |---|---|---|
-| Battery voltage on a 3.3 V pin | Permanent damage to the Nano ESP32 | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
+| TOF sensors draw more than the Nano's 3.3 V pin can give | The 3.3 V pin of a classic Nano comes from a small regulator (on the original board, inside the USB chip, ≈ 50 mA). Four VL53L1X peak near 80 mA, so the 3.3 V line could sag, the sensors could reset and the I²C bus could time out | Measure the 3.3 V pin with a multimeter while all four sensors are ranging. If it drops below ~3.0 V, move the TOF VIN back to the +5 V buck rail: the TOF400C modules have their own regulator and accept 3.3–5 V, so no other change is needed |
+| Nano 5 V UART into the camera's 3.3 V pins | The classic Nano's TX line is 5 V; the ESP32-S3 pins are not 5 V tolerant | Before the camera link is connected, add a resistor divider (1 kΩ / 2 kΩ) on the Nano TX → camera RX line; camera TX → Nano RX works directly (3.3 V is read as HIGH by the ATmega328P) |
+| Battery voltage on a 3.3 V pin | Permanent damage to the Nano ESP32 (it happened: journal Problem 31) | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
 | Servo stall pulls the 5 V rail down | Camera or sensors reset during a run | 3 A buck with large margin (see budget) |
 | Loose sensor wires | A TOF stops answering, I²C bus freezes | Locking JST connectors on the PCB; `Wire.setTimeOut()` in code so a frozen bus does not hang the program (journal Problems 12 and 30) |
 | All TOF sensors start with the same I²C address | Address conflict, no readings | XSHUT lines: sensors are switched on one at a time at start-up and each gets its own address (journal Problem 15) |
@@ -152,7 +159,7 @@ Values from the datasheets (typical = normal driving; peak = worst case, all at 
 | Sensor | Placement | Reasoning (field geometry) |
 |---|---|---|
 | TOF FRONT | Front centre, facing forward | Distance to the wall ahead, as a safety check and for parking. Corners are detected by the side sensors (Open) or the floor lines (Obstacle), not by the front sensor |
-| TOF LEFT / RIGHT | Sides, perpendicular to the car | Measure the distance to each wall. A sudden jump in one side reading means that wall has ended: a corner. Placed **about 2 cm higher** on the second chassis so the beam does not pass over the 10 cm wall (journal Problem 16) |
+| TOF LEFT / RIGHT | Sides, perpendicular to the car | Measure the distance to each wall. A sudden jump in one side reading means that wall has ended: a corner. Placed **1.5 cm higher** on the second chassis so the beam does not pass over the 10 cm wall (journal Problem 16) |
 | TOF BACK | Rear centre | Distance to the wall behind, used to know the position along a straight section |
 | BMI160 | Flat on the PCB, near the car's centre | Only yaw is used; mounting it flat makes the Z axis the turning axis |
 | Camera | Front, facing forward and slightly down | Sees the pillars of the next section; only a horizontal band of the image is searched so objects outside the field are ignored (journal §6) |
@@ -203,9 +210,13 @@ We used **EasyEDA Pro** (web version) because its learning curve is shorter than
   <img src="pcb_front.jpeg" alt="PCB front" height="300">
   <img src="pcb_back.jpeg" alt="PCB back" height="300">
   <br><em>Manufactured PCB, front and back.</em>
+  <br><br>
+  <img src="pcb_soldered_top.jpg" alt="Soldered PCB top" height="300">
+  <img src="pcb_soldered_back.jpg" alt="Soldered PCB back" height="300">
+  <br><em>The same PCB with every module soldered (top) and the wiring on the back, as mounted on chassis v3.</em>
 </div>
 
-The boards arrived in under two weeks and have worked without a single failure since. To reproduce them: open the [OSHWLab project](https://oshwlab.com/edu560/project_ehytvvog), choose *Order PCB*, keep 1.6 mm thickness, then solder female headers for the Nano ESP32, the BMI160, the TB6612FNG and the buck converter, and JST connectors for the external components.
+The boards arrived in under two weeks and have worked without a single failure since. To reproduce them: open the [OSHWLab project](https://oshwlab.com/edu560/project_ehytvvog), choose *Order PCB*, keep 1.6 mm thickness, then solder female headers for the Arduino Nano, the BMI160, the TB6612FNG and the buck converter, and JST connectors for the external components.
 
 ### 6.4 PCB blocks
 
@@ -226,7 +237,8 @@ The boards arrived in under two weeks and have worked without a single failure s
 
 | Component | File | Key data used |
 |---|---|---|
-| Arduino Nano ESP32 | [Arduino_nano_esp32-datasheet.pdf](datasheets/Arduino_nano_esp32-datasheet.pdf) | Pinout, VIN range, 3.3 V I/O limits |
+| Arduino Nano (classic) | [Arduino Nano documentation](https://docs.arduino.cc/hardware/nano/) | Pinout, VIN range, 3.3 V pin limit |
+| Arduino Nano ESP32 (original) | [Arduino_nano_esp32-datasheet.pdf](datasheets/Arduino_nano_esp32-datasheet.pdf) | Pinout, VIN range, 3.3 V I/O limits |
 | ESP32-S3-CAM | [GitHub: nulllaborg/esp32s3-cam](https://github.com/nulllaborg/esp32s3-cam) | Camera pin layout, PSRAM, flash size |
 | OV2640 | [OV2640DS.pdf](datasheets/OV2640DS.pdf) | Resolutions, RGB565 output |
 | VL53L1X (TOF400C) | [DS_vl53l1x.pdf](datasheets/DS_vl53l1x.pdf) | Range, timing budget, ROI, I²C address change |

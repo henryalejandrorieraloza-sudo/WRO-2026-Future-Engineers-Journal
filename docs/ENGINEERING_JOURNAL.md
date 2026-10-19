@@ -1,7 +1,7 @@
 # Engineering Journal — Software and Electronics
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
-> **Period covered:** 15 September – 5 October 2026
+> **Period covered:** 15 September – 18 October 2026
 > **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
@@ -20,9 +20,10 @@ This journal records, in chronological order, everything I worked on: what I bui
 6. [Phase 5 — Pillar detection finished (Sun 4 Oct)](#6-phase-5--pillar-detection-finished-sunday-4-october-2026)
 7. [Test tool — WRO 2026 scenario roulette](#7-test-tool--wro-2026-scenario-roulette)
 8. [Phase 6 — First tests on the new chassis (Mon 5 Oct)](#8-phase-6--first-tests-on-the-new-chassis-monday-5-october-2026)
-9. [Rules research](#9-rules-research)
-10. [Summary of problems and solutions](#10-summary-of-problems-and-solutions)
-11. [Next steps](#11-next-steps)
+9. [Phase 7 — Chassis v3, rack-and-pinion steering and silicone tyres (8–18 Oct)](#9-phase-7--chassis-v3-rack-and-pinion-steering-and-silicone-tyres-818-october-2026)
+10. [Rules research](#10-rules-research)
+11. [Summary of problems and solutions](#11-summary-of-problems-and-solutions)
+12. [Next steps](#12-next-steps)
 
 ---
 
@@ -30,9 +31,9 @@ This journal records, in chronological order, everything I worked on: what I bui
 
 | Part | Component | Connection |
 |---|---|---|
-| Main controller | Arduino Nano ESP32 (with headers) | — |
+| Main controller | Arduino Nano ESP32 (with headers) until 8 October; since then a **classic Arduino Nano (ATmega328P)**, same pinout (Problem 31) | — |
 | Drive motor | N20 DC 12 V with encoder, drives the rear wheels through a differential | TB6612FNG driver: PWMA = D6, AIN1 = D7, AIN2 = D8, STBY = tied to +5 V on the PCB (confirmed from the schematic; the D5 line in the test code is not needed) |
-| Steering | Ackermann on the front wheels, servo MG90 180° (replaced the SG90) | Signal on D9 |
+| Steering | Ackermann on the front wheels (chassis 1 and 2); **parallel rack and pinion** since chassis v3 (section 9). Servo MG90 180° (replaced the SG90) | Signal on D9 |
 | Distance sensors | 4 × TOF400C (VL53L1X chip) — replaced 4 × Sharp GP2Y0A21YK0F | I²C SDA = A4, SCL = A5 · XSHUT: FRONT = A1, BACK = A0, RIGHT = A2, LEFT = A3 |
 | Gyroscope | BMI160 | I²C SDA = A4, SCL = A5 (same bus as the TOF sensors) |
 | Start button | Push button | D10 |
@@ -298,9 +299,9 @@ I tested every component on its own before combining them.
 - **Decision:** raise the sensors about **3 cm** and mount them at **0°** in the vertical axis.
 - **Why:** at 0° the beam goes straight toward the wall instead of upward, so it no longer passes over the 10 cm wall.
 - **Status:** my teammate is building the new chassis with the sensors moved.
-- **Update (5 Oct):** on the new chassis the sensors were raised **about one finger width (~2 cm)** above their previous height. They now **detect the wall much better**. Together with the narrower measurement area found in section 8.2 (`ROI_HEIGHT = 6`), the cone no longer escapes over the wall.
+- **Update (5 Oct):** on the new chassis the sensors were raised **1.5 cm** (measured by my teammate; I first estimated it as one finger width, ~2 cm) above their previous height. They now **detect the wall much better**. Together with the narrower measurement area found in section 8.2 (`ROI_HEIGHT = 6`), the cone no longer escapes over the wall.
 
-### Problem 17 — The steering servo was damaged 🔄
+### Problem 17 — The steering servo was damaged ✅ (see Problem 33)
 
 - **What happened (3 Oct):** the current steering servo is damaged.
 - **Solution:** my teammate is building a new chassis with a new servo and with the side TOF sensors moved so they detect correctly. Planned delivery: **5 October 2026**.
@@ -632,7 +633,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 
 ### 8.3 Problems and solutions
 
-#### Problem 29 — The steering servo did not complete its movement 🔄
+#### Problem 29 — The steering servo did not complete its movement ✅ (steering redesigned, section 9)
 - **What I observed:** the servo did not reach the full left/right angles; in some tests it moved only toward one side.
 - **Probable cause:** the Ackermann linkage of the new chassis is **too tight** (too much friction), so the servo does not have the force to move it through the whole range. A second possible cause is that the servo arm was mounted far from the middle of its range, so one direction is almost at the servo's end stop.
 - **Why I did not force it:** a servo that pushes against a blocked mechanism heats up and can strip its gears. This already happened to the previous servo (Problem 17).
@@ -645,7 +646,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **Solution:** solder the wire again and fix all sensor wires with tape, hot glue or cable ties so vibration cannot pull them.
 - **Lesson:** after any mechanical work, run `tof_sensors_test` and check that the four sensors print `OK` before driving.
 
-#### Problem 31 — The Nano ESP32 overheated after a code upload ❓
+#### Problem 31 — The Nano ESP32 overheated after a code upload 🔄
 - **What happened:** the robot was powered on by its battery. I connected the USB cable and uploaded new code. The upload failed (`dfu-util: error get_status: LIBUSB_ERROR_PIPE`, and on the next attempts `No DFU capable USB device available`, exit status 74), and the **u-blox NORA-W106 module** (the module that contains the ESP32-S3 chip of the Nano) became hot. I had not changed any wiring before this.
 - **What I did:** disconnected the USB cable and the battery immediately, so a possible short circuit could not keep damaging the board.
 - **Possible causes (not confirmed yet):**
@@ -657,6 +658,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
   2. If it stays cool and the port appears → the Nano is fine and the short circuit is in the robot. With a multimeter, measure between 3.3 V and GND of the robot wiring (without the Nano) to find it.
   3. If it heats up alone → the Nano is damaged and must be replaced, **but only after** the short in the robot is found, or the new board would be damaged too.
 - **New safety rule:** to upload code, the battery is **off** and only the USB powers the Nano. Battery on only for driving tests, with the USB disconnected.
+- **Update (8 Oct):** the Nano ESP32 did not recover. It was replaced by a **classic Arduino Nano (ATmega328P)**, which fits the same PCB headers with the same pin numbers. The code was moved to the standard `Servo.h` library, which works on this board. The exact cause of the failure is still not confirmed, so the safety rule stays.
 
 #### Problem 32 — The first driving test could not be run 🔄
 - **The test:** `drive_until_left_open.ino` ([`src/hardware-tests/drive_until_left_open`](../src/hardware-tests/drive_until_left_open)). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
@@ -699,7 +701,74 @@ The turn always ends when the gyroscope says the car has rotated **exactly 90°*
 
 **Next:** implement both strategies on the Nano, tune `JUMP_THRESHOLD`, Kp/Kd and the final-straight distance on the track, and add floor-line detection to the camera code.
 
-## 9. Rules research
+## 9. Phase 7 — Chassis v3, rack-and-pinion steering and silicone tyres (8–18 October 2026)
+
+> The mechanical design in this phase was done by my teammate **Eduardo Rivadeneira**; I document it here because every change affected the software (steering limits, calibration, motor direction). All printed parts are in [`models/`](../models/README.md).
+
+### 9.1 From Ackermann to rack and pinion
+
+| Version | CAD | Printed | Steering |
+|---|---|---|---|
+| v1 | <img src="../models/iterations/cad_v1.png" height="160"> | <img src="../other/mechanical-iterations/printed_v1.jpg" height="160"> | Classic Ackermann |
+| v2 | <img src="../models/iterations/cad_v2.png" height="160"> | <img src="../other/mechanical-iterations/printed_v2.jpg" height="160"> | Ackermann with a steering rack |
+| v3 | <img src="../models/iterations/cad_v3.png" height="160"> | <img src="../other/mechanical-iterations/printed_v3.jpg" height="160"> | **Parallel steering, rack and pinion** |
+
+#### Problem 33 — The Ackermann steering destroyed three servos ✅
+- **What happened:** on chassis 1 and 2 the Ackermann linkage had many printed joints and too much friction. The servo could not complete its travel (Problem 29) and, pushing against the linkage, **three servos were damaged** (Problem 17 was the first one).
+- **Last case (10 Oct):** the new MG90 buzzed loudly and did not move after the wall-following PID tests, which used limits of 75° / 145°. That day the 3S battery was also unbalanced (the charger was only charging 2 of the 3 cells) and the rear motor did not move either, so a low voltage may have made it worse.
+- **Decision:** change the mechanism, not the servo again. Chassis v3 uses **parallel steering with a rack and pinion**: a **12-tooth pinion, module 1 mm**, on the servo moves a **module 1 mm rack** connected to both knuckles.
+- **Why:** fewer joints and almost no friction, so the servo is never blocked; the mechanism is much simpler and more reliable to print. Each degree of servo rotation moves the rack π × 12 mm / 360 ≈ 0.105 mm, always the same amount.
+- **Trade-off:** parallel steering loses the Ackermann geometry, so the inner front wheel slips a little in turns. At our mass (270 g) and speed this is small compared with a servo that breaks.
+- **Effect on the software:** new provisional values (15 Oct): centre 120°, **left limit 180°, right limit 50°** (left is now the larger angle), and on the new chassis `INVERT_STEER = true` and `MOTOR_REVERSED = true`. Tested with `servo_only_test` and `wall_keep_both_pid`.
+
+### 9.2 Other changes from v2 to v3
+
+| Change | Why |
+|---|---|
+| Tolerances corrected | Moving parts were either too loose or stuck; now they have just enough clearance to turn freely |
+| Sizes adapted in the CAD (base v3) | v2 needed improvised adaptations; now they are part of the design |
+| New camera mount and servo mount | Better fit, screwed to the base |
+| **No tape**, every joint screwed | Tape showed that the design was not finished and let the geometry move |
+| Side TOF sensors **1.5 cm** higher | Confirmed measurement of the change of Problem 16 |
+
+Final car: **13 cm long, 9.5 cm wide, 6 cm high, 270 g**. N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
+
+#### Problem 34 — A drive gear skipped when the motor reversed suddenly ✅
+- **What I observed (10 Oct):** when the motor jumped suddenly to reverse, one gear of the drive train skipped.
+- **Solution:** during a run the motor only drives **forward**; to stop it uses the short brake (not reverse). The wall-keeping sketches (`wall_keep_both_pid`, `wall_follow_nearest_pid`) only have a `motorForward()` function, so the motor can never jump into reverse.
+
+### 9.3 Custom silicone tyres
+
+The tyres are cast in printed moulds with **C25 silicone rubber** (parts A and B):
+
+| | | | |
+|---|---|---|---|
+| <img src="../other/tyres/printed_molds_1.jpg" height="130"> | <img src="../other/tyres/tyres_step_1.jpg" height="130"> | <img src="../other/tyres/tyres_step_3.jpg" height="130"> | <img src="../other/tyres/tyres_step_5.jpg" height="130"> |
+| Printed moulds | C25 silicone, parts A and B | 30 g of part A | Mixed and poured |
+
+1. Weigh **30 g** of part A.
+2. Add **23 drops** of part B. The amount comes from **B = ¾ · A** (A in grams, B in drops): ¾ × 30 = 22.5 → 23.
+3. Mix until most bubbles are gone and pour into the moulds.
+4. Wait **5–6 hours** until hard, then remove them.
+
+**Why:** more grip than printed plastic, so the car slips less when it accelerates, brakes and turns, and the gyro turns and encoder distances stay accurate. The fixed formula makes every batch the same.
+
+### 9.4 Power change: TOF sensors on the Nano's 3.3 V
+
+The four TOF400C sensors are now powered from the **3.3 V pin of the Nano** instead of the 5 V buck rail. The power budget was recalculated ([schemes §4.2](../schemes/README.md#42-power-budget)): typical ≈ 2.5 W (≈ 1.4 h per charge), peak ≈ 11.0 W. **Open risk:** the classic Nano's 3.3 V pin is meant for small loads, and four sensors peak near 80 mA. Next step: measure the 3.3 V pin with a multimeter while all four sensors are ranging; if it sags below ~3.0 V, move them back to 5 V.
+
+### 9.5 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Mobility and mechanical design | Three CAD + printed iterations, gear geometry (module 1, 12 teeth), torque and speed reasoning, trade-off Ackermann vs parallel |
+| Power and sensor architecture | Recalculated power budget and a new failure point (3.3 V pin) with a test and a fallback |
+| Systems thinking | A mechanical problem (friction) caused electrical damage (servos) and changed software constants: one decision fixed all three |
+| Reproducibility | 25 STL files, STEP assembly, tyre recipe and assembly order published in `models/` |
+
+---
+
+## 10. Rules research
 
 I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our approach is allowed:
 
@@ -711,7 +780,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 
 ---
 
-## 10. Summary of problems and solutions
+## 11. Summary of problems and solutions
 
 | # | Problem | Solution | Status |
 |---|---|---|---|
@@ -730,8 +799,8 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 13 | TOF only reached ~40 cm | Long mode, 100 ms budget, narrow ROI | ✅ |
 | 14 | Gyroscope library returned only 0 | Own register-level code | ✅ |
 | 15 | All TOF at the same address | Turn on one by one + `setAddress` (0x30–0x33) | ✅ |
-| 16 | TOF beam passed over the wall | Sensors raised ~2 cm (one finger) + ROI height 6; detection much better | ✅ |
-| 17 | Steering servo damaged | New chassis and servo; re-measure the centre | 🔄 |
+| 16 | TOF beam passed over the wall | Sensors raised 1.5 cm + ROI height 6; detection much better | ✅ |
+| 17 | Steering servo damaged | New chassis and servo; finally a new steering mechanism (Problem 33) | ✅ |
 | 18 | Generic camera example crashed | Manufacturer's example, 8 MB settings | ✅ |
 | 19 | Upload stuck at "Connecting..." | BOOT + RESET | ✅ |
 | 20 | Camera web page did not load | Drop Wi-Fi; detection through Serial | ✅ |
@@ -743,21 +812,26 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 26 | Upload port changed name / busy / disappeared | Choose the current port, one program at a time, BOOT + RESET, one board plugged in | ✅ |
 | 27 | Published web page could not use USB | Use the local `viewer.html` in Chrome or Edge | ✅ |
 | 28 | Sketch emptied while open in the Arduino IDE | Close without saving and reopen; master copy in the project | ✅ |
-| 29 | Servo did not complete its movement | Loosen the Ackermann linkage, remount the arm at 90°, calibrate with `servo_calibration` | 🔄 |
+| 29 | Servo did not complete its movement | Ackermann replaced by rack and pinion (chassis v3) | ✅ |
 | 30 | Right TOF wire came unsoldered | Solder again and fix the wires against vibration | 🔄 |
-| 31 | Nano ESP32 overheated after an upload | Disconnect; test the Nano alone; find the short in the robot; upload only with the battery off | ❓ |
+| 31 | Nano ESP32 overheated after an upload | Board replaced by a classic Nano (same pinout); upload only with the battery off; cause not confirmed | 🔄 |
 | 32 | First driving test not run | Run `drive_until_left_open` after fixing 29 and 31 | 🔄 |
+| 33 | Ackermann steering destroyed three servos | Parallel rack and pinion, 12-tooth module 1 pinion (chassis v3) | ✅ |
+| 34 | Drive gear skipped on a sudden reverse | Motor only forward during a run; stop with short brake | ✅ |
 
 ---
 
-## 11. Next steps
+## 12. Next steps
 
-- [ ] Find the cause of the Nano ESP32 overheating (test the Nano alone, then look for the short in the robot) — Problem 31.
-- [ ] Loosen the steering linkage, remount the servo arm at 90° and measure centre and limits with `servo_calibration`.
+- [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
+- [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
+- [ ] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°).
+- [ ] Measure the Nano's 3.3 V pin while the four TOF sensors are ranging (section 9.4).
+- [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
 - [ ] Repeat the ROI test with heights 7, 8 and 9, and with width 4, before fixing the final values.
 - [ ] Run `drive_until_left_open` (first driving test).
-- [x] Raise the TOF sensors (~2 cm higher): they detect the walls much better ✅
+- [x] Raise the TOF sensors (1.5 cm higher): they detect the walls much better ✅
 - [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
 - [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
 - [ ] Test the Open Challenge on the track and tune KP, KD and the jump threshold.

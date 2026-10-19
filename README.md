@@ -4,13 +4,19 @@
 
 # WRO 2026 Future Engineers — Team X67
 
-**An autonomous car built from a custom PCB, laser distance sensors, a gyroscope and our own on-board computer vision**
+## 🚗 *Enner Valencia*
+
+**An autonomous car built from a custom PCB, a 3D-printed rack-and-pinion chassis, laser distance sensors, a gyroscope and our own on-board computer vision**
 
 *Colegio Americano de Guayaquil · Ecuador*
 
 <a href="https://www.youtube.com/@SJVL67"><img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"></a>
 <a href="https://oshwlab.com/edu560/project_ehytvvog"><img src="https://img.shields.io/badge/PCB_on_OSHWLab-0A7DFF?style=for-the-badge&logo=opensourcehardware&logoColor=white"></a>
 <a href="docs/ENGINEERING_JOURNAL.md"><img src="https://img.shields.io/badge/Engineering_Journal-2E7D32?style=for-the-badge&logo=bookstack&logoColor=white"></a>
+<a href="models/README.md"><img src="https://img.shields.io/badge/3D_models_(STL)-F57C00?style=for-the-badge&logo=autodesk&logoColor=white"></a>
+
+<br><br>
+<img src="v-photos/left.jpg" alt="Enner Valencia" width="560">
 
 </div>
 
@@ -22,11 +28,12 @@ Here you will find the full engineering process (what we tried, what failed, the
 
 | | |
 |---|---|
-| **Main controller** | Arduino Nano ESP32 |
+| **Size / mass** | 13 × 9.5 × 6 cm · 270 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
+| **Main controller** | Arduino Nano (ATmega328P) |
 | **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline at ~25 fps |
 | **Sensors** | 4 × TOF400C laser distance sensors (VL53L1X), BMI160 gyroscope, motor encoder |
-| **Drive / steering** | One N20 12 V motor with encoder → rear differential · Ackermann front steering with an MG90 servo |
-| **Electronics** | Custom PCB (EasyEDA → JLCPCB) that is also the chassis base |
+| **Drive / steering** | One N20 12 V 1000 rpm motor with encoder → 1 : 1 rear differential · parallel **rack-and-pinion** steering (module 1 mm) with an MG90 servo |
+| **Chassis** | 3D-printed PLA base (v3, all joints screwed) carrying a custom PCB (EasyEDA → JLCPCB) · cast silicone tyres |
 | **Power** | 3S HV LiPo 11.4 V 380 mAh · CN3903 5 V / 3 A buck converter |
 
 ---
@@ -64,11 +71,11 @@ Here you will find the full engineering process (what we tried, what failed, the
 │   ├── hardware-tests/         ← one sketch per component
 │   ├── obstacle-challenge/     ← pillar detection + Pillar Vision Lab web tool
 │   └── tools/scenario-roulette/← generates official WRO 2026 track scenarios to test on
-├── models/                  ← files for 3D-printed parts
+├── models/                  ← 25 STL files of every printed part, renders, CAD v1–v3, tyre moulding
 ├── t-photos/                ← team photos (official and fun)
-├── v-photos/                ← vehicle photos
+├── v-photos/                ← the six official views of the vehicle + all parts laid out
 ├── video/                   ← links to the driving videos
-└── other/                   ← component pictures, PCB manufacturing steps, competition photos
+└── other/                   ← component pictures, PCB manufacturing, tyre casting, build process, retired parts
 ```
 
 | Folder | Detailed documentation |
@@ -79,7 +86,8 @@ Here you will find the full engineering process (what we tried, what failed, the
 | 🚗 Vehicle photos | [v-photos/README.md](v-photos/README.md) |
 | 👥 Team photos | [t-photos/README.md](t-photos/README.md) |
 | 🎥 Videos | [video/video.md](video/video.md) |
-| ⚙️ 3D models | [models/README.md](models/README.md) |
+| ⚙️ 3D models (25 STL), CAD iterations, tyre casting | [models/README.md](models/README.md) |
+| 🧰 Build process, retired parts | [other/README.md](other/README.md) |
 
 ---
 
@@ -98,6 +106,11 @@ This is our **first year** in the Future Engineers category. We are students of 
 | **Henry Riera Loza** | Software, sensors and computer vision, engineering journal and this repository. Robotics club since 2023 |
 | **Geovanny Li** | Computer vision research, software, strategy. Robotics club since 2023 |
 | **Henry Cercado** (coach) | Computer Science teacher and Computer Science engineer |
+
+### Our names
+
+- **Team X67.** "67" started as a joke, so we decided to give it a meaning: *if you fall 6 times, you get up 7*. The **X** is a variable: anyone can live by it.
+- **The car is called *Enner Valencia***, after the striker of Ecuador's national football team. Like him, through every drop in performance (three broken servos, a burnt board, two chassis redesigns) it always comes back, no matter how many times it falls.
 
 <div align="center">
   <img src="other/team-journey/debugging_at_nationals.jpg" width="380">
@@ -121,47 +134,88 @@ Constraints that shaped our design (from the [official rules](https://wro-associ
 
 ## 4. Vehicle photos and videos
 
-<div align="center">
-  <img src="v-photos/vehicle_top_programming.jpg" alt="Vehicle" height="380">
-  <img src="schemes/physical_wiring.jpeg" alt="Vehicle top view" height="380">
-  <br><em>The car on the bench while uploading code, and its top view with all the wiring.</em>
-</div>
+| Front | Back | Top |
+|---|---|---|
+| <img src="v-photos/front.jpg" width="200"> | <img src="v-photos/back.jpg" width="200"> | <img src="v-photos/top.jpg" width="260"> |
+| **Left** | **Right** | **Bottom** |
+| <img src="v-photos/left.jpg" width="260"> | <img src="v-photos/right.jpg" width="260"> | <img src="v-photos/bottom.jpg" width="260"> |
 
-- All vehicle photos: [v-photos](v-photos/README.md)
+- All vehicle photos with descriptions: [v-photos](v-photos/README.md)
 - Driving videos: [video/video.md](video/video.md) — [autonomous driving on YouTube](https://www.youtube.com/watch?v=J5yrJuZZ5P8)
 
 ---
 
 ## 5. Mobility and mechanical design
 
+All printed parts (25 STL files), the full STEP assembly, the CAD of every iteration and the tyre-casting process are in [models/README.md](models/README.md).
+
+<div align="center">
+  <img src="models/enner_valencia_cad.png" alt="CAD assembly" height="300">
+  <img src="v-photos/components_exploded.jpg" alt="All parts" height="300">
+  <br><em>CAD assembly of chassis v3, and every part of the real car laid out before assembly.</em>
+</div>
+
 ### 5.1 Chassis
 
-The chassis is built around our **custom PCB**: the board's outline was designed so that the steering assembly is fixed at the front and the drive assembly at the rear, with 3D-printed supports screwed to it. This keeps the car compact (the electronics are the frame), stiff (the 1.6 mm FR-4 board does not flex) and low, which lowers the centre of mass and reduces roll in corners. The battery sits flat on top, between the two axles.
+- **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
+- **Size and mass:** 13 cm long, 9.5 cm wide, 6 cm high, **270 g**. That is less than half of the allowed length and width and under 20 % of the allowed mass.
+- **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
+- **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
+- **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
 
 ### 5.2 Drive
 
-- **One N20 12 V motor with a Hall encoder** drives both rear wheels through a **differential**. A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
-- **Speed reasoning:** the N20 is rated at 1000 rpm without load. With the 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so a 1:1 transmission gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. That is far more than we need: our control loop is designed for ≈ 0.3–0.6 m/s, where the TOF sensors (one reading every 100 ms) see a new value every 3–6 cm. We therefore drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
-- **Torque reasoning:** the car is very light (small PCB chassis, 380 mAh battery), so the force needed to accelerate it is small. The micro gearbox of the N20 multiplies torque at the expense of speed, which is the right trade-off for a car that must accelerate, brake and turn every 1–2 m.
-- **Braking:** the TB6612FNG short-brake mode (both inputs HIGH) stops the motor actively, much faster and more repeatably than coasting.
+- **One N20 12 V, 1000 rpm motor with a Hall encoder** drives both rear wheels through a **differential with a 1 : 1 gear ratio** (motor gear and differential gear both 22 mm). A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
+- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so 1000 rpm at 1 : 1 gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. That is far more than we need: our control loop is designed for ≈ 0.3–0.6 m/s, where the TOF sensors (one reading every 100 ms) see a new value every 3–6 cm. We drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
+- **Torque reasoning:** to accelerate the 270 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.27 × (1 + 0.05 × 9.81) ≈ **0.40 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed.
+- **Why 1 : 1:** a reduction would give more torque that we do not need and less top speed; a step-up would make low speeds harder to control. 1 : 1 also means both gears are the same printed part size, which is simple to print and to replace.
+- **Braking:** the TB6612FNG short-brake mode (both inputs HIGH) stops the motor actively, much faster and more repeatably than coasting. The motor only drives forward during a run: a sudden reverse made one gear of the drive train skip (journal Problem 34).
 
 ### 5.3 Steering
 
-- **Ackermann geometry** on the front wheels: the inner wheel turns more than the outer wheel, so both follow circles with the same centre. This reduces tyre slip in the tight 60 cm corridors and makes the turn radius repeatable.
-- **Servo iteration:** the first SG90 servo moved inside its mount, so the same command gave different wheel angles, which cannot be fixed in code. It was replaced by a metal-gear **MG90** with the same connector and pulse range (journal Problems 8 and 17).
-- **Centre and limits are measured, not assumed:** the straight-ahead position was at 120°, not 90°, because it depends on how the arm is mounted (journal Problem 7). On the second chassis the linkage was too tight for the servo to complete its travel (journal Problem 29); the fix is to loosen the linkage and to mount the arm at 90° so both sides have the same range.
+<div align="center">
+  <img src="models/iterations/cad_v1.png" height="230">
+  <img src="models/iterations/cad_v2.png" height="230">
+  <img src="models/iterations/cad_v3.png" height="230">
+  <br><em>Steering iterations in CAD: v1 Ackermann, v2 Ackermann with a steering rack, v3 parallel rack and pinion (final).</em>
+</div>
 
-### 5.4 Wheels
+**Final mechanism (v3):** the MG90 servo turns a **12-tooth pinion with module 1 mm**, which moves a **module 1 mm rack** that pushes both steering knuckles together (parallel steering).
 
-Custom 41 mm wheels with a 5 mm silicone tread, for grip on the field mat and to reduce slipping when braking.
+- **Geometry:** the pitch diameter of the pinion is m × z = 1 × 12 = **12 mm**, so each degree of servo rotation moves the rack π × 12 / 360 ≈ **0.105 mm**. The relation between servo angle and rack position is linear and has no dead zone, so the angle we command is the angle we get.
+- **Why we left Ackermann:** in theory Ackermann is better, because the inner wheel turns more than the outer one and neither tyre slips. In practice our Ackermann linkages (v1 and v2) had too many printed joints and too much friction: the servo could not complete its travel (journal Problem 29) and **three servos were damaged** pushing against the linkage (journal Problems 17 and 33).
+- **Trade-off we accepted:** with parallel steering both front wheels turn the same angle, so in a turn the inner wheel slips a little. On a 270 g car at 0.3–0.6 m/s that slip is small, and the 1 : 1 differential at the rear already removes the larger scrubbing of the driven wheels. We traded a small geometric error for a mechanism that is **reliable, easy to print and does not break servos**.
+- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_calibration` after any mechanical change (on v3: centre 120°, left limit 180°, right limit 50°, provisional).
+
+### 5.4 Wheels and tyres
+
+The four 36 mm hubs are printed, and the **tyres are cast on them with C25 silicone rubber** in printed moulds (≈ 41 mm outside diameter). Silicone grips the field mat much better than printed plastic, which reduces slipping when the car accelerates, brakes and turns, so the encoder distance and the gyro turns stay accurate.
+
+| Moulds | Mix | Pour | Result |
+|---|---|---|---|
+| <img src="other/tyres/printed_molds_2.jpg" width="170"> | <img src="other/tyres/tyres_step_3.jpg" width="170"> | <img src="other/tyres/tyres_step_5.jpg" width="170"> | <img src="v-photos/right.jpg" width="200"> |
+
+Recipe: **30 g of part A + 23 drops of part B**, from the formula **B = ¾ · A** (drops of catalyst per gram of base), mixed until most bubbles are gone, poured and cured **5–6 hours**. Using a fixed formula makes every batch cure the same, so the four tyres have the same hardness. Full step-by-step with photos: [models/README.md §4](models/README.md#4-custom-silicone-tyres).
 
 ### 5.5 Iterations that changed the mechanics
 
 | Version | Change | Reason (data / test) |
 |---|---|---|
-| Chassis 1 → 2 | Side TOF sensors raised ~2 cm | The beam passed over the 10 cm wall and read the far side of the field (journal Problem 16). After the change the walls are detected reliably |
+| Chassis 1 → 2 | Side TOF sensors raised **1.5 cm** | The beam passed over the 10 cm wall and read the far side of the field (journal Problem 16). After the change the walls are detected reliably |
 | Chassis 1 → 2 | SG90 → MG90 servo | Servo moved inside its mount (journal Problem 8) |
-| Chassis 2 | Steering linkage to be loosened | Servo could not complete its travel (journal Problem 29) |
+| v1 → v2 | Ackermann with tie rods → Ackermann driven by a steering rack | First step toward moving both wheels from a single rack |
+| v2 → v3 | Ackermann → **parallel rack and pinion** (12 teeth, module 1 mm) | The linkage was too tight; three servos were damaged (journal Problems 17, 29, 33) |
+| v2 → v3 | Tolerances corrected in the CAD | Moving parts were either loose or stuck |
+| v2 → v3 | Sizes adapted in the CAD instead of improvised fixes; new camera and servo mounts | v2 needed hand adaptations and tape |
+| v2 → v3 | Tape removed, every joint screwed | Tape showed the design was not complete and let the geometry change |
+| Printed → cast | Silicone tyres | More grip on the mat; repeatable recipe |
+
+<div align="center">
+  <img src="other/mechanical-iterations/printed_v1.jpg" height="200">
+  <img src="other/mechanical-iterations/printed_v2.jpg" height="200">
+  <img src="other/mechanical-iterations/printed_v3.jpg" height="200">
+  <br><em>Printed chassis v1, v2 and v3.</em>
+</div>
 
 ---
 
@@ -173,21 +227,23 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 
 ```
  3S HV LiPo 11.4 V ──[switch]──┬──► TB6612FNG ──► N20 drive motor
-                               ├──► Arduino Nano ESP32 (VIN)
-                               └──► CN3903 buck 5 V / 3 A ──► camera board, 4 × TOF, BMI160, servo, encoder
+                               ├──► Arduino Nano (VIN) ──► 3.3 V pin ──► 4 × TOF400C
+                               └──► CN3903 buck 5 V / 3 A ──► camera board, BMI160, servo, encoder
 ```
 
 | | Typical | Peak |
 |---|---|---|
-| Current from the battery | ≈ 0.21 A | ≈ 1.0 A |
-| Power | ≈ 2.4 W | ≈ 11.4 W |
-| Run time on one charge | ≈ 1.4 h | ≈ 18 min |
+| Current from the battery | ≈ 0.22 A | ≈ 0.96 A |
+| Power | ≈ 2.5 W | ≈ 11.0 W |
+| Run time on one charge | ≈ 1.4 h | ≈ 19 min |
 
-The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1 A peak of the 5 V rail, so a servo stall cannot reset the camera or the sensors.
+The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1 A peak of the 5 V rail, so a servo stall cannot reset the camera.
 
-### 6.2 Wiring / pin map (Arduino Nano ESP32)
+**The TOF sensors take 3.3 V from the Nano**, not from the 5 V buck rail. Their laser pulses are then on a different rail from the servo, so a servo current peak cannot disturb a distance reading. The cost: four sensors peak near 80 mA, which is more than the small 3.3 V regulator of a classic Nano is rated for. We check the 3.3 V pin with a multimeter while all four sensors are ranging; if it sags, the TOF400C modules can go back to the 5 V rail with no other change (they accept 3.3–5 V). Full budget and failure analysis: [schemes/README.md §4](schemes/README.md#4-power-system).
 
-Pins are always written with the `D` prefix in code: without it the Nano ESP32 uses a different GPIO number (journal Problem 9).
+### 6.2 Wiring / pin map (Arduino Nano)
+
+The PCB was designed for the Nano ESP32; after that board was damaged (journal Problem 31) we use a **classic Arduino Nano (ATmega328P)**, which has the same pin positions, so the PCB did not change.
 
 | Device | Signal | Pin |
 |---|---|---|
@@ -209,7 +265,7 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 | Sensor | Placement | Why |
 |---|---|---|
 | **TOF FRONT** | Front centre | Distance to the wall ahead (safety check and parking) |
-| **TOF LEFT / RIGHT** | Both sides, perpendicular | Distance to each wall; a sudden jump means the wall ended → corner. Raised ~2 cm so the beam does not pass over the 10 cm wall |
+| **TOF LEFT / RIGHT** | Both sides, perpendicular | Distance to each wall; a sudden jump means the wall ended → corner. Raised **1.5 cm** so the beam does not pass over the 10 cm wall |
 | **TOF BACK** | Rear centre | Position along a straight section |
 | **BMI160** | Flat on the PCB | Yaw (Z axis) for straight driving and exact 90° turns |
 | **Camera** | Front, slightly down | Sees the pillars of the next section |
@@ -238,7 +294,7 @@ flowchart LR
         B --> C[BFS blob search<br>+ front-pillar split]
         C --> D[Closest pillar<br>+ side to pass]
     end
-    subgraph NANO["Arduino Nano ESP32 — control"]
+    subgraph NANO["Arduino Nano — control"]
         E[4 × TOF<br>distances] --> H[State machine]
         F[BMI160<br>heading] --> H
         G[Encoder<br>distance] --> H
@@ -249,7 +305,7 @@ flowchart LR
 ```
 
 - **Camera board:** all image processing. It sends only a few bytes per picture (colour of the closest pillar, its position, whether it is already on the correct side), so the link stays fast.
-- **Nano ESP32:** sensors, control loops and actuators. It never processes images, so its loop timing stays fast and predictable.
+- **Arduino Nano:** sensors, control loops and actuators. It never processes images, so its loop timing stays fast and predictable.
 
 ### 7.2 Modules
 
@@ -258,13 +314,14 @@ flowchart LR
 | TOF driver | Nano | Address assignment through XSHUT, continuous ranging, ROI, median filter, offsets | [`tof_sensors_test`](src/hardware-tests/tof_sensors_test) |
 | Gyro driver | Nano | BMI160 read through I²C registers (no library), offset calibration, yaw integration (`yaw += rate × dt`) | [`gyro_yaw_test`](src/hardware-tests/gyro_yaw_test) |
 | Motor control | Nano | TB6612FNG forward / reverse / coast / short brake with PWM | [`rear_motor_loop_test`](src/hardware-tests/rear_motor_loop_test) |
-| Steering | Nano | Servo pulse generated by hand (500–2500 µs at 50 Hz), calibrated centre and limits | [`servo_simple`](src/hardware-tests/servo_simple), [`servo_calibration`](src/hardware-tests/servo_calibration) |
+| Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz); on the Nano ESP32 the pulse was generated by hand. Calibrated centre and limits | [`servo_simple`](src/hardware-tests/servo_simple), [`servo_calibration`](src/hardware-tests/servo_calibration), [`servo_only_test`](src/hardware-tests/servo_only_test) |
+| Wall keeping | Nano | PID that keeps the start distances to both walls, or to the nearest wall | [`wall_keep_both_pid`](src/hardware-tests/wall_keep_both_pid), [`wall_follow_nearest_pid`](src/hardware-tests/wall_follow_nearest_pid) |
 | First drive test | Nano | Drive straight and brake when the left wall ends | [`drive_until_left_open`](src/hardware-tests/drive_until_left_open) |
 | Pillar detection | Camera | HSV → blobs → closest pillar → side to pass; streams picture and mask over USB | [`pillar_viewer.ino`](src/obstacle-challenge/pillar_viewer) |
 | Pillar Vision Lab | PC browser | Shows what the camera sees, runs the same algorithm in JavaScript and checks it matches, live parameter tuning | [`viewer.html`](src/obstacle-challenge/pillar_viewer/viewer.html) |
 | Scenario Roulette | PC browser | Draws valid official track layouts to test on and scores Open Challenge attempts | [`index.html`](src/tools/scenario-roulette/index.html) |
 
-**Why we wrote our own drivers:** the BMI160 library we tried only returned zeros without reporting any error (journal Problem 14), and the servo libraries did not work with our board core (journal Problem 6). Our register-level and hand-pulse versions are short, fully understood and faster.
+**Why we wrote our own drivers:** the BMI160 library we tried only returned zeros without reporting any error (journal Problem 14), and the servo libraries did not work with the Nano ESP32 core (journal Problem 6; on the classic Nano the standard `Servo.h` works). Our register-level and hand-pulse versions are short, fully understood and faster.
 
 **Why our own vision code instead of OpenCV:** OpenCV does not run on a microcontroller without an operating system; a Raspberry Pi would add weight, a second battery and a long boot time to a 30 × 20 cm car; and colour detection does not need a neural network. Our pipeline runs at ~25 fps and was verified pixel by pixel against its JavaScript copy. The full comparison (OpenMV, Pixy2, HuskyLens, Raspberry Pi) is in [journal §6.2](docs/ENGINEERING_JOURNAL.md#62-why-we-wrote-the-vision-ourselves-instead-of-using-opencv).
 
@@ -385,7 +442,10 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 |---|---|---|
 | Camera on its own board | Software, power | Nano loop stays fast; costs ~0.5 W more and a UART link |
 | PCB as chassis | Mechanics, electronics, time | Very compact and reliable, but every revision takes ~2 weeks to arrive from China |
-| TOF height on the chassis | Sensors, software | 2 cm higher fixed the readings over the wall without any code change |
+| TOF height on the chassis | Sensors, software | 1.5 cm higher fixed the readings over the wall without any code change |
+| Steering mechanism | Mechanics, electronics, software | Ackermann friction broke three servos; rack and pinion protects the servo and makes angle → wheel position linear |
+| Car size and mass (13 × 9.5 cm, 270 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
+| TOF on the Nano's 3.3 V pin | Power, sensors | Isolated from servo peaks, but limited by the Nano's small regulator |
 | Servo mount angle | Mechanics, software | Steering centre must be measured in software after every mechanical change |
 | Battery voltage directly to the motor | Power, control | Speed changes as the battery discharges, so turns are controlled by gyro angle, not time |
 
@@ -400,8 +460,13 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Floor lines for corners in the Obstacle Challenge | Side TOF jumps | Pillars near the walls could create false jumps; the lines are fixed by the rules |
 | "Correct third" of the image to pass pillars | Estimating pillar distance and planning a path | Bearing is read directly from the image, no calibration needed, simple to tune and explain |
 | Our own BMI160 driver | DFRobot library | The library returned only zeros, without errors (journal Problem 14) |
-| Hand-generated servo pulse | ESP32Servo / LEDC | Libraries did not work with our board core (journal Problem 6) |
+| Hand-generated servo pulse (on the Nano ESP32) | ESP32Servo / LEDC | Libraries did not work with that board core (journal Problem 6) |
 | MG90 metal-gear servo | SG90 | SG90 moved in its mount (journal Problem 8) |
+| Parallel rack-and-pinion steering | Ackermann linkage | Ackermann friction stopped the servo and damaged three servos (journal Problems 17, 29, 33); the small slip of parallel steering is acceptable at our mass and speed |
+| 1 : 1 differential | Extra gear reduction | The 270 g car needs only ≈ 8 mN·m at the wheel; 1 : 1 keeps top speed and uses identical, easy-to-print gears |
+| Cast silicone tyres | Printed or O-ring tyres | More grip on the mat; repeatable recipe (B = ¾ A) gives four identical tyres |
+| Screws on every joint | Tape and hand fixes | Geometry stays the same after crashes and disassembly |
+| Classic Arduino Nano | New Nano ESP32 | Same footprint (no new PCB); standard `Servo.h` works; available immediately after the ESP32 was damaged |
 | Own vision on ESP32-S3 | OpenCV on Raspberry Pi, Pixy2, HuskyLens | Weight, boot time, second battery, and we can explain and tune every step (journal §6.2) |
 | Custom PCB | Perforated prototype board | Prototype board too bulky; PCB is cleaner and doubles as the chassis |
 | Buck converter | Linear regulator | A linear regulator would waste ~3 W as heat |
@@ -410,14 +475,18 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 
 | Risk | Mitigation |
 |---|---|
-| Nano ESP32 damaged by a wrong voltage (journal Problem 31) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
+| Main board damaged by a wrong voltage (journal Problem 31: the Nano ESP32 was lost) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
+| TOF sensors draw more than the Nano's 3.3 V pin can give | Measure the 3.3 V pin under load; fallback: TOF VIN to the 5 V buck rail |
+| Classic Nano (5 V) TX into the camera's 3.3 V RX | Resistor divider on that line before the camera link is connected |
+| Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin |
+| Drive gear skips on a sudden reverse (journal Problem 34) | Motor only drives forward during a run; stops with short brake |
 | I²C bus freezes and hangs the program (journal Problem 12) | `Wire.setTimeOut(50)`; check connectors; each sensor tested alone first |
 | Loose sensor wire (journal Problem 30) | Locking connectors on the PCB; hardware tests before every session |
 | Lighting at the venue differs from home | Colour thresholds re-tuned on site with Pillar Vision Lab in minutes |
 | Camera sees objects outside the field | Search only a horizontal band of the image |
 | Steering not centred after a mechanical change | Re-run `servo_calibration` after any change to the steering |
 
-The complete list of the **32 problems** we found, with their causes and solutions, is in [journal §10](docs/ENGINEERING_JOURNAL.md#10-summary-of-problems-and-solutions).
+The complete list of the **34 problems** we found, with their causes and solutions, is in [journal §11](docs/ENGINEERING_JOURNAL.md#11-summary-of-problems-and-solutions).
 
 ---
 
@@ -448,22 +517,23 @@ Every component is tested alone before it is joined to the rest:
 
 1. Order the PCB from the [OSHWLab project](https://oshwlab.com/edu560/project_ehytvvog) (1.6 mm).
 2. Buy the components in the [BOM](schemes/README.md#1-bill-of-materials-bom).
-3. Solder headers and connectors, then wire the external components following the [wiring diagram](schemes/README.md#3-wiring-diagram).
-4. Print the supports in [models](models/README.md) and mount the steering at the front and the drive at the rear of the PCB.
+3. Print the 25 parts in [models/stl](models/stl) (PLA) and cast the four silicone tyres ([recipe](models/README.md#4-custom-silicone-tyres)).
+4. Assemble the drive train, the steering and the sensor brackets on the printed base following the [assembly order](models/README.md#5-assembly-order).
+5. Solder headers and connectors on the PCB, mount it on its supports and wire the external components following the [wiring diagram](schemes/README.md#3-wiring-diagram).
+6. Run the [hardware tests](src/hardware-tests) one by one, then `servo_calibration` to measure the steering centre.
 
 ### 12.2 Software
 
 - **Arduino IDE 2.x**
-- Board packages (*Tools → Board → Boards Manager*): **Arduino ESP32 Boards** (by Arduino) for the Nano ESP32; **esp32** (by Espressif) for the ESP32-S3-CAM.
-- Library (*Sketch → Include Library → Manage Libraries*): **VL53L1X** by **Pololu**. The BMI160 and the servo need no library.
+- Board packages (*Tools → Board → Boards Manager*): **Arduino AVR Boards** (built in) for the Arduino Nano; **esp32** (by Espressif) for the ESP32-S3-CAM.
+- Library (*Sketch → Include Library → Manage Libraries*): **VL53L1X** by **Pololu**. `Servo.h` and `Wire.h` come with the IDE; the BMI160 needs no library (own driver).
 
-### 12.3 Upload to the Nano ESP32
+### 12.3 Upload to the Arduino Nano
 
 1. Open the sketch (*File → Open*, choose the `.ino`). Each sketch is in a folder with its own name, as the Arduino IDE requires.
-2. *Tools → Board → Arduino ESP32 Boards → **Arduino Nano ESP32***, and choose the port.
+2. *Tools → Board → Arduino AVR Boards → **Arduino Nano***; *Tools → Processor → **ATmega328P*** (choose **ATmega328P (Old Bootloader)** if the upload fails with `not in sync`); choose the port.
 3. **Battery off**, USB connected. Click *Upload*.
-4. If the upload fails with `dfu-util` errors: double-press **RESET** (the LED "breathes" green), select the port again and upload.
-5. Serial Monitor at **115200** baud.
+4. Serial Monitor at **115200** baud.
 
 ### 12.4 Upload to the ESP32-S3-CAM
 
@@ -492,8 +562,10 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | Gyroscope heading | ✅ Working (own driver) |
 | Drive motor through TB6612FNG | ✅ Tested |
 | Pillar detection | ✅ Finished and tested on the robot |
-| Steering on chassis 2 | 🔄 Linkage adjustment and calibration |
-| Open Challenge program on chassis 2 | 🔄 Integration |
+| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | ✅ Built (25 STL files published) |
+| Steering calibration on v3 | 🔄 Provisional centre 120°, limits 180° / 50° |
+| Wall-keeping PID on v3 | 🔄 Tuning (`wall_keep_both_pid`) |
+| Open Challenge program on chassis v3 | 🔄 Integration |
 | Open Challenge final-straight and stop after 12 corners | 🔄 Integration |
 | Obstacle: correct-third steering, floor-line corners | ⏳ Next |
 | Camera → Nano UART link | ⏳ Next |

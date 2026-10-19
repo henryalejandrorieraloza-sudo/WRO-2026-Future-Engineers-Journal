@@ -2,6 +2,16 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v0.7 — 18 October · Chassis v3, 3D models and tyres
+- **3D models published:** 25 STL files of every printed part in `models/stl/` with a render of each part, the STEP assembly link, the CAD of chassis v1, v2 and v3, printing notes and the assembly order (`models/README.md`).
+- **Steering iteration documented:** v1 Ackermann → v2 Ackermann with a steering rack → v3 parallel **rack and pinion** (12-tooth pinion, module 1 mm). Reason: the Ackermann linkage damaged three servos (journal Problem 33).
+- **Custom silicone tyres:** casting process with C25 silicone in printed moulds, formula B = ¾ A (30 g → 23 drops), 5–6 h cure (`models/README.md §4`, `other/tyres/`).
+- **Six official vehicle views** of the final car plus all parts laid out (`v-photos/`). Size 13 × 9.5 × 6 cm, mass 270 g.
+- **Power:** TOF sensors now powered from the Nano's 3.3 V pin; power budget recalculated (≈ 2.5 W typical, ≈ 11.0 W peak, ≈ 1.4 h per charge) and new failure points (3.3 V pin current, 5 V UART into the 3.3 V camera).
+- **Corrections:** side TOF sensors raised 1.5 cm (not ~2 cm); main controller is the classic Arduino Nano everywhere in the docs; mechanical section rewritten with torque reasoning, 1 : 1 differential, gear geometry and the Ackermann vs parallel trade-off.
+- Team and car names explained (Team X67, *Enner Valencia*). Build-process photos, soldered PCB and retired components added (`other/`, `schemes/`).
+- Journal: Phase 7 (section 9), Problems 33–34; Problems 17 and 29 closed.
+
 ## v0.6 — 15 October · Pinion-and-rack steering on the classic Nano
 - Steering changed from Ackermann to a parallel pinion-and-rack mechanism driven by the MG90 servo. Provisional values: centre 120°, left limit 180°, right limit 50° (left is now the larger angle).
 - Main board is now a classic Arduino Nano (ATmega328P) after the Nano ESP32 was damaged.

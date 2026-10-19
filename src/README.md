@@ -6,7 +6,7 @@ The car uses two programmable boards:
 
 | Board | Role |
 |---|---|
-| **Arduino Nano ESP32** | Main controller: TOF distance sensors, BMI160 gyroscope, drive motor (TB6612FNG) and steering servo |
+| **Arduino Nano** (classic ATmega328P since 8 Oct; Nano ESP32 before) | Main controller: TOF distance sensors, BMI160 gyroscope, drive motor (TB6612FNG) and steering servo |
 | **ESP32-S3 CAM** (emakefun, OV2640) | Vision: detects the red and green pillars and decides on which side to pass |
 
 ## hardware-tests
