@@ -645,7 +645,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **What I observed:** the right sensor stopped answering (TIMEOUT). One of its wires had come off its solder joint.
 - **Why it matters:** the sensor itself is probably fine, but a loose wire on a moving car can touch another pin and cause a short circuit (see Problem 31).
 - **Solution:** solder the wire again and fix all sensor wires with tape, hot glue or cable ties so vibration cannot pull them.
-- **Lesson:** after any mechanical work, run `tof_sensors_test` and check that the four sensors print `OK` before driving.
+- **Lesson:** after any mechanical work, run `tof_gyro_sensors_test` and check that the four sensors print `OK` before driving.
 
 #### Problem 31 — The Nano ESP32 overheated after a code upload 🔄
 - **What happened:** the robot was powered on by its battery. I connected the USB cable and uploaded new code. The upload failed (`dfu-util: error get_status: LIBUSB_ERROR_PIPE`, and on the next attempts `No DFU capable USB device available`, exit status 74), and the **u-blox NORA-W106 module** (the module that contains the ESP32-S3 chip of the Nano) became hot. I had not changed any wiring before this.
