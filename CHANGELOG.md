@@ -2,6 +2,12 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v0.9 — 20 October · Corner detection with the front sensor (in testing)
+- Added `wall_follow_gyro_corner_front`: the side TOF sensors only **detect** the corner (reading > 3000 mm, 3 valid readings in a row → `cornerDetected = true`, turn side saved); the **front** TOF decides **when** to brake (front < `FRONT_STOP_MM`, 2 valid readings in a row). After the corner is detected the car stops following the wall and drives straight with the gyroscope.
+- Why: the side sensors are angled about 30° forward, so they see the opening L × tan 30° ≈ 0.58 × L before the wall really ends (L = distance to the wall). Braking or turning on the side reading alone would happen at a different place each time.
+- Setbacks found while building it: (1) treating invalid TOF readings (-1) as "open" stopped the car at the start even with an impossible threshold → invalid readings are now ignored; (2) a counter set to 100000 overflowed the Nano's 16-bit `int` (max 32 767) and became negative, so the car stopped immediately; (3) side readings above the opening threshold no longer enter the distance PID.
+- Current test values: `OPEN_THRESHOLD_MM = 3000`, `FRONT_STOP_MM = 4000`, `MAX_VALID_MM = 4000`. Tested sensor: `front_tof_test`-style raw readout (prints the exact `range_mm`).
+
 ## v0.8 — 20 October · Smooth wall following with the gyroscope
 - **Validated on the track:** `wall_follow_nearest_gyro` keeps the distance to the nearest wall straight and smooth at `MOTOR_SPEED = 60`.
 - Two-loop controller: the side TOF gives a small target heading (max 8°), the BMI160 gyroscope steers to it about 200 times per second.
