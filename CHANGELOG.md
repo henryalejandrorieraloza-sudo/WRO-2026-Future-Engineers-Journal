@@ -2,6 +2,13 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v0.8 — 20 October · Smooth wall following with the gyroscope
+- **Validated on the track:** `wall_follow_nearest_gyro` keeps the distance to the nearest wall straight and smooth at `MOTOR_SPEED = 60`.
+- Two-loop controller: the side TOF gives a small target heading (max 8°), the BMI160 gyroscope steers to it about 200 times per second.
+- Iterations documented: zigzag (KP too high) → too slow (too much smoothing) → S-shaped waves (a distance sensor cannot measure heading) → late correction (delay) → constant offset (KI) → gyroscope.
+- TOF timing budget 33 ms and non-blocking reads (`dataReady()`); Serial output limited to 10 Hz.
+- Journal: Phase 8 (section 10), Problems 35–39.
+
 ## v0.7 — 18 October · Chassis v3, 3D models and tyres
 - **3D models published:** 25 STL files of every printed part in `models/stl/` with a render of each part, the STEP assembly link, the CAD of chassis v1, v2 and v3, printing notes and the assembly order (`models/README.md`).
 - **Steering iteration documented:** v1 Ackermann → v2 Ackermann with a steering rack → v3 parallel **rack and pinion** (12-tooth pinion, module 1 mm). Reason: the Ackermann linkage damaged three servos (journal Problem 33).

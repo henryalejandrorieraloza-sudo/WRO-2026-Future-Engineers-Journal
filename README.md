@@ -486,7 +486,7 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Camera sees objects outside the field | Search only a horizontal band of the image |
 | Steering not centred after a mechanical change | Re-run `servo_calibration` after any change to the steering |
 
-The complete list of the **34 problems** we found, with their causes and solutions, is in [journal §11](docs/ENGINEERING_JOURNAL.md#11-summary-of-problems-and-solutions).
+The complete list of the **39 problems** we found, with their causes and solutions, is in [journal §12](docs/ENGINEERING_JOURNAL.md#12-summary-of-problems-and-solutions).
 
 ---
 

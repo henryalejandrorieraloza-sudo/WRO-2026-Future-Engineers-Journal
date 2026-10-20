@@ -24,6 +24,7 @@ One sketch per component, used to validate each part of the car on its own befor
 | [`servo_only_test`](hardware-tests/servo_only_test) | Nano (classic) | Steering only (pinion + rack): slow sweep centre → left → centre → right to check that the servo never pushes against the ends. Uses `Servo.h` |
 | [`wall_follow_nearest_pid`](hardware-tests/wall_follow_nearest_pid) | Nano (classic) | Averages 10 readings of each side TOF, picks the **nearest** wall and keeps that same distance with a PID while driving forward |
 | [`wall_keep_both_pid`](hardware-tests/wall_keep_both_pid) | Nano (classic) | Keeps the **left and right** distances measured at the start (does not center): drift = (errorL − errorR) / 2, corrected with a PID |
+| [`wall_follow_nearest_gyro`](hardware-tests/wall_follow_nearest_gyro) | Nano (classic) | ✅ **Validated 20 Oct.** Keeps the distance to the **nearest** wall, straight and smooth: distance error → small target heading (max 8°), BMI160 gyroscope → steering. Fixes the zigzag and S-shaped waves of the distance-only PID |
 | [`camera_webserver_emakefun`](hardware-tests/camera_webserver_emakefun) | ESP32-S3 CAM | Manufacturer's camera web server, used only to check the camera on the bench (needs a 2.4 GHz Wi-Fi network and the other files of the manufacturer's example) |
 
 ## obstacle-challenge

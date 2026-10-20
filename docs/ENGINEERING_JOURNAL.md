@@ -1,7 +1,7 @@
 # Engineering Journal — Software and Electronics
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
-> **Period covered:** 15 September – 18 October 2026
+> **Period covered:** 15 September – 20 October 2026
 > **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
@@ -21,9 +21,10 @@ This journal records, in chronological order, everything I worked on: what I bui
 7. [Test tool — WRO 2026 scenario roulette](#7-test-tool--wro-2026-scenario-roulette)
 8. [Phase 6 — First tests on the new chassis (Mon 5 Oct)](#8-phase-6--first-tests-on-the-new-chassis-monday-5-october-2026)
 9. [Phase 7 — Chassis v3, rack-and-pinion steering and silicone tyres (8–18 Oct)](#9-phase-7--chassis-v3-rack-and-pinion-steering-and-silicone-tyres-818-october-2026)
-10. [Rules research](#10-rules-research)
-11. [Summary of problems and solutions](#11-summary-of-problems-and-solutions)
-12. [Next steps](#12-next-steps)
+10. [Phase 8 — Smooth wall following with the gyroscope (20 Oct)](#10-phase-8--smooth-wall-following-with-the-gyroscope-tuesday-20-october-2026)
+11. [Rules research](#11-rules-research)
+12. [Summary of problems and solutions](#12-summary-of-problems-and-solutions)
+13. [Next steps](#13-next-steps)
 
 ---
 
@@ -768,7 +769,63 @@ The four TOF400C sensors are now powered from the **3.3 V pin of the Nano** inst
 
 ---
 
-## 10. Rules research
+## 10. Phase 8 — Smooth wall following with the gyroscope (Tuesday 20 October 2026)
+
+> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](../src/hardware-tests/wall_follow_nearest_gyro).
+
+The goal of the day was simple: at the start, pick the nearest side wall and keep exactly that distance, without zigzag and without slowing the car down. It took five versions to get there. Each version fixed one problem and showed the next one.
+
+### 10.1 Iterations, in order
+
+| Version | What changed | What the car did |
+|---|---|---|
+| 1. `wall_follow_nearest_pid` (15 Oct) | PID on the side distance, KP 0.5, KD 0.03, ±2 cm dead band | **Zigzag** (Problem 35) |
+| 2. Smooth PID | KP 0.2, distance filter, servo limited to 2° per loop, max correction 25°, soft dead band | No zigzag, but **too slow** to correct |
+| 3. Smooth PD v2 | KP 0.35, KD 0.08 on a filtered derivative, servo 5° per loop | Faster, but it moved **like a river**: long S-shaped waves (Problem 36) |
+| 4. Less delay | TOF budget 50 → 33 ms, filters faster, servo 10° per loop, no dead band, KP 0.4, KD 0.12 | Corrected sooner, but stayed **a bit to one side** (Problem 37) |
+| 5. + KI | KI 0.03 with a cap of 15° | Better, but still a small wave (Problem 38) |
+| 6. **Gyroscope** ✅ | Two loops: distance → small target heading, gyroscope → steering | **Straight and smooth** |
+
+### 10.2 Problems and solutions
+
+#### Problem 35 — Zigzag while following the wall ✅
+- **What happened:** with KP = 0.5, a drift of only 4 cm turned the servo 20°. The car overshot the reference again and again.
+- **First fix:** lower KP, filter the readings and limit how fast the servo can move. The zigzag disappeared, but the car became too slow to correct.
+
+#### Problem 36 — The car moved like a river (long S-shaped waves) ✅ (solved in Problem 38)
+- **Why it happened:** the side TOF measures **distance**, not **where the car is pointing**. Inside the dead band the servo went back to the centre while the car was still tilted, so it crossed the band diagonally and overshot on the other side. When the car is tilted, the TOF also measures diagonally and the wall looks farther than it is, which makes the next correction too big.
+- **Lesson:** the D term only "sees" the tilt through how the distance changes, which is slow and noisy.
+
+#### Problem 37 — Too much delay: the correction arrived late ✅
+- **What happened:** every smoothing step added delay: 50 ms per TOF measurement, slow filters and the servo speed limit. When the car finally corrected, it was already far, and the correction came as a sudden "whip".
+- **Fix:** timing budget 33 ms (minimum in Long mode), faster filters (0.8 distance / 0.5 derivative), servo 10° per loop, no dead band. Then a small KI (0.03, capped at 15°) removed the constant offset to one side.
+
+#### Problem 38 — A side distance sensor alone cannot drive perfectly straight ✅
+- **Decision:** use the **BMI160 gyroscope**, which measures the heading directly, in a **two-loop (cascade) controller**:
+  1. **Outer loop (distance, every TOF reading):** the distance error asks for a **small target heading**, at most **8°** toward or away from the wall (`K_DIST = 0.08`, `KI_DIST = 0.02`).
+  2. **Inner loop (gyroscope, about 200 times per second):** steers the car to that heading (`K_HEADING = 2.0`) and brakes the rotation (`K_RATE = 0.15`).
+- **Why it works:** the gyroscope corrects as soon as the car starts to rotate, **before** the distance changes. When the car reaches the right distance, the target heading returns to 0° and the gyroscope straightens it, so it does not overshoot.
+- **Other details:** the gyroscope is calibrated for 1.5 s with the car still (300 samples); the TOF is read only when it has new data (`dataReady()`), so the loop never waits; the Serial Monitor prints only 10 times per second so printing does not slow the control loop.
+- **Signs checked before driving:** turning the car left by hand must make `yaw` go up (`YAW_REVERSED`), and the wheels must steer the other way (`STEER_LEFT_IS_BIGGER = false` on our car).
+
+#### Problem 39 — Upload failed: the port disappeared ✅
+- **Error:** `cannot open port /dev/cu.usbserial-310: No such file or directory`. The sketch compiled correctly (12 448 bytes, 40 % of the Nano).
+- **Cause:** the Nano had reconnected with a different port name.
+- **Fix:** choose the current port again in *Tools → Port*; upload with the battery, motor and servo disconnected (same rule as Problem 26).
+
+### 10.3 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Software and algorithms | Five measured iterations from a simple PID to a cascade controller, each with the reason for the change |
+| Systems thinking | The limit was not the gains but the sensor: a distance sensor cannot measure heading, so a second sensor (gyroscope) solved it |
+| Reproducibility | All gains and signs are grouped at the top of the sketch, with the test to check each sign |
+
+**Next:** stop the car with the short brake when a side distance becomes larger than a threshold (the wall ended → a corner), as the first step of the 90° gyro turn.
+
+---
+
+## 11. Rules research
 
 I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our approach is allowed:
 
@@ -780,7 +837,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 
 ---
 
-## 11. Summary of problems and solutions
+## 12. Summary of problems and solutions
 
 | # | Problem | Solution | Status |
 |---|---|---|---|
@@ -818,10 +875,15 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 32 | First driving test not run | Run `drive_until_left_open` after fixing 29 and 31 | 🔄 |
 | 33 | Ackermann steering destroyed three servos | Parallel rack and pinion, 12-tooth module 1 pinion (chassis v3) | ✅ |
 | 34 | Drive gear skipped on a sudden reverse | Motor only forward during a run; stop with short brake | ✅ |
+| 35 | Zigzag while following the wall | Lower KP, filters, servo speed limit | ✅ |
+| 36 | Car moved like a river (S-shaped waves) | Gyroscope cascade controller (Problem 38) | ✅ |
+| 37 | Correction arrived late ("whip") | 33 ms TOF budget, faster filters and servo, small KI | ✅ |
+| 38 | A side distance sensor alone cannot drive straight | BMI160 gyroscope: distance → target heading → steering | ✅ |
+| 39 | Upload port disappeared (`/dev/cu.usbserial-310`) | Choose the current port; upload without the battery | ✅ |
 
 ---
 
-## 12. Next steps
+## 13. Next steps
 
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
@@ -834,7 +896,9 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] Raise the TOF sensors (1.5 cm higher): they detect the walls much better ✅
 - [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
 - [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
-- [ ] Test the Open Challenge on the track and tune KP, KD and the jump threshold.
+- [x] Drive straight and smooth along the nearest wall (`wall_follow_nearest_gyro`, Phase 8) ✅
+- [ ] Stop with the short brake when a side wall ends (corner detection by threshold), then add the 90° gyro turn.
+- [ ] Test the Open Challenge on the track and tune the jump threshold.
 - [x] Camera Block 1: pillar detection tested and calibrated (section 6).
 - [x] Mount the camera on the robot and test the detection by moving the robot by hand ✅
 - [ ] Fix the camera flex cable in place, and check the search band (`IGNORE_TOP_ROWS`, `NEAR_ROWS`) and the side zone on the track with the camera in its final position.
