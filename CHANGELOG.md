@@ -2,6 +2,13 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.0 — 21 October · "Éxito glorioso": first complete straight + corner
+- **Validated on the track:** `exito_glorioso` never hit a wall and always chose the correct turn side.
+- Flow: gyro wall following on the nearest wall → a side TOF above `SIDE_OPEN_MM = 2400` (3 valid readings) marks the opening and switches the PID to the opposite wall without braking → the front TOF below `FRONT_STOP_MM = 1400` starts the validated 90° turn (`turn_left_90_pid_brake`, now left or right) toward the opening → active brake.
+- Fixes from today's tests: the front TOF sometimes missed the wall because readings with `SigmaFail` and similar statuses were rejected → the front sensor now accepts **any** reading with a distance (40–4000 mm). If no opening was detected, the turn side is chosen by comparing both side walls (the farther one, invalid = no wall).
+- Safety: after `MAX_RUN_MS = 40 s` it compares both sides and turns anyway; LED D13 shows when the front TOF is not giving a usable reading (diagnosis without a USB cable).
+- Settings: `MOTOR_SPEED = 50`, `MAX_HEADING_DEG = 5`, `KI_DIST = 0.04`, turn at `TURN_SPEED = 40` / `SLOW_SPEED = 35`, `TURN_STEER_DEG = 60`.
+
 ## v0.9 — 20 October · Corner detection with the front sensor (in testing)
 - Added `wall_follow_gyro_corner_front`: the side TOF sensors only **detect** the corner (reading > 3000 mm, 3 valid readings in a row → `cornerDetected = true`, turn side saved); the **front** TOF decides **when** to brake (front < `FRONT_STOP_MM`, 2 valid readings in a row). After the corner is detected the car stops following the wall and drives straight with the gyroscope.
 - Why: the side sensors are angled about 30° forward, so they see the opening L × tan 30° ≈ 0.58 × L before the wall really ends (L = distance to the wall). Braking or turning on the side reading alone would happen at a different place each time.
