@@ -2,6 +2,14 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.1 — 21 October (night) · "Éxito rotundo": timed corner, no front sensor
+- **Validated on the track:** `exito_rotundo`.
+- **Straighter driving:** an integral was added to the gyro heading loop (`KI_HEADING = 2.5`, max 10° of steering). It cancels a constant steering offset (servo centre not exact), which made the car drift slowly to the left.
+- **Smooth wall switch:** the car keeps the last `REF_HISTORY = 5` wall readings of each side. When the opening is detected (side > 2400 mm, 3 valid readings in a row) the PID follows the opposite wall at the **average of its last 5 readings before the opening**, instead of the distance at that instant, so it no longer drifts when it switches wall.
+- **Corner by time instead of the front sensor:** after `RUN_MS = 1800 ms` the car brakes. If an opening was seen, it turns 90° toward it (the opening always wins, it is never re-evaluated). If not, it averages `COMPARE_SAMPLES = 10` readings per side with the car still and turns toward the farther side (invalid reading = no wall).
+- Why: comparing the walls with a single reading sometimes chose the wrong side; averaging with the car stopped and trusting the detected opening first fixed it.
+- Settings: `MOTOR_SPEED = 100`, `MAX_HEADING_DEG = 5`, turn at `TURN_SPEED = 60` / `SLOW_SPEED = 35`.
+
 ## v1.0 — 21 October · "Éxito glorioso": first complete straight + corner
 - **Validated on the track:** `exito_glorioso` never hit a wall and always chose the correct turn side.
 - Flow: gyro wall following on the nearest wall → a side TOF above `SIDE_OPEN_MM = 2400` (3 valid readings) marks the opening and switches the PID to the opposite wall without braking → the front TOF below `FRONT_STOP_MM = 1400` starts the validated 90° turn (`turn_left_90_pid_brake`, now left or right) toward the opening → active brake.
