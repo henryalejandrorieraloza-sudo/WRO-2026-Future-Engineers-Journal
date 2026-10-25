@@ -158,18 +158,18 @@ The TOF row is counted on the battery side: a linear regulator passes the same c
 
 | Sensor | Placement | Reasoning (field geometry) |
 |---|---|---|
-| TOF FRONT | Front centre, facing forward | Distance to the wall ahead, as a safety check and for parking. Corners are detected by the side sensors (Open) or the floor lines (Obstacle), not by the front sensor |
-| TOF LEFT / RIGHT | Sides, perpendicular to the car | Measure the distance to each wall. A sudden jump in one side reading means that wall has ended: a corner. Placed **1.5 cm higher** on the second chassis so the beam does not pass over the 10 cm wall (journal Problem 16) |
-| TOF BACK | Rear centre | Distance to the wall behind, used to know the position along a straight section |
+| TOF FRONT | Front centre, facing forward | Safety brake when a wall is too close, and FRONT vs BACK check after the first turn; parking later. Corners are detected by the side sensors (Open) or the floor lines (Obstacle), not by the front sensor |
+| TOF LEFT / RIGHT | Sides, **straight (0°), facing the wall**, centre ~5 cm from the floor | Measure the distance to the wall being followed; when it ends, the readings become invalid → corner. On the black wall an angled (30°) beam returns almost no light: 30 cm read as ~198 cm; straight it reads 32.0 cm (journal Phase 10). 5 cm is half of the 10 cm wall, so the ROI 16 × 8 cone stays on the wall and off the floor |
+| TOF BACK | Rear centre | FRONT vs BACK check after the first turn (after a correct turn the back is near the corner's outer wall and the front faces the long straight) |
 | BMI160 | Flat on the PCB, near the car's centre | Only yaw is used; mounting it flat makes the Z axis the turning axis |
 | Camera | Front, facing forward and slightly down | Sees the pillars of the next section; only a horizontal band of the image is searched so objects outside the field are ignored (journal §6) |
 
-**Why TOF instead of infrared or ultrasonic:** our first sensors were Sharp GP2Y0A21 infrared sensors. Their output is non-linear (distance ∝ V^-1.15), so the noise grows with distance and they were unreliable beyond 50–60 cm, less than one corridor width (journal Problem 3). Ultrasonic sensors have a wide cone that would see the floor and the neighbouring walls. The VL53L1X measures up to 4 m and its measurement area (ROI) can be narrowed in software; we chose the ROI with a measured experiment (journal §8.2).
+**Why TOF instead of infrared or ultrasonic:** our first sensors were Sharp GP2Y0A21 infrared sensors. Their output is non-linear (distance ∝ V^-1.15), so the noise grows with distance and they were unreliable beyond 50–60 cm, less than one corridor width (journal Problem 3). Ultrasonic sensors have a wide cone that would see the floor and the neighbouring walls. The VL53L1X measures up to 4 m and its measurement area (ROI) can be narrowed in software; we chose the ROI and the mounting angle with measured experiments (journal §8.2, overturned by the better tests of Phase 10).
 
 **Calibration methods**
 
-- **Gyroscope:** 200 samples at rest before each run; the average is subtracted as offset (like taring a scale).
-- **TOF sensors:** per-sensor offset in code, median filter of the last 5 valid readings, ROI chosen by experiment.
+- **Gyroscope:** 1000 samples (≈ 3 s) at rest right after power-on, while the car waits for the start button; the average is subtracted as offset (like taring a scale). The scale is checked with 4 hand turns (1440°) → `YAW_SCALE`.
+- **TOF sensors:** ROI 16 × 8 and mounting angle chosen with tape-measure experiments on the black wall (`tof_roi_budget_test`, journal Phase 10); only "range valid" readings; decisions from a window of 8 readings.
 - **Steering:** centre and limits measured on the real chassis with the `servo_calibration` sketch, with a 2–3° margin before each mechanical stop.
 - **Camera colours:** HSV thresholds tuned live with our Pillar Vision Lab tool under the real lighting.
 

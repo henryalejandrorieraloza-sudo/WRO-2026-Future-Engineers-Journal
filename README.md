@@ -187,7 +187,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 ### 5.2 Drive
 
 - **One N20 12 V, 1000 rpm motor with a Hall encoder** drives both rear wheels through a **differential with a 1 : 1 gear ratio** (motor gear and differential gear both 22 mm). A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
-- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so 1000 rpm at 1 : 1 gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. That is far more than we need: our control loop is designed for ≈ 0.3–0.6 m/s, where the TOF sensors (one reading every 100 ms) see a new value every 3–6 cm. We drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
+- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so 1000 rpm at 1 : 1 gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. That is far more than we need: our control loop is designed for ≈ 0.3–0.4 m/s, where the side TOF sensors (one reading every 50 ms) see a new value every 1.5–2 cm and one 8-reading decision takes less than one car length (§10.4). We drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
 - **Torque reasoning:** to accelerate the 270 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.27 × (1 + 0.05 × 9.81) ≈ **0.40 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed.
 - **Why 1 : 1:** a reduction would give more torque that we do not need and less top speed; a step-up would make low speeds harder to control. 1 : 1 also means both gears are the same printed part size, which is simple to print and to replace.
 - **Braking:** the TB6612FNG short-brake mode (both inputs HIGH) stops the motor actively, much faster and more repeatably than coasting. The motor only drives forward during a run: a sudden reverse made one gear of the drive train skip (journal Problem 34).
@@ -210,7 +210,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 
 ### 5.4 Wheels and tyres
 
-The four 36 mm hubs are printed, and the **tyres are cast on them with C25 silicone rubber** in printed moulds (≈ 41 mm outside diameter). Silicone grips the field mat much better than printed plastic, which reduces slipping when the car accelerates, brakes and turns, so the encoder distance and the gyro turns stay accurate.
+The four 36 mm hubs are printed, and the **tyres are cast on them with C25 silicone rubber** in printed moulds (≈ 41 mm outside diameter). Silicone grips the field mat much better than printed plastic, which reduces slipping when the car accelerates, brakes and turns, so the gyro turns and the wall distances stay accurate (and, once used, the encoder distance).
 
 | Moulds | Mix | Pour | Result |
 |---|---|---|---|
@@ -224,7 +224,7 @@ Recipe: **30 g of part A + 23 drops of part B**, from the formula **B = ¾ · A*
 |---|---|---|
 | Chassis 1 → 2 | Side TOF sensors raised **1.5 cm** | The beam passed over the 10 cm wall and read the far side of the field (journal Problem 16). After the change the walls are detected reliably |
 | Chassis 1 → 2 | SG90 → MG90 servo | Servo moved inside its mount (journal Problem 8) |
-| v1 → v2 | Ackermann with tie rods → Ackermann driven by a steering rack | First step toward moving both wheels from a single rack |
+| v1 → v2 | Ackermann with tie rods → Ackermann driven by a steering rack | Goal: move both wheels from one part (the rack) instead of two separate tie rods. It did not remove the friction of the Ackermann arms (journal Problems 29, 33), which led to v3 |
 | v2 → v3 | Ackermann → **parallel rack and pinion** (12 teeth, module 1 mm) | The linkage was too tight; three servos were damaged (journal Problems 17, 29, 33) |
 | v2 → v3 | Tolerances corrected in the CAD | Moving parts were either loose or stuck |
 | v2 → v3 | Sizes adapted in the CAD instead of improvised fixes; new camera and servo mounts | v2 needed hand adaptations and tape |
@@ -285,9 +285,9 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 
 | Sensor | Placement | Why |
 |---|---|---|
-| **TOF FRONT** | Front centre | Distance to the wall ahead (safety check and parking) |
+| **TOF FRONT** | Front centre | Safety brake if a wall is too close in any phase; FRONT vs BACK check after the first turn; parking later |
 | **TOF LEFT / RIGHT** | Both sides, **straight (0°), facing the wall squarely**, centre at ~5 cm from the floor (half of the 10 cm wall), level | Distance to the wall being followed; when the wall ends, the readings become invalid → corner. We first angled them 30° forward to see corners earlier, but on the black wall the angled beam returned almost no light (journal Phase 10) |
-| **TOF BACK** | Rear centre | Position along a straight section |
+| **TOF BACK** | Rear centre | FRONT vs BACK check after the first turn: after a correct turn the back faces the near outer wall of the corner and the front the long straight |
 | **BMI160** | Flat on the PCB | Yaw (Z axis) for straight driving and exact 90° turns |
 | **Camera** | Front, slightly down | Sees the pillars of the next section |
 
@@ -304,7 +304,7 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
   | **Sensor straight** | invalid | 33.4 ✓ (50 ms) | **32.0 ✓** |
 
 - **Only "range valid" readings are used.** "Signal fail" readings gave believable but wrong numbers (e.g. 63 cm with the wall at 30 cm).
-- **Gyroscope:** 200 samples at rest before every run; their mean is the offset.
+- **Gyroscope:** 1000 samples (≈ 3 s) at rest right after power-on, while the car waits for the start button; their mean is the offset. Scale checked with 4 hand turns (1440°) against a wall → `YAW_SCALE` (§10.4).
 - **Steering:** centre and limits found with the interactive `servo_calibration` sketch, with 2–3° of margin before each mechanical stop.
 - **Camera colours:** HSV thresholds tuned live under the real lighting with Pillar Vision Lab (section 9).
 
@@ -340,7 +340,7 @@ flowchart LR
 
 | Module | Board | What it does | Code |
 |---|---|---|---|
-| TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging in Short mode, distances in cm | [`tof_gyro_sensors_test`](src/hardware-tests/tof_gyro_sensors_test) |
+| TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging, ROI 16 × 8, only "range valid" readings (the driving code uses Long mode; the sensor test uses Short mode — with a useful range of only ~45 cm on the black wall, Short mode, which the datasheet gives as more robust to ambient light, will be compared in the next test) | [`tof_gyro_sensors_test`](src/hardware-tests/tof_gyro_sensors_test) |
 | Gyro driver | Nano | BMI160 read through I²C registers (no library), offset calibration, yaw integration (`yaw += rate × dt`) | [`tof_gyro_sensors_test`](src/hardware-tests/tof_gyro_sensors_test) |
 | Motor control | Nano | TB6612FNG forward / reverse / coast / short brake with PWM | [`rear_motor_loop_test`](src/hardware-tests/rear_motor_loop_test) |
 | Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz); on the Nano ESP32 the pulse was generated by hand. Calibrated centre and limits | [`servo_simple`](src/hardware-tests/servo_simple), [`servo_calibration`](src/hardware-tests/servo_calibration), [`servo_only_test`](src/hardware-tests/servo_only_test) |
@@ -557,6 +557,37 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Gyro error accumulates over 12 turns | Wall re-alignment every straight |
 
 The complete list of the **46 problems** we found, with their causes and solutions, is in [journal §14](docs/ENGINEERING_JOURNAL.md#14-summary-of-problems-and-solutions).
+
+### 10.4 Why each setting has its value
+
+Every number in the Open Challenge code comes from a measurement, from the field geometry, or from the rules. Values marked *provisional* are confirmed in the next test after the side sensors are remounted.
+
+| Setting | Value | Why this value | Evidence |
+|---|---|---|---|
+| Side TOF angle | **0°** (facing the wall) | At 30° the black wall reflects the laser away: a wall at 30 cm read ~198 cm. Straight: 32.0 cm, 30/30 valid | Journal §12.3 |
+| Side TOF height | ~**5 cm** (centre) | Half of the 10 cm wall. With a 16×8 cone (≈ ±7° vertical) the beam at 50 cm covers ≈ −1 to +11 cm: almost all on the wall, little floor, nothing over the top | Journal §12.4, rule 13.3 (100 mm walls) |
+| ROI | **16 × 8** | Wide and low: measured 38.1 cm at 40 cm (30/30). 16×16 reads short (floor in the cone), 1×6 is invalid even on white | Journal §12.4 |
+| Timing budget | **50 ms** (*provisional*; 100 / 140 ms to be tested) | 33 ms gave invalid readings with narrow ROIs; more time = more light but fewer readings per second | Journal §12.2–12.4 |
+| Readings used | only **"range valid"** | "Signal fail" gave believable wrong numbers (63 cm at 30 cm, 65.5 cm at 80 cm) | Journal §12.3–12.4 |
+| `WALL_MAX_MM` | **550 mm** (*provisional*) | 100 % valid at 400 mm, 0–27 % at 600 mm: the cut goes between | Journal §12.6 |
+| Decision window | **8 readings: ≥ 6 WALL, ≤ 2 NO WALL, else NOT SURE** | Wall at 40 cm: 30/30 valid; no wall: 0/30; 60 cm: 0–27 %. The NOT SURE band avoids guessing on the edge | Journal §12.6 |
+| Target distance to the inner wall | **≈ 250 mm** (*provisional*; before: 600 mm) | 600 mm was outside the sensor's reliable range (~450 mm). In a 600 mm corridor, 250 mm from the inner wall puts the 95 mm-wide car roughly in the middle and leaves ≥ 155 mm to the outer wall even with the −100 mm tolerance of the International Final (rule 9.18: never touch the outer wall). In a 1000 mm corridor the car simply stays close to the inner wall, still far from the outer one | Rules 8 and 9.18, journal §12.4 |
+| Max lean while following the wall | **5–8°** | A small tilt keeps the side beam almost perpendicular to the wall (a tilt of 8° changes the reading by only 1 %). Bigger tilts made the sensor read diagonally (journal Problem 36) and, on a black wall, an angled beam loses its signal (journal §12.3) | Journal Problems 36, 38, §12.3 |
+| Heading re-alignment limit | **±8° per straight** | Same as the largest lean the wall controller can command; a bigger difference means the estimate is wrong (e.g. measured near a corner), so it is ignored | Journal Problem 43 |
+| Gyro range / rate | **±500 °/s, 400 Hz** | A 90° turn takes about 1 s (≈ 90–150 °/s peak), so ±500 °/s never saturates and gives 4× the resolution of ±2000 °/s (65.6 vs 16.4 LSB per °/s). 400 Hz integrates the yaw in small steps | `turn_left_90_pid_brake` final-angle print |
+| Gyro calibration | **1000 samples (≈ 3 s) at rest** (competition value; the first wall-following sketch used 300) | Averaging more samples makes the offset more exact. It runs right after the power switch, while the car waits for the start button (rule 9.11), so it costs no race time and needs no input from the team (rule 9.9) | Rules 9.9, 9.11 |
+| `YAW_SCALE` | measured: 4 hand turns (1440°) against a wall, `YAW_SCALE = 1440 / measured` | Corrects a gyro that reads a few % short or long, the error behind Problem 43 | Journal Problem 43 |
+| Turn end | **90° by gyroscope**, brake `STOP_LEAD_DEG = 2°` early, slow in the last 25° | A turn by time changes with battery voltage; braking early absorbs the car's inertia. Values tuned with the printed final error | `turn_left_90_pid_brake` |
+| Close / far decision after a turn | **1 s after the turn** (`SW_MIN_MS = 1000`) | Earlier, the sensor sees the tip of the inner wall diagonally; at 1 s it chose correctly almost every time | Journal Problem 44 |
+| Straight after the wall ends, before turning | **500 ms** (*to be replaced by a distance*) | The side sensor is near the middle of the car; the rear must clear the inner corner before turning. At 0.3–0.5 m/s, 500 ms ≈ 15–25 cm, more than the 13 cm car length. A distance from the encoder would not depend on speed or battery | Car length, journal §11.2 |
+| Speed | ≤ ≈ **0.4 m/s** while deciding | One decision needs 8 readings × 50 ms = 0.4 s. At 0.4 m/s the car moves 16 cm during one decision, about one car length; faster, a hole could be confirmed too late | Sensor rate (this table) |
+| Lower speed after turns (`SW_SPEED`) | lower PWM than on straights | Gives the sensor more readings per centimetre right where the next decision is made | Journal Problem 40 |
+| FRONT/BACK check after the first turn | undo if BACK > FRONT + margin | After a correct turn the car faces the next long straight (front far) and has the corner's outer wall behind (back near); after a wrong turn it is the opposite | Field geometry |
+| Turns before stopping | **12** | 3 laps × 4 corners; a 13th turn leaves the starting section (rule 9.24.3) | Rules 9.22, 9.24.3 |
+| Final stop | **active brake, held** | Stops in a repeatable distance and keeps the car still (rule 9.24.2: no movement after 15 s; App. A.2: judged after 30 s) | Rules, journal Problem 34 |
+| Motor direction | forward only (except the first-turn undo) | A sudden reverse made a drive gear skip | Journal Problem 34 |
+
+**Wired but not used yet: the motor encoder.** It is connected to D2 / D3 (the Nano's two interrupt pins) but the validated programs drive by time, gyroscope and walls, because the encoder code was not needed to pass the first corner. It is planned for the two places where time is a weak substitute for distance: the straight before each turn and the final straight that must end inside the starting section, since a time-based distance changes as the battery discharges.
 
 ---
 

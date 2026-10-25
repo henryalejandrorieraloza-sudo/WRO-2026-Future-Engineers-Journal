@@ -1004,7 +1004,27 @@ A simpler algorithm does not mean a riskier one. Our priority for the competitio
 - **Solution:** sensors straight (0°) at ~5 cm from the floor, ROI 16 × 8, only "range valid" readings, decisions by valid / invalid with a window of 8 readings.
 - **Pending:** remount the sensors and repeat the test at 30, 45 and 60 cm with 16×8 at 50, 100 and 140 ms (more time = more light) to fix the final values.
 
-### 12.8 What this phase gives the rubric
+### 12.8 Decisions reviewed against the data and the rules (25 October)
+
+After Phase 10 we went through every setting of the Open Challenge code and asked: *is there a measurement, a geometric reason or a rule behind this value?* These had none, or had one that the new data proved wrong:
+
+| Setting before | Problem with it | Now | Justification |
+|---|---|---|---|
+| `TOTAL_TURNS = 13` | No reason recorded | **12** | 3 laps × 4 corners; a 13th turn leaves the starting section and loses the 3 stop points (rule 9.24.3) |
+| Target distance to the inner wall 600 mm | Outside the sensor's reliable range (~450 mm on the black wall) | **≈ 250 mm** (provisional) | Centres the 95 mm car in a 600 mm corridor and keeps ≥ 155 mm from the outer wall even at the −100 mm tolerance (rules 8, 9.18) |
+| Opening / hole thresholds 2400, 2600, 3000 mm; close / far 1650–1850 mm; front stop 1400 mm | Tuned on readings that were floor reflections at ~2 m, not the wall | **Removed**: valid / invalid decisions | Journal §12.2: wall at 30 cm and no wall both read ~2 m |
+| "Signal fail" accepted as a distance | Gave believable wrong numbers | **Only "range valid"** | 63 cm read with the wall at 30 cm; 65.5 cm with the wall at 80 cm |
+| One reading decides (`SIDE_CONFIRM = 1`, `SW_WALL_CONFIRM = 1`) | A single bad reading changed the turn side | **Window of 8 readings, NOT SURE band** | 30/30 valid at 40 cm, 0/30 without wall, 0–27 % at 60 cm |
+| ROI 1 × 6 | Below the 4 × 4 minimum of the ST datasheet; invalid even on a white sheet | **16 × 8** | Journal §12.3–12.4 |
+| Side sensors angled 30° | Black wall reflects the beam away | **0°** | 198 cm vs 32.0 cm for the same 30 cm wall |
+| 500 ms straight before each turn | No reason recorded | Kept for now, **to become a distance** | 500 ms at 0.3–0.5 m/s ≈ 15–25 cm, more than the 13 cm car, so the rear clears the inner corner; time depends on speed and battery, so the encoder will replace it |
+| Gyro calibration with 200, 300 or 1000 samples in different sketches | Inconsistent, no reason | **1000 samples (≈ 3 s)** | More samples = more exact offset; done while the car waits for the start button, so it costs no race time and needs no team input (rules 9.9, 9.11) |
+| Encoder wired to D2 / D3 but never read | Looked like an unused part | **Explained and planned** | Needed for the two distances that time cannot measure well: before each turn and the final straight inside the starting section |
+| Long mode in the driving code, Short mode in the sensor test | Inconsistent | **To compare in the next test** | With a useful range of only ~45 cm, Short mode (more robust to ambient light according to the datasheet) may be better |
+
+The full list of settings with their reasons is in the [README §10.4](../README.md#104-why-each-setting-has-its-value).
+
+### 12.9 What this phase gives the rubric
 
 | Rubric criterion | Evidence |
 |---|---|

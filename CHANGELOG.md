@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.4 — 25 October · Every setting justified
+- README **§10.4 "Why each setting has its value"**: every Open Challenge setting with its value, reason and evidence (measurement, field geometry or rule).
+- Journal **§12.8**: settings that had no justification or were proved wrong by the data, and what replaced them (12 turns instead of 13; target ≈ 250 mm instead of 600 mm; thresholds tuned on floor reflections removed; one-reading decisions replaced by an 8-reading window; gyro calibration unified to 1000 samples).
+- Fixed outdated descriptions: TOF FRONT / BACK roles (safety brake and first-turn check), side sensors straight at ~5 cm, gyro calibration, speed reasoning (50 ms readings, ≤ 0.4 m/s while deciding), encoder wired but not used yet (with the reason and plan), Long vs Short TOF mode.
+
 ## v1.3 — 25 October · Rules compliance review
 - Re-read the full *WRO 2026 Future Engineers General Rules* (15 Jan 2026) and Appendix C, and checked the repository against them.
 - README: corrected the challenge description (corridors 1000 / 600 mm ± 100 mm, 3-minute rounds, no touching the outer wall in the Open Challenge, parking lot rules); new **§3.1 Rules compliance** table (size, mass, drive, steering, no wireless, start procedure, no data entry, reverse driving, stop in the starting section); new **§14.1 Submission checklist** with the rule 7 deadlines counted from the International Final (8 Dec 2026).
