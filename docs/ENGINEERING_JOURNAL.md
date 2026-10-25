@@ -1,7 +1,7 @@
 # Engineering Journal — Software and Electronics
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
-> **Period covered:** 15 September – 20 October 2026
+> **Period covered:** 15 September – 25 October 2026
 > **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
@@ -22,9 +22,11 @@ This journal records, in chronological order, everything I worked on: what I bui
 8. [Phase 6 — First tests on the new chassis (Mon 5 Oct)](#8-phase-6--first-tests-on-the-new-chassis-monday-5-october-2026)
 9. [Phase 7 — Chassis v3, rack-and-pinion steering and silicone tyres (8–18 Oct)](#9-phase-7--chassis-v3-rack-and-pinion-steering-and-silicone-tyres-818-october-2026)
 10. [Phase 8 — Smooth wall following with the gyroscope (20 Oct)](#10-phase-8--smooth-wall-following-with-the-gyroscope-tuesday-20-october-2026)
-11. [Rules research](#11-rules-research)
-12. [Summary of problems and solutions](#12-summary-of-problems-and-solutions)
-13. [Next steps](#13-next-steps)
+11. [Phase 9 — From one corner to the full loop (21–24 Oct)](#11-phase-9--from-one-corner-to-the-full-loop-2124-october-2026)
+12. [Phase 10 — The side sensors could not see the black wall (24–25 Oct)](#12-phase-10--the-side-sensors-could-not-see-the-black-wall-2425-october-2026)
+13. [Rules research](#13-rules-research)
+14. [Summary of problems and solutions](#14-summary-of-problems-and-solutions)
+15. [Next steps](#15-next-steps)
 
 ---
 
@@ -627,6 +629,8 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 
 **Decision:** `ROI_HEIGHT = 6` and `ROI_WIDTH = 1`.
 
+> **Update 25 Oct:** this decision was overturned by better data. A large difference between "wall" and "no wall" did not mean the reading was the correct distance: on the black wall, with the sensors angled 30°, ROI 1 × 6 gave about 2 m at every distance. The new choice is **ROI 16 × 8 with the sensors straight** — see [Phase 10](#12-phase-10--the-side-sensors-could-not-see-the-black-wall-2425-october-2026).
+
 **Honest limits of this test (to check next):**
 - The Desmos curve is a cubic regression (R² = 0.935). I used it only to **see** the trend. With 6 points a cubic curve has no physical meaning (for example it goes below zero between 15 and 20, which is impossible). The decision is based on the **measured points**, not on the curve.
 - I did not test heights 7, 8 and 9. The best value could be between 6 and 10, so I will test those.
@@ -825,7 +829,192 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
 
 ---
 
-## 11. Rules research
+## 11. Phase 9 — From one corner to the full loop (21–24 October 2026)
+
+> **Result:** ✅ one complete corner validated on the track ("works excellent"): the car decides the turn side, turns 90°, checks the turn and follows the inner wall. 🔄 The 13-turn loop runs, but showed that the side sensors were giving us wrong data (Phase 10).
+
+### 11.1 What we built, in order
+
+| Date | Version | What it added | Result |
+|---|---|---|---|
+| 21 Oct | [`exito_glorioso`](../src/hardware-tests/exito_glorioso) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
+| 21 Oct (night) | [`exito_rotundo`](../src/hardware-tests/exito_rotundo) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
+| 22–23 Oct | One-corner version (10 iterations) | After the turn, a separate function `sideWallRun()` with three phases: **0** find the inner wall, **1** deviate to a target distance, **2** precise P+I+D on that wall; brake when it ends. FRONT/BACK check after the first turn | ✅ "Works excellent" |
+| 24 Oct | Open Challenge loop | Repeats straight → corner → 90° turn up to `TOTAL_TURNS`, absolute headings (90°, 180°, 270°…), FRONT/BACK check only on the first turn, final straight of 1 s and brake | 🔄 Runs, but drifted toward the inner wall lap after lap |
+
+### 11.2 Problems and solutions
+
+#### Problem 40 — The car stopped in the middle of the straight after the turn ✅
+- **What happened:** a single false reading at the end of the corner was taken as "inner wall found", the car started a 20° deviate manoeuvre, the sensor tilted with the car, lost the wall and the car braked.
+- **Fix:** 3 readings in a row to confirm the wall, ignore the first 300 ms after the turn, deviate angle lowered to 12°, and the "wall ended" jump only counts in phase 2 (when the car is already following the wall).
+
+#### Problem 41 — After the turn the car did not see the end of the wall and kept going ✅
+- **Fix:** an independent brake for a jump of more than 500 mm (`jumpStop`), active only in phase 2.
+
+#### Problem 42 — The car sometimes turned to the wrong side at the first corner 🔄 (root cause found in Problem 46)
+- **What we tried:**
+  1. A 500 mm jump **before** the turn as a second way to find the opening (`checkJumpOpening()`) → false positives with the far wall → disabled (`PJ_USE_JUMP = false`).
+  2. Opening threshold raised to 2600 mm, `RUN_MS` to 1600 ms.
+  3. Compare the sides only with **valid** readings: invalid readings had been counted as 4000 mm and inflated the average of a real wall. Now the car waits still until it has 10 valid readings per side (a side that cannot get them in 2 s counts as open).
+  4. FRONT/BACK check after the first turn: if BACK > FRONT the turn was wrong → undo it backwards and turn to the other side. An invalid close reading had been counted as "far", which made the check unreliable → fixed.
+- **Why it was still not 100 %:** the side sensors were not measuring the wall at all at long distances (Phase 10).
+
+#### Problem 43 — In the loop, every lap the car got closer to the inner wall until it hit it ✅
+- **What happened:** the error grew turn after turn, so it was not the PID of one straight but something carried from one straight to the next.
+- **Fixes, in order:**
+  1. Integral of the wall PID only active close to the target, frozen (not reset) outside that zone → it stopped "charging up" while the car was far from the target.
+  2. Asymmetric gains: gentle toward the wall, stronger away from it, and a **danger zone** that forces the maximum lean away when the car is too close.
+  3. Strong filtered D term to stop the car travelling diagonally into the wall.
+  4. **Root cause:** each new straight heading was `previous + 90°` from the gyroscope. A gyro error of ~1.5° per turn becomes > 8° after 6 turns, more than the wall PID can correct (±8°). **Solution:** the wall itself is the heading reference. While the car is on target and the distance is not changing (parallel to the wall), its yaw is the real direction of the wall; the next turn starts from that value (`REALIGN_WITH_WALL`). The gyro error is erased at every straight and can no longer accumulate. Each lap "starts fresh", like the first straight.
+- Other settings decided: target distance 600 mm, 500 ms straight after the wall ends before turning, deviate manoeuvre only on the first straight.
+
+#### Problem 44 — Close or far: after the turn the car chose wrong when deciding too early ✅
+- **What happened:** right after the turn the car is still in the corner area; the inner-side sensor sees the **tip** of the inner wall diagonally, not the wall beside it.
+- **Fix:** `SW_MIN_MS = 1000` (decide 1 s after the turn). With this it chose close / far correctly almost every time.
+
+#### Problem 45 — The car did not detect the hole (end of the inner wall) 🔄 (explained in Problem 46)
+- **Cause in the code:** when the wall ends, the sensor usually gives an **invalid** reading (status error, value −1), and the hole detection ignored invalid readings, so its counter never increased.
+
+### 11.3 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Software and algorithms | Ten measured iterations of one corner; the "wall as heading reference" idea solved an error that no PID gain could solve |
+| Systems thinking | The drift was traced to a sensor (gyroscope scale error) and solved by using a second reference (the wall) |
+| Risk | The FRONT/BACK check is a safety net that undoes a wrong turn instead of hitting a wall |
+
+---
+
+## 12. Phase 10 — The side sensors could not see the black wall (24–25 October 2026)
+
+> **Result:** ✅ we found, with data, the cause behind Problems 42, 44 and 45: with the side sensors angled 30° and the ROI 1 × 6, the TOF **did not see the black wall**; it was measuring the floor and far reflections at ~2 m. With the sensor **straight (facing the wall squarely) and ROI 16 × 8**, it measures the wall within 1–2 cm, with 30/30 valid readings, up to ~45 cm. This changes the Open Challenge algorithm: it becomes **simpler**.
+
+### 12.1 First sign: the numbers did not make sense
+
+With [`tof_left_right_print`](../src/hardware-tests/tof_left_right_print) (only LEFT and RIGHT, robot settings: ROI 1 × 6, 33 ms) **every reading was "signal fail"**:
+
+| Test | LEFT min / max / mean | RIGHT min / max / mean |
+|---|---|---|
+| 1 — "far" wall on the left | 219.6 / 243.7 / **230.7 cm** | 173.2 / 198.4 / 186.9 cm |
+| 2 — "close" wall on the left | 85.0 / 112.8 / **98.4 cm** | 176.0 / 203.4 / 188.3 cm |
+
+We used a 165 cm threshold between both cases and it worked "quite well", but the hole was never detected (Problem 45) and the right side read ~187 cm in both tests. Something was wrong with the sensor itself, so we stopped tuning thresholds and measured.
+
+### 12.2 Experiment 1 — ROI and timing budget, car parallel to the wall (sensor at 30°)
+
+Sketch: [`tof_roi_budget_test`](../src/hardware-tests/tof_roi_budget_test). Car still, black track wall at a known distance (tape measure), 30 readings per configuration. Median of the readings (all of them "signal fail" or invalid):
+
+| Real distance | 1×6, 33 ms (robot) | 4×4, 33 ms | 8×8, 33 ms | 8×8, 50 ms | 16×16 |
+|---|---|---|---|---|---|
+| 30 cm | 198 | 215 | 112 | 80 | all invalid |
+| 40 cm | 201 | 220 | 128 | 88 | all invalid |
+| 50 cm | 207 | 219 | 150 | 107 | all invalid |
+| 60 cm | 216 | 227 | 171 | 131 | all invalid |
+| **No wall** | **217** | **227** | **177** | **138** | all invalid |
+
+**Conclusion:** with the robot settings, a wall at 30 cm and **no wall** gave almost the same number (~2 m). "Far wall" and "nothing" looked identical, which explains the wrong-side decisions (Problem 42) and the hole that was never detected (Problem 45). The 230 cm "far wall" of §12.1 was probably not the wall.
+
+### 12.3 Experiment 2 — what is wrong: the sensor, the angle or the wall?
+
+Same position (wall at ~30 cm, sensor at 30°), three changes:
+
+| Condition | 1×6 33 ms | 1×6 50 ms | 8×8 33 ms | 8×8 50 ms | 16×16 33 ms | 16×16 50 ms |
+|---|---|---|---|---|---|---|
+| Black wall, sensor at 30° | ~198 ✗ | ~163 ✗ | ~112 ✗ | ~80 ✗ | invalid | invalid |
+| **White matte sheet** on the wall, sensor at 30° | invalid | 35.6 ✓ (30/30) | 34.4 ✓ (30/30) | 34.6 ✓ (30/30) | 35.4 ✓ (30/30) | 35.6 ✓ (30/30) |
+| Black wall, **sensor straight** (facing the wall) | invalid | invalid | invalid | 33.4 ✓ (23/30) | **32.0 ✓ (30/30)** | **32.1 ✓ (30/30)** |
+
+(Expected value at 30°: 30 / cos 30° ≈ 35 cm. Spread of every ✓ result: less than 1 cm.)
+
+**Conclusions:**
+1. **The sensor works.** With the white sheet it measured 34–36 cm, all "range valid", with less than 1 cm of spread.
+2. **The black wall at 30° reflects the laser away, like a mirror,** so almost no light comes back. With the sensor **straight**, the same black wall is measured correctly.
+3. **ROI 1 × 6 is the worst setting:** it was invalid even with the white sheet. It is below the 4 × 4 minimum of the ST datasheet. Our ROI experiment of §8.2 measured differences between "wall" and "no wall" without checking that the numbers were correct distances, and it already listed this as a limit to check.
+4. **"Signal fail" readings lie:** they gave believable numbers that were wrong (63 cm with the wall at 30 cm). From now on they are never used as distances.
+
+### 12.4 Experiment 3 — sensor straight: which ROI, and how far?
+
+Black wall, sensor straight, 50 ms. Median (valid readings out of 30):
+
+| ROI (width × height) | 40 cm real | 60 cm real | 80 cm real |
+|---|---|---|---|
+| 16×16 | 35.7 (30/30) | 51.0 (30/30) | — |
+| **16×8** | **38.1 (30/30)** | **59.2 (8/30)** | invalid |
+| 16×6 | 38.5 (29/30) | invalid | 75.7 ✗ (1 "signal fail") |
+| 8×16 | 35.8 (30/30) | 51.5 (1/30) | invalid |
+| 6×16 | 36.1 (10/30) | invalid | invalid |
+| 4×16 | invalid | invalid | 65.5 ✗ ("signal fail", false) |
+| 16×4 | invalid | invalid | invalid |
+
+**Conclusions:**
+1. **The error is always too short and grows with distance** (16×16: −4 cm at 40, −9 cm at 60). This is what happens when the floor enters the cone: the taller the cone, the more floor it sees.
+2. **16 × 8 is the best:** wide and low, it measures the real distance (38.1 at 40 cm; a second test gave 38.9) with less than 1 cm of spread.
+3. **Reliable range with the black wall: about 45 cm.** At 60 cm, 16×8 gives only 8/30 valid readings; at 80 cm nothing narrow is valid.
+4. **Fix on the car:** side sensors **straight (0°)** instead of 30°, centre of the sensor at about **5 cm** from the floor (half of the 10 cm wall) and level. With a 16×8 cone (about ±7° vertical) the beam at 50 cm then covers roughly −1 to +11 cm, almost all of it on the wall.
+
+### 12.5 Why we had angled the sensors, and why we changed our mind
+
+We angled the side sensors 30° forward ([CHANGELOG v0.9](../CHANGELOG.md), 20 Oct) so that they would see the end of a wall **earlier**. The data shows the price: on the black competition wall, an angled beam gets almost no light back, so the sensor gives us no information at all. Seeing the corner a little earlier is useless if the reading is wrong. A straight sensor sees the end of the wall a bit later, but the code already handles this (the car keeps driving straight for a short time before the 90° turn, and the gyroscope does the turn). **We chose correct data over early data.**
+
+### 12.6 How this changes the algorithm: simpler
+
+With the straight sensors and ROI 16 × 8, **each reading is either "wall" (valid and accurate) or "no wall" (invalid)**. The car no longer has to guess distances it cannot measure. Provisional rules (to confirm after remounting the sensors, at 30, 45 and 60 cm):
+
+| Reading | Meaning |
+|---|---|
+| "Range valid" and ≤ 550 mm (`WALL_MAX_MM`) | **WALL**, and the distance is reliable |
+| Anything else ("signal fail", other status, > 550 mm) | **NO WALL** (its number is never used) |
+
+Why 550 mm: at 400 mm 100 % of the readings were valid in both tests; at 600 mm only 0–27 %.
+
+Decisions use a **window of the last 8 readings**, never a single one:
+
+| WALL readings out of 8 | Result |
+|---|---|
+| 6 or more (≥ 75 %) | **WALL**: distance = median of the valid readings |
+| 2 or fewer (≤ 25 %) | **NO WALL** |
+| 3 to 5 | **NOT SURE**: no decision, wait for more readings |
+
+What becomes simpler:
+
+| Before | Now |
+|---|---|
+| Opening = side reading > 2400–2600 mm | Opening = that side becomes **NO WALL** |
+| Turn side = compare two noisy far averages (~2 m) | Turn side = the side **without** a wall |
+| Close / far threshold of 165–185 cm, calibrated with bad readings | Close / far = valid readings or not |
+| Hole = jump of more than 500 mm | Hole = the wall being followed becomes **NO WALL** |
+| "Signal fail" accepted as a distance | Never used |
+| Target distance 600 mm (outside the reliable range) | The car always drives **close to a wall** (< ~45 cm), where the sensor is accurate |
+
+### 12.7 Safety comes first
+
+A simpler algorithm does not mean a riskier one. Our priority for the competition is to **finish the three laps safely and stop in the starting section**, even if the run is slower. Points for completed laps are lost if the car hits a wall; a few seconds are not. These safety rules stay in every version:
+
+- **Never guess:** if the window says NOT SURE, the car slows down or stops and measures again with the car still (median of several readings) before deciding the turn side.
+- **Front safety always on:** if the FRONT sensor sees something too close, the car brakes, also during the first straight and during turns, and it does not depend on the BACK sensor.
+- **FRONT/BACK check after the first turn:** a wrong first turn is undone instead of continuing into a wall.
+- **Time limits:** every straight and every phase has a timeout; if it is reached, the car brakes instead of driving blind.
+- **Speed chosen for reliability:** slower after turns and during decisions (`SW_SPEED`), so the sensors have time to give enough valid readings.
+- **The wall corrects the heading every straight** (Problem 43), so a small gyro error can never grow into a crash in the third lap.
+- **Active brake** (both TB6612FNG inputs HIGH) at the end, and the motor only drives forward during a run (Problem 34), except the controlled undo of a wrong first turn.
+
+#### Problem 46 — The side TOF sensors could not see the black wall at 30° ✅ (cause found; remounting in progress 🔄)
+- **Cause:** angled beam (30°) on a black wall + ROI 1 × 6 (below the datasheet minimum) + sensor too low (floor in the cone).
+- **Solution:** sensors straight (0°) at ~5 cm from the floor, ROI 16 × 8, only "range valid" readings, decisions by valid / invalid with a window of 8 readings.
+- **Pending:** remount the sensors and repeat the test at 30, 45 and 60 cm with 16×8 at 50, 100 and 140 ms (more time = more light) to fix the final values.
+
+### 12.8 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Sensor architecture | Sensor placement justified with measured data and field geometry (black 10 cm wall, cone size, floor) |
+| Engineering decisions | "Why straight instead of 30°": correct data over early data, with three experiments and a control (white sheet) |
+| Software | The algorithm is simplified because the sensor data is now trustworthy; safety rules kept explicitly |
+| Honesty / iteration | Our own earlier ROI experiment (§8.2) was overturned by better data, and we explain why |
+
+---
+
+## 13. Rules research
 
 I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our approach is allowed:
 
@@ -837,7 +1026,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 
 ---
 
-## 12. Summary of problems and solutions
+## 14. Summary of problems and solutions
 
 | # | Problem | Solution | Status |
 |---|---|---|---|
@@ -880,10 +1069,17 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 37 | Correction arrived late ("whip") | 33 ms TOF budget, faster filters and servo, small KI | ✅ |
 | 38 | A side distance sensor alone cannot drive straight | BMI160 gyroscope: distance → target heading → steering | ✅ |
 | 39 | Upload port disappeared (`/dev/cu.usbserial-310`) | Choose the current port; upload without the battery | ✅ |
+| 40 | Car stopped mid-straight after the turn | 3 readings to confirm the wall, ignore 300 ms, deviate 12°, jump only in phase 2 | ✅ |
+| 41 | Car did not see the end of the wall after the turn | Independent 500 mm jump brake in phase 2 | ✅ |
+| 42 | Sometimes turned to the wrong side at the first corner | Valid-only comparison, FRONT/BACK check and undo; root cause in Problem 46 | 🔄 |
+| 43 | Closer to the inner wall every lap | Integral zone, asymmetric gains, danger zone; the wall corrects the heading every straight | ✅ |
+| 44 | Close / far decided wrong right after the turn | Decide 1 s after the turn (`SW_MIN_MS = 1000`) | ✅ |
+| 45 | Hole (end of the inner wall) not detected | Invalid readings must count as "no wall" (Problem 46) | 🔄 |
+| 46 | Side TOF could not see the black wall at 30° (~2 m readings, "signal fail") | Sensors straight at ~5 cm, ROI 16 × 8, only "range valid", decide by valid / invalid | ✅ cause · 🔄 remount |
 
 ---
 
-## 13. Next steps
+## 15. Next steps
 
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
@@ -891,13 +1087,18 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Measure the Nano's 3.3 V pin while the four TOF sensors are ranging (section 9.4).
 - [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
-- [ ] Repeat the ROI test with heights 7, 8 and 9, and with width 4, before fixing the final values.
+- [x] Repeat the ROI test with other sizes: done in Phase 10 — 16 × 8 replaces 1 × 6 ✅
 - [ ] Run `drive_until_left_open` (first driving test).
 - [x] Raise the TOF sensors (1.5 cm higher): they detect the walls much better ✅
 - [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
 - [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
 - [x] Drive straight and smooth along the nearest wall (`wall_follow_nearest_gyro`, Phase 8) ✅
-- [ ] Stop with the short brake when a side wall ends (corner detection by threshold), then add the 90° gyro turn.
+- [x] Stop with the short brake when a side wall ends, then add the 90° gyro turn (`exito_glorioso`, `exito_rotundo`, one-corner version) ✅
+- [x] Find why the car sometimes chose the wrong side: the side TOF could not see the black wall at 30° (Phase 10) ✅
+- [ ] Remount the side TOF sensors **straight (0°)**, centre at ~5 cm from the floor, level (teammate, hardware).
+- [ ] Repeat `tof_roi_budget_test` at 30, 45 and 60 cm with ROI 16 × 8 at 50, 100 and 140 ms and fix the final values.
+- [ ] New Open Challenge version: ROI 16 × 8, only "range valid", WALL / NO WALL / NOT SURE window of 8 readings, target distance inside the reliable range (< 45 cm), all safety rules of §12.7.
+- [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
 - [x] Camera Block 1: pillar detection tested and calibrated (section 6).
 - [x] Mount the camera on the robot and test the detection by moving the robot by hand ✅

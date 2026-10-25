@@ -64,7 +64,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 ├── README.md                ← this file: complete overview of the car
 ├── CHANGELOG.md             ← versions and release notes
 ├── docs/
-│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 32 problems, data and decisions
+│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 46 problems, data and decisions
 │   └── images/                 ← plots used in the journal
 ├── schemes/                 ← schematic, wiring diagram, PCB, power budget, BOM, datasheets
 ├── src/                     ← all source code (see src/README.md)
@@ -265,7 +265,7 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 | Sensor | Placement | Why |
 |---|---|---|
 | **TOF FRONT** | Front centre | Distance to the wall ahead (safety check and parking) |
-| **TOF LEFT / RIGHT** | Both sides, perpendicular | Distance to each wall; a sudden jump means the wall ended → corner. Raised **1.5 cm** so the beam does not pass over the 10 cm wall |
+| **TOF LEFT / RIGHT** | Both sides, **straight (0°), facing the wall squarely**, centre at ~5 cm from the floor (half of the 10 cm wall), level | Distance to the wall being followed; when the wall ends, the readings become invalid → corner. We first angled them 30° forward to see corners earlier, but on the black wall the angled beam returned almost no light (journal Phase 10) |
 | **TOF BACK** | Rear centre | Position along a straight section |
 | **BMI160** | Flat on the PCB | Yaw (Z axis) for straight driving and exact 90° turns |
 | **Camera** | Front, slightly down | Sees the pillars of the next section |
@@ -274,12 +274,20 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 
 **Calibration**
 
-- **TOF ROI chosen by experiment** (journal §8.2): we measured the same wall with several ROI heights and kept the one where the beam no longer saw the floor or passed over the wall (ROI 1 × 6). Per-sensor offset and a median filter of the last 5 valid readings.
+- **TOF ROI chosen by experiment, twice.** First (journal §8.2) we chose ROI 1 × 6 because it gave the biggest difference between "wall" and "no wall". Later tests with a tape measure (journal Phase 10) showed that with the sensor at 30° on the black wall it read **~2 m at every distance** (30, 40, 50, 60 cm and no wall) — the difference was real, but the distance was not. With the sensor **straight** and **ROI 16 × 8**, the black wall at 40 cm reads 38.1 cm, 30/30 valid readings, spread < 1 cm. Reliable range: about 45 cm.
+
+  | Black wall at 30 cm | ROI 1×6 | ROI 8×8 | ROI 16×16 |
+  |---|---|---|---|
+  | Sensor at 30° | ~198 cm ✗ | ~112 cm ✗ | invalid |
+  | Sensor at 30°, white sheet on the wall (control) | invalid (33 ms) / 35.6 ✓ (50 ms) | 34.4 ✓ | 35.4 ✓ |
+  | **Sensor straight** | invalid | 33.4 ✓ (50 ms) | **32.0 ✓** |
+
+- **Only "range valid" readings are used.** "Signal fail" readings gave believable but wrong numbers (e.g. 63 cm with the wall at 30 cm).
 - **Gyroscope:** 200 samples at rest before every run; their mean is the offset.
 - **Steering:** centre and limits found with the interactive `servo_calibration` sketch, with 2–3° of margin before each mechanical stop.
 - **Camera colours:** HSV thresholds tuned live under the real lighting with Pillar Vision Lab (section 9).
 
-**Noise and interference we considered:** sunlight and strong lamps raise the TOF ambient-light level (we print the ambient value in the diagnostic sketch); dark or shiny walls lower the return signal (we accept "signal fail" readings only if their value is valid); objects outside the field (people, flags) can look like pillars to the camera, so only a horizontal band of the image is searched.
+**Noise and interference we considered:** sunlight and strong lamps raise the TOF ambient-light level (we print the ambient value in the diagnostic sketch); dark walls return little light, and almost none when the beam hits them at an angle (journal Phase 10), so the side sensors face the wall squarely and "signal fail" readings are ignored; objects outside the field (people, flags) can look like pillars to the camera, so only a horizontal band of the image is searched.
 
 ---
 
@@ -331,56 +339,86 @@ flowchart LR
 
 ### 8.1 Idea
 
-The car learns its distances to the walls at the start, keeps those distances all the way so it never drifts, and detects each corner as a **sudden jump** in a side distance: the inner wall has ended, so the car turns toward that side until the gyroscope says it has rotated exactly 90°. A counter stops the car after the 12th corner (3 laps × 4 corners).
+**Finish the three laps safely first, then go faster.** The car drives along a side wall with a two-loop controller (wall distance → small target heading → gyroscope → steering). At the first corner it finds which side opens and fixes the direction of the round. At every corner it turns exactly 90° with the gyroscope, and at every straight the wall itself corrects the heading, so small errors cannot add up over 12 corners. After the last corner it drives a short straight and brakes actively.
+
+How we got here: a sudden-jump detector (Sharp sensors, journal §2.4) → keeping both start distances (§4.2) → smooth gyro wall following (Phase 8) → one complete corner and the loop (Phase 9) → **simpler decisions once the sensor data became trustworthy** (Phase 10).
 
 ### 8.2 State machine
 
 ```mermaid
 stateDiagram-v2
     [*] --> WAITING
-    WAITING --> STRAIGHT: start button, read L_ref and R_ref
-    STRAIGHT --> TURNING: side distance jumps, turn to that side
-    TURNING --> STRAIGHT: 90 deg turned, corners < 12
-    TURNING --> FINAL_STRAIGHT: 90 deg turned, corners = 12
-    FINAL_STRAIGHT --> FINISHED: short distance driven
-    FINISHED --> [*]: short brake
+    WAITING --> FIRST_STRAIGHT: start button, gyro calibrated
+    FIRST_STRAIGHT --> DECIDE: one side becomes NO WALL, or time is up
+    DECIDE --> DECIDE: NOT SURE, stop and measure again
+    DECIDE --> FIRST_TURN: side chosen
+    FIRST_TURN --> CHECK: 90 deg turned
+    CHECK --> FIRST_TURN: BACK farther than FRONT, undo and turn other side
+    CHECK --> FOLLOW_WALL: turn correct, direction fixed
+    FOLLOW_WALL --> TURN: followed wall becomes NO WALL
+    TURN --> FOLLOW_WALL: 90 deg turned, turns below 12
+    TURN --> FINAL_STRAIGHT: 12 turns
+    FOLLOW_WALL --> SAFE_STOP: front too close or timeout
+    FINAL_STRAIGHT --> FINISHED: short time driven
+    FINISHED --> [*]: active brake
+    SAFE_STOP --> [*]: active brake
 ```
 
 | State | What the car does |
 |---|---|
-| **WAITING** | Calibrates the gyroscope at rest (200 samples → offset). When the start button is pressed, it averages several readings of the LEFT and RIGHT TOF sensors and stores them as the **reference distances** `L_ref` and `R_ref` |
-| **STRAIGHT** | Motor forward. The steering keeps the heading of the current straight (a multiple of 90° from the gyro) **and** keeps the side distance equal to its reference with a PD controller. Every cycle it compares each side reading with the previous one to look for a sudden jump |
-| **TURNING** | Servo to its limit on the corner side, motor running. The car turns until the gyro heading has changed **exactly 90°** from the heading of the previous straight. Then the servo returns to its measured centre and `corners` increases by one |
-| **FINAL_STRAIGHT** | After the 12th corner the car drives straight a short, tuned distance (measured with the encoder) so the whole car is inside the starting section |
-| **FINISHED** | Motor short brake (both TB6612FNG inputs HIGH); the car stays stopped |
+| **WAITING** | Calibrates the gyroscope at rest (offset), waits for the start button |
+| **FIRST_STRAIGHT** | Gyro wall following on the nearest wall. Keeps a window of the last readings of each side to see which side opens |
+| **DECIDE** | Car **stopped**. Turn side = the side that became NO WALL. If the readings are NOT SURE, it measures again with the car still instead of guessing |
+| **FIRST_TURN / CHECK** | 90° gyro turn. Then FRONT vs BACK: if the back is clearly farther than the front, the turn was wrong → undo it and turn to the other side. Only done once; the direction is fixed for the round |
+| **FOLLOW_WALL** | Follows the **inner wall** at a target distance inside the sensor's reliable range, with the cascade controller. While on target and parallel, it stores the yaw as the real direction of this wall |
+| **TURN** | Drives straight a short time after the wall ends, then turns 90° from the corrected heading (wall direction + 90°) |
+| **FINAL_STRAIGHT → FINISHED** | After 12 turns: straight for a tuned time with the gyroscope, then active brake (both TB6612FNG inputs HIGH) |
+| **SAFE_STOP** | Any safety rule (8.5) brakes the car instead of letting it drive blind |
 
-### 8.3 Keeping the same distance to the walls
+### 8.3 Wall or no wall: how the side sensors are read
 
-- `L_ref` and `R_ref` are measured **once, at the start**, where the car is placed parallel to the walls.
-- In STRAIGHT the lateral error is `error = distance − reference` and the steering correction is `Kp · error + Kd · d(error)/dt`, added to the gyro heading correction (initial values Kp = 0.8, Kd = 0.3, to be tuned on the track).
-- **Which wall is followed:** before the first corner, both side walls are used. The first jump tells the turning direction of the round. From then on the car follows the **outer wall** at its reference distance, because the outer wall of the field is at the same position in all four sections, while the inner wall can be at a different distance in each section (corridors of 100 cm or 60 cm). Keeping the same distance to the outer wall therefore keeps the car on the same path in every section and every lap, without drifting.
-- **Why a PD controller with the gyro:** the gyro alone keeps the car parallel to the walls but cannot see a slow sideways drift; the distance alone reacts late to a change of angle. Together, the gyro holds the angle and the distance term removes the drift. The derivative term reacts to how fast the error is changing, which damps the zig-zag that a proportional-only controller tends to produce because the steering always reacts with some delay.
+The side TOF sensors face the wall squarely and use ROI 16 × 8 (journal Phase 10). On the black wall each reading is either accurate or invalid, so the car does not try to measure distances it cannot see:
 
-### 8.4 Corner detection: sudden jump
+| Reading | Meaning |
+|---|---|
+| "Range valid" and ≤ 550 mm | **WALL**, distance reliable (±1–2 cm) |
+| Anything else | **NO WALL** — the number is never used |
 
-- Every cycle (TOF period 100 ms), each side reading is compared with the previous one. If a side distance **increases by more than `JUMP_THRESHOLD`** (initial value 150 mm), that wall has ended: the car is at a corner and turns toward that side.
-- The sensors use the measurement area we chose by experiment, **ROI_WIDTH = 1 and ROI_HEIGHT = 6** (journal §8.2). With this ROI the difference between "wall at 60 cm" and "no wall" was the largest of all the heights tested (64 vs 1–57 for the others), so the jump at the end of a wall is clear and the beam does not pass over the 10 cm wall.
-- **Why a jump and not the front wall:** the side wall ends before the front wall gets close, so the car can start its turn earlier and with more room. The jump also tells which way to turn, so the car does not need to know in advance whether the round is clockwise or counter-clockwise. This method was developed with hand tests and validated (journal §2.4); comparing absolute left/right distances gave false decisions beyond 50 cm (journal §2.3).
+Decisions use the last **8** readings: **6 or more** WALL → WALL (distance = median); **2 or fewer** → NO WALL; **3–5** → NOT SURE (no decision yet). The thresholds are provisional and will be confirmed after remounting the sensors (30, 45, 60 cm test).
 
-### 8.5 Turning by gyro angle
+This made the algorithm **simpler**: no 2400–2600 mm "opening" threshold, no comparison of two noisy averages at ~2 m, no 165–185 cm close / far threshold, no jump threshold. The opening is the side without a wall; the corner is the moment the followed wall disappears.
 
-The turn ends when the heading has changed exactly 90°, not after a fixed time. A turn by time would change with the battery voltage and the speed; a turn by angle is the same every time. The target heading is absolute (0°, 90°, 180°, 270°, …), so small errors in one corner do not accumulate over the 12 corners.
+### 8.4 Turning, and why errors do not add up
+
+- The turn ends when the gyroscope says **90°**, not after a fixed time: a timed turn would change with battery voltage and speed. The wheels straighten gradually near the end (PD on the yaw) and the car brakes a few degrees early to absorb inertia (validated in `turn_left_90_pid_brake`).
+- Using `previous heading + 90°` let a gyro scale error of ~1.5° per turn grow past what the wall controller could correct (±8°) after about 6 turns, and the car hit the inner wall in a later lap (journal Problem 43). Now **the wall is the reference**: while the car is on target and the distance is not changing, its yaw is the true direction of the wall, and the next turn starts from it. Every straight is a fresh start.
+
+### 8.5 Safety rules (always active)
+
+Our priority is to **complete the three laps and stop correctly** — a crash loses the laps, a slower run only loses seconds.
+
+| Rule | Why |
+|---|---|
+| NOT SURE → slow down or stop and measure again | A wrong turn side ends the run; waiting costs a second |
+| Turn-side decision with the car **still**, using medians | Readings in motion and single readings were the cause of wrong decisions |
+| FRONT safety in every phase, independent of the BACK sensor | Last line of defence against hitting a wall |
+| FRONT/BACK check and undo after the first turn | A wrong first turn is corrected instead of followed |
+| Timeout for every straight and phase | The car never drives blind if a reading never comes |
+| Lower speed after turns and during decisions | More valid readings before the next decision |
+| Wall corrects the heading every straight | A small gyro error cannot become a crash in lap 3 |
+| Motor only forward during a run (except the controlled undo), active brake at the end | Drive gear skips on sudden reverse (journal Problem 34) |
 
 ### 8.6 Edge cases
 
 | Case | Handling |
 |---|---|
-| Car starts at any position inside the starting section | `L_ref` / `R_ref` are measured at the start, never assumed |
-| Corridor of 60 cm instead of 100 cm | After the first corner the car follows the outer wall, whose position never changes |
-| False jump right after a turn (the sensor sees past the end of the inner wall while the car straightens) | Jump detection is ignored for a short distance after each turn |
-| A single noisy TOF reading looks like a jump | Median filter of the last 5 valid readings before comparing |
-| Gyro drift over 3 laps | Offset calibration at rest before every run; absolute heading targets |
-| Stopping inside the starting section | After the 12th turn the car drives a tuned, encoder-measured distance and brakes actively |
+| Car starts at any position inside the starting section | Gyro wall following on the nearest wall; nothing about the position is assumed |
+| Inner wall far away (100 cm corridor) | Its readings are invalid (NO WALL); after the turn the car deviates toward it until it is in range, then follows it |
+| Right after a turn, the sensor sees the tip of the inner wall diagonally | Close / far is decided only 1 s after the turn (`SW_MIN_MS = 1000`, journal Problem 44) |
+| A single bad reading | Window of 8 readings with a NOT SURE band |
+| Gyro drift over 3 laps | Calibration at rest before every run + wall re-alignment every straight |
+| Wrong first turn | FRONT/BACK check and undo |
+| Stopping inside the starting section | After the 12th turn a tuned final straight and active brake |
 
 ---
 
@@ -443,6 +481,7 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Camera on its own board | Software, power | Nano loop stays fast; costs ~0.5 W more and a UART link |
 | PCB as chassis | Mechanics, electronics, time | Very compact and reliable, but every revision takes ~2 weeks to arrive from China |
 | TOF height on the chassis | Sensors, software | 1.5 cm higher fixed the readings over the wall without any code change |
+| TOF mounting angle | Sensors, software, strategy | At 30° the black wall returned no light and every decision based on it failed; straight sensors made the data trustworthy and the algorithm simpler |
 | Steering mechanism | Mechanics, electronics, software | Ackermann friction broke three servos; rack and pinion protects the servo and makes angle → wheel position linear |
 | Car size and mass (13 × 9.5 cm, 270 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
 | TOF on the Nano's 3.3 V pin | Power, sensors | Isolated from servo peaks, but limited by the Nano's small regulator |
@@ -455,6 +494,10 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 |---|---|---|
 | TOF400C (VL53L1X) | Sharp infrared | Sharp unreliable beyond 50–60 cm in our tests (journal Problem 3) |
 | Binary "wall / open" and jump detection | Comparing left vs right distances | Comparing magnitudes beyond 50 cm gave false decisions (journal §2.3) |
+| Side TOF **straight (0°)** | Angled 30° forward to see corners earlier | Black wall at 30 cm: ~198 cm (wrong) at 30°, 32.0 cm with 30/30 valid readings straight (journal Phase 10). Correct data over early data |
+| ROI **16 × 8** | ROI 1 × 6 | 1 × 6 was invalid even on a white sheet; 16 × 8 measured 38.1 cm at 40 cm, spread < 1 cm; 16 × 16 read short because its tall cone sees the floor |
+| Decide by valid / invalid readings, window of 8 | Distance thresholds at ~2 m | Beyond ~45 cm the black wall gives no valid readings, so "far wall" and "no wall" cannot be told apart by distance |
+| Wall as heading reference every straight | Gyro-only absolute headings | Gyro scale error (~1.5° per turn) exceeded the ±8° the wall controller can correct after ~6 turns (journal Problem 43) |
 | Moving reference for jump detection | Fixed reference | The fixed version tested worse on the track (journal Problem 4) |
 | Following the outer wall at its start distance | Centring between the walls | The inner walls move every round, so the centre changes; the outer wall never moves |
 | Floor lines for corners in the Obstacle Challenge | Side TOF jumps | Pillars near the walls could create false jumps; the lines are fixed by the rules |
@@ -485,8 +528,11 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Lighting at the venue differs from home | Colour thresholds re-tuned on site with Pillar Vision Lab in minutes |
 | Camera sees objects outside the field | Search only a horizontal band of the image |
 | Steering not centred after a mechanical change | Re-run `servo_calibration` after any change to the steering |
+| Side TOF cannot see the black wall (journal Problem 46) | Sensors straight at ~5 cm, ROI 16 × 8, only "range valid"; re-test with a tape measure after any change to the sensor mounts |
+| Wrong turn side at the first corner | Decision with the car still, NOT SURE band, FRONT/BACK check and undo |
+| Gyro error accumulates over 12 turns | Wall re-alignment every straight |
 
-The complete list of the **39 problems** we found, with their causes and solutions, is in [journal §12](docs/ENGINEERING_JOURNAL.md#12-summary-of-problems-and-solutions).
+The complete list of the **46 problems** we found, with their causes and solutions, is in [journal §14](docs/ENGINEERING_JOURNAL.md#14-summary-of-problems-and-solutions).
 
 ---
 
@@ -496,14 +542,14 @@ Every component is tested alone before it is joined to the rest:
 
 1. **Hardware tests** ([src/hardware-tests](src/hardware-tests)): one sketch per component, printing its readings to the Serial Monitor.
 2. **Hand tests:** the car or its sensors are moved by hand to check the decision logic before the car drives itself. This let us develop the algorithm while the chassis was still being built.
-3. **Measured experiments** to choose parameters: TOF ROI height (journal §8.2), HSV thresholds in Pillar Vision Lab.
+3. **Measured experiments** to choose parameters: TOF ROI and mounting angle with a tape measure and a control surface (journal §8.2 and Phase 10, `tof_roi_budget_test`), HSV thresholds in Pillar Vision Lab.
 4. **Driving tests on realistic layouts** generated by Scenario Roulette with the official procedure.
 
 | Metric | How we measure it |
 |---|---|
 | Vision frame rate | fps printed by the camera board (~25 fps) |
 | Vision correctness | Board result vs JavaScript result, compared on the same picture in Pillar Vision Lab |
-| TOF quality | Reading vs tape-measure distance; standard deviation of repeated readings |
+| TOF quality | Reading vs tape-measure distance; valid readings out of 30; spread (p90 − p10) of repeated readings (`tof_roi_budget_test`) |
 | Gyro drift | Heading change with the car at rest over time |
 | Turn accuracy | Heading error after each 90° turn |
 | Open Challenge score | Laps completed and official points, logged per attempt in Scenario Roulette |
@@ -564,9 +610,11 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | Pillar detection | ✅ Finished and tested on the robot |
 | Chassis v3: printed base, rack-and-pinion steering, silicone tyres | ✅ Built (25 STL files published) |
 | Steering calibration on v3 | 🔄 Provisional centre 120°, limits 180° / 50° |
-| Wall-keeping PID on v3 | 🔄 Tuning (`wall_keep_both_pid`) |
-| Open Challenge program on chassis v3 | 🔄 Integration |
-| Open Challenge final-straight and stop after 12 corners | 🔄 Integration |
+| Gyro wall following on v3 | ✅ Validated (`wall_follow_nearest_gyro`) |
+| 90° gyro turn with active brake | ✅ Validated (`turn_left_90_pid_brake`) |
+| One complete corner (decide, turn, check, follow inner wall) | ✅ Validated (`exito_glorioso`, `exito_rotundo`, one-corner version) |
+| Side TOF data on the black wall | 🔄 Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
+| Open Challenge 12-turn loop with wall re-alignment | 🔄 Runs; next version uses valid / invalid decisions |
 | Obstacle: correct-third steering, floor-line corners | ⏳ Next |
 | Camera → Nano UART link | ⏳ Next |
 | Parking | 🧠 Being designed |

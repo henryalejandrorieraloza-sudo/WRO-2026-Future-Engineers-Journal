@@ -2,6 +2,14 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.2 — 25 October · The side sensors could not see the black wall → simpler, safer algorithm
+- **One complete corner validated** (22–23 Oct, "works excellent"): turn side by opening or by comparing **valid** readings only, 90° gyro turn, FRONT/BACK check that undoes a wrong first turn, then `sideWallRun()` (find the inner wall → deviate to the target → precise P+I+D) and brake when the inner wall ends.
+- **Open Challenge loop** (24 Oct): 13 turns with absolute headings, final 1 s straight and active brake. The car got closer to the inner wall every lap (gyro error ~1.5° per turn > the ±8° the wall PID can correct after ~6 turns). Fixed by using **the wall as the heading reference every straight** (`REALIGN_WITH_WALL`), plus an integral zone, asymmetric gains, a danger zone and a filtered D term.
+- **Root cause of the wrong-side decisions found with data** (24–25 Oct, `tof_roi_budget_test`): with the side TOF angled 30° and ROI 1 × 6, the black wall at 30, 40, 50 and 60 cm and **no wall** all read ~2 m ("signal fail"). Control test: a white sheet on the wall at the same angle read 34–36 cm, all valid. Sensor **straight**: black wall at 30 cm → 32.0 cm, 30/30 valid. ROI **16 × 8**: 38.1 cm at 40 cm (30/30), 8/30 valid at 60 cm → reliable range ~45 cm.
+- **Decision:** side sensors straight (0°) at ~5 cm from the floor, ROI 16 × 8, only "range valid" readings. The algorithm becomes simpler: WALL / NO WALL / NOT SURE from a window of 8 readings replaces the 2600 mm opening, 165 cm close/far and 500 mm jump thresholds.
+- **Safety first:** NOT SURE → stop and measure again; decisions with the car still; FRONT safety in every phase; timeouts; lower speed during decisions. Goal: finish the 3 laps safely before going faster.
+- Added `tof_left_right_print` and `tof_roi_budget_test`. Journal: Phases 9 and 10 (sections 11–12), Problems 40–46; journal §8.2 marked as overturned. README §6.3, §8, §10 and §13 updated.
+
 ## v1.1 — 21 October (night) · "Éxito rotundo": timed corner, no front sensor
 - **Validated on the track:** `exito_rotundo`.
 - **Straighter driving:** an integral was added to the gyro heading loop (`KI_HEADING = 2.5`, max 10° of steering). It cancels a constant steering offset (servo centre not exact), which made the car drift slowly to the left.
