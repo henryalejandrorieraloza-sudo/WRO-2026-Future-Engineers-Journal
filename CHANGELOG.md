@@ -8,7 +8,6 @@ Versions of the car and of this repository. Dates are in 2026.
 - Open Challenge: the competition number of turns is **12** (a 13th turn would leave the starting section, rule 9.24.3); edge cases for the 600 mm corridor and the outer wall added.
 - `video/video.md`: one video per challenge (≥ 30 s autonomous) listed as required; Open and Obstacle videos pending.
 - `camera_webserver_emakefun` marked as bench test only (Wi-Fi not allowed in rounds, rule 11.10).
-- Versions are now Git tags (`v0.4` … `v1.3`).
 
 ## v1.2 — 25 October · The side sensors could not see the black wall → simpler, safer algorithm
 - **One complete corner validated** (22–23 Oct, "works excellent"): turn side by opening or by comparing **valid** readings only, 90° gyro turn, FRONT/BACK check that undoes a wrong first turn, then `sideWallRun()` (find the inner wall → deviate to the target → precise P+I+D) and brake when the inner wall ends.

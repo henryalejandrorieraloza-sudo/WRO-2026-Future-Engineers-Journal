@@ -648,7 +648,7 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. Each version is also a Git tag (`v0.4` … `v1.2`), so any earlier state of the car can be downloaded from the *Tags* page.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car.
 
 ### 14.1 Submission checklist
 
