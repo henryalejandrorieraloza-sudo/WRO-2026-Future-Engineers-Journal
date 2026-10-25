@@ -124,11 +124,32 @@ This is our **first year** in the Future Engineers category. We are students of 
 
 | Challenge | Task |
 |---|---|
-| **Open Challenge** | Drive **3 laps** on a 3 × 3 m field. The inner walls are placed randomly every round, so each corridor is either 100 cm or 60 cm wide, and the driving direction (clockwise or counter-clockwise) is also random |
-| **Obstacle Challenge** | Drive **3 laps** while obeying traffic signs: 🟥 **red** pillar → pass on its **right**; 🟩 **green** pillar → pass on its **left**. Then find the magenta parking lot and **parallel park** |
+| **Open Challenge** | Drive **3 laps** (3 minutes maximum) on a 3 × 3 m field with 10 cm black walls. The inner walls are placed randomly every round, so each corridor is either 1000 mm or 600 mm wide (± 100 mm at the International Final); the starting section, starting zone and driving direction (clockwise or counter-clockwise) are also random. After 3 laps the car must stop by itself inside the starting section. The car **may not touch the outer wall** |
+| **Obstacle Challenge** | Drive **3 laps** (3 minutes maximum, corridors always 1000 mm) while obeying traffic signs: 🟥 **red** pillar → pass on its **right**; 🟩 **green** pillar → pass on its **left**. Then find the magenta parking lot (always in the starting section, length 1.5 × car length) and **parallel park** without touching its limits |
 | **Documentation** | Public GitHub repository and engineering journal, scored with five criteria (mobility, power and sensors, software, systems thinking, reproducibility) |
 
 Constraints that shaped our design (from the [official rules](https://wro-association.org/)): maximum size 30 × 20 × 30 cm, maximum mass 1.5 kg, one drive axle with mechanically connected wheels, a steering system, one start button and one power switch, no wireless communication during the run.
+
+### 3.1 Rules compliance
+
+How the car and this repository meet each rule of the *WRO 2026 Future Engineers General Rules* (version 15 January 2026) that affects our design:
+
+| Rule | Requirement | How we comply |
+|---|---|---|
+| 9.17 / 11.1 | Max 300 × 200 × 300 mm | 130 × 95 × 60 mm |
+| 11.2 | Max 1.5 kg | 270 g |
+| 11.3 / 11.4 | 4 wheels, one driving axle, one steering actuator; no omni or ball wheels; no differential-drive robot | 4 wheels, rear-wheel drive, one MG90 servo on a rack and pinion |
+| 11.5 / 11.13 | Max 2 driving motors, connected to the axle (no motor per side) | One N20 motor → 1 : 1 mechanical differential on the rear axle |
+| 11.6 / 11.10 / 11.17 | Autonomous; no radio, Bluetooth or Wi-Fi during rounds; only wired links between components | The Nano has no radio. The camera board's Wi-Fi is **never started** in the competition code (the camera talks to the Nano by UART cable). `camera_webserver_emakefun` uses Wi-Fi and is a **bench test only** |
+| 9.6 / 9.10 / 9.11 / 9.14 | Placed switched off; one power switch; waiting state; one start button; pressing it starts the run | Power switch → program calibrates the gyro and waits in `WAITING`; one push button on D10 starts the run |
+| 9.9 / 11.7 | No data entered by switches, part positions or sensor calibration before the round; no signals during the run | The program reads nothing from the team: the gyro offset is measured **automatically** by the program at power-on with the car still, and the turn direction and wall positions are detected by the sensors during the run |
+| 9.16 / 9.21 / App. A.4 | Drive in the round direction; reverse only within the section where it changed direction and the next one | Direction detected at the first corner. The only reverse manoeuvre is the undo of a wrong first turn, a short move inside the corner section (allowed, App. A.4 case 1) |
+| 9.18 | Do not move walls; in the Open Challenge do not touch the outer wall | The car follows the **inner** wall at a short distance, so it stays away from the outer wall; front safety brake |
+| 9.22 / 9.24.2 / 9.24.3 / App. A.2–A.3 | After 3 laps stop completely inside the starting section (no movement after 15 s; judged after 30 s still); passing into the next corner ends the round without the stop points | After the **12th** turn: short tuned straight, then **active brake held forever** (both TB6612FNG inputs HIGH) |
+| 9.23 | One repair per round; no program upload, no data entry | Nothing to configure: after a repair the car is switched on and started with the same button |
+| 8 (Obstacle) / 1.8.1 | Parking-lot start points only if a full lap is completed | Start position decided by the team before the round; parking still being designed |
+| 3.3 / 3.7 | Code and construction only by the team, own solution | All code written by the team; history visible in the commits and the journal |
+| 7 | Public GitHub repository in English; README ≥ 5000 characters (modules, link to electromechanical components, build / compile / upload); commented code; photos of every side, top and bottom; team photo; one YouTube video per challenge with ≥ 30 s of autonomous driving; ≥ 3 commits on time; repository public for 12 months after the event; hard copy at the International Final | See [§14.1 Submission checklist](#141-submission-checklist) |
 
 ---
 
@@ -141,7 +162,7 @@ Constraints that shaped our design (from the [official rules](https://wro-associ
 | <img src="v-photos/left.jpg" width="260"> | <img src="v-photos/right.jpg" width="260"> | <img src="v-photos/bottom.jpg" width="260"> |
 
 - All vehicle photos with descriptions: [v-photos](v-photos/README.md)
-- Driving videos: [video/video.md](video/video.md) — [autonomous driving on YouTube](https://www.youtube.com/watch?v=J5yrJuZZ5P8)
+- Driving videos: [video/video.md](video/video.md) — [autonomous driving on YouTube](https://www.youtube.com/watch?v=J5yrJuZZ5P8). The rules ask for **one video per challenge** (Open and Obstacle), each with at least 30 s of autonomous driving; the list in `video.md` shows which ones are ready.
 
 ---
 
@@ -418,7 +439,10 @@ Our priority is to **complete the three laps and stop correctly** — a crash lo
 | A single bad reading | Window of 8 readings with a NOT SURE band |
 | Gyro drift over 3 laps | Calibration at rest before every run + wall re-alignment every straight |
 | Wrong first turn | FRONT/BACK check and undo |
-| Stopping inside the starting section | After the 12th turn a tuned final straight and active brake |
+| Narrow corridor (600 mm) | The inner wall is close, its readings are valid from the start; the car follows it directly |
+| Never touch the outer wall (rule 9.18) | The car always follows the **inner** wall at a short distance, and the FRONT safety brakes before any wall |
+| Wrong first turn | Undo is a short reverse inside the corner section, which the rules allow (Appendix A.4) |
+| Stopping inside the starting section | After exactly **12** turns (3 laps × 4 corners) a tuned final straight and active brake held forever. A 13th turn would carry the car out of the starting section and lose the 3 stop points (rule 9.24.3) |
 
 ---
 
@@ -615,6 +639,7 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | One complete corner (decide, turn, check, follow inner wall) | ✅ Validated (`exito_glorioso`, `exito_rotundo`, one-corner version) |
 | Side TOF data on the black wall | 🔄 Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
 | Open Challenge 12-turn loop with wall re-alignment | 🔄 Runs; next version uses valid / invalid decisions |
+| Videos: one per challenge (≥ 30 s autonomous) | 🔄 Pending (rule 7) |
 | Obstacle: correct-third steering, floor-line corners | ⏳ Next |
 | Camera → Nano UART link | ⏳ Next |
 | Parking | 🧠 Being designed |
@@ -623,7 +648,25 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. Each version is also a Git tag (`v0.4` … `v1.2`), so any earlier state of the car can be downloaded from the *Tags* page.
+
+### 14.1 Submission checklist
+
+International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines from rule 7, counted from 8 December:
+
+| Requirement (rule 7) | Deadline | Status |
+|---|---|---|
+| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | ✅ 4 Oct (first code and journal) |
+| Second commit | ≤ 8 Nov 2026 | ✅ many commits in October |
+| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | ⏳ |
+| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | ⏳ final Open and Obstacle programs, final README and journal |
+| README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | ✅ (§7, §12) |
+| Code for **every** programmed component, with comments | — | 🔄 tests and validated stages in `src/`; final competition programs to be added |
+| Photos: front, back, left, right, top, bottom + team photo | — | ✅ `v-photos/`, `t-photos/` |
+| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | 🔄 one general video; Open and Obstacle videos pending |
+| 3D-printing files, wiring diagram, schematic | — | ✅ `models/`, `schemes/` |
+| Repository public until at least December 2027 | — | ✅ public; do not delete or make private |
+| Hard copy of the documentation at the International Final | 8 Dec 2026 | ⏳ print README + journal |
 
 ---
 

@@ -867,6 +867,7 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
   3. Strong filtered D term to stop the car travelling diagonally into the wall.
   4. **Root cause:** each new straight heading was `previous + 90°` from the gyroscope. A gyro error of ~1.5° per turn becomes > 8° after 6 turns, more than the wall PID can correct (±8°). **Solution:** the wall itself is the heading reference. While the car is on target and the distance is not changing (parallel to the wall), its yaw is the real direction of the wall; the next turn starts from that value (`REALIGN_WITH_WALL`). The gyro error is erased at every straight and can no longer accumulate. Each lap "starts fresh", like the first straight.
 - Other settings decided: target distance 600 mm, 500 ms straight after the wall ends before turning, deviate manoeuvre only on the first straight.
+- **Rules check (25 Oct):** the loop was tested with `TOTAL_TURNS = 13`. Starting in the starting section, 3 laps are exactly **12** corners; after the 12th turn the car is back in the starting straight. A 13th turn would carry it out of the starting section, and rule 9.24.3 ends the round without the 3 points for stopping. The competition value is `TOTAL_TURNS = 12`.
 
 #### Problem 44 — Close or far: after the turn the car chose wrong when deciding too early ✅
 - **What happened:** right after the turn the car is still in the corner area; the inner-side sensor sees the **tip** of the inner wall diagonally, not the wall beside it.
@@ -1099,6 +1100,10 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Repeat `tof_roi_budget_test` at 30, 45 and 60 cm with ROI 16 × 8 at 50, 100 and 140 ms and fix the final values.
 - [ ] New Open Challenge version: ROI 16 × 8, only "range valid", WALL / NO WALL / NOT SURE window of 8 readings, target distance inside the reliable range (< 45 cm), all safety rules of §12.7.
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
+- [ ] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component.
+- [ ] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`.
+- [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring) and send the link before the organisers' deadline (≈ 17 Nov).
+- [ ] Print the README and this journal as the **hard copy** for the International Final (8–10 Dec 2026, San Juan).
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
 - [x] Camera Block 1: pillar detection tested and calibrated (section 6).
 - [x] Mount the camera on the robot and test the detection by moving the robot by hand ✅

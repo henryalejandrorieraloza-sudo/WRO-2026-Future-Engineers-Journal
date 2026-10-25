@@ -5,6 +5,9 @@
 // Tools: ESP32S3 Dev Module | USB CDC On Boot: Enabled | Flash Size: 8MB (64Mb)
 //        Partition: 8M with spiffs (3MB APP/1.5MB SPIFFS) | PSRAM: OPI PSRAM
 //        Upload Mode: UART0 / Hardware CDC | USB Mode: Hardware CDC and JTAG
+// BENCH TEST ONLY: this sketch uses Wi-Fi. Wireless communication is NOT allowed during rounds
+// (WRO rule 11.10), so it is never loaded on the car for a competition run; the competition
+// camera code talks to the Nano only through a UART cable.
 // Wi-Fi: put your own 2.4 GHz network below (do NOT upload your real password to GitHub).
 
 #include "esp_camera.h"

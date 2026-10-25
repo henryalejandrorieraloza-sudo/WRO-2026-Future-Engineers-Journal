@@ -2,6 +2,14 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.3 — 25 October · Rules compliance review
+- Re-read the full *WRO 2026 Future Engineers General Rules* (15 Jan 2026) and Appendix C, and checked the repository against them.
+- README: corrected the challenge description (corridors 1000 / 600 mm ± 100 mm, 3-minute rounds, no touching the outer wall in the Open Challenge, parking lot rules); new **§3.1 Rules compliance** table (size, mass, drive, steering, no wireless, start procedure, no data entry, reverse driving, stop in the starting section); new **§14.1 Submission checklist** with the rule 7 deadlines counted from the International Final (8 Dec 2026).
+- Open Challenge: the competition number of turns is **12** (a 13th turn would leave the starting section, rule 9.24.3); edge cases for the 600 mm corridor and the outer wall added.
+- `video/video.md`: one video per challenge (≥ 30 s autonomous) listed as required; Open and Obstacle videos pending.
+- `camera_webserver_emakefun` marked as bench test only (Wi-Fi not allowed in rounds, rule 11.10).
+- Versions are now Git tags (`v0.4` … `v1.3`).
+
 ## v1.2 — 25 October · The side sensors could not see the black wall → simpler, safer algorithm
 - **One complete corner validated** (22–23 Oct, "works excellent"): turn side by opening or by comparing **valid** readings only, 90° gyro turn, FRONT/BACK check that undoes a wrong first turn, then `sideWallRun()` (find the inner wall → deviate to the target → precise P+I+D) and brake when the inner wall ends.
 - **Open Challenge loop** (24 Oct): 13 turns with absolute headings, final 1 s straight and active brake. The car got closer to the inner wall every lap (gyro error ~1.5° per turn > the ±8° the wall PID can correct after ~6 turns). Fixed by using **the wall as the heading reference every straight** (`REALIGN_WITH_WALL`), plus an integral zone, asymmetric gains, a danger zone and a filtered D term.
