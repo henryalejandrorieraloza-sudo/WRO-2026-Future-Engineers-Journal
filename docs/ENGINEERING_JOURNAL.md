@@ -1033,6 +1033,21 @@ The full list of settings with their reasons is in the [README §10.4](../README
 | Software | The algorithm is simplified because the sensor data is now trustworthy; safety rules kept explicitly |
 | Honesty / iteration | Our own earlier ROI experiment (§8.2) was overturned by better data, and we explain why |
 
+### 12.10 Next algorithm: encoder delays and a fixed decision tree (Sunday 25 October, night)
+
+After reviewing the rules and the sensor data, I compared several ways to drive the Open Challenge before writing new code.
+
+**Why not reinforcement learning?** RL needs thousands of attempts; on the real track each attempt means placing the car, waiting and charging the battery, and a simulator would not model what actually goes wrong for us (black walls that the TOF cannot see, the USB vs battery difference, the steering centre at 120°). The task can be written as clear rules, so a state machine with PID is more reliable, easier to debug and easier to explain. We considered PID, feedforward, geometric path tracking (Pure Pursuit), LQR, MPC, imitation learning and RL; we keep **state machine + cascade PID**, and the encoder improves it.
+
+**What changes.** Every wait that was measured in **time** becomes a distance measured with the **encoder** (already wired, not used yet). A timed delay covers more distance with a full battery than with a low one, and the car behaved differently on USB than on battery. The full decision tree is in [README §8.7](../README.md#87-next-version-decision-tree-with-encoder-delays-planned-25-october):
+
+1. **First straight:** follow the nearest wall; when one side opens, store it as the direction of the round, wait N encoder turns, turn 90°.
+2. **After the first turn:** follow the outer wall until the inner wall appears, then start searching for openings.
+3. **Loop:** follow the inner wall → opening → N encoder turns → 90° turn → M encoder turns without searching (so the corner itself is not taken as an opening) → follow the inner wall again.
+4. **After 12 turns:** X encoder turns, active brake, stay still.
+
+**Open questions to measure:** encoder ticks per millimetre, turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor (the opening appears later before a narrow corridor, so one fixed N may not fit both).
+
 ---
 
 ## 13. Rules research
@@ -1119,6 +1134,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Remount the side TOF sensors **straight (0°)**, centre at ~5 cm from the floor, level (teammate, hardware).
 - [ ] Repeat `tof_roi_budget_test` at 30, 45 and 60 cm with ROI 16 × 8 at 50, 100 and 140 ms and fix the final values.
 - [ ] New Open Challenge version: ROI 16 × 8, only "range valid", WALL / NO WALL / NOT SURE window of 8 readings, target distance inside the reliable range (< 45 cm), all safety rules of §12.7.
+- [ ] Measure encoder ticks per millimetre and the full-lock turning radius, then code the decision tree of §12.10 (delays in encoder turns instead of time).
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
 - [ ] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component.
 - [ ] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`.

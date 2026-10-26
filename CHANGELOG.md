@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.5 — 25 October (night) · Next Open Challenge algorithm: decision tree with encoder delays
+- README **§8.7**: full decision tree of the next version (first straight on the nearest wall → opening fixes the direction → N encoder turns → 90° turn → outer wall until the inner wall appears → loop on the inner wall with N / M encoder delays → 12 turns, X encoder turns, active brake), with the reason for every element.
+- Journal **§12.10**: why not reinforcement learning (no simulator, sim-to-real gap, rules can be written), the control methods considered, and why every timed wait becomes an encoder distance (USB vs battery difference).
+- Next steps: measure encoder ticks per mm and the turning radius before coding.
+
 ## v1.4 — 25 October · Every setting justified
 - README **§10.4 "Why each setting has its value"**: every Open Challenge setting with its value, reason and evidence (measurement, field geometry or rule).
 - Journal **§12.8**: settings that had no justification or were proved wrong by the data, and what replaced them (12 turns instead of 13; target ≈ 250 mm instead of 600 mm; thresholds tuned on floor reflections removed; one-reading decisions replaced by an 8-reading window; gyro calibration unified to 1000 samples).

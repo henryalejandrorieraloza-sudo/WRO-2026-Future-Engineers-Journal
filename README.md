@@ -444,6 +444,76 @@ Our priority is to **complete the three laps and stop correctly** — a crash lo
 | Wrong first turn | Undo is a short reverse inside the corner section, which the rules allow (Appendix A.4) |
 | Stopping inside the starting section | After exactly **12** turns (3 laps × 4 corners) a tuned final straight and active brake held forever. A 13th turn would carry the car out of the starting section and lose the 3 stop points (rule 9.24.3) |
 
+### 8.7 Next version: decision tree with encoder delays (planned 25 October)
+
+This is the algorithm we will build next. It keeps everything validated above (cascade controller, 90° gyro turn, active brake, WALL / NO WALL / NOT SURE window) and replaces the **timed** waits with **encoder distance**, because time-based waits changed with battery voltage (the car behaved differently on USB than on battery).
+
+```
+START
+│  calibrate gyroscope → wait for start button
+▼
+══════════ PHASE 1: FIRST STRAIGHT (direction unknown) ══════════
+│
+├─ Follow the NEAREST wall (PID + gyroscope)
+│
+└─ Opening detected on one side?
+   ├─ NO  → keep driving
+   └─ YES → store that side as the TURN DIRECTION (fixed for the round)
+             │
+             ▼
+          Delay: N encoder turns
+             │
+             ▼
+          TURN toward that side until 90° (gyroscope)
+          counter = 1
+             │
+             ▼
+══════════ PHASE 2: FIND THE INNER WALL ══════════
+│
+├─ Follow the OUTER wall (PID + gyroscope)
+│
+└─ Inner wall detected?
+   ├─ NO  → keep following the outer wall
+   └─ YES → enable the opening search
+             │
+             ▼
+══════════ PHASE 3: LOOP (always the same from here) ══════════
+│
+├─ Follow the INNER wall (PID + gyroscope)
+│
+└─ Opening detected on the inner side?
+   ├─ NO  → keep following the inner wall
+   └─ YES
+       │
+       ▼
+    Delay: N encoder turns
+       │
+       ▼
+    TURN toward the stored direction until 90°
+    counter++
+       │
+       ▼
+    counter == 12?
+    ├─ YES → FINISH
+    │         drive X encoder turns → active brake → stay still
+    │
+    └─ NO  → drive M encoder turns, NOT searching for openings
+              │
+              ▼
+           back to "Follow the INNER wall"
+```
+
+| Element | Why |
+|---|---|
+| Delays measured in **encoder turns**, not milliseconds | Distance does not depend on battery voltage; a timed delay did |
+| During both delays the car holds the **gyro heading** only | No wall is available there; with 1° of gyro error the car moves only ~3.5 mm sideways over 200 mm |
+| **M** turns after every turn without searching for openings | Right after the turn the inner side sees the corner, which looks like an opening (journal Problem 44); M must be long enough to leave the corner section |
+| Outer wall followed **only** in Phase 2 | After the first corner the car is always close to the inner wall, so it never needs the outer wall again |
+| Exactly **12** turns, then X encoder turns and brake | Stops inside the starting section (rule 9.24.2); a 13th turn would leave it (rule 9.24.3) |
+| Opening = the WALL / NO WALL / NOT SURE window of 8 valid readings (§8.3) | Single readings on the black wall caused wrong decisions (journal Problem 46) |
+
+**To measure before coding:** encoder ticks per millimetre (push the car exactly 1 m), the steering turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor. With the side sensors reliable only up to ~45 cm (journal §12.4), Phase 2 must also be checked in a 1000 mm corridor, where the outer wall may be out of range right after the first turn — in that case the car holds the gyro heading until a wall is valid.
+
 ---
 
 ## 9. Obstacle Challenge strategy
@@ -670,6 +740,7 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | One complete corner (decide, turn, check, follow inner wall) | ✅ Validated (`exito_glorioso`, `exito_rotundo`, one-corner version) |
 | Side TOF data on the black wall | 🔄 Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
 | Open Challenge 12-turn loop with wall re-alignment | 🔄 Runs; next version uses valid / invalid decisions |
+| Encoder: delays in distance instead of time (§8.7) | ⏳ Next: measure ticks per mm |
 | Videos: one per challenge (≥ 30 s autonomous) | 🔄 Pending (rule 7) |
 | Obstacle: correct-third steering, floor-line corners | ⏳ Next |
 | Camera → Nano UART link | ⏳ Next |
