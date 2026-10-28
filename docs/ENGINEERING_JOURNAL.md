@@ -1337,11 +1337,52 @@ With the camera locked, the blue line looks dark grey-teal (H 85–200°), the s
 #### Problem 56 — The line disappeared after 16 cm ✅ cause
 At first the camera only searched lines from row 140 down, and the line was at row 143 at 16 cm. Searching higher (row 124) did **not** help: at 20 cm the line is only 2 rows tall and at 25 cm it has only 22–39 pixels. **Cause:** the camera is very low and sees the floor almost edge-on (perspective, horizon at row ~129). **Solution:** accept ~20–22 cm (lower minimums: orange 50 px, blue 60 px, length 40 px; search from row 136, where the line can still be seen and the wall edge cannot), put the line on the map and confirm it with 2 messages. Raising or tilting the camera would fix it at the source, but would make us recalibrate the pillars, which already work.
 
-#### Problem 57 — The row straight ahead was sometimes missing ✅ (to confirm)
-The camera saw the line, but the 20 centre columns were empty: there is a bright glare in the middle of the picture where the orange loses its colour. **Solution:** fit a straight line through the bottom edge of the line in the 40 columns on each side of the centre and read it at the centre. Tested on our screenshots; to be confirmed on the car at 16–22 cm.
+#### Problem 57 — The row straight ahead was sometimes missing ✅ (closed 28 Oct, §13.6)
+The camera saw the line, but the 20 centre columns were empty: there is a bright glare in the middle of the picture where the orange loses its colour. A least-squares fit over 40 columns on each side was tried on the car on 28 Oct; it worked for the orange line but did not fix the blue one, and it was dropped with the other changes of that day (Problem 60). With the final v3.1 the centre row is read in the 20 centre columns again.
 
-#### Problem 58 — The blue line was not detected at 15 cm (but it was at 20 cm) ❓
-Still open: the reason printed by the camera (`few pixels`, `too short` or `too thick`) will tell which setting to change.
+#### Problem 58 — The blue line was not detected at 15 cm (but it was at 20 cm) ✅ cause (28 Oct, §13.6)
+The camera printed `too short` with 150–260 pixels: the blue line was cut into short pieces by the glare in the middle of the picture. Beyond ~9 cm the blue line is only a 1–2 px dark streak; its colour is gone. See Problems 59–62.
+
+### 13.6 28 October: floor lines that survive the light
+
+**Goal of the day:** close step 1 of the roadmap — both lines detected reliably and **never** a false line, because a false line makes the car turn in the middle of a straight.
+
+**What happened, in order:**
+1. The 27 Oct camera (centre-row fit) still gave `-1` at 16–18 cm for blue and missed it at 20–22 cm (`too short`, 150–260 px). The blue line was cut into pieces by the glare.
+2. **Join pieces across 12 px gaps:** blue became `yes` everywhere — but with **5 400–6 700 px**, `thick` 19–32 and `low` 232–239 (the bottom of the picture), and the camera fell to **4.5 fps**. Floor specks that happen to be "blue" had been merged into one huge blob in front of the car (Problem 59).
+3. **Join only aligned pieces** (pieces whose centre is within 5 px of the main piece's long axis, computed from the pixel covariance): back to 12.5 fps, but the empty floor still gave a false blue (`low 209`, len 74, 254 px).
+4. **Back to the 27 Oct version that never gave false lines** (minimums 80 / 150 px, length 60, from row 140). It saw lines only very close, and sometimes took the black wall for blue.
+5. **Looked at the pictures** (Pillar Vision Lab): near the car the blue line is a wide grey-teal band; far away it is a 1–2 px dark streak with yellow / purple fringes — exactly like the bottom edge of the black wall. **By colour they cannot be told apart.** What differs is what is above them: floor above a line, wall above the wall's edge → **floor-above check** (Problem 60). The wall was rejected (`above` 35–66 of 96–130 columns, under 60 %).
+6. But the afternoon light had changed and a **false blue blob of 3 000–10 000 px** appeared on the empty floor, while the orange line disappeared. Resetting the camera on the empty floor did not fix it, so it was not the lock (Problem 61).
+7. **Colour probe:** the camera prints H, S, V of two fixed boxes. Numbers instead of guesses (Problem 62):
+
+| Probe on | H | S | V |
+|---|---|---|---|
+| Floor straight ahead (~5 cm) | 63–75 | 81–120 | 192–220 |
+| Floor at the bottom of the picture | **60–85** | 89–130 | 128–164 |
+| Orange line | 32–44 | 145–173 | 168–184 |
+| Red pillar | 4–22 | 204–255 | 112–136 |
+| Blue line | up to ~165 | 46–113 | from 72 |
+
+The floor reached **H 85°**, exactly where blue started. → `BLUE_HUE_LOW = 110` (25° above the floor, far below the line). With the floor out of the blue range, the size minimums could go back to orange 50 px, blue 60 px, length 40 px.
+
+**Result (camera v3.1):** empty floor in 3 places → no line; black wall → no line; orange from **16 cm** (row 144, formula 16.9 cm), blue from **9 cm** (row 155, formula 8.9 cm); 12.5 fps.
+
+**What this means for the corners:** each line only has to be seen once (it goes on the map). The two lines of a corner cross the car's path ~71 cm and ~14 cm before the wall ahead, far apart, so the colour of the first line seen still gives the direction of the round. As an extra safety, the direction can be decided only with lines closer than 9 cm, where both colours are seen.
+
+#### Problem 59 — Joining pieces made a giant false blue line ✅ reverted
+Pixels up to 12 px apart were allowed to join (125 neighbours per pixel instead of 4). The floor near the car has many isolated "blue" specks; they joined into one 6 000 px blob and the camera fell from 12.5 to 4.5 fps. **Lesson:** a rule that joins things must also be checked on the empty floor, not only on the line.
+
+#### Problem 60 — The bottom edge of the black wall looked like a far blue line ✅
+Far away (> 9 cm) the blue line is a thin dark streak; so is the bottom edge of the wall. **Solution: floor-above check** — a painted line has white floor above it (V ≥ 130 in ≥ 60 % of its columns, darkest pixel 3–6 rows above its top edge); the wall's edge has dark wall above it. It uses brightness, which changes together for the floor and the line, so it does not depend on the exact light.
+
+#### Problem 61 — In the afternoon the floor became "blue" and the orange line vanished ✅
+The light from the window changed, and the floor right in front of the car (car shadow + lens vignetting) moved to H 85°, the first hue of blue. Resetting the camera did not help, so it was not the 5 s lock. **Solution:** blue starts at 110° (Problem 62 gave the numbers). **Lesson:** the competition room will have other light; the colours must be checked there (the probe makes it a 2-minute job).
+
+#### Problem 62 — We were tuning colours from screenshots ✅
+A screenshot of the viewer changes the tone and brightness a little, and twice we had no numbers at all. **Solution:** a colour probe in the camera's own status print (two fixed boxes, min–max of H, S and V). Four readings (floor, blue, orange, red) were enough to find the cause of Problem 61.
+
+**What we learned about how we work:** in the morning several changes went in together (wider fit, lower minimums, joining pieces), and when a false line appeared we could not tell which change caused it. From now on: **one change, then the empty-floor test, then the next change.**
 
 ### 13.5 What this phase gives the rubric
 
@@ -1426,9 +1467,13 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 53 | Car reacted ~25.5 cm after a pillar and hit the next one | Aim at the next pillar as soon as the camera passes the centre; clear 5 cm after it | ✅ |
 | 54 | Encoder constant wrong (19.6 → map 23 % short) | Measured 15.1 ticks per cm | ✅ |
 | 55 | Green pillar taken for the blue line | `BLUE_MAX_SAT = 120` (line S 48–103, pillar S ≥ 152) | ✅ |
-| 56 | Line not seen beyond ~20–22 cm | Physical limit of the low camera; lower minimums, search from row 136, line on the map | ✅ cause |
-| 57 | Row straight ahead sometimes missing (glare in the centre) | Least-squares fit of the line edge over ±40 columns | 🔄 confirm |
-| 58 | Blue line not detected at 15 cm | Read the camera's reject reason | ❓ |
+| 56 | Line not seen beyond ~20–22 cm | Physical limit of the low camera; line on the map. Final range: orange 16 cm, blue 9 cm (§13.6) | ✅ cause |
+| 57 | Row straight ahead sometimes missing (glare in the centre) | Fit tried, then dropped with the other 28 Oct changes; centre strip kept | ✅ |
+| 58 | Blue line not detected at 15 cm | Line cut in pieces by the glare; far blue line has no colour left (§13.6) | ✅ cause |
+| 59 | Joining pieces made a 6 000 px false blue line, 4.5 fps | Reverted; every new rule is tested on the empty floor | ✅ |
+| 60 | Bottom edge of the black wall looked like a far blue line | Floor-above check: white floor above ≥ 60 % of the line's columns | ✅ |
+| 61 | Afternoon light: floor became "blue", orange vanished | Floor reached H 85° → `BLUE_HUE_LOW = 110` | ✅ |
+| 62 | Colours tuned from screenshots | Colour probe in the camera's status print | ✅ |
 
 ---
 
@@ -1465,8 +1510,9 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] Detect the orange and blue floor lines and measure them in cm (Phase 11) ✅
 - [x] Measure encoder ticks per cm: 15.1 (Phase 11) ✅
 - [x] One straight with pillars on the track: every case passes (`straight_pillars`, Phase 11) ✅
-- [ ] Confirm the centre-row fit at 16–22 cm and find why the blue line is missed at 15 cm (Problems 57–58).
-- [ ] Obstacle corners: hand rehearsal on the Nano → measure the turning radius while driving → one corner → one lap → three laps and stop (README §9.10).
+- [x] Floor lines without false detections: floor-above check, blue from 110°, colour probe (camera v3.1, §13.6) ✅
+- [ ] Optional: raise or tilt the camera so the blue line is seen farther than 9 cm (then recalibrate the pillars).
+- [ ] Obstacle corners: measure the turn while driving (forward and side displacement, 3 left + 3 right) → hand rehearsal on the Nano → one corner → one lap → three laps and stop (README §9.10).
 - [ ] Send the magenta parking walls to the Nano; test a gentle reverse before designing the parking manoeuvre.
 - [x] Camera Blocks 2 and 3: UART between the two boards (camera → Nano, 115200 baud) and the steering decision on the Nano ✅
 - [ ] Detect the parking lot (magenta pieces).

@@ -535,7 +535,7 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 
 **Why we left the "correct third" rule** (our first plan, 7 Oct): a rule that only looks at the picture has no information once the pillar leaves it. A pillar passed at the safe distance disappears from the picture **15 cm before** the car reaches it (measured), and in the first driving test (`obstacle_first_test`, 26 Oct) the car reacted to pillars too late. With a map, the pillar is still known while it is out of the picture, and the car can plan *how much* to move instead of only *which way*. The full story is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026). Every formula of this section is explained from the beginning, with worked examples, in [journal §13.3 "The math, step by step"](docs/ENGINEERING_JOURNAL.md#133-the-math-step-by-step).
 
-### 9.2 Vision pipeline (camera board, `obstacle_camera` v3)
+### 9.2 Vision pipeline (camera board, `obstacle_camera` v3.1)
 
 1. **Picture:** 320 × 240 RGB565, ~12.5 fps with pillars and lines. Only rows 124–239 are processed (the floor and the pillars; above is the room).
 2. **Frozen camera:** 5 s after power on, white balance, exposure and gain are locked, so the colour of a pillar does not change when the scene changes (red was flickering much more than green before the lock).
@@ -546,8 +546,8 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 | 🟥 Red pillar | 345–26° (wraps) | ≥ 115 | ≥ 95 | Pillar H 15–23° |
 | 🟩 Green pillar | 82–150° | ≥ 150 | ≥ 90 | Pillar H 86–95°, S ≥ 152; the yellow-green floor has S 88–156 |
 | 🟪 Magenta wall | 328–353° | ≥ 84 | ≥ 84 | Very close to red (see step 4) |
-| 🟧 Orange line | 29–52° | ≥ 115 | ≥ 110 | Line H 32–43°, S 131–161; red ends at 26°, floor starts at 60° |
-| 🟦 Blue line | 85–200° | **30–120** | ≥ 65 | The locked camera sees the blue line as dark grey-teal (S 48–103). The **maximum** saturation keeps the green pillar (S ≥ 152) out |
+| 🟧 Orange line | 29–52° | ≥ 115 | ≥ 110 | Line H 32–44°, S 131–173; red pillar H 4–22°, floor starts at 60° |
+| 🟦 Blue line | **110**–200° | **30–120** | ≥ 65 | The locked camera sees the blue line as dark grey-teal (H ~160°, S 46–113). The floor next to the car reaches H 85° (shadow + lens), so blue starts at 110° (it started at 85° and the floor became a false blue line, 28 Oct). The **maximum** saturation keeps the green pillar (S ≥ 152) out |
 
 4. **Red or magenta?** Red and magenta pixels that touch are grouped; if ≥ 70 % of the group is magenta, the whole group is a parking wall and never a pillar (a shape filter failed for this).
 5. **Pillars:** only rows 126–207 are searched (above: things outside the field; below: too close to measure). Pixels are grouped in **4 × 4 blocks** (a block is red/green if ≥ 12 of its 16 pixels are), blobs are found with a BFS, touching pillars are split (the front one is kept), and a blob must be a **solid** chunk (≥ 75 % filled), not touch the picture edge and be at a possible distance (5–130 cm ahead, ≤ 70 cm to the side).
@@ -640,10 +640,15 @@ steering = 2.0 · (heading − yaw) − 0.10 · yawRate        limited to ±60°
 
 ### 9.6 Floor lines in centimetres (27 October)
 
-**Detection** (for each colour, every picture):
-1. Take the biggest patch of that colour below row `LINE_TOP_ROW = 136`.
+**Detection** (for each colour, every picture; v3.1, validated 28 Oct):
+1. Take the biggest patch of that colour below row `LINE_TOP_ROW = 140`.
 2. It must be **long** (diagonal of its box ≥ 40 px) and **thin** (pixels ÷ length ≤ 40 px). A pillar or a blob is short and fat; this also rejects the orange edge of a red pillar.
-3. **Row straight ahead:** a straight line `row = a · x + b` is fitted (least squares) through the bottom edge of the line in the 40 columns on each side of the straight-ahead column (x = 172), and read at that column. The picture has a bright glare in its middle that left holes exactly in the centre columns; the fit fills them, and it also works when the car meets the line diagonally.
+3. **Floor above:** a line is painted *on* the floor, so it has white floor above it. For every column of the patch the camera looks 3–6 rows above its top edge and takes the darkest pixel; the column counts if it is bright (V ≥ 130, floor V 128–220). At least 60 % of the columns must count. The bottom edge of the black wall is also a thin dark stripe — far away it is indistinguishable from a blue line by colour — but it has **dark wall above**, so it is rejected (`no (wall above)`). This does not depend on the light, because the floor and the line change together.
+4. **Row straight ahead:** the lowest row of the patch in the 20 centre columns (x = 172 ± 10). (A least-squares fit over wider columns was tried on 28 Oct; together with lower size minimums and joining aligned pieces it let floor shadows in, so it was dropped — see the journal, Problems 59–60.)
+
+**Range measured on the car (28 Oct):** orange line from **16 cm** (row 144), blue line from **9 cm** (row 155). No false line on the empty floor (3 places) or looking at the black wall. Beyond ~9 cm the blue line becomes a 1–2 px dark streak with coloured fringes: its colour is gone, so it cannot be told from the wall by colour alone. The corner plan only needs each line seen once (it goes on the map), and the two lines of a corner are far apart along the car's path (~71 cm and ~14 cm before the wall ahead, §9.7), so seeing them at 9–16 cm is enough to tell which one comes first.
+
+**Colour probe:** with `STREAM_TO_PC = false` the status also prints the H, S, V range of two fixed boxes (straight ahead at row 170 ≈ 5 cm, and row 228 at the bottom). Putting a line, a pillar or the floor there gives the exact camera numbers in seconds — the way to recalibrate under the competition light.
 
 **Row → distance.** Measured on 27 Oct with the line in front of the car (and checked with the car parallel to the wall, as it really arrives at a corner):
 
@@ -692,7 +697,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | # | Step | Done when |
 |---|---|---|
 | 1 | Camera detects both lines (long-and-thin filter) | ✅ 27 Oct |
-| 2 | Row → cm table | ✅ 27 Oct (centre-row fit being checked at 16–22 cm; blue line at 15 cm under study) |
+| 2 | Row → cm table, and lines without false detections | ✅ 27–28 Oct (floor-above check, blue from 110°; orange from 16 cm, blue from 9 cm) |
 | 3 | Corner rehearsal by hand (Nano, motor off): map + line + direction + "turn now" | Correct direction and turn point; the second line is never counted |
 | 4 | Measure the turn while driving (forward and side displacement → radius) | Radius known → turn point computed |
 | 5 | One corner with the motor: no pillars, then a pillar before and right after the corner | 4 of 5 attempts in each case |
@@ -890,8 +895,8 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | Encoder | ✅ Measured: 15.1 ticks per cm (used in the Obstacle map) |
 | Camera → Nano UART link | ✅ Working (14-field message) |
 | Obstacle: one straight with pillars (map + steering law) | ✅ Validated 27 Oct (`straight_pillars`) |
-| Obstacle: orange and blue lines in cm | ✅ Detected up to ~22 cm, row → cm formula measured |
-| Obstacle: corners, 3 laps, stop | ⏳ Next (README §9.7, §9.10) |
+| Obstacle: orange and blue lines in cm | ✅ Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
+| Obstacle: corners, 3 laps, stop | ⏳ Next: measure the turn while driving, then the corner rehearsal (README §9.7, §9.10) |
 | Parking | 🧠 Being designed |
 
 ---

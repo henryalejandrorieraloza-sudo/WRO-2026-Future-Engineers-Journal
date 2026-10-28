@@ -2,6 +2,14 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.7 — 28 October · Floor lines without false detections
+- **Camera v3.1** (`obstacle_camera`), validated on the car: no false line on the empty floor (3 places) or looking at the black wall; orange seen from **16 cm**, blue from **9 cm**; 12.5 fps.
+- **Floor-above check:** a line must have white floor (V ≥ 130) above it in ≥ 60 % of its columns. The bottom edge of the black wall looks exactly like a far blue line, but it has dark wall above it and is now rejected.
+- **Blue starts at hue 110°** (was 85°): the floor next to the car reaches H 85° (car shadow + lens vignetting) and became a false blue line of 3 000–10 000 px when the afternoon light changed.
+- **Colour probe** in the status print: H, S, V of two fixed boxes, so colours are measured with the camera's own numbers instead of guessing from screenshots. Measured: floor H 60–85°, orange line H 32–44° S 145–173, red pillar H 4–22° S 204–255, blue line H up to ~165°.
+- Tried and **reverted** (journal Problems 59–60): a 40/80-column least-squares centre row, joining line pieces across 12 px gaps (merged floor specks into a 6 000 px blob and dropped the camera to 4.5 fps), and joining aligned pieces. Lesson: change one thing at a time and re-test the empty floor after every change.
+- README §9.2 and §9.6 updated; journal Phase 11 §13.6 with Problems 57–62.
+
 ## v1.6 — 27 October · Obstacle Challenge: pillars in centimetres, one straight validated, floor lines
 - **One straight with pillars validated on the track** (`straight_pillars`, every case passes): odometry map (encoder + gyro), each pillar put on the map, lateral goal 17 cm on the correct side → heading → gyro PD. Replaces the "correct third" plan, because a pillar leaves the picture 15 cm before the car passes it.
 - **Camera v3** (`obstacle_camera`): camera locked after 5 s, 4 × 4 blocks, time filter, red / magenta vote, pillar distance in cm (`FOCAL_PX = 100`, two faces, 12 px centre offset), orange and blue lines with a long-and-thin test, a least-squares centre row, and `BLUE_MAX_SAT = 120` so the green pillar is never a blue line. 14-field message (the first 10 unchanged).

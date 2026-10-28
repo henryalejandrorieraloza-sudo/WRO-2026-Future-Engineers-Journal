@@ -1,12 +1,13 @@
 // =====================================================================
-// OBSTACLE CAMERA (ESP32S3-CAM) - v3 (pillars + both floor lines)
+// OBSTACLE CAMERA (ESP32S3-CAM) - v3.1 (pillars + both floor lines)
 // Finds, in every picture:
 //   - the closest red / green pillar (same algorithm as Pillar Vision Lab)
 //   - red + magenta patches: if a patch is mostly magenta it is a parking
 //     wall, never a pillar (same majority vote as the page)
 //   - the ORANGE and the BLUE floor lines: biggest patch of each color below LINE_TOP_ROW,
-//     only if it is long and thin (a real stripe), with its lowest row and its row
-//     straight ahead (center strip)
+//     only if it is long and thin (a real stripe) AND has white floor above it (the bottom
+//     edge of the black wall has wall above), with its lowest row and its row straight
+//     ahead (center strip)
 // and sends one short text line to the Arduino Nano about 10 times a second:
 //   $color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,
 //    orangeFound,orangeRow,blueCenterRow,orangeCenterRow
@@ -22,15 +23,24 @@
 // v2 vision improvements (each one has its own switch):
 //   1) LOCK_CAMERA      white balance, exposure and gain frozen a few seconds after power on.
 //   2) USE_BLOCKS       pillars found on a grid of 4x4 blocks.
-//   3) USE_TIME_FILTER  a pillar appears after 3 of the last 4 pictures (ON_NEED).
+//   3) USE_TIME_FILTER  a pillar appears after ON_NEED of the last 4 pictures.
 //   4) Mirror / flip done by the camera sensor itself.
-// v3: orange + blue lines, "long and thin" line filter, BLUE_MAX_SAT (green pillar never blue),
-//     status text every 0.5 s with the line details.
+// v3:   orange + blue lines, "long and thin" line filter, BLUE_MAX_SAT (green pillar never blue),
+//       status text every 0.5 s with the line details.
+// v3.1 (28 Oct): validated on the car, no false lines on the empty floor or on the black wall.
+//       - BLUE_HUE_LOW 85 -> 110: the floor near the car reaches H 85, the blue line is ~160.
+//       - Floor-above check: a line must have white floor (V >= 130) above it in >= 60 % of
+//         its columns; the bottom edge of the black wall has dark wall above and is rejected.
+//       - Color probe: H, S, V of two fixed boxes printed in the status, to calibrate the
+//         colors with exact camera numbers (no viewer needed).
+//       - Measured range: orange line from 16 cm, blue line from 9 cm.
 // It can also keep sending the pictures to viewer.html over USB (STREAM_TO_PC).
 //
 // Tools: ESP32S3 Dev Module | USB CDC On Boot: Enabled | Flash Size: 8MB
 //        Partition: 8M with spiffs (3MB APP/1.5MB SPIFFS) | PSRAM: OPI PSRAM
 // Wiring (team PCB): camera GPIO43 (TX) -> Nano D0 (RX). The camera does not listen to the Nano.
+// Upload: BOOT + RESET on the camera, and hold the Nano's RESET while uploading (both boards share D0).
+// Power on the camera looking at the empty floor: the colors are frozen 5 s after power on.
 // =====================================================================
 
 #include "esp_camera.h"
@@ -109,9 +119,10 @@ const bool REJECT_AT_EDGE   = true;  // a patch touching the left / right pictur
 const bool LENS_CORRECTION  = true;
 
 // ===== PASTE HERE what "Copy as Arduino code" gives you in viewer.html =====
-// (if you paste again: put back BLUE_MAX_SAT and BLUE_MIN_PIXELS = 150, the viewer does not have them)
+// (if you paste again: put back BLUE_HUE_LOW = 110, BLUE_MAX_SAT and the line minimums, the viewer does not have them)
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
 // Measured with the camera locked (yellow cast): red pillar H 15-23, green pillar H 86-95.
+// Probe on 28 Oct: red pillar H 4-22 S 204-255 V 112-136.
 const int RED_HUE_LOW    = 345;    // wraps through 0 up to 26
 const int RED_HUE_HIGH   = 26;
 const int RED_MIN_SAT    = 115;
@@ -129,18 +140,18 @@ const int  BOTTOM_TOL      = 8;
 const int  NEAR_ROWS       = 32;
 const int  SIDE_ZONE       = 56;
 
-// Lines, measured 2026-10-27 on the screenshots (camera locked):
-//   orange line H 32-43 S 131-161 V 192-240 | floor H 60-73 S 94-121 V 144-252
-//   blue line H 85-200 S 48-103 V 65-140 (dark gray-teal) | green pillar S 152+
-const int ORANGE_HUE_LOW  = 29;    // red pillar ends at 23-26
+// Lines, measured 2026-10-27 on the screenshots and 2026-10-28 with the probe (camera locked):
+//   orange line H 32-44 S 145-173 V 168-184 | floor H 60-85 S 81-130 V 128-220
+//   blue line H up to ~165, S 46-113, V from 72 (dark gray-teal) | green pillar S 152+
+const int ORANGE_HUE_LOW  = 29;    // red pillar ends at 22-26
 const int ORANGE_HUE_HIGH = 52;    // floor starts at 60
-const int ORANGE_MIN_SAT  = 115;   // line S 131-161
+const int ORANGE_MIN_SAT  = 115;   // line S 131-173
 const int ORANGE_MIN_VAL  = 110;
 
-const int BLUE_HUE_LOW    = 85;    // the locked camera sees the blue line as dark gray-teal
+const int BLUE_HUE_LOW    = 110;   // floor reaches H 85 at the bottom of the picture; blue line is ~160 -> 25 deg margin
 const int BLUE_HUE_HIGH   = 200;
 const int BLUE_MIN_SAT    = 30;
-const int BLUE_MAX_SAT    = 120;   // blue line S 48-103, green pillar S 152+ -> never mixed
+const int BLUE_MAX_SAT    = 120;   // blue line S 46-113, green pillar S 152+ -> never mixed
 const int BLUE_MIN_VAL    = 65;    // lower lets the black wall in
 
 const int MAGENTA_HUE_LOW  = 328;
@@ -149,8 +160,8 @@ const int MAGENTA_MIN_SAT  = 84;
 const int MAGENTA_MIN_VAL  = 84;
 
 const int FLOOR_TOP_ROW      = 124;
-const int ORANGE_MIN_PIXELS  = 50;    // at 20 cm the line has only ~100-130 px (2 rows tall)
-const int BLUE_MIN_PIXELS    = 60;    // same for blue
+const int ORANGE_MIN_PIXELS  = 50;    // at ~16 cm the line has only ~120-165 px
+const int BLUE_MIN_PIXELS    = 60;    // safe now: BLUE_HUE_LOW = 110 keeps the floor out, floor-above check keeps the wall out
 const int LINE_ROW_MIN       = 6;
 const int LINE_TRIGGER_ROW   = 236;
 const int MAGENTA_MIN_PIXELS = 250;
@@ -160,14 +171,24 @@ const int TURN_CONFIRM_FRAMES = 3;
 
 // ---------- Floor lines (full lap, step 1) ----------
 // A floor line is a long, thin stripe. These numbers decide what counts as a line.
-const int LINE_TOP_ROW     = 136;  // lines are searched only from this row down (the closest ~40 cm).
+const int LINE_TOP_ROW     = 140;  // lines are searched only from this row down (the closest ~23 cm).
                                    // The far line is a thin streak mixed with the wall. Must be >= FLOOR_TOP_ROW.
-                                   // Step 2 sets it with the row -> cm table.
 const int LINE_MIN_LENGTH  = 40;   // px: a line patch must be at least this long (diagonal of its box)
 const int LINE_MAX_THICK   = 40;   // px: average thickness (pixels / length). A pillar or a blob is fatter
-const int LINE_FIT_HALF    = 40;   // px: columns on each side of the straight-ahead column used to fit the line
-const int LINE_FIT_MIN_COLS = 10;   // the fit needs at least this many columns with line pixels
+const int LINE_CENTER_HALF = 10;   // px: half width of the straight-ahead strip (center + X_CENTER_OFFSET)
 const int LINE_COL_MIN     = 2;    // px: a column of that strip needs this many line pixels to count
+// Floor above the line: a floor line has bright (white) floor above it; the bottom edge of the black wall does not
+const int ABOVE_FROM        = 3;    // rows above the line's top edge where the check starts
+const int ABOVE_TO          = 6;    // ... and where it ends
+const int FLOOR_MIN_VAL     = 130;  // brightness (V) the floor above must have (floor V 128-220, black wall much lower)
+const int ABOVE_MIN_PERCENT = 60;   // % of the line's columns that must have floor above
+const int ABOVE_MIN_COLS    = 10;   // at least this many columns must be checkable
+// Color probe: prints the H, S, V range of two small boxes, to calibrate colors with exact camera numbers
+const int PROBE_X       = W / 2 + X_CENTER_OFFSET;  // straight-ahead column
+const int PROBE_NEAR_Y  = 170;  // row ~5 cm ahead of the camera: put each line / pillar here
+const int PROBE_LOW_Y   = 228;  // row at the bottom of the picture (where the false blue appeared)
+const int PROBE_HALF_W  = 6;    // box half width, px
+const int PROBE_HALF_H  = 2;    // box half height, px
 const unsigned long STATUS_EVERY_MS = 500;   // status text to the Serial Monitor (only with STREAM_TO_PC = false)
 
 // ---------- Working area ----------
@@ -189,6 +210,7 @@ uint8_t  *code;          // AREA_H x W, one code per pixel
 uint8_t  *seen;          // BFS visited marks
 uint32_t *queue;         // BFS queue (pixel index in the area)
 uint8_t  *maskPacked;    // pillar map for the viewer, 2 bits per pixel
+uint8_t  *valueMap;      // AREA_H x W, brightness (V) of each pixel, for the floor-above check
 int colTop[W], colBottom[W], colCount[W];
 int rowCount[H];
 
@@ -206,7 +228,7 @@ struct Pillar {
 };
 
 // Floor line found in one picture (orange or blue)
-const uint8_t LINE_OK = 0, LINE_NONE = 1, LINE_FEW = 2, LINE_SHORT = 3, LINE_THICK = 4;
+const uint8_t LINE_OK = 0, LINE_NONE = 1, LINE_FEW = 2, LINE_SHORT = 3, LINE_THICK = 4, LINE_WALL = 5;
 struct LineInfo {
   bool found;
   int lowest;        // lowest row of the patch (any column)
@@ -214,7 +236,9 @@ struct LineInfo {
   int count;         // pixels in the patch
   int length;        // px, diagonal of the patch box
   int thick;         // px, average thickness = count / length
-  uint8_t reason;    // LINE_OK / NONE / FEW / SHORT / THICK (for the status print)
+  uint8_t reason;    // LINE_OK / NONE / FEW / SHORT / THICK / WALL (for the status print)
+  int aboveFloor;    // columns with white floor above the line (floor-above check)
+  int aboveChecked;  // columns that could be checked
 };
 
 // Time filter memory
@@ -265,7 +289,7 @@ bool isOrange(int h, int s, int v)  { return inHue(h, ORANGE_HUE_LOW, ORANGE_HUE
 bool isBlue(int h, int s, int v)    { return inHue(h, BLUE_HUE_LOW, BLUE_HUE_HIGH) && s >= BLUE_MIN_SAT && s <= BLUE_MAX_SAT && v >= BLUE_MIN_VAL; }
 
 // One code per pixel of the working area. Red is tested first (like the page),
-// then green, then magenta / orange / blue.
+// then green, then magenta / orange / blue. The brightness is kept for the floor-above check.
 void buildCodeMap(const uint8_t *buf) {
   for (int ay = 0; ay < AREA_H; ay++) {
     int y = AREA_TOP + ay;
@@ -280,6 +304,7 @@ void buildCodeMap(const uint8_t *buf) {
       else if (isOrange(h, s, v))  c = C_ORANGE;
       else if (isBlue(h, s, v))    c = C_BLUE;
       code[ay * W + x] = c;
+      valueMap[ay * W + x] = (uint8_t)v;
     }
   }
 }
@@ -513,9 +538,10 @@ Pillar timeFilter(const Pillar &raw) {
 
 // ---------- Floor lines (orange and blue) ----------
 // A floor line is a long, thin stripe. For each color: take the biggest patch below
-// LINE_TOP_ROW, check it is long and thin, then measure where it is straight ahead.
+// LINE_TOP_ROW, check it is long and thin and has floor above it, then measure where it is.
 
 // Walks the patch of this color that contains 'start' (only rows from firstRow down).
+// Only touching pixels (4 neighbors) belong to the same patch.
 // The pixels end up in queue[0 .. return value - 1].
 int walkPatch(int start, uint8_t color, int firstRow) {
   int head = 0, tail = 0;
@@ -534,30 +560,29 @@ int walkPatch(int start, uint8_t color, int firstRow) {
   return tail;
 }
 
-// Row of the line straight ahead (column cx = center + X_CENTER_OFFSET).
-// The glare in the middle of the picture leaves holes right there, so instead of reading
-// only the center columns, a straight line row = a*x + b is fitted through the bottom edge
-// of the line in the columns near cx (LINE_FIT_HALF on each side) and read at cx.
-// Returns -1 if the line does not pass near the center.
-int centerRowOfLine(int minX, int maxX) {
-  int cx = W / 2 + X_CENTER_OFFSET;                       // real straight-ahead column
-  if (cx < minX - LINE_FIT_HALF || cx > maxX + LINE_FIT_HALF) return -1;
-  float n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
-  for (int x = max(0, cx - LINE_FIT_HALF); x <= min(W - 1, cx + LINE_FIT_HALF); x++) {
-    if (colCount[x] < LINE_COL_MIN) continue;
-    float dx = x - cx, y = colBottom[x];
-    n++; sx += dx; sy += y; sxx += dx * dx; sxy += dx * y;
+// Floor-above check. For each column of the line: look ABOVE_FROM..ABOVE_TO rows above the
+// line's top edge and take the darkest of those pixels. If it is at least FLOOR_MIN_VAL bright,
+// there is white floor above in that column. A painted floor line has floor above it;
+// the bottom edge of the black wall has dark wall above it.
+void checkFloorAbove(int minX, int maxX, int &checked, int &floorCols) {
+  checked = 0; floorCols = 0;
+  for (int x = minX; x <= maxX; x++) {
+    if (colCount[x] == 0) continue;
+    int yFrom = colTop[x] - ABOVE_TO;                    // highest row looked at
+    int yTo   = colTop[x] - ABOVE_FROM;                  // lowest row looked at
+    if (yFrom < AREA_TOP) continue;                      // outside the working area: cannot check
+    int darkest = 255;
+    for (int y = yFrom; y <= yTo; y++) {
+      int v = valueMap[(y - AREA_TOP) * W + x];
+      if (v < darkest) darkest = v;
+    }
+    checked++;
+    if (darkest >= FLOOR_MIN_VAL) floorCols++;
   }
-  if (n < LINE_FIT_MIN_COLS) return -1;
-  float den = n * sxx - sx * sx;
-  float b = (den > 0.5f) ? (sy * sxx - sx * sxy) / den : sy / n;   // value at x = cx
-  int row = (int)(b + 0.5f);
-  if (row < LINE_TOP_ROW || row >= H) return -1;
-  return row;
 }
 
 LineInfo findLine(uint8_t color, int minPixels) {
-  LineInfo line = {false, -1, -1, 0, 0, 0, LINE_NONE};
+  LineInfo line = {false, -1, -1, 0, 0, 0, LINE_NONE, 0, 0};
   const int firstRow = LINE_TOP_ROW - AREA_TOP;          // first area row searched
 
   // 1) The biggest patch of this color
@@ -572,10 +597,10 @@ LineInfo findLine(uint8_t color, int minPixels) {
   if (bestStart < 0) return line;                         // LINE_NONE
   if (bestN < minPixels) { line.reason = LINE_FEW; return line; }
 
-  // 2) Walk it again and measure it: box, pixels per column / per row
+  // 2) Walk it again and measure it: box, pixels per column / per row, top and bottom of each column
   memset(seen, 0, AREA_H * W);
   int n = walkPatch(bestStart, color, firstRow);
-  for (int x = 0; x < W; x++) { colCount[x] = 0; colBottom[x] = -1; }
+  for (int x = 0; x < W; x++) { colCount[x] = 0; colBottom[x] = -1; colTop[x] = H; }
   memset(rowCount, 0, sizeof(rowCount));
   int minX = W, maxX = -1, minY = H, maxY = -1;
   for (int k = 0; k < n; k++) {
@@ -583,6 +608,7 @@ LineInfo findLine(uint8_t color, int minPixels) {
     int x = i % W, y = AREA_TOP + i / W;
     colCount[x]++;
     if (y > colBottom[x]) colBottom[x] = y;
+    if (y < colTop[x])    colTop[x] = y;
     rowCount[y]++;
     if (x < minX) minX = x;
     if (x > maxX) maxX = x;
@@ -597,9 +623,19 @@ LineInfo findLine(uint8_t color, int minPixels) {
   if (line.length < LINE_MIN_LENGTH) { line.reason = LINE_SHORT; return line; }
   if (line.thick  > LINE_MAX_THICK)  { line.reason = LINE_THICK; return line; }
 
-  // 4) Where is it? Lowest row overall, and lowest row straight ahead (center strip)
+  // 4) Is it on the floor? White floor above it (the black wall's bottom edge has wall above)
+  checkFloorAbove(minX, maxX, line.aboveChecked, line.aboveFloor);
+  if (line.aboveChecked < ABOVE_MIN_COLS ||
+      (long)line.aboveFloor * 100 < (long)ABOVE_MIN_PERCENT * line.aboveChecked) {
+    line.reason = LINE_WALL;
+    return line;
+  }
+
+  // 5) Where is it? Lowest row overall, and lowest row straight ahead (center strip)
   for (int y = H - 1; y >= LINE_TOP_ROW; y--) if (rowCount[y] >= LINE_ROW_MIN) { line.lowest = y; break; }
-  line.centerRow = centerRowOfLine(minX, maxX);
+  int cx = W / 2 + X_CENTER_OFFSET;                       // real straight-ahead column
+  for (int x = max(0, cx - LINE_CENTER_HALF); x <= min(W - 1, cx + LINE_CENTER_HALF); x++)
+    if (colCount[x] >= LINE_COL_MIN && colBottom[x] > line.centerRow) line.centerRow = colBottom[x];
 
   line.found  = line.lowest >= 0;
   line.reason = line.found ? LINE_OK : LINE_FEW;
@@ -612,6 +648,7 @@ const char *lineReason(const LineInfo &l) {
     case LINE_FEW:   return "no (few pixels)";
     case LINE_SHORT: return "no (too short)";
     case LINE_THICK: return "no (too thick)";
+    case LINE_WALL:  return "no (wall above)";
     default:         return "no";
   }
 }
@@ -770,21 +807,42 @@ void setup() {
   Serial.setTxTimeoutMs(0);          // never wait for the computer
   Serial1.begin(NANO_BAUD, SERIAL_8N1, NANO_RX_PIN, NANO_TX_PIN);   // TX only, to the Nano
   delay(1500);
-  Serial.println("OBSTACLE CAMERA v3: starting...");
+  Serial.println("OBSTACLE CAMERA v3.1: starting...");
 
   code       = (uint8_t *)ps_malloc(AREA_H * W);
   seen       = (uint8_t *)ps_malloc(AREA_H * W);
   queue      = (uint32_t *)ps_malloc(AREA_H * W * sizeof(uint32_t));
   maskPacked = (uint8_t *)ps_malloc(W * H / 4);
-  if (!psramFound() || !code || !seen || !queue || !maskPacked || !startCamera()) {
+  valueMap   = (uint8_t *)ps_malloc(AREA_H * W);
+  if (!psramFound() || !code || !seen || !queue || !maskPacked || !valueMap || !startCamera()) {
     while (true) { Serial.println("Camera or PSRAM did not start. Check Tools -> PSRAM: OPI PSRAM, then RESET."); delay(3000); }
   }
-  Serial.printf("OBSTACLE CAMERA v3: OK, pillar band rows %d-%d (%d x %d blocks), lines from row %d\n",
+  Serial.printf("OBSTACLE CAMERA v3.1: OK, pillar band rows %d-%d (%d x %d blocks), lines from row %d\n",
                 BAND_TOP, BAND_END - 1, BW, BH, LINE_TOP_ROW);
   Serial.printf("lock=%d blocks=%d timeFilter=%d (lock in %lu ms)\n",
                 LOCK_CAMERA, USE_BLOCKS, USE_TIME_FILTER, LOCK_AFTER_MS);
   bootMs = millis();
   fpsStart = millis();
+}
+
+// Prints the H, S, V range (min-max) of the pixels in a small box centered at (cx, cy)
+void printProbe(const char *name, const uint8_t *buf, int cx, int cy) {
+  int hMin = 999, hMax = -1, sMin = 999, sMax = -1, vMin = 999, vMax = -1;
+  for (int y = cy - PROBE_HALF_H; y <= cy + PROBE_HALF_H; y++) {
+    for (int x = cx - PROBE_HALF_W; x <= cx + PROBE_HALF_W; x++) {
+      int r, g, b, h, s, v;
+      readPixel(buf, x, y, r, g, b);
+      rgbToHsv(r, g, b, h, s, v);
+      if (h < hMin) hMin = h;
+      if (h > hMax) hMax = h;
+      if (s < sMin) sMin = s;
+      if (s > sMax) sMax = s;
+      if (v < vMin) vMin = v;
+      if (v > vMax) vMax = v;
+    }
+  }
+  Serial.printf("  PROBE %-6s (x %d, y %d): H %d-%d  S %d-%d  V %d-%d\n",
+                name, cx, cy, hMin, hMax, sMin, sMax, vMin, vMax);
 }
 
 void loop() {
@@ -823,10 +881,14 @@ void loop() {
                   cameraFps, cameraLocked ? "(locked)" : "(auto)",
                   closest.found ? (closest.color == C_RED ? "RED" : "GREEN") : "none",
                   roundInt(aheadCm), roundInt(sideCm));
-    Serial.printf("  ORANGE %s | center %d | low %d | len %d | thick %d | px %d\n", lineReason(orange),
-                  orange.centerRow, orange.lowest, orange.length, orange.thick, orange.count);
-    Serial.printf("  BLUE   %s | center %d | low %d | len %d | thick %d | px %d\n", lineReason(blue),
-                  blue.centerRow, blue.lowest, blue.length, blue.thick, blue.count);
+    Serial.printf("  ORANGE %s | center %d | low %d | len %d | thick %d | px %d | above %d/%d\n", lineReason(orange),
+                  orange.centerRow, orange.lowest, orange.length, orange.thick, orange.count,
+                  orange.aboveFloor, orange.aboveChecked);
+    Serial.printf("  BLUE   %s | center %d | low %d | len %d | thick %d | px %d | above %d/%d\n", lineReason(blue),
+                  blue.centerRow, blue.lowest, blue.length, blue.thick, blue.count,
+                  blue.aboveFloor, blue.aboveChecked);
+    printProbe("near", frame->buf, PROBE_X, PROBE_NEAR_Y);
+    printProbe("bottom", frame->buf, PROBE_X, PROBE_LOW_Y);
     lastStatus = millis();
   }
   esp_camera_fb_return(frame);
