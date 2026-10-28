@@ -2,6 +2,13 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.6 — 27 October · Obstacle Challenge: pillars in centimetres, one straight validated, floor lines
+- **One straight with pillars validated on the track** (`straight_pillars`, every case passes): odometry map (encoder + gyro), each pillar put on the map, lateral goal 17 cm on the correct side → heading → gyro PD. Replaces the "correct third" plan, because a pillar leaves the picture 15 cm before the car passes it.
+- **Camera v3** (`obstacle_camera`): camera locked after 5 s, 4 × 4 blocks, time filter, red / magenta vote, pillar distance in cm (`FOCAL_PX = 100`, two faces, 12 px centre offset), orange and blue lines with a long-and-thin test, a least-squares centre row, and `BLUE_MAX_SAT = 120` so the green pillar is never a blue line. 14-field message (the first 10 unchanged).
+- **Measured:** encoder 15.1 ticks / cm (the old 19.6 made the map 23 % short); line row → distance `276.2 / (row − 129.2) − 1.8` (error ≤ 1 cm); the low camera sees the lines only up to ~22 cm.
+- Added `line_test` (Nano, motor off). `straight_pillars` reads up to 80 characters per message so the longer v3 message never overflows.
+- README **§9 rewritten** with every formula and a worked example (pinhole model, odometry map, steering law, row → cm, corner geometry), the roadmap to the full Obstacle Challenge with its points (§9.10), new decisions and risks (§10.2–10.3), status (§13). Journal **Phase 11** (section 13) with Problems 47–58.
+
 ## v1.5 — 25 October (night) · Next Open Challenge algorithm: decision tree with encoder delays
 - README **§8.7**: full decision tree of the next version (first straight on the nearest wall → opening fixes the direction → N encoder turns → 90° turn → outer wall until the inner wall appears → loop on the inner wall with N / M encoder delays → 12 turns, X encoder turns, active brake), with the reason for every element.
 - Journal **§12.10**: why not reinforcement learning (no simulator, sim-to-real gap, rules can be written), the control methods considered, and why every timed wait becomes an encoder distance (USB vs battery difference).

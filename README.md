@@ -30,7 +30,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 |---|---|
 | **Size / mass** | 13 × 9.5 × 6 cm · 270 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
 | **Main controller** | Arduino Nano (ATmega328P) |
-| **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline at ~25 fps |
+| **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline (320 × 240, ~12.5 fps with pillars and floor lines) |
 | **Sensors** | 4 × TOF400C laser distance sensors (VL53L1X), BMI160 gyroscope, motor encoder |
 | **Drive / steering** | One N20 12 V 1000 rpm motor with encoder → 1 : 1 rear differential · parallel **rack-and-pinion** steering (module 1 mm) with an MG90 servo |
 | **Chassis** | 3D-printed PLA base (v3, all joints screwed) carrying a custom PCB (EasyEDA → JLCPCB) · cast silicone tyres |
@@ -64,12 +64,12 @@ Here you will find the full engineering process (what we tried, what failed, the
 ├── README.md                ← this file: complete overview of the car
 ├── CHANGELOG.md             ← versions and release notes
 ├── docs/
-│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 46 problems, data and decisions
+│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 58 problems, data and decisions
 │   └── images/                 ← plots used in the journal
 ├── schemes/                 ← schematic, wiring diagram, PCB, power budget, BOM, datasheets
 ├── src/                     ← all source code (see src/README.md)
 │   ├── hardware-tests/         ← one sketch per component
-│   ├── obstacle-challenge/     ← pillar detection + Pillar Vision Lab web tool
+│   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test, Pillar Vision Lab
 │   └── tools/scenario-roulette/← generates official WRO 2026 track scenarios to test on
 ├── models/                  ← 25 STL files of every printed part, renders, CAD v1–v3, tyre moulding
 ├── t-photos/                ← team photos (official and fun)
@@ -319,9 +319,9 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 ```mermaid
 flowchart LR
     subgraph CAM["ESP32-S3-CAM — vision"]
-        A[OV2640<br>160×120 RGB565] --> B[HSV colour<br>classification]
+        A[OV2640<br>320×240 RGB565] --> B[HSV colour<br>classification]
         B --> C[BFS blob search<br>+ front-pillar split]
-        C --> D[Closest pillar<br>+ side to pass]
+        C --> D[Closest pillar in cm<br>+ floor lines]
     end
     subgraph NANO["Arduino Nano — control"]
         E[4 × TOF<br>distances] --> H[State machine]
@@ -333,7 +333,7 @@ flowchart LR
     D -- "UART: a few bytes per frame" --> H
 ```
 
-- **Camera board:** all image processing. It sends only a few bytes per picture (colour of the closest pillar, its position, whether it is already on the correct side), so the link stays fast.
+- **Camera board:** all image processing. It sends one short text line per picture (colour of the closest pillar, its distance ahead and to the side in cm, and where the orange and blue floor lines are), so the link stays fast.
 - **Arduino Nano:** sensors, control loops and actuators. It never processes images, so its loop timing stays fast and predictable.
 
 ### 7.2 Modules
@@ -347,6 +347,9 @@ flowchart LR
 | Wall keeping | Nano | PID that keeps the start distances to both walls, or to the nearest wall | [`wall_keep_both_pid`](src/hardware-tests/wall_keep_both_pid), [`wall_follow_nearest_pid`](src/hardware-tests/wall_follow_nearest_pid) |
 | First drive test | Nano | Drive straight and brake when the left wall ends | [`drive_until_left_open`](src/hardware-tests/drive_until_left_open) |
 | Pillar detection | Camera | HSV → blobs → closest pillar → side to pass; streams picture and mask over USB | [`pillar_viewer.ino`](src/obstacle-challenge/pillar_viewer) |
+| Obstacle vision v3 | Camera | Locked camera, 4 × 4 blocks, time filter, pillar position in cm (§9.3), red / magenta vote, orange and blue lines with the long-and-thin test and the centre-row fit (§9.6); 14-field message to the Nano | [`obstacle_camera`](src/obstacle-challenge/obstacle_camera) |
+| Straight with pillars | Nano | Odometry map (encoder + gyro), pillars on the map, lateral goal → heading → gyro PD (§9.4–9.5) | [`straight_pillars`](src/obstacle-challenge/straight_pillars) |
+| Line test | Nano | Motor off; prints what the camera says about the lines and the pillar, used to measure the row → cm table | [`line_test`](src/obstacle-challenge/line_test) |
 | Pillar Vision Lab | PC browser | Shows what the camera sees, runs the same algorithm in JavaScript and checks it matches, live parameter tuning | [`viewer.html`](src/obstacle-challenge/pillar_viewer/viewer.html) |
 | Scenario Roulette | PC browser | Draws valid official track layouts to test on and scores Open Challenge attempts | [`index.html`](src/tools/scenario-roulette/index.html) |
 
@@ -520,49 +523,187 @@ START
 
 ### 9.1 Idea
 
-The car steers so that the closest pillar ends up in the **correct third of the camera image**, keeps driving, and uses the **orange and blue floor lines** to know when it has reached a corner: it turns 90° with the gyroscope and increases the corner counter. Parking is still being designed.
+The camera does not only say *"there is a red pillar on the left"*: it measures **where the pillar is in centimetres** (how far ahead and how far to the side). The Nano keeps a small **map of the current straight**, built with the encoder (distance) and the gyroscope (heading), and puts every pillar on that map. The car then steers toward a lateral position that leaves the pillar on its correct side, with the same gyro PD that drives the Open Challenge straights. The floor lines are measured the same way and will also be put on the map, so the car knows where the corner is even after the line leaves the picture.
 
-### 9.2 Pillar detection (finished and tested on the robot)
+| Stage | Status |
+|---|---|
+| Vision: pillars, magenta parking walls, orange and blue lines | ✅ `obstacle_camera` v3 |
+| One straight with pillars (map + steering law) | ✅ Validated 27 Oct: every case passes ([`straight_pillars`](src/obstacle-challenge/straight_pillars)) |
+| Floor lines measured in cm | ✅ Row → cm formula measured 27 Oct (error ≤ 1 cm) |
+| Corners, laps, stop in the starting section | ⏳ Next (plan in §9.7 and §9.10) |
+| Parking | 🧠 Being designed (§9.8) |
 
-1. Take a 160 × 120 RGB565 picture, about 25 times per second.
-2. Convert each pixel to **HSV** and classify it as RED (hue ≥ 340° or ≤ 15°), GREEN (hue 80–160°) or nothing, with minimum saturation and brightness so the white walls and the grey mat are rejected.
-3. Group pixels into blobs with a **BFS flood fill**; blobs under 30 pixels are noise; a shape filter keeps only blobs taller than wide.
-4. If two pillars of the same colour touch in the picture, split them and keep the **front** one.
-5. The **closest pillar** is the one whose base is lowest in the picture.
+**Why we left the "correct third" rule** (our first plan, 7 Oct): a rule that only looks at the picture has no information once the pillar leaves it. A pillar passed at the safe distance disappears from the picture **15 cm before** the car reaches it (measured), and in the first driving test (`obstacle_first_test`, 26 Oct) the car reacted to pillars too late. With a map, the pillar is still known while it is out of the picture, and the car can plan *how much* to move instead of only *which way*. The full story is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026).
 
-Only rows 53–78 of the picture are searched: the camera's wide view can see red or green objects outside the field and read them as pillars.
+### 9.2 Vision pipeline (camera board, `obstacle_camera` v3)
 
-### 9.3 Passing pillars: the "correct third" rule
+1. **Picture:** 320 × 240 RGB565, ~12.5 fps with pillars and lines. Only rows 124–239 are processed (the floor and the pillars; above is the room).
+2. **Frozen camera:** 5 s after power on, white balance, exposure and gain are locked, so the colour of a pillar does not change when the scene changes (red was flickering much more than green before the lock).
+3. **HSV classification**, tested in this order: red → green → magenta → orange → blue. Values measured with the camera locked:
 
-The 160-pixel-wide image is divided into three equal thirds (≈ 53 px each).
+| Colour | Hue | Saturation | Value | Measured / why |
+|---|---|---|---|---|
+| 🟥 Red pillar | 345–26° (wraps) | ≥ 115 | ≥ 95 | Pillar H 15–23° |
+| 🟩 Green pillar | 82–150° | ≥ 150 | ≥ 90 | Pillar H 86–95°, S ≥ 152; the yellow-green floor has S 88–156 |
+| 🟪 Magenta wall | 328–353° | ≥ 84 | ≥ 84 | Very close to red (see step 4) |
+| 🟧 Orange line | 29–52° | ≥ 115 | ≥ 110 | Line H 32–43°, S 131–161; red ends at 26°, floor starts at 60° |
+| 🟦 Blue line | 85–200° | **30–120** | ≥ 65 | The locked camera sees the blue line as dark grey-teal (S 48–103). The **maximum** saturation keeps the green pillar (S ≥ 152) out |
 
-| Closest pillar | Rule | Target in the image |
+4. **Red or magenta?** Red and magenta pixels that touch are grouped; if ≥ 70 % of the group is magenta, the whole group is a parking wall and never a pillar (a shape filter failed for this).
+5. **Pillars:** only rows 126–207 are searched (above: things outside the field; below: too close to measure). Pixels are grouped in **4 × 4 blocks** (a block is red/green if ≥ 12 of its 16 pixels are), blobs are found with a BFS, touching pillars are split (the front one is kept), and a blob must be a **solid** chunk (≥ 75 % filled), not touch the picture edge and be at a possible distance (5–130 cm ahead, ≤ 70 cm to the side).
+6. **Time filter:** a pillar is reported when it is seen in 2 of the last 4 pictures and dropped after 3 empty ones.
+7. **Floor lines:** see §9.6.
+8. **Message to the Nano** (UART, 115200 baud, one text line per picture):
+
+```
+$color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,orangeRow,blueCenterRow,orangeCenterRow
+```
+
+The first 10 fields are the pillar (colour, centre `x` in px, width in px, `distCm` ahead and `latCm` to the side); the last 4 are the lines (v3). Older Nano sketches read only the first 10 fields, so they keep working.
+
+### 9.3 From pixels to centimetres: where is the pillar?
+
+The camera works like a **pinhole camera**: an object of real size *S* at distance *D* looks *f · S / D* pixels wide, where *f* is the focal length in pixels. A pillar is 5 cm wide, so its width in the picture gives its distance.
+
+```
+xc     = x − X_CENTER_OFFSET              pixels from the real straight-ahead line
+a      = atan(|xc| / f)                   angle between the car's direction and the pillar
+seen   = 5 cm · (cos a + sin a)           width of the pillar as seen from that angle
+ahead  = f · seen / width                 cm ahead of the camera (to the front face)
+side   = ahead · xc / f                   cm to the side (+ right, − left)
+```
+
+- **Why `cos a + sin a`:** the pillar is a 5 × 5 cm square. Seen straight on, only its front face shows (5 cm). Seen from an angle *a*, two faces show, and together they look 5 · (cos *a* + sin *a*) cm wide (up to 7.1 cm at 45°). Without this, pillars to the side would look closer than they are.
+- **`X_CENTER_OFFSET = 12 px`:** a pillar exactly in front of the car appeared 12 px to the right of the picture centre, because the camera is turned about atan(12 / 100) ≈ 7°. All positions are measured from that real centre line.
+- **`f = FOCAL_PX = 100`:** measured with `straight_measure`. With 112, a centred pillar at 30 cm read 35 cm and at 50 cm read 59 cm; with the pillar 16.75 cm to the side at 50 cm it read 51 cm and ±18 cm (symmetric). 100 is the value that fits all the measurements best.
+- **Range:** about 50 cm ahead (limited by the top of the search band, which we keep to avoid the background). A pillar passed at the safe distance leaves the picture through its side 15 cm before the car; a centred pillar is seen down to 3 cm.
+
+**Example:** a red pillar 20 px wide with its centre at x = +40 px → xc = 28 px, a = 15.6°, seen = 5 · (0.963 + 0.269) = 6.2 cm, ahead = 100 · 6.2 / 20 = **31 cm**, side = 31 · 28 / 100 = **8.7 cm to the right**.
+
+### 9.4 The map of the straight (odometry)
+
+The Nano keeps the position of the camera point on a map of the current straight: **x = cm forward, y = cm to the left** of the lane where the straight started (the "home lane").
+
+```
+ds    = new encoder ticks / 15.1              cm driven in this loop
+h     = (yaw before + yaw now) / 2            average heading in this loop
+carX += ds · cos h
+carY += ds · sin h
+```
+
+- **15.1 ticks per cm** was measured by pushing the car by hand: 980 ticks = 66 / 65.5 / 63.5 cm (average 65 cm). The first value we used, 19.6, made the map think every distance was **23 % shorter** than it was, and the car reacted late.
+- **Putting a pillar on the map:** the camera gives `ahead` (front face) and `side`. The pillar centre is `fwd = ahead + 2.5 cm` ahead and `left = −side` to the left, and in map coordinates:
+
+```
+pillarX = carX + fwd · cos h − left · sin h
+pillarY = carY + fwd · sin h + left · cos h
+```
+
+- **The same pillar seen again** (closer than 15 cm on the map, same colour) is not a new pillar: its stored position moves 30 % toward the new measurement (`BLEND = 0.3`), so the noise of single pictures is averaged out.
+- The map keeps two pillars: the **current** one (being passed) and the **next** one (already seen farther away).
+- **The map is the blind zone:** when the camera loses the pillar, its position on the map is still known, so there is no special "blind" state in the code.
+
+### 9.5 How much to move: the steering law
+
+**1. Lateral goal.** The pillar centre must stay at least `TARGET_CM = 17 cm` from the car centre = half the car (4.25 cm) + 10 cm of gap + half the pillar (2.5 cm).
+
+```
+red   (pass on its right):  goalY = min(carY, pillarY − 17)
+green (pass on its left):   goalY = max(carY, pillarY + 17)
+```
+
+The `min` / `max` mean "never move back toward the pillar": if the car is already farther than 17 cm, it stays where it is.
+
+**2. Heading toward the goal.** The car must be at the goal lateral position **10 cm before the pillar's front face** (`ARRIVE_BEFORE_CM`):
+
+```
+look    = max(12 cm, pillarX − 2.5 − carX − 10)
+heading = atan2(goalY − carY, look)            limited to ±45°
+```
+
+`look` never goes below 12 cm, so the angle does not explode next to the pillar. ±45° is the largest angle that still reached the second pillar in the simulation (35° hit it).
+
+**3. Gyro PD → wheels** (the same values as the validated Open Challenge code):
+
+```
+steering = 2.0 · (heading − yaw) − 0.10 · yawRate        limited to ±60° of servo, max 300 °/s
+```
+
+**4. While passing and after the pillar.**
+- As soon as the camera passes the pillar centre, the car already aims at the **next** pillar (or straightens), but it may not move sideways **toward** the pillar beside it.
+- 5 cm after the pillar centre (`RETURN_AFTER_CM`) the pillar is cleared: the next pillar becomes the current one, or the car returns to the home lane (`look = 20 cm`). The rear does not swing into the pillar because only the front wheels steer.
+- In the first version the car drove ~25 cm after a pillar before reacting, and there was no room left for a second pillar 100 cm later; aiming at the next pillar earlier fixed it.
+
+**Example:** car at (0, 0), red pillar centre at (40, +10) → goalY = min(0, 10 − 17) = −7 cm, look = 40 − 2.5 − 0 − 10 = 27.5 cm, heading = atan2(−7, 27.5) = **−14°** (to the right). With yaw = 0 the servo moves 2.0 · 14 = 28° to the right of centre, and less as the car turns.
+
+**Tested:** first in a simulation (car model + camera at 6–10 Hz with 0.2 s delay, ±10 % distance error, 3 cm noise, speed 20–40 cm/s, pillars at ±10 cm, two pillars 100 cm apart), then on the track: **every straight-with-pillars case passed on 27 Oct**. Known limit: the car must start straight (5° off at the start failed in the simulation).
+
+### 9.6 Floor lines in centimetres (27 October)
+
+**Detection** (for each colour, every picture):
+1. Take the biggest patch of that colour below row `LINE_TOP_ROW = 136`.
+2. It must be **long** (diagonal of its box ≥ 40 px) and **thin** (pixels ÷ length ≤ 40 px). A pillar or a blob is short and fat; this also rejects the orange edge of a red pillar.
+3. **Row straight ahead:** a straight line `row = a · x + b` is fitted (least squares) through the bottom edge of the line in the 40 columns on each side of the straight-ahead column (x = 172), and read at that column. The picture has a bright glare in its middle that left holes exactly in the centre columns; the fit fills them, and it also works when the car meets the line diagonally.
+
+**Row → distance.** Measured on 27 Oct with the line in front of the car (and checked with the car parallel to the wall, as it really arrives at a corner):
+
+```
+distance (cm) = 276.2 / (row − 129.2) − 1.8
+```
+
+| Row | Measured | Formula |
 |---|---|---|
-| 🟥 Red | Pass on its **right** → the pillar must stay on the car's left | **Left third** |
-| 🟩 Green | Pass on its **left** → the pillar must stay on the car's right | **Right third** |
+| 192 | 2 cm (parallel to the wall) | 2.6 |
+| 176 | 5 cm | 4.1 |
+| 158 | 8 cm (parallel to the wall) | 7.8 |
+| 153 | 10 cm | 9.8 |
+| 145 | 15–16 cm | 15.7 |
+| 143 | 18 cm | 18.3 |
+| 141 | 22 cm | 21.7 |
 
-- While the pillar is **not** in its target third, the servo steers the car away from it (red → steer right, green → steer left).
-- Once the pillar is **inside** the target third, the servo returns toward the centre and the car keeps driving straight past it.
-- When the pillar leaves the bottom of the image (it has been passed), the next closest pillar becomes the target; if there is none, the car returns to the heading of the current straight.
+This is the ground-plane perspective of a low camera: row 129 is the horizon, and the floor gets squeezed into fewer rows the farther it is.
 
-**Why this rule:** the horizontal position of the pillar in the image is directly the angle between the car's direction and the pillar, so no distance estimation or camera calibration is needed. Keeping a red pillar in the left third means the car's path passes to its right with lateral clearance, and the same for green on the other side. The rule matches the "correct side" check already built and tested in the detection code (central zone ±28 px ≈ the middle third). It is also simple enough to tune and explain, which matters with the time left before the competition.
+**Why the lines are only seen up to ~22 cm:** the camera is very low, so it sees the floor almost edge-on. At 20 cm the 2 cm line is only **2 rows tall** (~100–130 pixels); at 25 cm it has only 22–39 pixels and its colour blends with the floor. This is a physical limit, not a setting: lowering the thresholds further would let the wall edge in, and on an empty floor the camera reports no line (checked). It is enough for the corner plan (§9.7); if not, the camera can be raised or tilted later, at the cost of recalibrating the pillars.
 
-**Safety rule:** the side TOF sensors have priority over the pillar rule. If a side wall is closer than a minimum distance, the car steers away from the wall even if the pillar is not yet in its third.
+### 9.7 Corners and laps (next)
 
-### 9.4 Corners: floor lines and counter
+**Field geometry** (official mat): both lines of a corner start at the corner of the inner wall and reach the outer wall 42 cm from the corner. For a car in the middle of the corridor, the **first line** crosses its path ~71 cm before the wall ahead and the second ~14 cm before it. If the car is 10 cm off the middle, the first line moves only ~6 cm, so it is a good marker of how far the corner is.
 
-- Each corner of the field has an orange line and a blue line on the floor. The camera detects them with the same HSV method as the pillars.
-- When the **first line of a corner** is detected, the car turns until the gyro heading has changed 90° (same turning method as the Open Challenge) and increases the corner counter. The second line of the same corner is ignored.
-- The turning direction is learned at the first corner, from the side that is open, and kept for the rest of the round.
-- **Why lines and not the TOF jump used in the Open Challenge:** in this challenge the side TOF sensors can also see pillars, which would create false jumps. The floor lines are fixed by the rules, always at the corners, and the camera is already looking at the floor in front of the car.
+**Plan** (steps 3–7 of §9.10):
+1. **Direction of the round:** the colour of the first line seen at the first corner — orange first → clockwise, blue first → counter-clockwise — then kept for the whole round.
+2. **Line on the map:** the line distance (§9.6) is put on the map like a pillar and confirmed by 2 messages that agree within ±5 cm. A reflection never appears twice at the same place on the floor.
+3. **Turn point = line + an offset** that depends on the turning radius (to be measured). The turn starts at a map position, so camera delay and speed do not change it.
+4. **90° turn while driving** with the gyro PD, toward **absolute headings** (0°, 90°, 180°, 270°…): the error of one turn is corrected on the next straight instead of adding up. Pillars are ignored during the turn; after it, a new map starts and no lines are searched for the next 60 cm (so the second line of the corner is never counted).
+5. **Pillars right after the corner:** the first pillar seats of a straight are exactly at its start. The turn must end inside the corner section, so these pillars are 20–40 cm ahead, within the camera's range.
+6. **12 corners**, then ~75 cm more with the straight logic and stop inside the starting section.
 
-### 9.5 After 12 corners: parking
+### 9.8 Parking (planned)
 
-After the 12th corner the three laps are complete. **The parking manoeuvre is still being designed**; the options we are studying (finding the magenta parking-lot walls with the camera and the side TOF sensors) will be documented here and in the engineering journal once they are tested.
+After the third lap the car will find the magenta walls of the parking lot (already detected by the camera, not yet sent to the Nano) and park parallel. Starting the round **inside** the parking lot is worth 7 more points. The lot is 1.5 × the car length (≈ 18 cm for our 12–13 cm car), so parallel parking will almost certainly need **reverse**; the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested first.
 
-### 9.6 Pillar Vision Lab
+### 9.9 Pillar Vision Lab
 
-<a href="https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html">Pillar Vision Lab</a> is the calibration tool we built: a web page that receives every picture over USB (Web Serial), draws the colour mask on top, runs the same algorithm in JavaScript, checks that its result matches the camera board, and lets us tune every parameter live. It turned threshold tuning from guessing into measuring, and it is how we will tune the floor-line colours too.
+<a href="https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html">Pillar Vision Lab</a> is the calibration tool we built: a web page that receives every picture over USB (Web Serial), draws the colour mask on top, runs the same algorithm in JavaScript, checks that its result matches the camera board, and lets us tune every parameter live. It turned threshold tuning from guessing into measuring, and we also used it to tune the floor-line colours.
+
+### 9.10 Roadmap to the complete Obstacle Challenge
+
+**Points** in one Obstacle round (rules §10): sections 24 + laps 3 + stop in the starting section 3 + no pillar moved 10 (8 if moved) + start from the parking lot 7 + parking 15 (7 if partial) = **62**. Three clean laps and a correct stop already give 40. **Time:** a round is 3 minutes and three laps along the middle of the corridor are ≈ 24 m, so the car must average at least ~16–20 cm/s to leave time for parking.
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Camera detects both lines (long-and-thin filter) | ✅ 27 Oct |
+| 2 | Row → cm table | ✅ 27 Oct (centre-row fit being checked at 16–22 cm; blue line at 15 cm under study) |
+| 3 | Corner rehearsal by hand (Nano, motor off): map + line + direction + "turn now" | Correct direction and turn point; the second line is never counted |
+| 4 | Measure the turn while driving (forward and side displacement → radius) | Radius known → turn point computed |
+| 5 | One corner with the motor: no pillars, then a pillar before and right after the corner | 4 of 5 attempts in each case |
+| 6 | One full lap (4 corners, absolute headings) | No wall or pillar touched |
+| 7 | Three laps and stop | Stops inside the starting section |
+| 8 | Robustness: both directions, different start zones, Scenario Roulette pillar cards | Results table in the journal |
+| 9 | Speed: fast on free straights, slow near pillars and corners | Three laps in < ~2 min |
+| 10 | Camera sends the magenta walls to the Nano | — |
+| 11 | Start from inside the parking lot | +7 points |
+| 12 | Parallel parking after the third lap | +15 points |
+| 13 | One final Obstacle program, start button, battery only | Same behaviour as on USB |
 
 ---
 
@@ -595,7 +736,9 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Moving reference for jump detection | Fixed reference | The fixed version tested worse on the track (journal Problem 4) |
 | Following the outer wall at its start distance | Centring between the walls | The inner walls move every round, so the centre changes; the outer wall never moves |
 | Floor lines for corners in the Obstacle Challenge | Side TOF jumps | Pillars near the walls could create false jumps; the lines are fixed by the rules |
-| "Correct third" of the image to pass pillars | Estimating pillar distance and planning a path | Bearing is read directly from the image, no calibration needed, simple to tune and explain |
+| Pillar position in cm + odometry map of the straight (27 Oct) | "Correct third" of the image (our 7 Oct plan) | A pillar passed at a safe distance leaves the picture 15 cm before the car reaches it; with only the picture the car reacted too late (first test, 26 Oct). The map keeps the pillar while it is out of sight and says *how much* to move. Every straight-with-pillars case passed on the track |
+| Floor line measured in cm and stored on the map | Turning when the line leaves the bottom of the picture | Leaving the picture happens only ~3–5 cm ahead, with few pixels, and later at higher speed because the camera message is ~0.2 s old; a map position does not depend on speed or delay |
+| `BLUE_MAX_SAT = 120` | Only minimum thresholds | The locked camera sees the blue line grey-teal (S 48–103), the same hue as the green pillar (S ≥ 152): a maximum saturation separates them |
 | Our own BMI160 driver | DFRobot library | The library returned only zeros, without errors (journal Problem 14) |
 | Hand-generated servo pulse (on the Nano ESP32) | ESP32Servo / LEDC | Libraries did not work with that board core (journal Problem 6) |
 | MG90 metal-gear servo | SG90 | SG90 moved in its mount (journal Problem 8) |
@@ -625,8 +768,10 @@ After the 12th corner the three laps are complete. **The parking manoeuvre is st
 | Side TOF cannot see the black wall (journal Problem 46) | Sensors straight at ~5 cm, ROI 16 × 8, only "range valid"; re-test with a tape measure after any change to the sensor mounts |
 | Wrong turn side at the first corner | Decision with the car still, NOT SURE band, FRONT/BACK check and undo |
 | Gyro error accumulates over 12 turns | Wall re-alignment every straight |
+| The camera sees the floor lines only up to ~22 cm (low camera) | Lines put on the map and confirmed with 2 messages; if not enough, raise / tilt the camera and recalibrate |
+| Parallel parking needs reverse, and the drive gear skipped on a sudden reverse | Gentle reverse only, tested alone before the parking manoeuvre |
 
-The complete list of the **46 problems** we found, with their causes and solutions, is in [journal §14](docs/ENGINEERING_JOURNAL.md#14-summary-of-problems-and-solutions).
+The complete list of the **58 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
 
 ### 10.4 Why each setting has its value
 
@@ -732,7 +877,7 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | TOF sensors (×4), unique addresses, ROI, filtering | ✅ Working |
 | Gyroscope heading | ✅ Working (own driver) |
 | Drive motor through TB6612FNG | ✅ Tested |
-| Pillar detection | ✅ Finished and tested on the robot |
+| Pillar detection | ✅ Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
 | Chassis v3: printed base, rack-and-pinion steering, silicone tyres | ✅ Built (25 STL files published) |
 | Steering calibration on v3 | 🔄 Provisional centre 120°, limits 180° / 50° |
 | Gyro wall following on v3 | ✅ Validated (`wall_follow_nearest_gyro`) |
@@ -742,8 +887,11 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 | Open Challenge 12-turn loop with wall re-alignment | 🔄 Runs; next version uses valid / invalid decisions |
 | Encoder: delays in distance instead of time (§8.7) | ⏳ Next: measure ticks per mm |
 | Videos: one per challenge (≥ 30 s autonomous) | 🔄 Pending (rule 7) |
-| Obstacle: correct-third steering, floor-line corners | ⏳ Next |
-| Camera → Nano UART link | ⏳ Next |
+| Encoder | ✅ Measured: 15.1 ticks per cm (used in the Obstacle map) |
+| Camera → Nano UART link | ✅ Working (14-field message) |
+| Obstacle: one straight with pillars (map + steering law) | ✅ Validated 27 Oct (`straight_pillars`) |
+| Obstacle: orange and blue lines in cm | ✅ Detected up to ~22 cm, row → cm formula measured |
+| Obstacle: corners, 3 laps, stop | ⏳ Next (README §9.7, §9.10) |
 | Parking | 🧠 Being designed |
 
 ---
