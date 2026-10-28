@@ -1090,7 +1090,222 @@ After the Open Challenge decision tree I moved to the Obstacle Challenge. In two
 
 **What the camera said about the line at 20 and 25 cm** (camera Serial Monitor): at 20 cm `ORANGE yes | center 141 | len 60–77 | thick 2 | px 103–133`; at 25 cm `ORANGE no (few pixels) | px 22–39`.
 
-### 13.3 Problems and solutions
+### 13.3 The math, step by step
+
+Everything the car does in the Obstacle Challenge comes from a few ideas of trigonometry. This section explains each one from the beginning, with the reason it is used and a worked example with real numbers from our car. (The same formulas, shorter, are in [README §9.3–9.6](../README.md#93-from-pixels-to-centimetres-where-is-the-pillar).)
+
+#### 13.3.1 Tangent and arctangent (`tan`, `atan`)
+
+In a right triangle, the **tangent** of an angle is the opposite side divided by the adjacent side:
+
+```
+            •  (object)
+           /|
+          / |  opposite
+         /  |
+        / a |
+ (car) •----+
+         adjacent
+
+ tan(a)  = opposite / adjacent
+ atan(r) = the angle whose tangent is r      (the inverse: from a ratio back to the angle)
+```
+
+- If we know the angle and one side, `tan` gives the other side.
+- If we know both sides, `atan` gives the angle.
+
+We use it in both directions: the camera turns **pixels into an angle** (`atan`), and the steering turns **"how far to the side / how far ahead" into a heading** (`atan2`).
+
+#### 13.3.2 The pinhole camera: from a pixel to an angle
+
+A camera behaves like a box with a tiny hole. Light from an object goes straight through the hole and lands on the sensor. The distance from the hole to the sensor, measured in pixels, is the **focal length f** (`FOCAL_PX = 100` for our camera).
+
+```
+   sensor          hole                        world
+     |              •
+ xc  |            / |                            • pillar
+ px  |  ←  f  →  /  |            side (cm)       |
+     |----------•---+--------------------------- + --- straight ahead
+                    |←———————— ahead (cm) ——————→|
+```
+
+The two triangles (inside the camera and outside) have the **same angle a**, so their sides are proportional (similar triangles):
+
+```
+tan(a) = xc / f = side / ahead
+```
+
+- `xc` is how many pixels the pillar is from the real centre line of the picture.
+- So `a = atan(xc / f)` is the angle between the car's direction and the pillar.
+- And `side = ahead · xc / f`: once we know how far ahead the pillar is, we know how far to the side.
+
+**Why `X_CENTER_OFFSET = 12`:** a pillar placed exactly in front of the car appeared 12 px right of the middle of the picture. The camera is turned a little: atan(12 / 100) ≈ 7°. So `xc = x − 12`, measured from the line the car really drives along.
+
+#### 13.3.3 Distance from the width (similar triangles again)
+
+The same proportion works for sizes: an object `S` cm wide at a distance `D` looks `f · S / D` pixels wide. We know the real width of a pillar, so we can solve for the distance:
+
+```
+width_px = f · S / ahead      →      ahead = f · S / width_px
+```
+
+**Why `S = 5 · (cos a + sin a)` and not just 5 cm:** a pillar is a 5 × 5 cm square seen from above. Straight on, only its front face shows: 5 cm. From an angle `a`, a second face also shows, and the total width the camera sees is the projection of the square:
+
+```
+ straight on (a = 0°):  ▮  front face only       → 5 · (1 + 0)        = 5.0 cm
+ a = 20°:               ▮▯ front + part of side  → 5 · (0.94 + 0.34)  = 6.4 cm
+ a = 45°:               ◆  two faces equally     → 5 · (0.71 + 0.71)  = 7.1 cm
+```
+
+Without this correction a pillar to the side would look wider, and the formula would say it is **closer** than it really is.
+
+**Worked example (red pillar 20 px wide, centre at x = +40 px):**
+
+```
+xc     = 40 − 12                    = 28 px
+a      = atan(28 / 100)             = 15.6°
+S      = 5 · (cos 15.6° + sin 15.6°) = 5 · (0.963 + 0.269) = 6.2 cm
+ahead  = 100 · 6.2 / 20             = 31 cm   (to the front face)
+side   = 31 · 28 / 100              = 8.7 cm  (to the right)
+```
+
+**How `f = 100` was chosen:** with 112, real 30 cm read 35 cm and real 50 cm read 59 cm (about 15 % too long). Since `ahead` is proportional to `f`, lowering `f` shortens every distance by the same factor; 100 was the value that fit all the measurements (centred and to the side) best.
+
+#### 13.3.4 The map: rotating between "car view" and "map view" (`cos`, `sin`)
+
+The camera says where the pillar is **from the car** (`fwd` ahead, `left` to the left). The map needs it **on the track** (x along the straight, y across it). If the car is turned by the heading `h`, its "ahead" and "left" directions on the map are:
+
+```
+ahead direction = ( cos h,  sin h)
+left  direction = (−sin h,  cos h)
+```
+
+So a point `fwd` ahead and `left` to the left of the car is at:
+
+```
+pillarX = carX + fwd · cos h − left · sin h
+pillarY = carY + fwd · sin h + left · cos h
+```
+
+This is a **rotation**: the same idea as turning a sheet of paper. With h = 0 it is just `pillarX = carX + fwd`, `pillarY = carY + left`. The opposite rotation (`relativeToCar`) gives where a stored pillar is from the car now:
+
+```
+fwd  =  (pillarX − carX) · cos h + (pillarY − carY) · sin h
+left = −(pillarX − carX) · sin h + (pillarY − carY) · cos h
+```
+
+**Example:** car at (50, −5) turned h = −10° (to the right), pillar seen 30 cm ahead and 4 cm to the left:
+
+```
+pillarX = 50 + 30 · 0.985 − 4 · (−0.174) = 50 + 29.5 + 0.7 = 80.2 cm
+pillarY = −5 + 30 · (−0.174) + 4 · 0.985 = −5 − 5.2 + 3.9  = −6.3 cm
+```
+
+`fwd = ahead + 2.5`, because the camera measures to the **front face** and the map stores the **centre** of the pillar; `left = −side`, because the camera counts the right as positive and the map counts the left as positive.
+
+#### 13.3.5 Odometry: adding small steps
+
+Every loop the encoder says how many ticks the wheel turned. With 15.1 ticks per cm, `ds = ticks / 15.1` cm. During that small step the car moved in the direction of its heading, so the same rotation gives:
+
+```
+carX += ds · cos h
+carY += ds · sin h
+```
+
+`h` is the **average** of the heading before and after the step. In a curve the heading changes during the step; using the middle value is more exact than using the start or the end (the error per step becomes much smaller).
+
+**Why the encoder constant mattered so much:** with the wrong 19.6 ticks per cm, every `ds` was 15.1 / 19.6 = 0.77 of the real distance: the map thought the car had moved 23 % less, so pillars on the map "stayed" ahead longer and the car reacted late.
+
+**Averaging repeated detections (`BLEND = 0.3`):** when the camera sees a pillar already on the map, the stored position moves 30 % toward the new one: `x = x + 0.3 · (new − x)`. After n new detections, the first one weighs only 0.7ⁿ (after 5: 17 %). Recent measurements (taken closer, so more exact) count more, and the noise of single pictures is smoothed.
+
+#### 13.3.6 How much to turn: `atan2`
+
+The car wants to reach a lateral position `goalY` before the pillar. The straight path from the car to that point has a slope `(goalY − carY) / look`, where `look` is the distance ahead left to get there. The heading of that path is its angle:
+
+```
+heading = atan2(goalY − carY, look)
+
+          goal •
+              /|
+             / | goalY − carY
+            /  |
+   car •---/---+
+          ← look →
+```
+
+- `atan2(y, x)` is `atan(y / x)` but it also knows the signs of `y` and `x`, so it gives a negative angle (turn right) when the goal is to the right, and it never divides by zero.
+- **`look = max(12, pillarX − 2.5 − carX − 10)`:** the distance from the car to 10 cm **before** the pillar's front face. The car should already be at the safe side when it gets there. The minimum of 12 cm stops the angle from growing huge right next to the pillar (a tiny `look` would give almost 90°).
+- **Limited to ±45°:** in the simulation, 35° was not enough to reach the second pillar; more than 45° makes the car lose speed and turn too sharply.
+
+**`goalY` for each colour** (17 cm = 4.25 half car + 10 gap + 2.5 half pillar):
+
+```
+red   (pillar must stay on the LEFT):   goalY = min(carY, pillarY − 17)
+green (pillar must stay on the RIGHT):  goalY = max(carY, pillarY + 17)
+```
+
+`min` / `max` mean "if I am already farther than 17 cm, stay where I am": the car never moves back toward the pillar.
+
+**Worked example:** car at (0, 0), red pillar centre at (40, +10):
+
+```
+goalY   = min(0, 10 − 17)          = −7 cm   (7 cm to the right)
+look    = 40 − 2.5 − 0 − 10        = 27.5 cm
+heading = atan2(−7, 27.5)          = −14.3°  (to the right)
+```
+
+#### 13.3.7 From heading to wheels: the gyro PD
+
+`heading` is where the car should point; `yaw` (gyroscope) is where it points now. The servo moves in proportion to the difference (P), minus a term that brakes the turn when the car is already turning fast (D):
+
+```
+steering = KP · (heading − yaw) − KD · yawRate        KP = 2.0, KD = 0.10
+```
+
+Example: heading −14.3°, yaw 0°, not turning yet → steering = 2.0 · (−14.3) = −28.6° (servo 28.6° to the right of centre). As the car turns, `yaw` approaches −14.3° and the steering goes back to the centre by itself; if it is turning at −60 °/s, the D term adds +6° to soften it, so the car does not overshoot. The servo may move at most 300 °/s and ±60° from its centre.
+
+#### 13.3.8 The floor line: from a row to centimetres
+
+The floor is a flat plane below the camera. A point on the floor `d` cm ahead is seen below the horizon at an angle whose tangent is `height / d`. With the pinhole model (§13.3.2) that angle becomes a number of rows below the horizon row:
+
+```
+row − horizon = f · height / d      →      d = (f · height) / (row − horizon)
+```
+
+So the distance is **one constant divided by (row − horizon)**. We measured 9 points and found the best values (least squares fit):
+
+```
+d = 276.2 / (row − 129.2) − 1.8
+```
+
+- `129.2` is the **horizon row**: the floor infinitely far away.
+- `276.2 = f · height`. If the vertical focal length is also about 100 px, the lens is about 2.8 cm above the floor: that is why the camera sees the floor almost edge-on.
+- `−1.8` is a small correction for where we measured from (the lens is not exactly at the front of the car).
+
+**Why the far line is so hard to see:** the derivative of the formula says how many cm one row is worth: `276.2 / (row − 129.2)²`. At 10 cm (row 153) one row is 0.5 cm; at 22 cm (row 141) one row is **2 cm**, so a 2 cm line is only ~1–2 rows tall and its colour mixes with the floor.
+
+#### 13.3.9 The line's row straight ahead: least squares
+
+The bright glare in the middle of the picture leaves holes in the line exactly at the centre columns. Instead of reading one column, the camera takes the bottom edge of the line in the 40 columns on each side of the centre (x = 172) and fits the straight line `row = a · dx + b` (dx = column − 172) that passes as close as possible to all those points (least squares). `b` is then the row at the centre:
+
+```
+n = number of columns, sums over those columns:
+b = ( Σrow · Σdx² − Σdx · Σ(dx · row) ) / ( n · Σdx² − (Σdx)² )
+```
+
+If a few columns are missing in the middle, the line through the others still passes through the right place. It also works when the line crosses the picture diagonally (the car arriving parallel to the wall).
+
+#### 13.3.10 Corner geometry (from the official mat)
+
+Both lines of a corner start at the corner of the inner wall and reach the outer wall 42 cm from the corner. Taking the corner square as 100 × 100 cm, the first line crosses the car's path at:
+
+```
+distance to the wall ahead = 100 − 0.58 · (distance from the car to the inner wall)
+```
+
+`0.58 = 58 / 100` is the slope of the line. For a car in the middle (50 cm from the inner wall): 100 − 29 = **71 cm**. If the car is 10 cm off the middle, the line moves only 0.58 · 10 ≈ **6 cm**, so the first line is a good marker of where the corner is even if we do not know the exact lane.
+
+### 13.4 Problems and solutions
 
 #### Problem 47 — The picture came out scrambled by rows again ✅
 Same symptom as Problem 22. Re-seating the camera flex cable fixed it. The cable must be fixed in place before the competition.
@@ -1128,12 +1343,12 @@ The camera saw the line, but the 20 centre columns were empty: there is a bright
 #### Problem 58 — The blue line was not detected at 15 cm (but it was at 20 cm) ❓
 Still open: the reason printed by the camera (`few pixels`, `too short` or `too thick`) will tell which setting to change.
 
-### 13.4 What this phase gives the rubric
+### 13.5 What this phase gives the rubric
 
 | Rubric criterion | Evidence |
 |---|---|
 | Sensor use and calibration | Focal length, centre offset, encoder and row → cm, each measured with a tape measure and compared with the formula |
-| Software / algorithm | The pinhole model, the odometry map and the steering law are written as formulas with examples (README §9.3–9.5) |
+| Software / algorithm | Every formula explained from the beginning with worked examples (§13.3): pinhole model, rotation, odometry, `atan2` steering, PD, row → cm, least squares, corner geometry |
 | Engineering decisions | "Correct third" replaced by a map, with the reason (pillar out of sight 15 cm before passing it); line measured in cm instead of "leaves the picture" |
 | Iteration with data | Late reaction measured (25.5 cm), encoder error measured (23 %), line range limited by physics and shown with the camera's own numbers |
 | Honesty | The line range is shorter than we wanted; we explain why and adapt the plan instead of hiding it |

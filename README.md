@@ -533,7 +533,7 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 | Corners, laps, stop in the starting section | ⏳ Next (plan in §9.7 and §9.10) |
 | Parking | 🧠 Being designed (§9.8) |
 
-**Why we left the "correct third" rule** (our first plan, 7 Oct): a rule that only looks at the picture has no information once the pillar leaves it. A pillar passed at the safe distance disappears from the picture **15 cm before** the car reaches it (measured), and in the first driving test (`obstacle_first_test`, 26 Oct) the car reacted to pillars too late. With a map, the pillar is still known while it is out of the picture, and the car can plan *how much* to move instead of only *which way*. The full story is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026).
+**Why we left the "correct third" rule** (our first plan, 7 Oct): a rule that only looks at the picture has no information once the pillar leaves it. A pillar passed at the safe distance disappears from the picture **15 cm before** the car reaches it (measured), and in the first driving test (`obstacle_first_test`, 26 Oct) the car reacted to pillars too late. With a map, the pillar is still known while it is out of the picture, and the car can plan *how much* to move instead of only *which way*. The full story is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026). Every formula of this section is explained from the beginning, with worked examples, in [journal §13.3 "The math, step by step"](docs/ENGINEERING_JOURNAL.md#133-the-math-step-by-step).
 
 ### 9.2 Vision pipeline (camera board, `obstacle_camera` v3)
 
