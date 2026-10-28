@@ -7,7 +7,7 @@ The car uses two programmable boards:
 | Board | Role |
 |---|---|
 | **Arduino Nano** (classic ATmega328P since 8 Oct; Nano ESP32 before) | Main controller: TOF distance sensors, BMI160 gyroscope, drive motor (TB6612FNG) and steering servo |
-| **ESP32-S3 CAM** (emakefun, OV2640) | Vision: detects the red and green pillars and decides on which side to pass |
+| **ESP32-S3 CAM** (emakefun, OV2640) | Vision: detects the red and green pillars (position in cm), the magenta parking walls and the orange and blue floor lines |
 
 ## hardware-tests
 
@@ -38,6 +38,9 @@ One sketch per component, used to validate each part of the car on its own befor
 |---|---|---|
 | [`pillar_viewer/pillar_viewer.ino`](obstacle-challenge/pillar_viewer) | ESP32-S3 CAM | Pillar detection (HSV colour classification + blob search, closest pillar, correct-side check). Sends every picture and its colour mask over USB |
 | [`pillar_viewer/viewer.html`](obstacle-challenge/pillar_viewer/viewer.html) | PC (Chrome / Edge) | **Pillar Vision Lab**: shows what the camera sees, runs the same algorithm in JavaScript and checks it against the board, and lets us tune every parameter live. Open it [online](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html) or as a local file, press *Connect* and choose the camera port (close the Arduino Serial Monitor first) |
+| [`obstacle_camera`](obstacle-challenge/obstacle_camera) | ESP32-S3 CAM | ✅ **Current vision code (v3, 27 Oct).** 320 × 240, camera locked after 5 s, HSV classification, red / magenta majority vote, pillars on 4 × 4 blocks with a solid-shape and plausibility check and a time filter; pillar distance ahead and to the side in **cm** (pinhole model, README §9.3); **orange and blue floor lines** with the long-and-thin test and the centre-row fit (README §9.6). Sends `$color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,orangeRow,blueCenterRow,orangeCenterRow` to the Nano at 115200 baud; with `STREAM_TO_PC = true` it also streams pictures to Pillar Vision Lab, with `false` it prints a status every 0.5 s (why each line was accepted or rejected) |
+| [`straight_pillars`](obstacle-challenge/straight_pillars) | Nano (classic) | ✅ **Validated 27 Oct — one straight with pillars, every case passes.** Odometry map of the straight (encoder 15.1 ticks / cm + gyro), every pillar put on the map, lateral goal 17 cm from the pillar on its correct side → heading `atan2(error, distance)` (max 45°) → gyro PD → servo. Aims at the next pillar as soon as the camera passes the current one; clears it 5 cm after its centre. Waits for START (D10), stops after `RUN_CM` or if the camera stops talking (README §9.4–9.5) |
+| [`line_test`](obstacle-challenge/line_test) | Nano (classic) | 🔬 **Measurement, 27 Oct.** Motor off: prints 5 times per second whether the camera sees the orange and blue lines, their lowest row and their row straight ahead, how many messages had them, and the pillar. Used to measure the row → cm table of README §9.6 |
 
 ## tools
 

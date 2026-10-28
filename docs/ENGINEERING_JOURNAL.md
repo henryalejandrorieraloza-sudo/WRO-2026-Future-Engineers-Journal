@@ -1,7 +1,7 @@
 # Engineering Journal — Software and Electronics
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
-> **Period covered:** 15 September – 25 October 2026
+> **Period covered:** 15 September – 27 October 2026
 > **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
@@ -24,9 +24,10 @@ This journal records, in chronological order, everything I worked on: what I bui
 10. [Phase 8 — Smooth wall following with the gyroscope (20 Oct)](#10-phase-8--smooth-wall-following-with-the-gyroscope-tuesday-20-october-2026)
 11. [Phase 9 — From one corner to the full loop (21–24 Oct)](#11-phase-9--from-one-corner-to-the-full-loop-2124-october-2026)
 12. [Phase 10 — The side sensors could not see the black wall (24–25 Oct)](#12-phase-10--the-side-sensors-could-not-see-the-black-wall-2425-october-2026)
-13. [Rules research](#13-rules-research)
-14. [Summary of problems and solutions](#14-summary-of-problems-and-solutions)
-15. [Next steps](#15-next-steps)
+13. [Phase 11 — Obstacle Challenge: from pixels to centimetres (26–27 Oct)](#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026)
+14. [Rules research](#14-rules-research)
+15. [Summary of problems and solutions](#15-summary-of-problems-and-solutions)
+16. [Next steps](#16-next-steps)
 
 ---
 
@@ -1050,7 +1051,96 @@ After reviewing the rules and the sensor data, I compared several ways to drive 
 
 ---
 
-## 13. Rules research
+## 13. Phase 11 — Obstacle Challenge: from pixels to centimetres (26–27 October 2026)
+
+After the Open Challenge decision tree I moved to the Obstacle Challenge. In two days the camera went from "there is a red pillar on the left" to "the pillar is 31 cm ahead and 9 cm to the right", the car passed every straight-with-pillars case on the track, and the camera learned to measure the floor lines in centimetres. The method is explained with all formulas in [README §9](../README.md#9-obstacle-challenge-strategy).
+
+### 13.1 What I built, in order
+
+1. **320 × 240 pictures (26 Oct).** The algorithm only looks at a band of the picture, so I doubled the resolution and process only that band. The pictures had more noise than at 160 × 120.
+2. **Magenta parking walls.** The camera saw the magenta walls dull (H ~330–354°), right next to red. A shape filter did not separate them; a majority vote did (Problem 48).
+3. **First driving test** (`obstacle_first_test`): wheels to full lock toward the pillar's side until the pillar is on its correct side, straight until it leaves the picture, a few encoder cm more, back to the start heading, stop at the blue line.
+4. **Camera v2 (27 Oct):** red flickered much more than green, so I froze the camera, detected pillars on 4 × 4 blocks and added a time filter (Problem 50).
+5. **Distance in cm.** `straight_measure` (motor off) printed the camera's estimate while I placed pillars with a tape measure (Problem 51). The camera reaches ~50 cm, sees a centred pillar down to 3 cm, and loses a pillar passed at the safe distance through its side **15 cm** ahead.
+6. **`straight_pillars`**: the odometry map + steering law, simulated first (camera delay, noise, 20–40 cm/s), then on the track. The car reacted late (Problem 53), then the encoder constant was wrong (Problem 54); after both fixes **every case passed**.
+7. **Floor lines (night of 27 Oct):** camera v3 detects the orange and blue lines with a "long and thin" test and sends 4 more fields; `line_test` on the Nano printed what the camera saw while I measured the row → distance table (Problems 55–58).
+
+### 13.2 Measurements
+
+**Pillar distance** (`straight_measure`, `FOCAL_PX = 112`):
+
+| Pillar position | Real | Camera said |
+|---|---|---|
+| Centred | 30 cm | 35 cm ahead |
+| Centred | 50 cm | 59 cm ahead, −3 cm side |
+| Edge 10 cm from the car (centre 16.75 cm to the side) | 50 cm | 51 cm ahead, ±18 cm side (same both sides) |
+| Centred | 80 cm | not detected (search band ends at ~50 cm) |
+
+→ `FOCAL_PX = 100`, the value that fits all of them best.
+
+**Encoder:** pushing the car by hand, 980 ticks = 66 / 65.5 / 63.5 cm (average 65 cm) → **15.1 ticks per cm**.
+
+**Floor line, row straight ahead → distance** (`line_test`):
+
+| Distance | 2 cm* | 5 cm | 8 cm* | 10 cm | 15 cm | 16 cm | 18 cm | 22 cm |
+|---|---|---|---|---|---|---|---|---|
+| Row | 192 | 176 | 158 | 153 | 145 | 145 | 143 | 141 |
+
+\* car parallel to the wall, as it really arrives at a corner; the others with the line in front of the car. Fit: **distance = 276.2 / (row − 129.2) − 1.8**, error ≤ 1 cm at every point. With an empty floor the camera reports no line (no false lines).
+
+**What the camera said about the line at 20 and 25 cm** (camera Serial Monitor): at 20 cm `ORANGE yes | center 141 | len 60–77 | thick 2 | px 103–133`; at 25 cm `ORANGE no (few pixels) | px 22–39`.
+
+### 13.3 Problems and solutions
+
+#### Problem 47 — The picture came out scrambled by rows again ✅
+Same symptom as Problem 22. Re-seating the camera flex cable fixed it. The cable must be fixed in place before the competition.
+
+#### Problem 48 — Red pillars and magenta parking walls looked alike ✅
+In our camera the magenta walls are dull and their hue touches red. A shape filter (pillars taller than wide) did not work well. **Solution:** red and magenta pixels that touch are grouped, and if ≥ 70 % of the group is magenta, the whole group is a parking wall.
+
+#### Problem 49 — The black wall was taken for the blue line ✅
+**Solution:** a minimum number of pixels for each line colour, and later the long-and-thin test (Problem 56).
+
+#### Problem 50 — Red flickered much more than green ✅
+The camera kept changing its white balance and exposure as the scene changed. **Solution (camera v2):** white balance, exposure and gain frozen 5 s after power on; pillars found on 4 × 4 blocks (a block counts if ≥ 12 of its 16 pixels have the colour); a pillar appears after 2–3 of the last 4 pictures. Colours had to be re-tuned after the lock.
+
+#### Problem 51 — Pillar distances were too long ✅
+With `FOCAL_PX = 112` a pillar at 30 cm read 35 cm and at 50 cm read 59 cm. **Solution:** `FOCAL_PX = 100`. The formula also counts the two faces of the square pillar seen from an angle, and the camera's 12 px offset from the centre (README §9.3).
+
+#### Problem 52 — "does not name a type" in the Arduino IDE ✅
+A function with my own `struct` as a parameter did not compile: the IDE writes the function prototypes before the struct. **Solution:** the struct at the very top, and the functions receive plain numbers.
+
+#### Problem 53 — The car reacted too late and hit the second pillar ✅
+I measured that after passing a pillar the car drove **~25.5 cm** before straightening or reacting, so with a second pillar 100 cm later there was no room. **Solution:** as soon as the camera passes the pillar centre, the car already aims at the next pillar (without moving toward the pillar beside it), and the pillar is cleared 5 cm after its centre instead of ~16.5 cm.
+
+#### Problem 54 — The encoder constant was wrong ✅
+The 19.6 ticks per cm I had used made the map think every distance was **23 % shorter**. **Solution:** measured 15.1 ticks per cm (§13.2). After this, every straight-with-pillars case passed: *"funciona perfecto"*.
+
+#### Problem 55 — The green pillar was taken for the blue line ✅
+With the camera locked, the blue line looks dark grey-teal (H 85–200°), the same hue range as the green pillar. **Solution:** a **maximum** saturation for blue (`BLUE_MAX_SAT = 120`): the line has S 48–103, the pillar S ≥ 152. The web viewer still paints the pillar blue because it checks blue before green and has no maximum; the camera board checks green first.
+
+#### Problem 56 — The line disappeared after 16 cm ✅ cause
+At first the camera only searched lines from row 140 down, and the line was at row 143 at 16 cm. Searching higher (row 124) did **not** help: at 20 cm the line is only 2 rows tall and at 25 cm it has only 22–39 pixels. **Cause:** the camera is very low and sees the floor almost edge-on (perspective, horizon at row ~129). **Solution:** accept ~20–22 cm (lower minimums: orange 50 px, blue 60 px, length 40 px; search from row 136, where the line can still be seen and the wall edge cannot), put the line on the map and confirm it with 2 messages. Raising or tilting the camera would fix it at the source, but would make us recalibrate the pillars, which already work.
+
+#### Problem 57 — The row straight ahead was sometimes missing ✅ (to confirm)
+The camera saw the line, but the 20 centre columns were empty: there is a bright glare in the middle of the picture where the orange loses its colour. **Solution:** fit a straight line through the bottom edge of the line in the 40 columns on each side of the centre and read it at the centre. Tested on our screenshots; to be confirmed on the car at 16–22 cm.
+
+#### Problem 58 — The blue line was not detected at 15 cm (but it was at 20 cm) ❓
+Still open: the reason printed by the camera (`few pixels`, `too short` or `too thick`) will tell which setting to change.
+
+### 13.4 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Sensor use and calibration | Focal length, centre offset, encoder and row → cm, each measured with a tape measure and compared with the formula |
+| Software / algorithm | The pinhole model, the odometry map and the steering law are written as formulas with examples (README §9.3–9.5) |
+| Engineering decisions | "Correct third" replaced by a map, with the reason (pillar out of sight 15 cm before passing it); line measured in cm instead of "leaves the picture" |
+| Iteration with data | Late reaction measured (25.5 cm), encoder error measured (23 %), line range limited by physics and shown with the camera's own numbers |
+| Honesty | The line range is shorter than we wanted; we explain why and adapt the plan instead of hiding it |
+
+---
+
+## 14. Rules research
 
 I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our approach is allowed:
 
@@ -1062,7 +1152,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 
 ---
 
-## 14. Summary of problems and solutions
+## 15. Summary of problems and solutions
 
 | # | Problem | Solution | Status |
 |---|---|---|---|
@@ -1112,10 +1202,22 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 44 | Close / far decided wrong right after the turn | Decide 1 s after the turn (`SW_MIN_MS = 1000`) | ✅ |
 | 45 | Hole (end of the inner wall) not detected | Invalid readings must count as "no wall" (Problem 46) | 🔄 |
 | 46 | Side TOF could not see the black wall at 30° (~2 m readings, "signal fail") | Sensors straight at ~5 cm, ROI 16 × 8, only "range valid", decide by valid / invalid | ✅ cause · 🔄 remount |
+| 47 | Picture scrambled by rows again | Re-seat the camera flex cable; fix it in place | ✅ |
+| 48 | Red pillars and magenta parking walls looked alike | Red + magenta majority vote (≥ 70 % magenta → parking wall) | ✅ |
+| 49 | Black wall taken for the blue line | Minimum pixels per line colour + long-and-thin test | ✅ |
+| 50 | Red flickered much more than green | Camera locked after 5 s, 4 × 4 blocks, time filter | ✅ |
+| 51 | Pillar distances too long | `FOCAL_PX` 112 → 100, two faces seen from an angle, 12 px centre offset | ✅ |
+| 52 | "does not name a type" with a struct parameter | Struct at the top, plain numbers as parameters | ✅ |
+| 53 | Car reacted ~25.5 cm after a pillar and hit the next one | Aim at the next pillar as soon as the camera passes the centre; clear 5 cm after it | ✅ |
+| 54 | Encoder constant wrong (19.6 → map 23 % short) | Measured 15.1 ticks per cm | ✅ |
+| 55 | Green pillar taken for the blue line | `BLUE_MAX_SAT = 120` (line S 48–103, pillar S ≥ 152) | ✅ |
+| 56 | Line not seen beyond ~20–22 cm | Physical limit of the low camera; lower minimums, search from row 136, line on the map | ✅ cause |
+| 57 | Row straight ahead sometimes missing (glare in the centre) | Least-squares fit of the line edge over ±40 columns | 🔄 confirm |
+| 58 | Blue line not detected at 15 cm | Read the camera's reject reason | ❓ |
 
 ---
 
-## 15. Next steps
+## 16. Next steps
 
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
@@ -1145,8 +1247,13 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] Mount the camera on the robot and test the detection by moving the robot by hand ✅
 - [ ] Fix the camera flex cable in place, and check the search band (`IGNORE_TOP_ROWS`, `NEAR_ROWS`) and the side zone on the track with the camera in its final position.
 - [ ] Get the steering servo and remount the side TOF sensors (needed before the car can drive).
-- [ ] Detect the orange and blue floor lines, using the processing time freed by the smaller search band.
-- [ ] Camera Blocks 2 and 3: UART between the two boards and the steering decision on the Nano ESP32 (print the servo angle until the servo arrives).
+- [x] Detect the orange and blue floor lines and measure them in cm (Phase 11) ✅
+- [x] Measure encoder ticks per cm: 15.1 (Phase 11) ✅
+- [x] One straight with pillars on the track: every case passes (`straight_pillars`, Phase 11) ✅
+- [ ] Confirm the centre-row fit at 16–22 cm and find why the blue line is missed at 15 cm (Problems 57–58).
+- [ ] Obstacle corners: hand rehearsal on the Nano → measure the turning radius while driving → one corner → one lap → three laps and stop (README §9.10).
+- [ ] Send the magenta parking walls to the Nano; test a gentle reverse before designing the parking manoeuvre.
+- [x] Camera Blocks 2 and 3: UART between the two boards (camera → Nano, 115200 baud) and the steering decision on the Nano ✅
 - [ ] Detect the parking lot (magenta pieces).
 - [ ] Calibrate the colours again on the competition field, under its lighting, with Pillar Vision Lab.
 - [ ] Add Serial Monitor screenshots and the manual-simulation video as evidence.
