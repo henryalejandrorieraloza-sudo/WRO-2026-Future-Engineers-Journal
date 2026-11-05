@@ -4,7 +4,7 @@
 
 # WRO 2026 Future Engineers — Team X67
 
-## 🚗 *Enner Valencia*
+## *Enner Valencia*
 
 **An autonomous car built from a custom PCB, a 3D-printed rack-and-pinion chassis, laser distance sensors, a gyroscope and our own on-board computer vision**
 
@@ -68,7 +68,8 @@ Here you will find the full engineering process (what we tried, what failed, the
 │   └── images/                 ← plots used in the journal
 ├── schemes/                 ← schematic, wiring diagram, PCB, power budget, BOM, datasheets
 ├── src/                     ← all source code (see src/README.md)
-│   ├── hardware-tests/         ← one sketch per component
+│   ├── hardware-tests/         ← one sketch per component (sensors, motor, steering, camera)
+│   ├── open-challenge/         ← wall-following, corner and turn algorithms, in order of development
 │   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test, Pillar Vision Lab
 │   └── tools/scenario-roulette/← generates official WRO 2026 track scenarios to test on
 ├── models/                  ← 25 STL files of every printed part, renders, CAD v1–v3, tyre moulding
@@ -78,16 +79,16 @@ Here you will find the full engineering process (what we tried, what failed, the
 └── other/                   ← component pictures, PCB manufacturing, tyre casting, build process, retired parts
 ```
 
-| Folder | Detailed documentation |
+| Topic | Detailed documentation |
 |---|---|
-| ⚡ Electrical system, PCB, power budget, BOM | [schemes/README.md](schemes/README.md) |
-| 💾 Source code, every sketch explained | [src/README.md](src/README.md) |
-| 📓 Engineering process | [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) |
-| 🚗 Vehicle photos | [v-photos/README.md](v-photos/README.md) |
-| 👥 Team photos | [t-photos/README.md](t-photos/README.md) |
-| 🎥 Videos | [video/video.md](video/video.md) |
-| ⚙️ 3D models (25 STL), CAD iterations, tyre casting | [models/README.md](models/README.md) |
-| 🧰 Build process, retired parts | [other/README.md](other/README.md) |
+| Electrical system, PCB, power budget, BOM | [schemes/README.md](schemes/README.md) |
+| Source code, every sketch explained | [src/README.md](src/README.md) |
+| Engineering process | [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) |
+| Vehicle photos | [v-photos/README.md](v-photos/README.md) |
+| Team photos | [t-photos/README.md](t-photos/README.md) |
+| Videos | [video/video.md](video/video.md) |
+| 3D models (25 STL), CAD iterations, tyre casting | [models/README.md](models/README.md) |
+| Build process, retired parts | [other/README.md](other/README.md) |
 
 ---
 
@@ -125,7 +126,7 @@ This is our **first year** in the Future Engineers category. We are students of 
 | Challenge | Task |
 |---|---|
 | **Open Challenge** | Drive **3 laps** (3 minutes maximum) on a 3 × 3 m field with 10 cm black walls. The inner walls are placed randomly every round, so each corridor is either 1000 mm or 600 mm wide (± 100 mm at the International Final); the starting section, starting zone and driving direction (clockwise or counter-clockwise) are also random. After 3 laps the car must stop by itself inside the starting section. The car **may not touch the outer wall** |
-| **Obstacle Challenge** | Drive **3 laps** (3 minutes maximum, corridors always 1000 mm) while obeying traffic signs: 🟥 **red** pillar → pass on its **right**; 🟩 **green** pillar → pass on its **left**. Then find the magenta parking lot (always in the starting section, length 1.5 × car length) and **parallel park** without touching its limits |
+| **Obstacle Challenge** | Drive **3 laps** (3 minutes maximum, corridors always 1000 mm) while obeying traffic signs: **red** pillar → pass on its **right**; **green** pillar → pass on its **left**. Then find the magenta parking lot (always in the starting section, length 1.5 × car length) and **parallel park** without touching its limits |
 | **Documentation** | Public GitHub repository and engineering journal, scored with five criteria (mobility, power and sensors, software, systems thinking, reproducibility) |
 
 Constraints that shaped our design (from the [official rules](https://wro-association.org/)): maximum size 30 × 20 × 30 cm, maximum mass 1.5 kg, one drive axle with mechanically connected wheels, a steering system, one start button and one power switch, no wireless communication during the run.
@@ -299,9 +300,9 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 
   | Black wall at 30 cm | ROI 1×6 | ROI 8×8 | ROI 16×16 |
   |---|---|---|---|
-  | Sensor at 30° | ~198 cm ✗ | ~112 cm ✗ | invalid |
-  | Sensor at 30°, white sheet on the wall (control) | invalid (33 ms) / 35.6 ✓ (50 ms) | 34.4 ✓ | 35.4 ✓ |
-  | **Sensor straight** | invalid | 33.4 ✓ (50 ms) | **32.0 ✓** |
+  | Sensor at 30° | ~198 cm (wrong) | ~112 cm (wrong) | invalid |
+  | Sensor at 30°, white sheet on the wall (control) | invalid (33 ms) / 35.6 (correct) (50 ms) | 34.4 (correct) | 35.4 (correct) |
+  | **Sensor straight** | invalid | 33.4 (correct) (50 ms) | **32.0 (correct)** |
 
 - **Only "range valid" readings are used.** "Signal fail" readings gave believable but wrong numbers (e.g. 63 cm with the wall at 30 cm).
 - **Gyroscope:** 1000 samples (≈ 3 s) at rest right after power-on, while the car waits for the start button; their mean is the offset. Scale checked with 4 hand turns (1440°) against a wall → `YAW_SCALE` (§10.4).
@@ -343,8 +344,9 @@ flowchart LR
 | TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging, ROI 16 × 8, only "range valid" readings (the driving code uses Long mode; the sensor test uses Short mode — with a useful range of only ~45 cm on the black wall, Short mode, which the datasheet gives as more robust to ambient light, will be compared in the next test) | [`tof_gyro_sensors_test`](src/hardware-tests/tof_gyro_sensors_test) |
 | Gyro driver | Nano | BMI160 read through I²C registers (no library), offset calibration, yaw integration (`yaw += rate × dt`) | [`tof_gyro_sensors_test`](src/hardware-tests/tof_gyro_sensors_test) |
 | Motor control | Nano | TB6612FNG forward / reverse / coast / short brake with PWM | [`rear_motor_loop_test`](src/hardware-tests/rear_motor_loop_test) |
-| Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz); on the Nano ESP32 the pulse was generated by hand. Calibrated centre and limits | [`servo_simple`](src/hardware-tests/servo_simple), [`servo_calibration`](src/hardware-tests/servo_calibration), [`servo_only_test`](src/hardware-tests/servo_only_test) |
-| Wall keeping | Nano | PID that keeps the start distances to both walls, or to the nearest wall | [`wall_keep_both_pid`](src/hardware-tests/wall_keep_both_pid), [`wall_follow_nearest_pid`](src/hardware-tests/wall_follow_nearest_pid) |
+| Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz). Calibrated centre and limits | [`servo_simple`](src/hardware-tests/servo_simple), [`servo_calibration`](src/hardware-tests/servo_calibration), [`servo_only_test`](src/hardware-tests/servo_only_test) |
+| Wall keeping | Nano | PID that keeps the start distances to both walls, or to the nearest wall | [`wall_keep_both_pid`](src/open-challenge/wall_keep_both_pid), [`wall_follow_nearest_pid`](src/open-challenge/wall_follow_nearest_pid) |
+| Corner turn | Nano | Gap detection on the side TOF sensors, wall switching, 90° gyro turn with active brake (front-triggered and timed versions) | [`corner_turn_front_trigger`](src/open-challenge/corner_turn_front_trigger), [`corner_turn_timed`](src/open-challenge/corner_turn_timed), [`turn_left_90_pid_brake`](src/open-challenge/turn_left_90_pid_brake) |
 | First drive test | Nano | Drive straight and brake when the left wall ends | [`drive_until_left_open`](src/hardware-tests/drive_until_left_open) |
 | Pillar detection | Camera | HSV → blobs → closest pillar → side to pass; streams picture and mask over USB | [`pillar_viewer.ino`](src/obstacle-challenge/pillar_viewer) |
 | Obstacle vision v3 | Camera | Locked camera, 4 × 4 blocks, time filter, pillar position in cm (§9.3), red / magenta vote, orange and blue lines with the long-and-thin test and the centre-row fit (§9.6); 14-field message to the Nano | [`obstacle_camera`](src/obstacle-challenge/obstacle_camera) |
@@ -527,11 +529,11 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 
 | Stage | Status |
 |---|---|
-| Vision: pillars, magenta parking walls, orange and blue lines | ✅ `obstacle_camera` v3 |
-| One straight with pillars (map + steering law) | ✅ Validated 27 Oct: every case passes ([`straight_pillars`](src/obstacle-challenge/straight_pillars)) |
-| Floor lines measured in cm | ✅ Row → cm formula measured 27 Oct (error ≤ 1 cm) |
-| Corners, laps, stop in the starting section | ⏳ Next (plan in §9.7 and §9.10) |
-| Parking | 🧠 Being designed (§9.8) |
+| Vision: pillars, magenta parking walls, orange and blue lines | Done — `obstacle_camera` v3 |
+| One straight with pillars (map + steering law) | Validated 27 Oct: every case passes ([`straight_pillars`](src/obstacle-challenge/straight_pillars)) |
+| Floor lines measured in cm | Done — Row → cm formula measured 27 Oct (error ≤ 1 cm) |
+| Corners, laps, stop in the starting section | Planned — next (plan in §9.7 and §9.10) |
+| Parking | In design (§9.8) |
 
 **Why we left the "correct third" rule** (our first plan, 7 Oct): a rule that only looks at the picture has no information once the pillar leaves it. A pillar passed at the safe distance disappears from the picture **15 cm before** the car reaches it (measured), and in the first driving test (`obstacle_first_test`, 26 Oct) the car reacted to pillars too late. With a map, the pillar is still known while it is out of the picture, and the car can plan *how much* to move instead of only *which way*. The full story is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026). Every formula of this section is explained from the beginning, with worked examples, in [journal §13.3 "The math, step by step"](docs/ENGINEERING_JOURNAL.md#133-the-math-step-by-step).
 
@@ -543,11 +545,11 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 
 | Colour | Hue | Saturation | Value | Measured / why |
 |---|---|---|---|---|
-| 🟥 Red pillar | 345–26° (wraps) | ≥ 115 | ≥ 95 | Pillar H 15–23° |
-| 🟩 Green pillar | 82–150° | ≥ 150 | ≥ 90 | Pillar H 86–95°, S ≥ 152; the yellow-green floor has S 88–156 |
-| 🟪 Magenta wall | 328–353° | ≥ 84 | ≥ 84 | Very close to red (see step 4) |
-| 🟧 Orange line | 29–52° | ≥ 115 | ≥ 110 | Line H 32–44°, S 131–173; red pillar H 4–22°, floor starts at 60° |
-| 🟦 Blue line | **110**–200° | **30–120** | ≥ 65 | The locked camera sees the blue line as dark grey-teal (H ~160°, S 46–113). The floor next to the car reaches H 85° (shadow + lens), so blue starts at 110° (it started at 85° and the floor became a false blue line, 28 Oct). The **maximum** saturation keeps the green pillar (S ≥ 152) out |
+| Red pillar | 345–26° (wraps) | ≥ 115 | ≥ 95 | Pillar H 15–23° |
+| Green pillar | 82–150° | ≥ 150 | ≥ 90 | Pillar H 86–95°, S ≥ 152; the yellow-green floor has S 88–156 |
+| Magenta wall | 328–353° | ≥ 84 | ≥ 84 | Very close to red (see step 4) |
+| Orange line | 29–52° | ≥ 115 | ≥ 110 | Line H 32–44°, S 131–173; red pillar H 4–22°, floor starts at 60° |
+| Blue line | **110**–200° | **30–120** | ≥ 65 | The locked camera sees the blue line as dark grey-teal (H ~160°, S 46–113). The floor next to the car reaches H 85° (shadow + lens), so blue starts at 110° (it started at 85° and the floor became a false blue line, 28 Oct). The **maximum** saturation keeps the green pillar (S ≥ 152) out |
 
 4. **Red or magenta?** Red and magenta pixels that touch are grouped; if ≥ 70 % of the group is magenta, the whole group is a parking wall and never a pillar (a shape filter failed for this).
 5. **Pillars:** only rows 126–207 are searched (above: things outside the field; below: too close to measure). Pixels are grouped in **4 × 4 blocks** (a block is red/green if ≥ 12 of its 16 pixels are), blobs are found with a BFS, touching pillars are split (the front one is kept), and a blob must be a **solid** chunk (≥ 75 % filled), not touch the picture edge and be at a possible distance (5–130 cm ahead, ≤ 70 cm to the side).
@@ -696,8 +698,8 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 
 | # | Step | Done when |
 |---|---|---|
-| 1 | Camera detects both lines (long-and-thin filter) | ✅ 27 Oct |
-| 2 | Row → cm table, and lines without false detections | ✅ 27–28 Oct (floor-above check, blue from 110°; orange from 16 cm, blue from 9 cm) |
+| 1 | Camera detects both lines (long-and-thin filter) | Done — 27 Oct |
+| 2 | Row → cm table, and lines without false detections | Done — 27–28 Oct (floor-above check, blue from 110°; orange from 16 cm, blue from 9 cm) |
 | 3 | Corner rehearsal by hand (Nano, motor off): map + line + direction + "turn now" | Correct direction and turn point; the second line is never counted |
 | 4 | Measure the turn while driving (forward and side displacement → radius) | Radius known → turn point computed |
 | 5 | One corner with the motor: no pillars, then a pillar before and right after the corner | 4 of 5 attempts in each case |
@@ -815,7 +817,7 @@ Every number in the Open Challenge code comes from a measurement, from the field
 
 Every component is tested alone before it is joined to the rest:
 
-1. **Hardware tests** ([src/hardware-tests](src/hardware-tests)): one sketch per component, printing its readings to the Serial Monitor.
+1. **Hardware tests** ([src/hardware-tests](src/hardware-tests)): one sketch per component, printing its readings to the Serial Monitor. Driving algorithms are then developed in [src/open-challenge](src/open-challenge) and [src/obstacle-challenge](src/obstacle-challenge).
 2. **Hand tests:** the car or its sensors are moved by hand to check the decision logic before the car drives itself. This let us develop the algorithm while the chassis was still being built.
 3. **Measured experiments** to choose parameters: TOF ROI and mounting angle with a tape measure and a control surface (journal §8.2 and Phase 10, `tof_roi_budget_test`), HSV thresholds in Pillar Vision Lab.
 4. **Driving tests on realistic layouts** generated by Scenario Roulette with the official procedure.
@@ -878,26 +880,26 @@ Upload `pillar_viewer.ino` to the camera board, open `viewer.html` in **Chrome o
 
 | Part | Status |
 |---|---|
-| Custom PCB and wiring | ✅ Manufactured and working |
-| TOF sensors (×4), unique addresses, ROI, filtering | ✅ Working |
-| Gyroscope heading | ✅ Working (own driver) |
-| Drive motor through TB6612FNG | ✅ Tested |
-| Pillar detection | ✅ Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
-| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | ✅ Built (25 STL files published) |
-| Steering calibration on v3 | 🔄 Provisional centre 120°, limits 180° / 50° |
-| Gyro wall following on v3 | ✅ Validated (`wall_follow_nearest_gyro`) |
-| 90° gyro turn with active brake | ✅ Validated (`turn_left_90_pid_brake`) |
-| One complete corner (decide, turn, check, follow inner wall) | ✅ Validated (`exito_glorioso`, `exito_rotundo`, one-corner version) |
-| Side TOF data on the black wall | 🔄 Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
-| Open Challenge 12-turn loop with wall re-alignment | 🔄 Runs; next version uses valid / invalid decisions |
-| Encoder: delays in distance instead of time (§8.7) | ⏳ Next: measure ticks per mm |
-| Videos: one per challenge (≥ 30 s autonomous) | 🔄 Pending (rule 7) |
-| Encoder | ✅ Measured: 15.1 ticks per cm (used in the Obstacle map) |
-| Camera → Nano UART link | ✅ Working (14-field message) |
-| Obstacle: one straight with pillars (map + steering law) | ✅ Validated 27 Oct (`straight_pillars`) |
-| Obstacle: orange and blue lines in cm | ✅ Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
-| Obstacle: corners, 3 laps, stop | ⏳ Next: measure the turn while driving, then the corner rehearsal (README §9.7, §9.10) |
-| Parking | 🧠 Being designed |
+| Custom PCB and wiring | Done — Manufactured and working |
+| TOF sensors (×4), unique addresses, ROI, filtering | Done — Working |
+| Gyroscope heading | Done — Working (own driver) |
+| Drive motor through TB6612FNG | Done — Tested |
+| Pillar detection | Done — Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
+| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (25 STL files published) |
+| Steering calibration on v3 | In progress — Provisional centre 120°, limits 180° / 50° |
+| Gyro wall following on v3 | Validated (`wall_follow_nearest_gyro`) |
+| 90° gyro turn with active brake | Validated (`turn_left_90_pid_brake`) |
+| One complete corner (decide, turn, check, follow inner wall) | Validated (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version) |
+| Side TOF data on the black wall | In progress — Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
+| Open Challenge 12-turn loop with wall re-alignment | In progress — Runs; next version uses valid / invalid decisions |
+| Encoder: delays in distance instead of time (§8.7) | Planned — Next: measure ticks per mm |
+| Videos: one per challenge (≥ 30 s autonomous) | In progress — Pending (rule 7) |
+| Encoder | Done — Measured: 15.1 ticks per cm (used in the Obstacle map) |
+| Camera → Nano UART link | Done — Working (14-field message) |
+| Obstacle: one straight with pillars (map + steering law) | Validated 27 Oct (`straight_pillars`) |
+| Obstacle: orange and blue lines in cm | Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
+| Obstacle: corners, 3 laps, stop | Planned — Next: measure the turn while driving, then the corner rehearsal (README §9.7, §9.10) |
+| Parking | In design — Being designed |
 
 ---
 
@@ -911,17 +913,17 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 
 | Requirement (rule 7) | Deadline | Status |
 |---|---|---|
-| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | ✅ 4 Oct (first code and journal) |
-| Second commit | ≤ 8 Nov 2026 | ✅ many commits in October |
-| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | ⏳ |
-| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | ⏳ final Open and Obstacle programs, final README and journal |
-| README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | ✅ (§7, §12) |
-| Code for **every** programmed component, with comments | — | 🔄 tests and validated stages in `src/`; final competition programs to be added |
-| Photos: front, back, left, right, top, bottom + team photo | — | ✅ `v-photos/`, `t-photos/` |
-| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | 🔄 one general video; Open and Obstacle videos pending |
-| 3D-printing files, wiring diagram, schematic | — | ✅ `models/`, `schemes/` |
-| Repository public until at least December 2027 | — | ✅ public; do not delete or make private |
-| Hard copy of the documentation at the International Final | 8 Dec 2026 | ⏳ print README + journal |
+| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Done — 4 Oct (first code and journal) |
+| Second commit | ≤ 8 Nov 2026 | Done — many commits in October |
+| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | Pending |
+| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Pending — final Open and Obstacle programs, final README and journal |
+| README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
+| Code for **every** programmed component, with comments | — | In progress — tests and validated stages in `src/`; final competition programs to be added |
+| Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
+| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | In progress — one general video; Open and Obstacle videos pending |
+| 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
+| Repository public until at least December 2027 | — | Done — public; do not delete or make private |
+| Hard copy of the documentation at the International Final | 8 Dec 2026 | Planned — print README + journal |
 
 ---
 

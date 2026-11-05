@@ -14,7 +14,7 @@
 const int  CENTER_ANGLE         = 120;
 const int  LEFT_LIMIT           = 180;
 const int  RIGHT_LIMIT          = 50;
-const bool STEER_LEFT_IS_BIGGER = false;  // same as the validated code (Lance Chung)
+const bool STEER_LEFT_IS_BIGGER = false;  // same as the validated wall-following code (wall_follow_nearest_gyro)
 const int  SERVO_SPEED_DPS      = 300;    // max servo speed (degrees per second)
 const int  SERVO_SETTLE_MS      = 400;    // time for the wheels to reach full left
 

@@ -776,7 +776,7 @@ The four TOF400C sensors are now powered from the **3.3 V pin of the Nano** inst
 
 ## 10. Phase 8 — Smooth wall following with the gyroscope (Tuesday 20 October 2026)
 
-> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](../src/hardware-tests/wall_follow_nearest_gyro).
+> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](../src/open-challenge/wall_follow_nearest_gyro).
 
 The goal of the day was simple: at the start, pick the nearest side wall and keep exactly that distance, without zigzag and without slowing the car down. It took five versions to get there. Each version fixed one problem and showed the next one.
 
@@ -838,8 +838,8 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
 
 | Date | Version | What it added | Result |
 |---|---|---|---|
-| 21 Oct | [`exito_glorioso`](../src/hardware-tests/exito_glorioso) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
-| 21 Oct (night) | [`exito_rotundo`](../src/hardware-tests/exito_rotundo) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
+| 21 Oct | [`corner_turn_front_trigger`](../src/open-challenge/corner_turn_front_trigger) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
+| 21 Oct (night) | [`corner_turn_timed`](../src/open-challenge/corner_turn_timed) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
 | 22–23 Oct | One-corner version (10 iterations) | After the turn, a separate function `sideWallRun()` with three phases: **0** find the inner wall, **1** deviate to a target distance, **2** precise P+I+D on that wall; brake when it ends. FRONT/BACK check after the first turn | ✅ "Works excellent" |
 | 24 Oct | Open Challenge loop | Repeats straight → corner → 90° turn up to `TOTAL_TURNS`, absolute headings (90°, 180°, 270°…), FRONT/BACK check only on the first turn, final straight of 1 s and brake | 🔄 Runs, but drifted toward the inner wall lap after lap |
 
@@ -1491,7 +1491,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
 - [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
 - [x] Drive straight and smooth along the nearest wall (`wall_follow_nearest_gyro`, Phase 8) ✅
-- [x] Stop with the short brake when a side wall ends, then add the 90° gyro turn (`exito_glorioso`, `exito_rotundo`, one-corner version) ✅
+- [x] Stop with the short brake when a side wall ends, then add the 90° gyro turn (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version) ✅
 - [x] Find why the car sometimes chose the wrong side: the side TOF could not see the black wall at 30° (Phase 10) ✅
 - [ ] Remount the side TOF sensors **straight (0°)**, centre at ~5 cm from the floor, level (teammate, hardware).
 - [ ] Repeat `tof_roi_budget_test` at 30, 45 and 60 cm with ROI 16 × 8 at 50, 100 and 140 ms and fix the final values.
