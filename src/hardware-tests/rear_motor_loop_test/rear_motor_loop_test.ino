@@ -1,10 +1,10 @@
 // Rear motor test: FORWARD -> STOP -> BACKWARD -> STOP (loop)
-// Board: Arduino Nano ESP32 | Driver: TB6612FNG | Motor: N20 DC (rear axle)
+// Board: Arduino Nano (classic, ATmega328P) | Driver: TB6612FNG | Motor: N20 DC (rear axle)
 
-const int PWMA_PIN = D6;   // speed (PWM)
-const int AIN1_PIN = D7;   // direction 1
-const int AIN2_PIN = D8;   // direction 2
-const int STBY_PIN = D5;   // standby (must be HIGH). If STBY is wired to 3.3V, ignore this pin.
+const int PWMA_PIN = 6;   // D6: speed (PWM)
+const int AIN1_PIN = 7;   // D7: direction 1
+const int AIN2_PIN = 8;   // D8: direction 2
+const int STBY_PIN = 5;   // D5: standby (must be HIGH). If STBY is wired to 3.3V, ignore this pin.
 
 // --- Tunable values ---
 const int MOTOR_SPEED  = 150;   // 0-255
@@ -39,8 +39,6 @@ void setup() {
   motorStop();
 
   Serial.begin(115200);
-  unsigned long start = millis();
-  while (!Serial && millis() - start < 5000) delay(10);  // Nano ESP32 native USB
 
   Serial.println("Rear motor test started");
 }

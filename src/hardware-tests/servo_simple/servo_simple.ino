@@ -1,13 +1,13 @@
 /*
   servo_simple.ino
   -----------------
-  Simplest possible steering servo test (on D9): no libraries,
-  no ledc. Generates the servo pulse by hand (50Hz, 0.5-2.5ms pulse),
-  so it compiles on any ESP32 core version.
+  Simplest possible steering servo test (on D9): no libraries.
+  Generates the servo pulse by hand (50Hz, 0.5-2.5ms pulse).
 
-  THIS IS THE VERSION THAT WORKED on the Nano ESP32 (22 Sept 2026).
-  The ESP32Servo library was not installed, and ledcAttach() does not
-  exist in the Nano ESP32's 2.x core, so both earlier versions failed.
+  Board: Arduino Nano (classic, ATmega328P).
+  This hand-made pulse was first written on 22 Sept 2026 because the
+  servo libraries did not work with the Nano ESP32 core (journal
+  Problem 6). On the classic Nano the standard Servo.h also works.
 
   CALIBRATED: the real steering CENTER of our old chassis was 120 degrees
   (not 90). With the NEW servo/chassis (Oct 2026) measure it again.
@@ -15,7 +15,7 @@
   to the real mechanical limits of the Ackermann steering.
 */
 
-const int PIN_SERVO = D9;
+const int PIN_SERVO = 9;   // D9
 
 const int CENTER_ANGLE = 120; // measured on the old chassis - RE-MEASURE with the new servo
 const int LEFT_ANGLE   = 90;  // ADJUST
