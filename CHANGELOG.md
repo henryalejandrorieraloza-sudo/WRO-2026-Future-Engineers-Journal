@@ -2,6 +2,12 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.8 — 5 November · Repository reorganisation
+- **Sketches regrouped by purpose:** `src/hardware-tests/` now holds only component tests; the driving algorithms moved to the new `src/open-challenge/` folder (`wall_follow_nearest_pid`, `wall_keep_both_pid`, `wall_follow_nearest_gyro`, `wall_follow_gyro_corner_front`, `turn_left_90_pid_brake`, and the two renamed sketches below).
+- **Descriptive names instead of nicknames:** `exito_glorioso` is now `corner_turn_front_trigger` and `exito_rotundo` is now `corner_turn_timed`. Code, headers, journal tables and links were updated; the behaviour is unchanged.
+- `src/README.md` rewritten: system overview, Nano pin map, one table per folder with an explicit status column, IDE settings and conventions.
+- Status symbols in the READMEs replaced by plain text (*Done*, *In progress*, *Planned*, *Pending*).
+
 ## v1.7.1 — 5 November · Sketches moved to the classic Arduino Nano
 - `drive_until_left_open`, `rear_motor_loop_test` and `servo_simple` now target the **classic Arduino Nano (ATmega328P)**: numeric pins instead of `D6`/`D9` names, `Wire.begin()` without pins, no `Serial.printf`, and no wait for a native USB port.
 - `src/README.md`: board column and Arduino IDE settings now list only the classic Nano and the ESP32-S3 CAM (the Nano ESP32 setup and `dfu-util` notes were removed). The journal keeps the history of the Nano ESP32 (Problems 6 and 31).
@@ -46,16 +52,16 @@ Versions of the car and of this repository. Dates are in 2026.
 - **Safety first:** NOT SURE → stop and measure again; decisions with the car still; FRONT safety in every phase; timeouts; lower speed during decisions. Goal: finish the 3 laps safely before going faster.
 - Added `tof_left_right_print` and `tof_roi_budget_test`. Journal: Phases 9 and 10 (sections 11–12), Problems 40–46; journal §8.2 marked as overturned. README §6.3, §8, §10 and §13 updated.
 
-## v1.1 — 21 October (night) · "Éxito rotundo": timed corner, no front sensor
-- **Validated on the track:** `exito_rotundo`.
+## v1.1 — 21 October (night) · Timed corner, no front sensor
+- **Validated on the track:** `corner_turn_timed`.
 - **Straighter driving:** an integral was added to the gyro heading loop (`KI_HEADING = 2.5`, max 10° of steering). It cancels a constant steering offset (servo centre not exact), which made the car drift slowly to the left.
 - **Smooth wall switch:** the car keeps the last `REF_HISTORY = 5` wall readings of each side. When the opening is detected (side > 2400 mm, 3 valid readings in a row) the PID follows the opposite wall at the **average of its last 5 readings before the opening**, instead of the distance at that instant, so it no longer drifts when it switches wall.
 - **Corner by time instead of the front sensor:** after `RUN_MS = 1800 ms` the car brakes. If an opening was seen, it turns 90° toward it (the opening always wins, it is never re-evaluated). If not, it averages `COMPARE_SAMPLES = 10` readings per side with the car still and turns toward the farther side (invalid reading = no wall).
 - Why: comparing the walls with a single reading sometimes chose the wrong side; averaging with the car stopped and trusting the detected opening first fixed it.
 - Settings: `MOTOR_SPEED = 100`, `MAX_HEADING_DEG = 5`, turn at `TURN_SPEED = 60` / `SLOW_SPEED = 35`.
 
-## v1.0 — 21 October · "Éxito glorioso": first complete straight + corner
-- **Validated on the track:** `exito_glorioso` never hit a wall and always chose the correct turn side.
+## v1.0 — 21 October · First complete straight and corner
+- **Validated on the track:** `corner_turn_front_trigger` never hit a wall and always chose the correct turn side.
 - Flow: gyro wall following on the nearest wall → a side TOF above `SIDE_OPEN_MM = 2400` (3 valid readings) marks the opening and switches the PID to the opposite wall without braking → the front TOF below `FRONT_STOP_MM = 1400` starts the validated 90° turn (`turn_left_90_pid_brake`, now left or right) toward the opening → active brake.
 - Fixes from today's tests: the front TOF sometimes missed the wall because readings with `SigmaFail` and similar statuses were rejected → the front sensor now accepts **any** reading with a distance (40–4000 mm). If no opening was detected, the turn side is chosen by comparing both side walls (the farther one, invalid = no wall).
 - Safety: after `MAX_RUN_MS = 40 s` it compares both sides and turns anyway; LED D13 shows when the front TOF is not giving a usable reading (diagnosis without a USB cable).
