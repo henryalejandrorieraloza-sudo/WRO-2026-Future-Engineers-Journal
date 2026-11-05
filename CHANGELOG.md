@@ -2,6 +2,10 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.7.1 — 5 November · Sketches moved to the classic Arduino Nano
+- `drive_until_left_open`, `rear_motor_loop_test` and `servo_simple` now target the **classic Arduino Nano (ATmega328P)**: numeric pins instead of `D6`/`D9` names, `Wire.begin()` without pins, no `Serial.printf`, and no wait for a native USB port.
+- `src/README.md`: board column and Arduino IDE settings now list only the classic Nano and the ESP32-S3 CAM (the Nano ESP32 setup and `dfu-util` notes were removed). The journal keeps the history of the Nano ESP32 (Problems 6 and 31).
+
 ## v1.7 — 28 October · Floor lines without false detections
 - **Camera v3.1** (`obstacle_camera`), validated on the car: no false line on the empty floor (3 places) or looking at the black wall; orange seen from **16 cm**, blue from **9 cm**; 12.5 fps.
 - **Floor-above check:** a line must have white floor (V ≥ 130) above it in ≥ 60 % of its columns. The bottom edge of the black wall looks exactly like a far blue line, but it has dark wall above it and is now rejected.
