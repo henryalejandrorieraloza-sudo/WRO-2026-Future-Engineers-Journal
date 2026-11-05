@@ -17,10 +17,11 @@
     hits its end). Then use 2-3 degrees LESS than that, so the servo
     never pushes against the end (it heats up and can break).
 
+  Board: Arduino Nano (classic, ATmega328P).
   Same pulse-by-hand method as servo_simple.ino (no libraries).
 */
 
-const int PIN_SERVO   = D9;
+const int PIN_SERVO   = 9;     // D9
 const int START_ANGLE = 120;   // old center, change after measuring
 
 int angle = START_ANGLE;
@@ -34,14 +35,16 @@ void sendPulse(int a) {
 }
 
 void printAngle() {
-  Serial.printf("angle = %d  (pulse %d us)\n", angle, (int)map(angle, 0, 180, 500, 2500));
+  Serial.print("angle = ");
+  Serial.print(angle);
+  Serial.print("  (pulse ");
+  Serial.print(map(angle, 0, 180, 500, 2500));
+  Serial.println(" us)");
 }
 
 void setup() {
   pinMode(PIN_SERVO, OUTPUT);
   Serial.begin(115200);
-  unsigned long t = millis();
-  while (!Serial && millis() - t < 5000) delay(10);
   Serial.println("SERVO CALIBRATION: type 0-180, or a / d / c");
   printAngle();
 }
