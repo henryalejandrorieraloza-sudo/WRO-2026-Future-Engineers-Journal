@@ -2,6 +2,10 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## Unreleased — 11 November · Hardware tests for the Open Challenge
+- Added `test_completo_nano` (motor, servo, two side TOF sensors and BMI160 working together; validated on the car).
+- Added `wall_follow_gap_turn`: nearest-wall following with the gyro, brake when either side sensor sees a gap, then a 90° turn toward the gap. Built on the working hardware initialisation of `test_completo_nano` and the validated `wall_follow_nearest_gyro` and `turn_left_90_pid_brake` controllers. Not yet tested on the track.
+
 ## v1.8 — 5 November · Repository reorganisation
 - **Sketches regrouped by purpose:** `src/hardware-tests/` now holds only component tests; the driving algorithms moved to the new `src/open-challenge/` folder (`wall_follow_nearest_pid`, `wall_keep_both_pid`, `wall_follow_nearest_gyro`, `wall_follow_gyro_corner_front`, `turn_left_90_pid_brake`, and the two renamed sketches below).
 - **Descriptive names instead of nicknames:** `exito_glorioso` is now `corner_turn_front_trigger` and `exito_rotundo` is now `corner_turn_timed`. Code, headers, journal tables and links were updated; the behaviour is unchanged.
