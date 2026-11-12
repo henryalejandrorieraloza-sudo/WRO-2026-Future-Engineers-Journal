@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Pillar Vision Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,6 +147,23 @@
   .tunebar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
   textarea#copyBox{width:100%;min-height:150px;margin-top:10px;font:12px/1.5 var(--font-mono);background:var(--bg);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:8px}
   pre#log{margin:0;max-height:96px;overflow:auto;font:12px/1.5 var(--font-mono);color:var(--sub);white-space:pre-wrap}
+  .zname.ext{color:#d64fd6} .zname.trig{color:#1aa6b7}
+  .group.orange{color:#d9730d} .group.blue{color:#2d63d8} .group.magenta{color:#c53fc5}
+  .extgrid{display:grid;grid-template-columns:auto auto;margin:6px 0 0}
+  .extgrid dt,.extgrid dd{padding:5px 0}
+  .dirbig{font:700 20px/1.1 var(--font-display);letter-spacing:.02em;margin:4px 0 2px}
+  .dirbig.turn{color:var(--ok)}
+  .dirbig.or{color:#e07a10} .dirbig.bl{color:#3d78f0} .dirbig.none{color:var(--sub)}
+  .warnline{font-size:12.5px;color:var(--warn);margin-top:6px}
+  .calib{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+  .calib .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+  .calib button{padding:7px 10px;font-size:12.5px;display:inline-flex;gap:6px;align-items:center}
+  .calib button i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .calib button.on{outline:2px solid var(--accent);outline-offset:1px}
+  .calib button .ck{font:600 11px var(--font-mono);color:var(--ok)}
+  .calib pre{margin:8px 0 0;font:12px/1.5 var(--font-mono);color:var(--sub);white-space:pre-wrap}
+  .calib .bad{color:var(--bad)} .calib .okc{color:var(--ok)}
+  #main.cross{cursor:crosshair}
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -154,7 +171,7 @@
   <header>
     <div>
       <h1>Pillar Vision Lab</h1>
-      <p>Live picture from the ESP32S3-CAM with the same steps as <span class="mono">closest_pillar_test</span>: colors, blobs, the split of touching pillars and the closest-pillar decision. The page re-runs the Arduino algorithm on every picture and checks it gives the same answer as the camera.</p>
+      <p>Live picture from the ESP32S3-CAM with the same steps as <span class="mono">closest_pillar_test</span>: colors, blobs, the split of touching pillars and the closest-pillar decision. The page re-runs the Arduino algorithm on every picture and checks it gives the same answer as the camera. It also finds the orange and blue floor lines and the magenta parking walls (page only for now) and works with any picture size (160×120, 320×240…).</p>
     </div>
     <div class="actions">
       <button class="primary" id="btnConnect" type="button">Connect camera</button>
@@ -184,12 +201,30 @@
         <label><input type="checkbox" id="lyNoise" checked> Noise</label>
         <label><input type="checkbox" id="lySplit" checked> Split logic</label>
         <label><input type="checkbox" id="lyGuides" checked> Guides</label>
+        <label><input type="checkbox" id="lyExt" checked> Lines &amp; parking</label>
       </div>
       <div class="zones" role="group" aria-label="Zones">
         <label for="zTop"><span class="zname top">Ignore top</span><input type="range" id="zTop" min="0" max="119"><output id="zTopV" class="mono"></output></label>
         <label for="zNear"><span class="zname near">Near (band end)</span><input type="range" id="zNear" min="1" max="119"><output id="zNearV" class="mono"></output></label>
         <label for="zSide"><span class="zname side">Side zone</span><input type="range" id="zSide" min="0" max="79"><output id="zSideV" class="mono"></output></label>
-        <p class="sub zhint">Pillars are only searched in the band between the yellow line (ignore top) and the red NEAR line (counted in rows up from the bottom edge); drag either line on the picture. Side zone: a pillar whose centre is within ± this many pixels of the middle is CENTER. A red pillar is on the correct side once it is left of the zone, a green one once it is right of it: green halo = correct side, red halo = not yet.</p>
+        <label for="zExt"><span class="zname ext">Lines/parking from</span><input type="range" id="zExt" min="0" max="119"><output id="zExtV" class="mono"></output></label>
+        <label for="zTrig"><span class="zname trig">Line trigger</span><input type="range" id="zTrig" min="0" max="119"><output id="zTrigV" class="mono"></output></label>
+        <p class="sub zhint">Pillars are only searched in the band between the yellow line (ignore top) and the red NEAR line (counted in rows up from the bottom edge); drag either line on the picture. Side zone: a pillar whose centre is within ± this many pixels of the middle is CENTER. A red pillar is on the correct side once it is left of the zone, a green one once it is right of it: green halo = correct side, red halo = not yet. Lines and magenta are searched from the dotted purple line down to the bottom edge; a line whose lowest row passes the cyan trigger line counts as "reached" (time to turn and count a corner).</p>
+      </div>
+      <div class="calib" role="group" aria-label="Calibrate colors">
+        <span class="zname side">Calibrate colors</span>
+        <div class="row" id="calBtns">
+          <button type="button" data-c="red"><i style="background:#e8384b"></i>Red pillar<span class="ck"></span></button>
+          <button type="button" data-c="green"><i style="background:#3fc35d"></i>Green pillar<span class="ck"></span></button>
+          <button type="button" data-c="magenta"><i style="background:#e040e0"></i>Magenta<span class="ck"></span></button>
+          <button type="button" data-c="orange"><i style="background:#f08a2a"></i>Orange line<span class="ck"></span></button>
+          <button type="button" data-c="blue"><i style="background:#3b6fe0"></i>Blue line<span class="ck"></span></button>
+          <button type="button" data-c="floor"><i style="background:#e8e8e2"></i>White floor<span class="ck"></span></button>
+          <button type="button" data-c="wall"><i style="background:#222"></i>Black wall<span class="ck"></span></button>
+          <button type="button" id="calClear">Forget samples</button>
+        </div>
+        <p class="sub zhint" style="margin-top:8px">Press a color, then drag a box over that object on the picture (only over the object). The page reads the real camera pixels inside the box and sets that color's thresholds by itself. Floor and wall are only checked, so you can see if they would be mistaken for a color. Do every color you can, in the light you will race in; each new box for the same color adds to it.</p>
+        <pre id="calOut">No samples yet.</pre>
       </div>
     </div>
 
@@ -199,15 +234,36 @@
       <div class="sub" id="decisionSub">—</div>
       <dl>
         <dt>Position in picture</dt><dd id="dWhere">—</dd>
-        <dt>x (−80 left … +79 right)</dt><dd id="dX">—</dd>
+        <dt id="dXl">x (−80 left … +79 right)</dt><dd id="dX">—</dd>
         <dt>On the correct side</dt><dd id="dSide">—</dd>
         <dt>Bottom row (bigger = closer)</dt><dd id="dBottom">—</dd>
         <dt>Height × width</dt><dd id="dSize">—</dd>
         <dt>Pixels</dt><dd id="dPx">—</dd>
         <dt>Split from a bigger blob</dt><dd id="dSplit">—</dd>
+        <dt>Red patches that were magenta</dt><dd id="dMerge">—</dd>
         <dt>Blobs found / noise</dt><dd id="dBlobs">—</dd>
         <dt>Arduino says</dt><dd id="dEsp">—</dd>
       </dl>
+      <div class="k">Lines &amp; parking (page only)</div>
+      <div class="dirbig none" id="eDir">—</div>
+      <div class="sub" id="eDirSub">—</div>
+      <dl class="extgrid">
+        <dt>Orange line</dt><dd id="eOr">—</dd>
+        <dt>Blue line</dt><dd id="eBl">—</dd>
+        <dt>Line trigger</dt><dd id="eTrig">—</dd>
+        <dt>Magenta walls (blobs)</dt><dd id="eMagN">—</dd>
+        <dt>Closest magenta</dt><dd id="eMag">—</dd>
+      </dl>
+      <div class="warnline" id="eWarn" hidden></div>
+      <div class="k">Corner trigger (page only)</div>
+      <div class="dirbig none" id="cState">—</div>
+      <dl class="extgrid">
+        <dt>Corners counted</dt><dd id="cCount">0 / 12</dd>
+        <dt>Direction of the run</dt><dd id="cDir">—</dd>
+        <dt>Lines ignored for</dt><dd id="cLock">—</dd>
+      </dl>
+      <div class="sub" style="font-size:12.5px;margin-top:6px">Arms when a line passes the cyan line, turns when that same line has been missing for TURN_CONFIRM_FRAMES pictures, then ignores lines for LOCK_AFTER_TURN. The page only gets ~2–5 pictures a second, the robot ~13, so here it reacts later than on the robot.</div>
+      <div class="tunebar" style="margin-top:8px"><button type="button" id="btnRunReset">Reset run (corners = 0)</button></div>
       <div class="k">Pixel under the mouse</div>
       <div class="hover" id="hover">Move over the picture to read RGB and H S V, and how the page and the Arduino classify that pixel.</div>
       <div class="k">Board messages</div>
@@ -219,9 +275,9 @@
     <h2>The algorithm, step by step</h2>
     <div class="strip" style="margin-top:10px">
       <div class="step"><canvas id="s1" width="320" height="240"></canvas>
-        <h3><span>1</span>Picture</h3><p>160×120 RGB565 from the camera, read with <code>readPixel()</code> (mirror / flip applied).</p></div>
+        <h3><span>1</span>Picture</h3><p><span id="resTxt">160×120</span> RGB565 from the camera, read with <code>readPixel()</code> (mirror / flip applied).</p></div>
       <div class="step"><canvas id="s2" width="320" height="240"></canvas>
-        <h3><span>2</span>Colors</h3><p>Every pixel to HSV and <code>classify()</code>: red, green or nothing.</p></div>
+        <h3><span>2</span>Colors</h3><p>Every pixel to HSV and <code>classify()</code>: red, green or nothing. Orange, blue and magenta are drawn on top in their own colors.</p></div>
       <div class="step"><canvas id="s3" width="320" height="240"></canvas>
         <h3><span>3</span>Blobs</h3><p>BFS joins touching pixels of one color. Under <code>MIN_PIXELS</code> is noise (grey dashes).</p></div>
       <div class="step"><canvas id="s4" width="320" height="240"></canvas>
@@ -236,7 +292,7 @@
     </div>
     <div class="panel">
       <h2>Thresholds</h2>
-      <p class="sub" style="margin:6px 0 0">Every parameter of the Arduino code. They start with the robot's values; move them to try new values live (changed ones turn orange). The page remembers them in this browser. The robot keeps its own values until you press <b>Copy as Arduino code</b> and paste the lines into the sketch.</p>
+      <p class="sub" style="margin:6px 0 0">Every parameter of the Arduino code. They start with the robot's values; move them to try new values live (changed ones turn orange). The page saves them automatically in this browser (separately for 160×120 and 320×240), so they are still there after reloading or reconnecting. The robot keeps its own values until you press <b>Copy as Arduino code</b> and paste the lines into the sketch.</p>
       <form class="tune" id="tune" onsubmit="return false">
         <div class="group red">Red</div>
         <label for="tRedLo">Hue ≥ (wraps)<input id="tRedLo" type="number" min="0" max="359"></label>
@@ -249,17 +305,56 @@
         <label for="tGrS">Min saturation<input id="tGrS" type="number" min="0" max="255"></label>
         <label for="tGrV">Min value<input id="tGrV" type="number" min="0" max="255"></label>
         <div class="group other">Blobs</div>
-        <label for="tMin">MIN_PIXELS<input id="tMin" type="number" min="1" max="1000"></label>
-        <label for="tTol">BOTTOM_TOL<input id="tTol" type="number" min="0" max="60"></label>
+        <label for="tRedMin">RED_MIN_PIXELS<input id="tRedMin" type="number" min="1" max="4000"></label>
+        <label for="tGrMin">GREEN_MIN_PIXELS<input id="tGrMin" type="number" min="1" max="4000"></label>
+        <label for="tTol">BOTTOM_TOL<input id="tTol" type="number" min="0" max="120"></label>
         <label for="tTop">IGNORE_TOP_ROWS<input id="tTop" type="number" min="0" max="118"></label>
         <label for="tNear">NEAR_ROWS (band end)<input id="tNear" type="number" min="1" max="119"></label>
+        <div class="group orange">Orange line</div>
+        <label for="tOrLo">Hue from<input id="tOrLo" type="number" min="0" max="359"></label>
+        <label for="tOrHi">Hue to<input id="tOrHi" type="number" min="0" max="359"></label>
+        <label for="tOrS">Min saturation<input id="tOrS" type="number" min="0" max="255"></label>
+        <label for="tOrV">Min value<input id="tOrV" type="number" min="0" max="255"></label>
+        <div class="group blue">Blue line</div>
+        <label for="tBlLo">Hue from<input id="tBlLo" type="number" min="0" max="359"></label>
+        <label for="tBlHi">Hue to<input id="tBlHi" type="number" min="0" max="359"></label>
+        <label for="tBlS">Min saturation<input id="tBlS" type="number" min="0" max="255"></label>
+        <label for="tBlV">Min value<input id="tBlV" type="number" min="0" max="255"></label>
+        <div class="group magenta">Magenta (parking walls)</div>
+        <label for="tMgLo">Hue from<input id="tMgLo" type="number" min="0" max="359"></label>
+        <label for="tMgHi">Hue to<input id="tMgHi" type="number" min="0" max="359"></label>
+        <label for="tMgS">Min saturation<input id="tMgS" type="number" min="0" max="255"></label>
+        <label for="tMgV">Min value<input id="tMgV" type="number" min="0" max="255"></label>
+        <div class="group other">Lines &amp; parking</div>
+        <label for="tExt">FLOOR_TOP_ROW<input id="tExt" type="number" min="0" max="119"></label>
+        <label for="tOrMin">ORANGE_MIN_PIXELS<input id="tOrMin" type="number" min="1" max="8000"></label>
+        <label for="tBlMin">BLUE_MIN_PIXELS<input id="tBlMin" type="number" min="1" max="8000"></label>
+        <label for="tLineRow">LINE_ROW_MIN (px in a row)<input id="tLineRow" type="number" min="1" max="120"></label>
+        <label for="tTrig">LINE_TRIGGER_ROW<input id="tTrig" type="number" min="0" max="119"></label>
+        <label for="tMagMin">MAGENTA_MIN_PIXELS<input id="tMagMin" type="number" min="1" max="8000"></label>
+        <label for="tMgMaj">MAGENTA_MAJORITY (%)<input id="tMgMaj" type="number" min="1" max="100"></label>
+        <div class="group other">Corner trigger</div>
+        <label for="tConfirm">TURN_CONFIRM_FRAMES<input id="tConfirm" type="number" min="1" max="20"></label>
+        <label for="tLock">LOCK_AFTER_TURN (ms, page)<input id="tLock" type="number" min="0" max="10000"></label>
       </form>
       <div class="tunebar">
-        <button id="btnReset" type="button">Reset to Arduino values</button>
+        <button id="btnReset" type="button">Reset to defaults</button>
         <button id="btnCopy" type="button">Copy as Arduino code</button>
         <span class="sub" id="copyMsg" aria-live="polite"></span>
       </div>
       <textarea id="copyBox" readonly hidden aria-label="Arduino lines"></textarea>
+      <div class="tunebar">
+        <button id="btnImportShow" type="button">Load from Arduino code</button>
+        <button id="btnSaveFile" type="button">Save settings to a file</button>
+        <button id="btnLoadFile" type="button">Load settings file</button>
+        <input type="file" id="fileIn" accept=".json,application/json" hidden>
+        <span class="sub" id="importMsg" aria-live="polite"></span>
+      </div>
+      <div id="importBox" hidden>
+        <p class="sub" style="margin:8px 0 4px">Paste the settings block of your sketch (the lines between PASTE HERE and end of the pasted part) and press Apply. Every <span class="mono">const int NAME = value;</span> line it knows is loaded into the page.</p>
+        <textarea id="importText" aria-label="Arduino code to load" style="width:100%;min-height:150px;font:12px/1.5 var(--font-mono);background:var(--bg);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:8px"></textarea>
+        <div class="tunebar"><button id="btnImportApply" type="button" class="primary">Apply</button></div>
+      </div>
     </div>
   </section>
 </div>
@@ -269,29 +364,59 @@
   "use strict";
 
   // ===== Arduino constants (closest_pillar_test / pillar_viewer) =====
-  const ARDUINO = { redLo:340, redHi:15, redS:100, redV:60, grLo:80, grHi:160, grS:80, grV:50,
-                    minPx:30, tol:4, top:53, near:41 };
+  // Colors measured on Henry's track (26 Oct 2026, OV2640, room light)
+  const ARDUINO = { redLo:355, redHi:19, redS:85, redV:60, grLo:85, grHi:135, grS:55, grV:50,
+                    redMin:30, grMin:30, tol:4, top:53, near:41 };
   // Search band: rows P.top .. (120 - P.near - 1). Rows above (ignore top) and from the
   // NEAR line down are ignored, the same as IGNORE_TOP_ROWS / NEAR_ROWS in the Arduino code.
+  // Lines & parking: page-only for now (the sketch does not send them yet)
+  // blV 60: the black walls are slightly blue but always dark (V < ~50), so a higher minimum keeps them out.
+  const EXT = { orLo:20, orHi:45, orS:40, orV:90, blLo:195, blHi:240, blS:55, blV:60,
+                mgLo:320, mgHi:354, mgS:45, mgV:60, ext:36, orMin:20, blMin:20, lineRow:3, trig:100, magMin:30,
+                confirm:3, lockMs:2500, mgMaj:50 };
+  let DEF = { ...ARDUINO, ...EXT };
+  // Values above are for 160x120. A bigger picture scales them like the sketch does:
+  // rows / widths x k, pixel counts x k*k (k = width / 160).
+  const BASE_A = { ...ARDUINO }, BASE_E = { ...EXT };
+  let scaledFor = 160;
+  function scaleDefaults(W) {
+    if (W === scaledFor) return false;
+    const k = W / 160; scaledFor = W;
+    for (const key of ["top", "near", "tol"]) ARDUINO[key] = Math.round(BASE_A[key] * k);
+    ARDUINO.redMin = Math.round(BASE_A.redMin * k * k); ARDUINO.grMin = Math.round(BASE_A.grMin * k * k);
+    for (const key of ["ext", "trig", "lineRow"]) EXT[key] = Math.round(BASE_E[key] * k);
+    for (const key of ["orMin", "blMin", "magMin"]) EXT[key] = Math.round(BASE_E[key] * k * k);
+    ARDUINO_ZONES.side = Math.round(28 * k);
+    DEF = { ...ARDUINO, ...EXT }; P = { ...DEF }; SIDE_ZONE = ARDUINO_ZONES.side;
+    loadSettings();                       // values saved earlier for this picture size win
+    loadSamples(); if (typeof calReport === "function") calReport();
+    return true;
+  }
   let SIDE_ZONE = 28;
   const ARDUINO_ZONES = { side: 28 };
   let NEAR_ROWS = 41, NEAR_BOTTOM = 79;
+  function fH() { return frame ? frame.H : 120; }
+  function fW() { return frame ? frame.W : 160; }
   function syncBand() {
-    P.top = Math.max(0, Math.min(118, P.top));
-    P.near = Math.max(1, Math.min(119 - P.top, P.near));      // band is always at least 1 row tall
-    NEAR_ROWS = P.near; NEAR_BOTTOM = 120 - P.near;
+    const H = fH();
+    P.top = Math.max(0, Math.min(H - 2, P.top));
+    P.near = Math.max(1, Math.min(H - 1 - P.top, P.near));      // band is always at least 1 row tall
+    P.ext = Math.max(0, Math.min(H - 1, P.ext));
+    P.trig = Math.max(0, Math.min(H - 1, P.trig));
+    NEAR_ROWS = P.near; NEAR_BOTTOM = H - P.near;
   }
-  const NONE = 0, RED = 1, GREEN = 2;
+  const NONE = 0, RED = 1, GREEN = 2, ORANGE = 3, BLUE = 4, MAGENTA = 5;
   const MAGIC = [0xAA, 0x55, 0xC3, 0x3C], HEADER = 25;
   // Red: pass it on its right -> it must end up on the LEFT of the picture (x < -SIDE_ZONE).
   // Green: pass it on its left -> it must end up on the RIGHT (x > SIDE_ZONE).
-  function centerX(p) { return Math.trunc(p.sumX / p.count) - 80; }
+  function centerX(p) { return Math.trunc(p.sumX / p.count) - fW() / 2; }
   function onCorrectSide(p) { const x = centerX(p); return p.color === RED ? x < -SIDE_ZONE : x > SIDE_ZONE; }
 
   const $ = id => document.getElementById(id);
-  let P = { ...ARDUINO };
+  let P = { ...DEF };
   let frame = null;        // {W,H,mirror,flip,pic,espMask,esp:{...},camFps,demo}
   let result = null;       // the page's own run of the algorithm
+  let xres = null;         // lines & parking (page only)
   let viewerFrames = 0, viewerFps = 0, fpsT0 = performance.now();
 
   // ===== Same math as the sketch =====
@@ -320,6 +445,142 @@
     return NONE;
   }
 
+  // Floor lines and parking walls. Magenta first: its hue sits between blue and red.
+  const inHue = (h, lo, hi) => lo <= hi ? (h >= lo && h <= hi) : (h >= lo || h <= hi);
+  function classifyExt(h, s, v) {
+    if (classify(h, s, v) === RED) return NONE;      // red pillar wins over magenta / orange
+    if (inHue(h, P.mgLo, P.mgHi) && s >= P.mgS && v >= P.mgV) return MAGENTA;
+    if (inHue(h, P.orLo, P.orHi) && s >= P.orS && v >= P.orV) return ORANGE;
+    if (inHue(h, P.blLo, P.blHi) && s >= P.blS && v >= P.blV) return BLUE;
+    return NONE;
+  }
+  function analyzeExt(f, pillarCls, mergeForce) {
+    const W = f.W, H = f.H, N = W * H, ext = new Uint8Array(N);
+    let orangeAsRed = 0, magentaAsRed = 0;
+    for (let y = P.ext; y < H; y++) for (let x = 0; x < W; x++) {
+      const [r, g, b] = rgbAt(f, x, y), [h, s, v] = hsv(r, g, b);
+      const i = y * W + x;
+      let c = classifyExt(h, s, v);
+      const fm = mergeForce ? mergeForce[i] : 0;
+      if (fm === 2) c = MAGENTA;                       // part of a mostly-magenta patch
+      else if (fm === 1 && c === MAGENTA) c = NONE;    // part of a mostly-red patch (a pillar)
+      ext[i] = c;
+      if (pillarCls[i] === RED) { if (c === ORANGE) orangeAsRed++; if (c === MAGENTA) magentaAsRed++; }
+    }
+    // A line = the BIGGEST connected patch of its color (scattered dots from a dark wall or noise
+    // never join into one big patch). It must have at least ORANGE/BLUE_MIN_PIXELS.
+    // "Lowest row" = closest part of the line. Least squares y = a + b*x gives its tilt.
+    const lines = {};
+    const lv = new Uint8Array(N), lqx = new Int16Array(N), lqy = new Int16Array(N), lid = new Int32Array(N).fill(-1);
+    for (const color of [ORANGE, BLUE]) {
+      let bestId = -1, bestN = 0, id = 0;
+      for (let y = P.ext; y < H; y++) for (let x = 0; x < W; x++) {
+        const i0 = y * W + x;
+        if (ext[i0] !== color || lv[i0]) continue;
+        let n = 0, head = 0, tail = 0;
+        lqx[tail] = x; lqy[tail] = y; tail++; lv[i0] = 1;
+        while (head < tail) {
+          const cx = lqx[head], cy = lqy[head]; head++; n++; lid[cy * W + cx] = color * 100000 + id;
+          for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+            if (nx < 0 || nx >= W || ny < P.ext || ny >= H) continue;
+            const j = ny * W + nx;
+            if (lv[j] || ext[j] !== color) continue;
+            lv[j] = 1; lqx[tail] = nx; lqy[tail] = ny; tail++;
+          }
+        }
+        if (n > bestN) { bestN = n; bestId = color * 100000 + id; }
+        id++;
+      }
+      const rowCount = new Int32Array(H);
+      let n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0, minX = W, maxX = -1;
+      for (let y = P.ext; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        if (ext[i] !== color) continue;
+        if (lid[i] !== bestId) { ext[i] = 0; continue; }            // not part of the line: drop it
+        rowCount[y]++; n++; sx += x; sy += y; sxx += x * x; sxy += x * y;
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+      }
+      let lowest = -1;
+      for (let y = H - 1; y >= P.ext; y--) if (rowCount[y] >= P.lineRow) { lowest = y; break; }
+      const den = n * sxx - sx * sx;
+      const slope = den !== 0 ? (n * sxy - sx * sy) / den : 0, icpt = n ? (sy - slope * sx) / n : 0;
+      const need = color === ORANGE ? P.orMin : P.blMin;
+      if (bestId >= 0 && n < need) for (let i = 0; i < N; i++) if (lid[i] === bestId) ext[i] = 0;   // too small: not a line
+      lines[color] = { color, found: n >= need && lowest >= 0, count: n, lowest, slope, icpt, minX, maxX,
+                       angle: Math.round(Math.atan(slope) * 180 / Math.PI) };
+    }
+    // Magenta blobs (BFS, same idea as the pillars)
+    const visited = new Uint8Array(N), qx = new Int16Array(N), qy = new Int16Array(N), mags = [];
+    for (let y = P.ext; y < H; y++) for (let x = 0; x < W; x++) {
+      const i0 = y * W + x;
+      if (ext[i0] !== MAGENTA || visited[i0]) continue;
+      let minX = x, maxX = x, minY = y, maxY = y, n = 0, sumX = 0, head = 0, tail = 0;
+      qx[tail] = x; qy[tail] = y; tail++; visited[i0] = 1;
+      while (head < tail) {
+        const cx = qx[head], cy = qy[head]; head++;
+        n++; sumX += cx;
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx; if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+          if (nx < 0 || nx >= W || ny < P.ext || ny >= H) continue;
+          const j = ny * W + nx;
+          if (visited[j] || ext[j] !== MAGENTA) continue;
+          visited[j] = 1; qx[tail] = nx; qy[tail] = ny; tail++;
+        }
+      }
+      if (n >= P.magMin) mags.push({ minX, maxX, minY, maxY, count: n, cx: Math.trunc(sumX / n) - W / 2 });
+    }
+    mags.sort((a, b) => b.maxY - a.maxY || b.count - a.count);       // closest first
+    const o = lines[ORANGE], bl = lines[BLUE];
+    let first = null;                                                 // the line you reach first
+    if (o.found && bl.found) first = o.lowest >= bl.lowest ? o : bl;
+    else if (o.found) first = o; else if (bl.found) first = bl;
+    const reached = [o, bl].filter(l => l.found && l.lowest >= P.trig);
+    return { ext, lines, mags, first, reached, orangeAsRed, magentaAsRed };
+  }
+
+  // ===== Red / magenta: one BFS over red + magenta pixels together =====
+  // The camera sees the magenta walls almost red, so a wall often gets red spots.
+  // Every patch of touching red-or-magenta pixels is counted: if at least MAGENTA_MAJORITY %
+  // of it is magenta, the WHOLE patch is magenta (its red pixels are removed from the pillar map);
+  // otherwise the whole patch is red (its magenta pixels are removed from the parking map).
+  function mergeRedMagenta(f, cls) {
+    const W = f.W, H = f.H, N = W * H, y0 = Math.min(P.top, P.ext);
+    const kind = new Uint8Array(N);                 // 1 red, 2 magenta
+    for (let y = y0; y < H; y++) for (let x = 0; x < W; x++) {
+      const [r, g, b] = rgbAt(f, x, y), [h, s, v] = hsv(r, g, b);
+      if (classify(h, s, v) === RED) kind[y * W + x] = 1;
+      else if (inHue(h, P.mgLo, P.mgHi) && s >= P.mgS && v >= P.mgV) kind[y * W + x] = 2;
+    }
+    const seen = new Uint8Array(N), qx = new Int16Array(N), qy = new Int16Array(N), comp = new Int32Array(N);
+    const force = new Uint8Array(N);                // 1 = force red (not magenta), 2 = force magenta
+    let toMagenta = 0, redRemoved = 0;
+    for (let y = y0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i0 = y * W + x;
+      if (!kind[i0] || seen[i0]) continue;
+      let head = 0, tail = 0, nRed = 0, nMg = 0;
+      qx[tail] = x; qy[tail] = y; tail++; seen[i0] = 1;
+      while (head < tail) {
+        const cx = qx[head], cy = qy[head]; head++;
+        const i = cy * W + cx; comp[head - 1] = i;
+        if (kind[i] === 1) nRed++; else nMg++;
+        for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) {
+          if (nx < 0 || nx >= W || ny < y0 || ny >= H) continue;
+          const j = ny * W + nx;
+          if (seen[j] || !kind[j]) continue;
+          seen[j] = 1; qx[tail] = nx; qy[tail] = ny; tail++;
+        }
+      }
+      const magenta = nMg * 100 >= P.mgMaj * (nRed + nMg);
+      if (magenta && nRed) toMagenta++;
+      for (let k = 0; k < tail; k++) {
+        const i = comp[k];
+        force[i] = magenta ? 2 : 1;
+        if (magenta && cls[i] === RED) { cls[i] = NONE; redRemoved++; }
+      }
+    }
+    return { force, toMagenta, redRemoved };
+  }
+
   // buildClassMap + findClosestPillar + frontPillarOfBlob + isCloser, recording every step
   function analyze(f) {
     const W = f.W, H = f.H, N = W * H;
@@ -329,6 +590,7 @@
       const [r, g, b] = rgbAt(f, x, y), [h, s, v] = hsv(r, g, b);
       cls[y * W + x] = classify(h, s, v);
     }
+    const merge = mergeRedMagenta(f, cls);          // red inside a mostly-magenta patch is not a pillar
     const label = new Int32Array(N).fill(-1);
     const visited = new Uint8Array(N), qx = new Int16Array(N), qy = new Int16Array(N);
     const colTop = new Int16Array(W), colBottom = new Int16Array(W), colCount = new Int32Array(W);
@@ -358,7 +620,7 @@
           visited[j] = 1; qx[tail] = nx; qy[tail] = ny; tail++;
         }
       }
-      const blob = { id, color, minX, maxX, minY, maxY, total, noise: total < P.minPx, front: null,
+      const blob = { id, color, minX, maxX, minY, maxY, total, noise: total < (color === RED ? P.redMin : P.grMin), front: null,
                      bottoms: Array.from(colBottom.slice(minX, maxX + 1)) };
       blobs.push(blob);
       if (blob.noise) continue;
@@ -373,11 +635,11 @@
       let top = H, count = 0, sumX = 0;
       for (let c = left; c <= right; c++) { if (colTop[c] < top) top = colTop[c]; count += colCount[c]; sumX += c * colCount[c]; }
       const fp = { color, left, right, top, bottom: lowest, count, sumX, blobId: id,
-                   found: count >= P.minPx, wasSplit: left > minX || right < maxX };
+                   found: count >= (color === RED ? P.redMin : P.grMin), wasSplit: left > minX || right < maxX };
       blob.front = fp;
       if (fp.found && isCloser(fp, closest)) closest = fp;
     }
-    return { cls, label, blobs, closest };
+    return { cls, label, blobs, closest, merge };
   }
 
   // ===== Comparison with the Arduino's own answer =====
@@ -452,7 +714,7 @@
     const fs = mode === "main" ? 12 : 9;
 
     if (mode !== "s1") {                          // rows the Arduino ignores (above and below the band)
-      const nb = 120 - P.near;
+      const nb = H - P.near;
       ctx.fillStyle = "rgba(0,0,0,.55)";
       if (P.top > 0) ctx.fillRect(0, 0, W * scale, P.top * scale);
       ctx.fillRect(0, nb * scale, W * scale, (H - nb) * scale);
@@ -461,8 +723,47 @@
       ctx.strokeStyle = "#ff6b7a"; ctx.beginPath(); ctx.moveTo(0, nb * scale); ctx.lineTo(W * scale, nb * scale); ctx.stroke();
       if (mode === "main") {
         if (P.top > 0) text("IGNORED 0–" + (P.top - 1), W * scale - 120, P.top * scale - 24, "rgba(0,0,0,.7)", "#ffd166", 11);
-        text("NEAR: IGNORED " + nb + "–119", W * scale - 168, nb * scale + 6, "rgba(0,0,0,.7)", "#ff8a96", 11);
+        text("NEAR: IGNORED " + nb + "–" + (H - 1), W * scale - 168, nb * scale + 6, "rgba(0,0,0,.7)", "#ff8a96", 11);
       }
+    }
+    // Lines & parking layer: painted after the dimming so it stays bright everywhere
+    const showExt = (mode === "main" && $("lyExt").checked) || mode === "s2";
+    if (showExt && xres) {
+      const ex = ctx.createImageData(W, H), EC = { 3: [255, 150, 20], 4: [50, 120, 255], 5: [255, 40, 255] };
+      for (let i = 0; i < W * H; i++) {
+        const c = xres.ext[i]; if (!c) continue;
+        const col = EC[c], o = i * 4;
+        ex.data[o] = col[0]; ex.data[o + 1] = col[1]; ex.data[o + 2] = col[2];
+        ex.data[o + 3] = mode === "main" ? (showPic ? Math.round(255 * Math.max(a, .5)) : 255) : 255;
+      }
+      const t2 = paint.tmp2 || (paint.tmp2 = document.createElement("canvas"));
+      t2.width = W; t2.height = H; t2.getContext("2d").putImageData(ex, 0, 0);
+      ctx.drawImage(t2, 0, 0, canvas.width, canvas.height);
+    }
+    if (mode === "main" && $("lyExt").checked && xres) {
+      // where the line / magenta search starts, and the trigger row
+      ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.strokeStyle = "#e36be3";
+      ctx.beginPath(); ctx.moveTo(0, P.ext * scale); ctx.lineTo(W * scale, P.ext * scale); ctx.stroke();
+      ctx.setLineDash([12, 5]); ctx.strokeStyle = "#26c6da"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(0, P.trig * scale); ctx.lineTo(W * scale, P.trig * scale); ctx.stroke();
+      ctx.setLineDash([]);
+      text("LINE TRIGGER " + P.trig, 6, P.trig * scale + 4, "rgba(0,0,0,.7)", "#7fe7f2", 11);
+      for (const l of [xres.lines[ORANGE], xres.lines[BLUE]]) {
+        if (!l.found) continue;
+        const col = l.color === ORANGE ? "#ffa53a" : "#6fa0ff";
+        const y0 = l.icpt + l.slope * l.minX, y1 = l.icpt + l.slope * (l.maxX + 1);
+        ctx.strokeStyle = "#000"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(l.minX * scale, y0 * scale); ctx.lineTo((l.maxX + 1) * scale, y1 * scale); ctx.stroke();
+        ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(l.minX * scale, y0 * scale); ctx.lineTo((l.maxX + 1) * scale, y1 * scale); ctx.stroke();
+        ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(0, (l.lowest + 1) * scale); ctx.lineTo(W * scale, (l.lowest + 1) * scale); ctx.stroke(); ctx.setLineDash([]);
+        const lx = Math.min(Math.max(4, ((l.minX + l.maxX) / 2) * scale - 60), W * scale - 170);
+        text((l.color === ORANGE ? "ORANGE" : "BLUE") + " · row " + l.lowest + " · " + l.angle + "°", lx, Math.min((l.lowest + 1) * scale + 4, H * scale - 22), "rgba(0,0,0,.75)", col, 11);
+      }
+      xres.mags.forEach((m, k) => {
+        box(m.minX, m.minY, m.maxX, m.maxY, "#ffffff", 4);
+        box(m.minX, m.minY, m.maxX, m.maxY, "#ff40ff", 2);
+        text((k === 0 ? "PARKING WALL · " : "magenta · ") + m.count + " px", m.minX * scale, Math.max(0, m.minY * scale - 20), "#ff40ff", "#1a001a", 11);
+      });
     }
     if (showGuides) {
       // side-zone lines (thick): between them the pillar is CENTER
@@ -527,6 +828,13 @@
   function paintAll() {
     if (!frame) return;
     paint($("main"), "main");
+    if (calBox) {
+      const cv = $("main"), ctx = cv.getContext("2d"), k = cv.width / frame.W;
+      const x0 = Math.min(calBox.x0, calBox.x1), y0 = Math.min(calBox.y0, calBox.y1);
+      ctx.setLineDash([6, 4]); ctx.lineWidth = 3; ctx.strokeStyle = "#ffffff";
+      ctx.strokeRect(x0 * k, y0 * k, (Math.abs(calBox.x1 - calBox.x0) + 1) * k, (Math.abs(calBox.y1 - calBox.y0) + 1) * k);
+      ctx.setLineDash([]);
+    }
     paint($("s1"), "s1"); paint($("s2"), "s2"); paint($("s3"), "s3"); paint($("s4"), "s4");
   }
 
@@ -557,23 +865,49 @@
       $("dPx").textContent = c.count;
       $("dSplit").textContent = c.wasSplit ? "yes" : "no";
     }
+    $("dMerge").textContent = result.merge.toMagenta ? result.merge.toMagenta + " patch(es), " + result.merge.redRemoved + " red px removed" : "none";
     const noise = result.blobs.filter(b => b.noise).length;
     $("dBlobs").textContent = (result.blobs.length - noise) + " / " + noise;
     const e = frame.esp;
     $("dEsp").textContent = e.found ? (e.color === RED ? "RED" : "GREEN") + " · bottom " + e.bottom : "no pillar";
 
+    $("dXl").textContent = "x (−" + frame.W / 2 + " left … +" + (frame.W / 2 - 1) + " right)";
+    $("resTxt").textContent = frame.W + "×" + frame.H;
+    // ----- lines & parking -----
+    const lo = xres.lines[ORANGE], lb = xres.lines[BLUE];
+    const lineTxt = l => l.found ? "row " + l.lowest + " · " + l.angle + "° · " + l.count + " px" : (l.count ? "only " + l.count + " px" : "not seen");
+    $("eOr").textContent = lineTxt(lo); $("eBl").textContent = lineTxt(lb);
+    const ed = $("eDir");
+    if (xres.first) {
+      const isO = xres.first.color === ORANGE;
+      ed.textContent = isO ? "ORANGE FIRST → CLOCKWISE" : "BLUE FIRST → COUNTER-CLOCKWISE";
+      ed.className = "dirbig " + (isO ? "or" : "bl");
+      $("eDirSub").textContent = (lo.found && lb.found ? "Both lines seen; the lower one in the picture is the one you cross first." : "Only one line seen.") +
+        " Use it at the FIRST corner only, then keep that direction.";
+    } else { ed.textContent = "No line"; ed.className = "dirbig none"; $("eDirSub").textContent = "No orange or blue line in the floor area."; }
+    $("eTrig").textContent = xres.reached.length ? "REACHED (" + xres.reached.map(l => l.color === ORANGE ? "orange" : "blue").join(" + ") + ")" : "not yet (row < " + P.trig + ")";
+    $("eTrig").style.color = xres.reached.length ? "var(--ok)" : "";
+    $("eMagN").textContent = xres.mags.length;
+    const m = xres.mags[0];
+    $("eMag").textContent = m ? "x " + m.cx + " (" + (m.cx < -SIDE_ZONE ? "LEFT" : m.cx > SIDE_ZONE ? "RIGHT" : "CENTER") + ") · bottom " + m.maxY + " · " + (m.maxY - m.minY + 1) + "×" + (m.maxX - m.minX + 1) : "—";
+    const warns = [];
+    if (xres.orangeAsRed) warns.push(xres.orangeAsRed + " orange-line pixels are ALSO red for the pillar code → raise the red hue limit or lower RED_HUE_HIGH.");
+    if (xres.magentaAsRed) warns.push(xres.magentaAsRed + " magenta pixels are ALSO red for the pillar code → raise RED_HUE_LOW.");
+    $("eWarn").hidden = !warns.length; $("eWarn").textContent = warns.join(" ");
+
+    cornerPanel();
     const cmp = compare();
     setChip("chipMatch", cmp.state, cmp.text);
     $("fsDec").textContent = d.textContent; $("fsDec").className = "fsdec " + (c ? (c.color === RED ? "red" : "green") : "none");
     $("fsSub").textContent = $("decisionSub").textContent;
-    $("fsChips").textContent = cmp.text + " · " + (frame.demo ? "demo picture" : "cam " + frame.camFps.toFixed(1) + " fps");
+    $("fsChips").textContent = "corner: " + $("cState").textContent + " · " + run.corners + "/12 · " + cmp.text + " · " + (frame.demo ? "demo picture" : "cam " + frame.camFps.toFixed(1) + " fps");
     setChip("chipFps", "", frame.demo ? "demo" : "cam " + frame.camFps.toFixed(1) + " · page " + viewerFps.toFixed(1) + " fps");
 
     // blob table
     const rows = result.blobs.slice().sort((a, b) => (b.front ? b.front.bottom : -1) - (a.front ? a.front.bottom : -1) || b.total - a.total)
       .slice(0, 14).map(bl => {
         const win = c && c.blobId === bl.id;
-        const status = bl.noise ? '<span class="tag">noise &lt; ' + P.minPx + '</span>'
+        const status = bl.noise ? '<span class="tag">noise &lt; ' + (bl.color === RED ? P.redMin : P.grMin) + '</span>'
           : win ? '<span class="tag win">closest</span>' + (bl.front.wasSplit ? ' <span class="tag split">split</span>' : '')
           : bl.front.wasSplit ? '<span class="tag split">split</span>' : '<span class="tag">candidate</span>';
         const colr = bl.color === RED ? "var(--pill-red)" : "var(--pill-green)";
@@ -586,10 +920,58 @@
       (rows || '<tr><td colspan="6" style="color:var(--sub)">No red or green pixels in this picture.</td></tr>') + '</tbody>';
   }
 
+  // ===== Corner trigger: "turn when the first line you saw leaves the picture" =====
+  // WAIT    -> no line close yet
+  // ARMED   -> a line got past the cyan line (close): we follow THAT color
+  // TURN    -> that line was missing for TURN_CONFIRM_FRAMES pictures in a row = it went under the car
+  // LOCKED  -> ignore lines for LOCK_AFTER_TURN (the robot is turning; the corner's 2nd line must not count)
+  const run = { state: "WAIT", color: 0, missing: 0, corners: 0, dir: 0, lockUntil: 0, lastTurn: 0, lastId: -1 };
+  function stepCorner() {
+    if (!frame || frame.demo) return;
+    const now = performance.now();
+    if (run.state === "LOCKED" || run.state === "TURN") {
+      if (now < run.lockUntil) return;
+      run.state = "WAIT"; run.color = 0; run.missing = 0;
+    }
+    const lines = xres.lines;
+    if (run.state === "WAIT") {
+      // the closest line that already passed the cyan line
+      const cands = [lines[ORANGE], lines[BLUE]].filter(l => l.found && l.lowest >= P.trig).sort((a, b) => b.lowest - a.lowest);
+      if (cands.length) {
+        run.state = "ARMED"; run.color = cands[0].color; run.missing = 0;
+        if (!run.dir) run.dir = run.color;            // the very first line of the run decides the direction
+      }
+      return;
+    }
+    if (run.state === "ARMED") {
+      const l = lines[run.color];
+      if (l.found) { run.missing = 0; return; }
+      run.missing++;
+      if (run.missing >= P.confirm) {
+        run.state = "TURN"; run.corners++; run.lastTurn = now; run.lockUntil = now + P.lockMs;
+        log("TURN #" + run.corners + " (" + (run.color === ORANGE ? "orange" : "blue") + " line left the picture)");
+      }
+    }
+  }
+  function cornerPanel() {
+    const st = $("cState"), now = performance.now();
+    const col = run.color === ORANGE ? "orange" : run.color === BLUE ? "blue" : "";
+    const txt = { WAIT: "WAITING for a line", ARMED: "ARMED · following " + col + " line" + (run.missing ? " · missing " + run.missing + "/" + P.confirm : ""),
+                  TURN: "TURN NOW ↻", LOCKED: "TURNING · lines ignored" }[run.state];
+    const showTurn = run.state === "TURN" && now - run.lastTurn < 1200;
+    st.textContent = frame && frame.demo ? "connect the camera" : (run.state === "TURN" && !showTurn ? txt.replace("TURN NOW ↻", "TURNING · lines ignored") : txt);
+    st.className = "dirbig " + (showTurn ? "turn" : run.state === "ARMED" ? (run.color === ORANGE ? "or" : "bl") : "none");
+    $("cCount").textContent = run.corners + " / 12";
+    $("cDir").textContent = run.dir ? (run.dir === ORANGE ? "CLOCKWISE (orange first)" : "COUNTER-CLOCKWISE (blue first)") : "not known yet";
+    $("cLock").textContent = run.state === "TURN" || run.state === "LOCKED" ? Math.max(0, Math.round((run.lockUntil - now) / 100) / 10) + " s left" : "—";
+  }
+
   function process() {
     if (!frame) return;
     syncBand();
     result = analyze(frame);
+    xres = analyzeExt(frame, result.cls, result.merge.force);
+    if (frame.id !== run.lastId) { run.lastId = frame.id; stepCorner(); }   // only real new pictures count
     paintAll();
     updatePanel();
     syncZoneUI();
@@ -597,6 +979,11 @@
 
   // ===== Zone sliders (ignore top / medium / near) =====
   function syncZoneUI() {
+    const H = fH();
+    for (const id of ["zTop", "zNear", "zExt", "zTrig", "tTop", "tNear", "tExt", "tTrig", "tTopR", "tNearR", "tExtR", "tTrigR"]) $(id).max = H - 1;
+    $("zSide").max = fW() / 2 - 1;
+    $("zExt").value = P.ext; $("zExtV").textContent = "row " + P.ext + "+";
+    $("zTrig").value = P.trig; $("zTrigV").textContent = "row " + P.trig;
     $("zTop").value = P.top;  $("zTopV").textContent = "rows 0–" + Math.max(0, P.top - 1);
     if (P.top === 0) $("zTopV").textContent = "none";
     $("zNear").value = NEAR_ROWS;  $("zNearV").textContent = NEAR_ROWS + " (rows ≥" + NEAR_BOTTOM + " off)";
@@ -606,6 +993,8 @@
   $("zTop").addEventListener("input", () => { P.top = +$("zTop").value; process(); });
   $("zNear").addEventListener("input", () => { P.near = +$("zNear").value; process(); });
   $("zSide").addEventListener("input", () => { SIDE_ZONE = +$("zSide").value; process(); });
+  $("zExt").addEventListener("input", () => { P.ext = +$("zExt").value; process(); });
+  $("zTrig").addEventListener("input", () => { P.trig = +$("zTrig").value; process(); });
 
   // Drag the lines directly on the picture
   let dragging = null;
@@ -615,6 +1004,7 @@
   }
   function lineNear(row) {
     const cands = [["top", P.top], ["near", NEAR_BOTTOM]];
+    if ($("lyExt").checked) cands.push(["ext", P.ext], ["trig", P.trig]);
     let best = null, bd = 4;
     for (const [k, v] of cands) { const d = Math.abs(row - v); if (d < bd) { bd = d; best = k; } }
     return best;
@@ -626,15 +1016,151 @@
   });
   $("main").addEventListener("pointermove", e => {
     if (!frame) return;
-    const row = Math.max(0, Math.min(119, rowAt(e)));
+    const H = fH(), row = Math.max(0, Math.min(H - 1, rowAt(e)));
     if (!dragging) { $("main").classList.toggle("grab", !!lineNear(row)); return; }
-    if (dragging === "top") P.top = Math.min(row, 118 - 0);
-    else P.near = 120 - row;
+    if (dragging === "top") P.top = Math.min(row, H - 2);
+    else if (dragging === "near") P.near = H - row;
+    else if (dragging === "ext") P.ext = row;
+    else P.trig = row;
     process();
   });
   const stopDrag = () => { dragging = null; };
   $("main").addEventListener("pointerup", stopDrag);
   $("main").addEventListener("pointercancel", stopDrag);
+
+  // ===== Color calibration: drag a box over an object, thresholds come from its pixels =====
+  // samples[color] = list of [h, s, v] from the camera picture (not the drawing on top).
+  let calColor = null, calBox = null, samples = {};
+  const CAL_KEY = () => "pillarVisionLab.samples.v1." + scaledFor;
+  function saveSamples() { try { localStorage.setItem(CAL_KEY(), JSON.stringify(samples)); } catch (e) {} }
+  function loadSamples() { try { samples = JSON.parse(localStorage.getItem(CAL_KEY()) || "{}") || {}; } catch (e) { samples = {}; } }
+  const pct = (arr, q) => { const a = arr.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(q * a.length)))]; };
+  // Hue is a circle (359 and 0 are neighbours): measure every hue as an offset from the mean direction.
+  function hueRange(hs, margin) {
+    let sx = 0, sy = 0;
+    for (const h of hs) { sx += Math.cos(h * Math.PI / 180); sy += Math.sin(h * Math.PI / 180); }
+    const c = (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360;
+    const d = hs.map(h => ((h - c + 540) % 360) - 180);
+    const lo = Math.round((c + pct(d, 0.03) - margin + 360) % 360), hi = Math.round((c + pct(d, 0.97) + margin + 360) % 360);
+    return { lo, hi, center: Math.round(c) };
+  }
+  const MARGIN = 6;   // extra degrees of hue on each side
+  const KEYS = { red: ["redLo", "redHi", "redS", "redV"], green: ["grLo", "grHi", "grS", "grV"],
+                 magenta: ["mgLo", "mgHi", "mgS", "mgV"], orange: ["orLo", "orHi", "orS", "orV"], blue: ["blLo", "blHi", "blS", "blV"] };
+  // Rebuild every sampled color's thresholds, then pull apart colors that are neighbours on
+  // the hue circle (red / magenta / orange): the border goes halfway between their centres.
+  // If they still mix, saturation is used as a second border when it separates them.
+  function recalcAll() {
+    const floorS = samples.floor && samples.floor.length > 10 ? Math.round(pct(samples.floor.map(p => p[1]), 0.98)) + 6 : 0;
+    // If the black wall was sampled, every color's brightness minimum stays above the wall
+    // (the wall is never pure black: in the dark its hue is random, often blue).
+    const wallV = samples.wall && samples.wall.length > 10 ? Math.round(pct(samples.wall.map(p => p[2]), 0.98)) + 8 : 0;
+    const R = {};
+    for (const name of Object.keys(KEYS)) {
+      const sm = samples[name]; if (!sm || sm.length < 10) continue;
+      const hs = sm.map(p => p[0]), ss = sm.map(p => p[1]), vs = sm.map(p => p[2]);
+      let sx = 0, sy = 0;
+      for (const h of hs) { sx += Math.cos(h * Math.PI / 180); sy += Math.sin(h * Math.PI / 180); }
+      const c = (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360;
+      const d = hs.map(h => ((h - c + 540) % 360) - 180);
+      R[name] = { c, dlo: pct(d, 0.03) - MARGIN, dhi: pct(d, 0.97) + MARGIN,
+                  s: Math.max(20, floorS, Math.round(pct(ss, 0.05) * 0.8)), v: Math.max(25, wallV, Math.round(pct(vs, 0.05) * 0.7)),
+                  sLow: pct(ss, 0.05), sHigh: pct(ss, 0.95) };
+    }
+    const notes = [];
+    for (const [a, b] of [["red", "magenta"], ["red", "orange"], ["magenta", "orange"], ["magenta", "blue"], ["orange", "green"]]) {
+      const A = R[a], B = R[b]; if (!A || !B) continue;
+      const delta = ((B.c - A.c + 540) % 360) - 180;          // where B sits, seen from A
+      const overlap = delta > 0 ? A.dhi >= delta + B.dlo : A.dlo <= delta + B.dhi;
+      if (!overlap) continue;
+      // 1st choice: saturation, when one color is clearly duller (keeps both hue ranges whole).
+      // The pillar color wins: a pixel that is red for the pillar test is never magenta / orange.
+      const [dull, vivid, dn, vn] = A.sHigh < B.sLow ? [A, B, a, b] : B.sHigh < A.sLow ? [B, A, b, a] : [null];
+      if (dull && vn === "red") {
+        vivid.s = Math.max(vivid.s, Math.round((dull.sHigh + vivid.sLow) / 2));
+        notes.push(a + "/" + b + ": red needs S ≥ " + vivid.s + " (" + dn + " is duller)");
+        continue;
+      }
+      // 2nd choice: a hue border halfway between the two centres
+      const half = delta / 2;
+      if (delta > 0) { A.dhi = Math.min(A.dhi, half - 1); B.dlo = Math.max(B.dlo, -half); }
+      else           { A.dlo = Math.max(A.dlo, half + 1); B.dhi = Math.min(B.dhi, -half); }
+      notes.push(a + "/" + b + ": hue border at " + Math.round((A.c + half + 360) % 360) + "°");
+    }
+    for (const [name, r] of Object.entries(R)) {
+      const k = KEYS[name];
+      P[k[0]] = Math.round((r.c + r.dlo + 360) % 360); P[k[1]] = Math.round((r.c + r.dhi + 360) % 360);
+      P[k[2]] = r.s; P[k[3]] = r.v;
+    }
+    calNotes = notes;
+  }
+  let calNotes = [];
+  // Which color each test would call a pixel. Pillar test first (like the robot), then lines/parking.
+  function whoClaims(h, s, v) {
+    const out = [], c = classify(h, s, v), x = classifyExt(h, s, v);
+    if (c === RED) out.push("red"); if (c === GREEN) out.push("green");
+    if (x === MAGENTA) out.push("magenta"); if (x === ORANGE) out.push("orange"); if (x === BLUE) out.push("blue");
+    // red vs magenta / orange: classify() stops at the first match, so check them directly too
+    if (c !== RED && (h >= P.redLo || h <= P.redHi) && s >= P.redS && v >= P.redV) out.push("red");
+    return out;
+  }
+  function calReport() {
+    const names = ["red", "green", "magenta", "orange", "blue", "floor", "wall"];
+    const lines = [];
+    for (const n of names) {
+      const sm = samples[n];
+      const btn = document.querySelector('#calBtns [data-c="' + n + '"] .ck');
+      if (btn) btn.textContent = sm && sm.length ? " ✓" : "";
+      if (!sm || !sm.length) continue;
+      const hs = sm.map(p => p[0]), ss = sm.map(p => p[1]), vs = sm.map(p => p[2]);
+      const r = hueRange(hs, 0);
+      const counts = {};
+      for (const [h, s, v] of sm) for (const w of new Set(whoClaims(h, s, v))) counts[w] = (counts[w] || 0) + 1;
+      const own = n === "floor" || n === "wall" ? null : Math.round(100 * (counts[n] || 0) / sm.length);
+      const wrong = Object.entries(counts).filter(([w, k]) => w !== n && 100 * k / sm.length >= 1).map(([w, k]) => w + " " + Math.round(100 * k / sm.length) + "%");
+      lines.push(n.toUpperCase().padEnd(8) + " " + String(sm.length).padStart(5) + " px · H " + r.lo + "–" + r.hi + " · S " + pct(ss, .05) + "–" + pct(ss, .95) +
+        " · V " + pct(vs, .05) + "–" + pct(vs, .95) + "\n         " +
+        (own === null ? "" : "found " + own + "%" + (own < 85 ? " ✗ (low)" : " ✓") + " · ") +
+        (wrong.length ? "also seen as: " + wrong.join(", ") + " ✗" : "no mix-ups ✓"));
+    }
+    if (calNotes.length) lines.push("", "Separated: " + calNotes.join(" · "));
+    $("calOut").textContent = lines.length ? lines.join("\n") : "No samples yet.";
+  }
+  function addSample(box) {
+    const f = frame, sm = samples[calColor] || (samples[calColor] = []);
+    const x0 = Math.max(0, Math.min(box.x0, box.x1)), x1 = Math.min(f.W - 1, Math.max(box.x0, box.x1));
+    const y0 = Math.max(0, Math.min(box.y0, box.y1)), y1 = Math.min(f.H - 1, Math.max(box.y0, box.y1));
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const [r, g, b] = rgbAt(f, x, y); sm.push(hsv(r, g, b)); }
+    if (sm.length > 6000) samples[calColor] = sm.filter((_, i) => i % 2 === 0);   // keep it small
+    // a new sample of one color can change the others (floor limits saturation)
+    recalcAll();
+    saveSamples(); fillTune(); process(); calReport();
+    log("Calibrated " + calColor + " from " + ((x1 - x0 + 1) * (y1 - y0 + 1)) + " pixels.");
+  }
+  document.querySelectorAll("#calBtns [data-c]").forEach(b => b.addEventListener("click", () => {
+    calColor = calColor === b.dataset.c ? null : b.dataset.c;
+    document.querySelectorAll("#calBtns [data-c]").forEach(o => o.classList.toggle("on", o.dataset.c === calColor));
+    $("main").classList.toggle("cross", !!calColor);
+  }));
+  $("calClear").onclick = () => { samples = {}; saveSamples(); calReport(); };
+  function pixAt(e) {
+    const r = $("main").getBoundingClientRect();
+    return { x: Math.floor((e.clientX - r.left) / r.width * fW()), y: Math.floor((e.clientY - r.top) / r.height * fH()) };
+  }
+  $("main").addEventListener("pointerdown", e => {
+    if (!frame || !calColor) return;
+    const p = pixAt(e); calBox = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+    $("main").setPointerCapture(e.pointerId); e.preventDefault(); e.stopImmediatePropagation();
+  }, true);
+  $("main").addEventListener("pointermove", e => {
+    if (!calBox) return;
+    const p = pixAt(e); calBox.x1 = p.x; calBox.y1 = p.y; paintAll(); e.stopImmediatePropagation();
+  }, true);
+  $("main").addEventListener("pointerup", e => {
+    if (!calBox) return;
+    const b = calBox; calBox = null; e.stopImmediatePropagation();
+    if (Math.abs(b.x1 - b.x0) + Math.abs(b.y1 - b.y0) >= 2) addSample(b); else paintAll();
+  }, true);
 
   // ===== Full screen (button, F key, or double-click the picture; Esc leaves) =====
   function toggleFull() {
@@ -663,13 +1189,17 @@
     const [R, G, B] = rgbAt(frame, x, y), [h, s, v] = hsv(R, G, B);
     const name = c => ["nothing", "RED", "GREEN", "?"][c];
     const i = y * frame.W + x;
-    $("hover").innerHTML = `<span class="sw" style="background:rgb(${R},${G},${B})"></span>x ${x} · y ${y} · RGB ${R},${G},${B}<br>H ${h} · S ${s} · V ${v} → page: <b>${name(result.cls[i])}</b> · Arduino: <b>${name(espClass(i))}</b>`;
+    const xn = ["—", "", "", "ORANGE", "BLUE", "MAGENTA"][xres ? xres.ext[i] : 0] || "—";
+    $("hover").innerHTML = `<span class="sw" style="background:rgb(${R},${G},${B})"></span>x ${x} · y ${y} · RGB ${R},${G},${B}<br>H ${h} · S ${s} · V ${v} → page: <b>${name(result.cls[i])}</b> · Arduino: <b>${name(espClass(i))}</b> · lines/parking: <b>${xn}</b>`;
   });
 
   // ===== Layers + tuning controls =====
-  ["lyPic", "lyMask", "lyAlpha", "lyBlobs", "lyNoise", "lySplit", "lyGuides"].forEach(id => $(id).addEventListener("input", paintAll));
+  ["lyPic", "lyMask", "lyAlpha", "lyBlobs", "lyNoise", "lySplit", "lyGuides", "lyExt"].forEach(id => $(id).addEventListener("input", paintAll));
   const TUNE = { tRedLo: "redLo", tRedHi: "redHi", tRedS: "redS", tRedV: "redV", tGrLo: "grLo", tGrHi: "grHi",
-                 tGrS: "grS", tGrV: "grV", tMin: "minPx", tTol: "tol", tTop: "top", tNear: "near" };
+                 tGrS: "grS", tGrV: "grV", tRedMin: "redMin", tGrMin: "grMin", tTol: "tol", tTop: "top", tNear: "near",
+                 tOrLo: "orLo", tOrHi: "orHi", tOrS: "orS", tOrV: "orV", tBlLo: "blLo", tBlHi: "blHi", tBlS: "blS", tBlV: "blV",
+                 tMgLo: "mgLo", tMgHi: "mgHi", tMgS: "mgS", tMgV: "mgV", tExt: "ext", tOrMin: "orMin", tBlMin: "blMin", tMgMaj: "mgMaj", tLineRow: "lineRow",
+                 tTrig: "trig", tMagMin: "magMin", tConfirm: "confirm", tLock: "lockMs" };
   // Each number box gets a slider in front of it (same min / max); both move together.
   for (const [id, k] of Object.entries(TUNE)) {
     const num = $(id), lab = num.closest("label");
@@ -686,25 +1216,76 @@
   function syncRanges() { for (const [id, k] of Object.entries(TUNE)) { $(id + "R").value = P[k]; if (document.activeElement !== $(id)) $(id).value = P[k]; } }
   function fillTune() { for (const [id, k] of Object.entries(TUNE)) $(id).value = P[k]; syncRanges(); }
   function markChanged() {
-    for (const [id, k] of Object.entries(TUNE)) $(id).closest("label").classList.toggle("changed", P[k] !== ARDUINO[k]);
+    for (const [id, k] of Object.entries(TUNE)) $(id).closest("label").classList.toggle("changed", P[k] !== DEF[k]);
+    $("zExt").closest("label").classList.toggle("changed", P.ext !== DEF.ext);
+    $("zTrig").closest("label").classList.toggle("changed", P.trig !== DEF.trig);
     $("zNear").closest("label").classList.toggle("changed", P.near !== ARDUINO.near);
     $("zSide").closest("label").classList.toggle("changed", SIDE_ZONE !== ARDUINO_ZONES.side);
     $("zTop").closest("label").classList.toggle("changed", P.top !== ARDUINO.top);
   }
-  const STORE_KEY = "pillarVisionLab.settings.v2";
+  // Settings are kept per picture size (160x120 and 320x240 each remember their own),
+  // so they survive reloads, reconnecting and switching sketches.
+  const STORE_KEY = () => "pillarVisionLab.settings.v4." + scaledFor;
   function saveSettings() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify({ P, side: SIDE_ZONE })); } catch (e) {}
+    try { localStorage.setItem(STORE_KEY(), JSON.stringify({ P, side: SIDE_ZONE })); } catch (e) {}
   }
   function loadSettings() {
     try {
-      const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+      const s = JSON.parse(localStorage.getItem(STORE_KEY()) || "null");
       if (!s) return;
-      for (const k of Object.keys(ARDUINO)) if (typeof s.P[k] === "number") P[k] = s.P[k];
+      for (const k of Object.keys(DEF)) if (typeof s.P[k] === "number") P[k] = s.P[k];
       if (typeof s.side === "number") SIDE_ZONE = s.side;
     } catch (e) {}
   }
-  $("btnReset").onclick = () => { P = { ...ARDUINO }; SIDE_ZONE = ARDUINO_ZONES.side;
+  $("btnRunReset").onclick = () => { Object.assign(run, { state: "WAIT", color: 0, missing: 0, corners: 0, dir: 0, lockUntil: 0 }); cornerPanel(); };
+  $("btnReset").onclick = () => { P = { ...DEF }; SIDE_ZONE = ARDUINO_ZONES.side;
     fillTune(); process(); $("copyMsg").textContent = ""; };
+  // ===== Bring settings back: from the sketch text, or from a saved file =====
+  const NAME_TO_KEY = {
+    RED_HUE_LOW: "redLo", RED_HUE_HIGH: "redHi", RED_MIN_SAT: "redS", RED_MIN_VAL: "redV",
+    GREEN_HUE_LOW: "grLo", GREEN_HUE_HIGH: "grHi", GREEN_MIN_SAT: "grS", GREEN_MIN_VAL: "grV",
+    RED_MIN_PIXELS: "redMin", GREEN_MIN_PIXELS: "grMin", IGNORE_TOP_ROWS: "top", BOTTOM_TOL: "tol", NEAR_ROWS: "near",
+    ORANGE_HUE_LOW: "orLo", ORANGE_HUE_HIGH: "orHi", ORANGE_MIN_SAT: "orS", ORANGE_MIN_VAL: "orV",
+    BLUE_HUE_LOW: "blLo", BLUE_HUE_HIGH: "blHi", BLUE_MIN_SAT: "blS", BLUE_MIN_VAL: "blV",
+    MAGENTA_HUE_LOW: "mgLo", MAGENTA_HUE_HIGH: "mgHi", MAGENTA_MIN_SAT: "mgS", MAGENTA_MIN_VAL: "mgV",
+    FLOOR_TOP_ROW: "ext", ORANGE_MIN_PIXELS: "orMin", BLUE_MIN_PIXELS: "blMin", LINE_ROW_MIN: "lineRow",
+    LINE_TRIGGER_ROW: "trig", MAGENTA_MIN_PIXELS: "magMin", MAGENTA_MAJORITY: "mgMaj", TURN_CONFIRM_FRAMES: "confirm" };
+  function afterLoad(msg) { fillTune(); process(); saveSettings(); $("importMsg").textContent = msg; }
+  $("btnImportShow").onclick = () => { $("importBox").hidden = !$("importBox").hidden; };
+  $("btnImportApply").onclick = () => {
+    if (!frame || frame.demo) { $("importMsg").textContent = "Connect the camera first (values are kept per picture size), then press Apply."; return; }
+    const re = /const\s+(?:int|long|uint8_t|int16_t)\s+([A-Z_0-9]+)\s*=\s*(-?\d+)/g;
+    let m, n = 0;
+    const text = $("importText").value;
+    while ((m = re.exec(text))) {
+      const name = m[1], v = parseInt(m[2], 10);
+      if (name === "SIDE_ZONE") { SIDE_ZONE = v; n++; }
+      else if (NAME_TO_KEY[name]) { P[NAME_TO_KEY[name]] = v; n++; }
+    }
+    afterLoad(n ? n + " values loaded from the code." : "No known lines found. Paste lines like: const int RED_HUE_LOW = 340;");
+  };
+  $("btnSaveFile").onclick = () => {
+    const data = { picture: fW() + "x" + fH(), P, side: SIDE_ZONE, samples, saved: new Date().toISOString() };
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" }));
+    a.download = "pillar_vision_settings_" + fW() + "x" + fH() + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    $("importMsg").textContent = "Saved. Keep the file next to viewer.html.";
+  };
+  $("btnLoadFile").onclick = () => $("fileIn").click();
+  $("fileIn").onchange = async () => {
+    const f = $("fileIn").files[0]; if (!f) return;
+    if (!frame || frame.demo) { $("importMsg").textContent = "Connect the camera first (values are kept per picture size), then load the file."; $("fileIn").value = ""; return; }
+    try {
+      const d = JSON.parse(await f.text());
+      for (const k of Object.keys(DEF)) if (d.P && typeof d.P[k] === "number") P[k] = d.P[k];
+      if (typeof d.side === "number") SIDE_ZONE = d.side;
+      if (d.samples) { samples = d.samples; saveSamples(); calReport(); }
+      afterLoad("Loaded " + f.name + (d.picture && d.picture !== fW() + "x" + fH() ? " (it was saved for " + d.picture + ")" : "") + ".");
+    } catch (e) { $("importMsg").textContent = "That file could not be read."; }
+    $("fileIn").value = "";
+  };
+
   $("btnCopy").onclick = async () => {
     const lines =
 `const int RED_HUE_LOW    = ${P.redLo};
@@ -717,11 +1298,37 @@ const int GREEN_HUE_HIGH = ${P.grHi};
 const int GREEN_MIN_SAT  = ${P.grS};
 const int GREEN_MIN_VAL  = ${P.grV};
 
-const int  MIN_PIXELS      = ${P.minPx};
+const int  RED_MIN_PIXELS   = ${P.redMin};
+const int  GREEN_MIN_PIXELS = ${P.grMin};
 const int  IGNORE_TOP_ROWS = ${P.top};
 const int  BOTTOM_TOL      = ${P.tol};
-const int  NEAR_ROWS       = ${P.near};   // rows from H - NEAR_ROWS (${120 - P.near}) down are ignored: search band = rows ${P.top}-${119 - P.near}
-const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside it on the pass side = correct side`;
+const int  NEAR_ROWS       = ${P.near};   // rows from H - NEAR_ROWS (${fH() - P.near}) down are ignored: search band = rows ${P.top}-${fH() - 1 - P.near}
+const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside it on the pass side = correct side
+
+// ---------- Floor lines and parking walls (picture ${fW()}x${fH()}) ----------
+const int ORANGE_HUE_LOW  = ${P.orLo};
+const int ORANGE_HUE_HIGH = ${P.orHi};
+const int ORANGE_MIN_SAT  = ${P.orS};
+const int ORANGE_MIN_VAL  = ${P.orV};
+
+const int BLUE_HUE_LOW    = ${P.blLo};
+const int BLUE_HUE_HIGH   = ${P.blHi};
+const int BLUE_MIN_SAT    = ${P.blS};
+const int BLUE_MIN_VAL    = ${P.blV};
+
+const int MAGENTA_HUE_LOW  = ${P.mgLo};
+const int MAGENTA_HUE_HIGH = ${P.mgHi};
+const int MAGENTA_MIN_SAT  = ${P.mgS};
+const int MAGENTA_MIN_VAL  = ${P.mgV};
+
+const int FLOOR_TOP_ROW      = ${P.ext};   // lines and magenta are searched from this row to the bottom
+const int ORANGE_MIN_PIXELS  = ${P.orMin};   // biggest orange patch must be at least this big
+const int BLUE_MIN_PIXELS    = ${P.blMin};   // biggest blue patch must be at least this big
+const int LINE_ROW_MIN       = ${P.lineRow};   // a row belongs to the line if it has at least this many pixels
+const int LINE_TRIGGER_ROW   = ${P.trig};  // lowest line row >= this -> line reached
+const int MAGENTA_MIN_PIXELS = ${P.magMin};
+const int MAGENTA_MAJORITY   = ${P.mgMaj};   // a red+magenta patch with at least this % magenta is all magenta
+const int TURN_CONFIRM_FRAMES = ${P.confirm};  // line missing this many pictures in a row = it went under the car`;
     const box = $("copyBox"); box.value = lines; box.hidden = false;
     try { await navigator.clipboard.writeText(lines); $("copyMsg").textContent = "Copied. Paste over the same lines in the sketch."; }
     catch (e) { box.focus(); box.select(); $("copyMsg").textContent = "Select-all is ready: press ⌘C to copy."; }
@@ -807,8 +1414,11 @@ const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside
       onFrame(f);
     }
   }
+  let frameCounter = 0;
   function onFrame(f) {
+    f.id = ++frameCounter;
     frame = f; gotFrame = true;
+    if (scaleDefaults(f.W)) { fillTune(); log("Picture is " + f.W + "x" + f.H + ": settings scaled to match the sketch."); }
     viewerFrames++;
     const now = performance.now();
     if (now - fpsT0 >= 1000) { viewerFps = viewerFrames * 1000 / (now - fpsT0); viewerFrames = 0; fpsT0 = now; }
@@ -830,6 +1440,7 @@ const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside
 
   // ===== Demo picture (so the page shows the whole pipeline before connecting) =====
   function loadDemo() {
+    if (scaleDefaults(160)) fillTune();
     const W = 160, H = 120, pic = new Uint8Array(W * H * 2);
     const put = (x, y, r, g, b) => { const p = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3); pic[(y * W + x) * 2] = p >> 8; pic[(y * W + x) * 2 + 1] = p & 255; };
     let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -837,11 +1448,22 @@ const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside
       if (y < 34) { const k = 40 + rnd() * 10; put(x, y, k, k, k + 4); }                       // black wall
       else { const k = 170 + y * .6 + rnd() * 14; put(x, y, k, k - 2, k - 8); }                  // white mat
     }
+    // floor lines (drawn before the pillars): orange is the closer one -> clockwise
+    const band = (xa, ya, xb, yb, th, rgb) => { for (let x = 0; x < W; x++) {
+      if (x < Math.min(xa, xb) || x > Math.max(xa, xb)) continue;
+      const yc = ya + (yb - ya) * (x - xa) / (xb - xa);
+      for (let y = Math.round(yc - th / 2); y <= Math.round(yc + th / 2); y++) if (y >= 34 && y < H)
+        put(x, y, rgb[0] + rnd() * 12, rgb[1] + rnd() * 12, rgb[2] + rnd() * 12); } };
+    band(0, 109, 159, 86, 3, [235, 110, 25]);
+    band(40, 70, 159, 60, 2, [25, 70, 190]);
+    // two magenta parking walls on the right, against the outer wall
+    for (const [x0, x1, y0, y1] of [[118, 156, 64, 76], [132, 152, 44, 53]])
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(x, y, 195 + rnd() * 12, 78 + rnd() * 8, 108 + rnd() * 8);
     const pillar = (x0, y0, w, h, rgb) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
       const sh = x < x0 + w * .3 ? .8 : 1; put(x, y, rgb[0] * sh + rnd() * 10, rgb[1] * sh + rnd() * 10, rgb[2] * sh + rnd() * 10); } };
     pillar(104, 44, 9, 18, [40, 170, 60]);      // far green, behind…
     pillar(92, 52, 14, 30, [45, 180, 65]);      // …and a closer green touching it -> split
-    pillar(28, 58, 18, 40, [215, 35, 50]);      // close red: the winner
+    pillar(28, 58, 18, 40, [220, 40, 35]);      // close red: the winner
     for (let k = 0; k < 6; k++) put(140 + k, 100, 220, 30, 40);   // a few red specks: noise
     for (let k = 0; k < 3; k++) put(60 + k, 110, 40, 190, 70);
     const f = { W, H, mirror: false, flip: false, demo: true, pic, camFps: 0, espMask: null, esp: null };
@@ -859,7 +1481,9 @@ const int  SIDE_ZONE       = ${SIDE_ZONE};   // |x| <= this -> "CENTER"; outside
   }
 
   loadSettings();
+  loadSamples();
   fillTune();
+  calReport();
   loadDemo();
 })();
 </script>
