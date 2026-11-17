@@ -2,6 +2,10 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## Unreleased — 17 November · TOF sensors back on the 5 V rail
+- **Power:** the four TOF400C sensors are powered from the +5 V buck rail again, not the Nano's 3.3 V pin. The classic Nano works with 5 V logic, so the sensors connect to it directly. Power budget recalculated (≈ 2.2 W typical, ≈ 10.5 W peak, ≈ 1.6 h per charge). The new failure point is servo peaks on the shared 5 V rail, to be checked with a multimeter during a servo stall.
+- Journal section 9.4, the risk table in `schemes/README.md` §4.3 and the main README were updated to match.
+
 ## v1.8 — 5 November · Repository reorganisation
 - **Sketches regrouped by purpose:** `src/hardware-tests/` now holds only component tests; the driving algorithms moved to the new `src/open-challenge/` folder (`wall_follow_nearest_pid`, `wall_keep_both_pid`, `wall_follow_nearest_gyro`, `wall_follow_gyro_corner_front`, `turn_left_90_pid_brake`, and the two renamed sketches below).
 - **Descriptive names instead of nicknames:** `exito_glorioso` is now `corner_turn_front_trigger` and `exito_rotundo` is now `corner_turn_timed`. Code, headers, journal tables and links were updated; the behaviour is unchanged.

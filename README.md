@@ -249,19 +249,19 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 
 ```
  3S HV LiPo 11.4 V ──[switch]──┬──► TB6612FNG ──► N20 drive motor
-                               ├──► Arduino Nano (VIN) ──► 3.3 V pin ──► 4 × TOF400C
-                               └──► CN3903 buck 5 V / 3 A ──► camera board, BMI160, servo, encoder
+                               ├──► Arduino Nano (VIN)
+                               └──► CN3903 buck 5 V / 3 A ──► camera board, BMI160, servo, encoder, 4 × TOF400C
 ```
 
 | | Typical | Peak |
 |---|---|---|
-| Current from the battery | ≈ 0.22 A | ≈ 0.96 A |
-| Power | ≈ 2.5 W | ≈ 11.0 W |
-| Run time on one charge | ≈ 1.4 h | ≈ 19 min |
+| Current from the battery | ≈ 0.20 A | ≈ 0.92 A |
+| Power | ≈ 2.2 W | ≈ 10.5 W |
+| Run time on one charge | ≈ 1.6 h | ≈ 20 min |
 
-The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1 A peak of the 5 V rail, so a servo stall cannot reset the camera.
+The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1.05 A peak of the 5 V rail, so a servo stall cannot reset the camera.
 
-**The TOF sensors take 3.3 V from the Nano**, not from the 5 V buck rail. Their laser pulses are then on a different rail from the servo, so a servo current peak cannot disturb a distance reading. The cost: four sensors peak near 80 mA, which is more than the small 3.3 V regulator of a classic Nano is rated for. We check the 3.3 V pin with a multimeter while all four sensors are ranging; if it sags, the TOF400C modules can go back to the 5 V rail with no other change (they accept 3.3–5 V). Full budget and failure analysis: [schemes/README.md §4](schemes/README.md#4-power-system).
+**The TOF sensors take 5 V from the buck rail**, like the other sensors and the camera. The classic Nano works with 5 V logic, so the 5 V sensors talk to it directly. The cost: the servo's current peaks now share the rail with the sensors. The 3 A buck margin keeps that rail steady, and we check it with a multimeter during a servo stall while the sensors are ranging. Full budget and failure analysis: [schemes/README.md §4](schemes/README.md#4-power-system).
 
 ### 6.2 Wiring / pin map (Arduino Nano)
 
@@ -726,7 +726,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | TOF mounting angle | Sensors, software, strategy | At 30° the black wall returned no light and every decision based on it failed; straight sensors made the data trustworthy and the algorithm simpler |
 | Steering mechanism | Mechanics, electronics, software | Ackermann friction broke three servos; rack and pinion protects the servo and makes angle → wheel position linear |
 | Car size and mass (13 × 9.5 cm, 270 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
-| TOF on the Nano's 3.3 V pin | Power, sensors | Isolated from servo peaks, but limited by the Nano's small regulator |
+| TOF on the 5 V buck rail | Power, sensors | The Nano works with 5 V logic, so the sensors connect directly; they share the rail with the servo, which the 3 A buck margin covers |
 | Servo mount angle | Mechanics, software | Steering centre must be measured in software after every mechanical change |
 | Battery voltage directly to the motor | Power, control | Speed changes as the battery discharges, so turns are controlled by gyro angle, not time |
 
@@ -763,7 +763,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | Risk | Mitigation |
 |---|---|
 | Main board damaged by a wrong voltage (journal Problem 31: the Nano ESP32 was lost) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
-| TOF sensors draw more than the Nano's 3.3 V pin can give | Measure the 3.3 V pin under load; fallback: TOF VIN to the 5 V buck rail |
+| Servo peaks on the shared 5 V rail reach the TOF sensors | Measure the 5 V rail under servo stall with the sensors ranging; 3 A buck margin |
 | Classic Nano (5 V) TX into the camera's 3.3 V RX | Resistor divider on that line before the camera link is connected |
 | Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin |
 | Drive gear skips on a sudden reverse (journal Problem 34) | Motor only drives forward during a run; stops with short brake |

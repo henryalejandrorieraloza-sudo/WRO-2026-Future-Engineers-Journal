@@ -759,16 +759,18 @@ The tyres are cast in printed moulds with **C25 silicone rubber** (parts A and B
 
 **Why:** more grip than printed plastic, so the car slips less when it accelerates, brakes and turns, and the gyro turns and encoder distances stay accurate. The fixed formula makes every batch the same.
 
-### 9.4 Power change: TOF sensors on the Nano's 3.3 V
+### 9.4 Power change: TOF sensors on the 5 V buck rail
 
-The four TOF400C sensors are now powered from the **3.3 V pin of the Nano** instead of the 5 V buck rail. The power budget was recalculated ([schemes §4.2](../schemes/README.md#42-power-budget)): typical ≈ 2.5 W (≈ 1.4 h per charge), peak ≈ 11.0 W. **Open risk:** the classic Nano's 3.3 V pin is meant for small loads, and four sensors peak near 80 mA. Next step: measure the 3.3 V pin with a multimeter while all four sensors are ranging; if it sags below ~3.0 V, move them back to 5 V.
+The four TOF400C sensors are powered from the **+5 V buck rail**, like the camera and the other sensors. The classic Nano works with 5 V logic, so the 5 V sensors connect to it directly. The power budget was recalculated ([schemes §4.2](../schemes/README.md#42-power-budget)): typical ≈ 2.2 W (≈ 1.6 h per charge), peak ≈ 10.5 W. **Open risk:** the servo's current peaks now share the 5 V rail with the sensors. The 3 A buck margin should keep the rail steady, but this must be measured. Next step: measure the 5 V rail with a multimeter while the servo stalls and all four sensors are ranging.
+
+This reverses the earlier plan to power the sensors from the Nano's 3.3 V pin, whose small regulator would have carried the sensors' current.
 
 ### 9.5 What this phase gives the rubric
 
 | Rubric criterion | Evidence |
 |---|---|
 | Mobility and mechanical design | Three CAD + printed iterations, gear geometry (module 1, 12 teeth), torque and speed reasoning, trade-off Ackermann vs parallel |
-| Power and sensor architecture | Recalculated power budget and a new failure point (3.3 V pin) with a test and a fallback |
+| Power and sensor architecture | Recalculated power budget and a new failure point (servo peaks on the shared 5 V rail) with a test and a margin check |
 | Systems thinking | A mechanical problem (friction) caused electrical damage (servos) and changed software constants: one decision fixed all three |
 | Reproducibility | 25 STL files, STEP assembly, tyre recipe and assembly order published in `models/` |
 
@@ -1482,7 +1484,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
 - [ ] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°).
-- [ ] Measure the Nano's 3.3 V pin while the four TOF sensors are ranging (section 9.4).
+- [ ] Measure the 5 V buck rail during a servo stall while the four TOF sensors are ranging (section 9.4).
 - [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
 - [x] Repeat the ROI test with other sizes: done in Phase 10 — 16 × 8 replaces 1 × 6 ✅
