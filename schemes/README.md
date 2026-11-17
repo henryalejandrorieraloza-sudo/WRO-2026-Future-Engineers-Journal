@@ -82,7 +82,7 @@ The schematic is organised in functional blocks. It was drawn for the Nano ESP32
 | I²C bus (4 × TOF + BMI160) | SDA / SCL | A4 / A5 |
 | TOF BACK / FRONT / RIGHT / LEFT | XSHUT | A0 / A1 / A2 / A3 |
 
-Only the Nano's VIN pin receives the battery voltage. The classic Nano works with 5 V logic; the TOF400C modules are powered from its 3.3 V pin (section 4).
+Only the Nano's VIN pin receives the battery voltage. The classic Nano works with 5 V logic; the TOF400C modules are powered from the +5 V buck rail (section 4).
 
 ---
 
@@ -96,9 +96,10 @@ Only the Nano's VIN pin receives the battery voltage. The classic Nano works wit
    [power switch]
         │
         ├────────────► TB6612FNG VM ─────► N20 drive motor
-        ├────────────► Arduino Nano VIN ─► on-board 5 V regulator ─► 3.3 V pin ─► 4 × TOF400C
+        ├────────────► Arduino Nano VIN ─► on-board 5 V regulator ─► Nano (5 V logic)
         │
         └─► CN3903 buck 5 V / 3 A ─► +5 V rail ─┬─► ESP32-S3-CAM (→ 3.3 V for OV2640)
+                                                ├─► 4 × TOF400C
                                                 ├─► BMI160
                                                 ├─► TB6612FNG logic (VCC, STBY)
                                                 ├─► Steering servo
@@ -110,7 +111,7 @@ Only the Nano's VIN pin receives the battery voltage. The classic Nano works wit
 - **The motor takes the battery voltage directly.** The N20 is rated for 12 V, so a second regulator would only add losses and weight.
 - **The servo has the largest current peaks on the 5 V rail** (up to ~650 mA at stall). A 3 A buck leaves a wide margin, so a servo stall does not pull the rail down and reset the camera board or the sensors.
 - **A switching (buck) regulator instead of a linear one:** dropping 11.4 V to 5 V at 0.5 A in a linear regulator would waste ~3.2 W as heat, more than all the electronics use.
-- **The TOF sensors take 3.3 V from the Nano.** This keeps the sensors' I²C pull-ups at 3.3 V and takes their laser pulses off the rail that feeds the servo, so a servo current peak cannot disturb a distance measurement. The cost is that their current now passes through the Nano's small on-board regulators (see the budget and the failure points below).
+- **The TOF sensors take 5 V from the buck rail.** The classic Nano works with 5 V logic, so 5 V sensors and their I²C lines match it directly, and their current no longer passes through the Nano's small on-board regulator. The cost is that they share the rail with the servo, so the 3 A buck margin has to keep that rail steady during servo stalls (see the budget and the failure points below).
 - **One common ground** for all boards; the camera board and the Nano share it so the UART link has a clean reference.
 
 ### 4.2 Power budget
@@ -121,30 +122,30 @@ Values from the datasheets (typical = normal driving; peak = worst case, all at 
 |---|---|---|---|---|---|
 | N20 drive motor | 11.4 V | 50 mA | 350 mA | 0.57 W | 3.99 W |
 | Arduino Nano (ATmega328P) | 11.4 V (VIN, linear regulator) | ~20 mA | ~30 mA | 0.23 W | 0.34 W |
-| 4 × TOF400C | 3.3 V from the Nano (through its linear regulators, so the battery supplies the same current at 11.4 V) | 40 mA | 80 mA | 0.46 W | 0.91 W |
+| 4 × TOF400C | 5 V buck rail | 40 mA | 80 mA | 0.20 W | 0.40 W |
 | ESP32-S3-CAM + OV2640 | 5 V | 100 mA | 310 mA | 0.50 W | 1.55 W |
 | BMI160 | 5 V | 1 mA | 1.5 mA | 0.005 W | 0.008 W |
 | TB6612FNG logic | 5 V | 2 mA | 10 mA | 0.01 W | 0.05 W |
 | Steering servo | 5 V | 100 mA | 650 mA (stall) | 0.50 W | 3.25 W |
-| **5 V buck rail total** | 5 V | **203 mA** | **0.97 A** | 1.02 W | 4.86 W |
-| Buck losses (≈ 85 % efficiency) | — | — | — | 0.18 W | 0.86 W |
-| **Total from battery** | 11.4 V | **≈ 0.22 A** | **≈ 0.96 A** | **≈ 2.5 W** | **≈ 11.0 W** |
+| **5 V buck rail total** | 5 V | **243 mA** | **1.05 A** | 1.22 W | 5.26 W |
+| Buck losses (≈ 85 % efficiency) | — | — | — | 0.22 W | 0.93 W |
+| **Total from battery** | 11.4 V | **≈ 0.20 A** | **≈ 0.92 A** | **≈ 2.2 W** | **≈ 10.5 W** |
 
-The TOF row is counted on the battery side: a linear regulator passes the same current it delivers, so the 4 sensors cost 40 mA × 11.4 V ≈ 0.46 W from the battery, of which only 40 mA × 3.3 V ≈ 0.13 W reaches the sensors and the rest becomes heat in the Nano's regulators. Moving the sensors off the 5 V buck rail (previous design) costs about 0.2 W more at typical load; we accept it because it is small next to the motor and the servo.
+The TOF row is on the 5 V buck rail, so its cost reaches the battery through the buck converter: 40 mA × 5 V ≈ 0.20 W at typical load, about 0.4 W at peak. Compared with the previous design, where the sensors ran from the Nano's 3.3 V pin, the total is about 0.3 W lower at typical load, because the Nano's regulator no longer carries the sensors' current.
 
 **What the numbers tell us**
 
-- **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.5 ≈ **1.4 h**; even at a continuous worst case it is ≈ **19 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
-- **Discharge rate:** the ≈ 1.0 A peak is ≈ 2.5 C, far below the battery's 90C rating, so voltage sag at the motor is small.
-- **Buck margin:** the 5 V rail peaks at ~0.97 A of the CN3903's 3 A, so the regulator never runs near its limit.
-- **Nano regulator heat:** the Nano's 5 V linear regulator drops 11.4 V → 5 V for the Nano and the TOF sensors: (11.4 − 5) V × 60 mA ≈ **0.4 W** typical, ≈ 0.7 W at peak. It gets warm but stays within what a small regulator can dissipate in open air.
+- **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.2 ≈ **1.6 h**; even at a continuous worst case it is ≈ **20 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
+- **Discharge rate:** the ≈ 0.9 A peak is ≈ 2.4 C, far below the battery's 90C rating, so voltage sag at the motor is small.
+- **Buck margin:** the 5 V rail peaks at ~1.05 A of the CN3903's 3 A, so the regulator never runs near its limit.
+- **Nano regulator heat:** the Nano's 5 V linear regulator now only feeds the Nano: (11.4 − 5) V × 20 mA ≈ **0.13 W** typical, ≈ 0.2 W at peak. It stays cool.
 - **Charging:** ≈ 45–50 min with a balance charger (IMAX B6AC) at 0.4 A (≈ 1C).
 
 ### 4.3 Failure points we considered
 
 | Risk | What could happen | Mitigation |
 |---|---|---|
-| TOF sensors draw more than the Nano's 3.3 V pin can give | The 3.3 V pin of a classic Nano comes from a small regulator (on the original board, inside the USB chip, ≈ 50 mA). Four VL53L1X peak near 80 mA, so the 3.3 V line could sag, the sensors could reset and the I²C bus could time out | Measure the 3.3 V pin with a multimeter while all four sensors are ranging. If it drops below ~3.0 V, move the TOF VIN back to the +5 V buck rail: the TOF400C modules have their own regulator and accept 3.3–5 V, so no other change is needed |
+| Servo peaks on the shared 5 V rail reach the TOF sensors | A servo stall could glitch a distance reading or make a sensor reset | 3 A buck with large margin (see budget). Measure the 5 V rail with a multimeter while the servo stalls and the four sensors are ranging |
 | Nano 5 V UART into the camera's 3.3 V pins | The classic Nano's TX line is 5 V; the ESP32-S3 pins are not 5 V tolerant | Before the camera link is connected, add a resistor divider (1 kΩ / 2 kΩ) on the Nano TX → camera RX line; camera TX → Nano RX works directly (3.3 V is read as HIGH by the ATmega328P) |
 | Battery voltage on a 3.3 V pin | Permanent damage to the Nano ESP32 (it happened: journal Problem 31) | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
 | Servo stall pulls the 5 V rail down | Camera or sensors reset during a run | 3 A buck with large margin (see budget) |
