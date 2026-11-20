@@ -2,6 +2,12 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## Unreleased — 20 November · Whole repository on the classic Arduino Nano
+- **Every sketch that runs on the main controller targets the classic Arduino Nano (ATmega328P)**: no ESP32-only calls (`Serial.printf`, LEDC, native-USB waits, `D`-prefixed pins) remain in `src/`. The only non-Nano sketches are the three for the ESP32-S3-CAM vision board, which cannot move to a Nano (2 KB of RAM against 150 KB per picture); `src/README.md` now says so.
+- `tof_servo_sensors_test`: translated to English (repository convention), added the I²C timeout used by the other sketches, and replaced the old Ackermann servo angles (10° / 90° / 170°) by ±25° around the rack centre (120°), so the test cannot push the servo against the end of the rack. It is now listed in the `src/README.md` table.
+- `src/README.md`: Arduino IDE setting now requires Arduino AVR Boards 1.8.3 or newer (`Wire.setWireTimeout`).
+- Main README (design decisions) and `schemes/README.md` describe the classic Nano as the controller; the Nano ESP32 only appears as history (journal Problems 6 and 31) and as the origin of the PCB footprint.
+
 ## Unreleased — 17 November · TOF sensors back on the 5 V rail
 - **Power:** the four TOF400C sensors are powered from the +5 V buck rail again, not the Nano's 3.3 V pin. The classic Nano works with 5 V logic, so the sensors connect to it directly. Power budget recalculated (≈ 2.2 W typical, ≈ 10.5 W peak, ≈ 1.6 h per charge). The new failure point is servo peaks on the shared 5 V rail, to be checked with a multimeter during a servo stall.
 - Journal section 9.4, the risk table in `schemes/README.md` §4.3 and the main README were updated to match.

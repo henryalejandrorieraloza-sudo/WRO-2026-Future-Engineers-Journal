@@ -223,7 +223,7 @@ The boards arrived in under two weeks and have worked without a single failure s
 
 | Block | Layout |
 |---|---|
-| Arduino Nano ESP32 | <img src="pcb-blocks/arduino_nano_esp32_pcb.png" height="180"> |
+| Arduino Nano (footprint drawn as Nano ESP32, same pin positions) | <img src="pcb-blocks/arduino_nano_esp32_pcb.png" height="180"> |
 | Camera board connectors | <img src="pcb-blocks/camera_esp32_out_pcb.png" height="180"> |
 | TOF sensor connectors | <img src="pcb-blocks/sensors_out_pcb.png" height="180"> |
 | BMI160 | <img src="pcb-blocks/bmi160_pcb.png" height="180"> |
@@ -239,7 +239,7 @@ The boards arrived in under two weeks and have worked without a single failure s
 | Component | File | Key data used |
 |---|---|---|
 | Arduino Nano (classic) | [Arduino Nano documentation](https://docs.arduino.cc/hardware/nano/) | Pinout, VIN range, 3.3 V pin limit |
-| Arduino Nano ESP32 (original) | [Arduino_nano_esp32-datasheet.pdf](datasheets/Arduino_nano_esp32-datasheet.pdf) | Pinout, VIN range, 3.3 V I/O limits |
+| Arduino Nano ESP32 (retired, kept because the PCB footprint was drawn from it) | [Arduino_nano_esp32-datasheet.pdf](datasheets/Arduino_nano_esp32-datasheet.pdf) | Footprint and pin positions shared with the classic Nano |
 | ESP32-S3-CAM | [GitHub: nulllaborg/esp32s3-cam](https://github.com/nulllaborg/esp32s3-cam) | Camera pin layout, PSRAM, flash size |
 | OV2640 | [OV2640DS.pdf](datasheets/OV2640DS.pdf) | Resolutions, RGB565 output |
 | VL53L1X (TOF400C) | [DS_vl53l1x.pdf](datasheets/DS_vl53l1x.pdf) | Range, timing budget, ROI, I²C address change |

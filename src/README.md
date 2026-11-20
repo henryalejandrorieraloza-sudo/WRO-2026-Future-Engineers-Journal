@@ -4,7 +4,7 @@ All firmware for the car. Each Arduino sketch lives in a folder with the same na
 
 ## 1. System overview
 
-The car runs two programmable boards that communicate over a wired UART link.
+The car runs two programmable boards that communicate over a wired UART link. **Every sketch that drives the car (all of `open-challenge/`, `straight_pillars`, `line_test` and every hardware test except the camera ones) targets the classic Arduino Nano.** The only sketches that do not are the three that run on the camera board (`obstacle_camera`, `pillar_viewer`, `camera_webserver_emakefun`): an ATmega328P has 2 KB of RAM, while one 320 × 240 picture is 150 KB, so the vision has to stay on its own board.
 
 | Board | Role |
 |---|---|
@@ -45,6 +45,7 @@ Each sketch validates one component on its own before it is combined with the ot
 | [`tof_left_right_print`](hardware-tests/tof_left_right_print) | Nano | Side TOF sensors | Prints the LEFT and RIGHT readings together with the status of each reading (`range valid`, `signal fail`, …), about 30 times per second. Diagnostic tool (journal Phase 10) |
 | [`tof_roi_budget_test`](hardware-tests/tof_roi_budget_test) | Nano | TOF sensor | Experiment. With the car in front of a real wall, the operator types the measured distance and the sketch tries every region-of-interest size and timing budget, reporting the number of valid, signal-fail and other readings plus median, minimum, maximum and spread. Result: with the sensor mounted straight, ROI 16 × 8 measures the black wall to within 1–2 cm up to about 45 cm |
 | [`rear_motor_loop_test`](hardware-tests/rear_motor_loop_test) | Nano | Drive motor and TB6612FNG | Cycle: forward, stop, backward, stop |
+| [`tof_servo_sensors_test`](hardware-tests/tof_servo_sensors_test) | Nano | Side TOF sensors and steering servo | Sweeps the servo left, centre, right (±25° around the rack centre 120°) while printing the LEFT and RIGHT distances in cm. Gives each VL53L1X its own address through `XSHUT` (LEFT A3 = 0x30, RIGHT A2 = 0x31) |
 | [`servo_simple`](hardware-tests/servo_simple) | Nano | Steering servo | Sweep left, centre, right with the pulse generated in software (no library) |
 | [`servo_only_test`](hardware-tests/servo_only_test) | Nano | Steering (rack and pinion) | Slow sweep centre, left, centre, right using `Servo.h`, to check that the servo never pushes against the mechanical limits |
 | [`servo_calibration`](hardware-tests/servo_calibration) | Nano | Steering servo | Interactive calibration: type an angle in the Serial Monitor (or `a` / `d` for ±1°) to find the real steering centre and limits safely |
@@ -89,7 +90,7 @@ Later iterations (one-corner version, 12-turn loop, wall re-alignment) are docum
 
 | Option | Value |
 |---|---|
-| Board package | Arduino AVR Boards (built in) |
+| Board package | Arduino AVR Boards **1.8.3 or newer** (built in; the sketches call `Wire.setWireTimeout`, which older versions do not have) |
 | Board | Arduino Nano |
 | Processor | ATmega328P. If the upload fails with `not in sync` or `resp=0x00`, select **ATmega328P (Old Bootloader)** |
 | Libraries | *VL53L1X* by Pololu. Steering uses the built-in `Servo.h` (500–2500 µs) |
