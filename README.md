@@ -66,7 +66,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 | **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (25 STL, CAD v1–v3, assembly order) |
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
-| **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (60+ problems with data) |
+| **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (69 problems with data) |
 | **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes · 60+ commits with descriptive messages |
 
 ---
@@ -78,7 +78,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 ├── README.md                ← this file: complete overview of the car
 ├── CHANGELOG.md             ← versions and release notes
 ├── docs/
-│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 58 problems, data and decisions
+│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 69 problems, data and decisions
 │   └── images/                 ← plots used in the journal
 ├── schemes/                 ← schematic, wiring diagram, PCB, power budget, BOM, datasheets
 ├── src/                     ← all source code (see src/README.md)
@@ -583,11 +583,13 @@ Corners, laps and the stop in the starting section are planned (§9.7); parking 
 
 | Colour | Hue | Saturation | Value | Measured / why |
 |---|---|---|---|---|
-| Red pillar | 345–26° (wraps) | ≥ 115 | ≥ 95 | Pillar H 15–23° |
-| Green pillar | 82–150° | ≥ 150 | ≥ 90 | Pillar H 86–95°, S ≥ 152; the yellow-green floor has S 88–156 |
+| Red pillar | 345–40° (wraps) | ≥ 115 | 95–165 | Pillar H 4–22°, S 204–255 on 28 Oct. A maximum V keeps the bright orange line from being taken for a red pillar |
+| Green pillar | 82–150° | ≥ 120 | ≥ 130 | Pillar S ≈ 148, V ≈ 194; the dark wall has V 74–92 |
 | Magenta wall | 328–353° | ≥ 84 | ≥ 84 | Very close to red (see step 4) |
-| Orange line | 29–52° | ≥ 115 | ≥ 110 | Line H 32–44°, S 131–173; red pillar H 4–22°, floor starts at 60° |
-| Blue line | **110**–200° | **30–120** | ≥ 65 | The locked camera sees the blue line as dark grey-teal (H ~160°, S 46–113). The floor next to the car reaches H 85° (shadow + lens), so blue starts at 110° (it started at 85° and the floor became a false blue line, 28 Oct). The **maximum** saturation keeps the green pillar (S ≥ 152) out |
+| Orange line | 55–90° | ≥ 90 | ≥ 100 | **19 Nov, new camera, greenish light:** line H 64–75, S 95–160, V 107–174; the floor is H 111–125, S 70–90 (pale green). In the yellow light of October the same line was H 29–52 |
+| Blue line | 165–215° | 80–200 | ≥ 40 | **19 Nov:** line H 191–208, S 110–170, V 47–143; the floor is H 111–125, S 70–90. In October the line looked dark grey-teal (H 110–200, S 30–120) and the floor reached H 85° |
+
+The October thresholds (red 345–26°, green S ≥ 150, orange 29–52°, blue 110–200° with S ≤ 120) were tuned for the yellow light of that month. The new camera (19 Nov) sees the scene green-tinted, so the ranges were measured again with the colour probe and the camera viewer (journal §17.5). **They are measured but not yet validated on the track**, as the October ones were. The **maximum** blue saturation of October kept the green pillar (S ≥ 150) out of the blue line; with blue starting at 165° the hue itself now does that job.
 
 4. **Red or magenta?** Red and magenta pixels that touch are grouped; if ≥ 70 % of the group is magenta, the whole group is a parking wall and never a pillar (a shape filter failed for this).
 5. **Pillars:** only rows 126–207 are searched (above: things outside the field; below: too close to measure). Pixels are grouped in **4 × 4 blocks** (a block is red/green if ≥ 12 of its 16 pixels are), blobs are found with a BFS, touching pillars are split (the front one is kept), and a blob must be a **solid** chunk (≥ 75 % filled), not touch the picture edge and be at a possible distance (5–130 cm ahead, ≤ 70 cm to the side).
@@ -783,7 +785,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | Floor lines for corners in the Obstacle Challenge | Side TOF jumps | Pillars near the walls could create false jumps; the lines are fixed by the rules |
 | Pillar position in cm + odometry map of the straight (27 Oct) | "Correct third" of the image (our 7 Oct plan) | A pillar passed at a safe distance leaves the picture 15 cm before the car reaches it; with only the picture the car reacted too late (first test, 26 Oct). The map keeps the pillar while it is out of sight and says *how much* to move. Every straight-with-pillars case passed on the track |
 | Floor line measured in cm and stored on the map | Turning when the line leaves the bottom of the picture | Leaving the picture happens only ~3–5 cm ahead, with few pixels, and later at higher speed because the camera message is ~0.2 s old; a map position does not depend on speed or delay |
-| `BLUE_MAX_SAT = 120` | Only minimum thresholds | The locked camera sees the blue line grey-teal (S 48–103), the same hue as the green pillar (S ≥ 152): a maximum saturation separates them |
+| `BLUE_MAX_SAT = 120` (October light) | Only minimum thresholds | The locked camera saw the blue line grey-teal (S 48–103), the same hue as the green pillar (S ≥ 152): a maximum saturation separated them. Since the new camera (19 Nov) blue starts at 165° and `BLUE_MAX_SAT = 200`, so the hue separates it from the green pillar |
 | Our own BMI160 driver | DFRobot library | The library returned only zeros, without errors (journal Problem 14) |
 | Standard `Servo.h` (500–2500 µs) on the classic Nano | ESP32Servo / LEDC / hand-made pulse | Built into the AVR core and works at the first try; the ESP32 libraries did not work on the earlier Nano ESP32 (journal Problem 6) |
 | MG90 metal-gear servo | SG90 | SG90 moved in its mount (journal Problem 8) |
@@ -816,7 +818,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | The camera sees the floor lines only up to ~22 cm (low camera) | Lines put on the map and confirmed with 2 messages; if not enough, raise / tilt the camera and recalibrate |
 | Parallel parking needs reverse, and the drive gear skipped on a sudden reverse | Gentle reverse only, tested alone before the parking manoeuvre |
 
-The complete list of the **58 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
+The complete list of the **69 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
 
 ### 10.4 Why each setting has its value
 
