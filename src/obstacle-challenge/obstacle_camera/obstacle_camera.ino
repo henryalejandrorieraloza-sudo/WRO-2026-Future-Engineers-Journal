@@ -1,7 +1,7 @@
 // =====================================================================
 // OBSTACLE CAMERA (ESP32S3-CAM) - v3.1 (pillars + both floor lines)
 // Finds, in every picture:
-//   - the closest red / green pillar (same algorithm as Pillar Vision Lab)
+//   - the closest red / green pillar (HSV colour classes, 4x4 blocks, front pillar)
 //   - red + magenta patches: if a patch is mostly magenta it is a parking
 //     wall, never a pillar (same majority vote as the page)
 //   - the ORANGE and the BLUE floor lines: biggest patch of each color below LINE_TOP_ROW,
@@ -34,7 +34,7 @@
 //       - Color probe: H, S, V of two fixed boxes printed in the status, to calibrate the
 //         colors with exact camera numbers (no viewer needed).
 //       - Measured range: orange line from 16 cm, blue line from 9 cm.
-// It can also keep sending the pictures to viewer.html over USB (STREAM_TO_PC).
+// It can also keep sending the pictures to camera_viewer.html over USB (STREAM_TO_PC).
 //
 // Tools: ESP32S3 Dev Module | USB CDC On Boot: Enabled | Flash Size: 8MB
 //        Partition: 8M with spiffs (3MB APP/1.5MB SPIFFS) | PSRAM: OPI PSRAM
@@ -69,7 +69,7 @@ const int XCLK_FREQ_HZ = 10000000;   // 10 MHz: safer with the long flex cable
 const int  NANO_TX_PIN  = 43;        // camera GPIO43 -> Nano D0 (RX), as on the PCB
 const int  NANO_RX_PIN  = -1;        // GPIO44 is NOT used: the camera never listens to the Nano
 const long NANO_BAUD    = 115200;    // must match the Nano sketch
-const bool STREAM_TO_PC = true;     // true = also send pictures to viewer.html (slower). false to drive / test
+const bool STREAM_TO_PC = true;     // true = also send pictures to camera_viewer.html (slower). false to drive / test
 const unsigned long STREAM_EVERY_MS = 1;   // one picture to the viewer every 0.5 s (the page needs time to read it)
 
 // ---------- Image ----------
@@ -86,7 +86,7 @@ const int   X_CENTER_OFFSET = 12; // a pillar straight ahead shows up this many 
 
 // ---------- Vision improvements (switch each one off to compare) ----------
 // 1) Frozen camera. IMPORTANT: colors change when the camera is frozen, so calibrate the colors
-//    in viewer.html AFTER the lock (wait LOCK_AFTER_MS after power on, then connect the viewer).
+//    in camera_viewer.html AFTER the lock (wait LOCK_AFTER_MS after power on, then connect the viewer).
 const bool          LOCK_CAMERA    = true;
 const unsigned long LOCK_AFTER_MS  = 5000;   // time the camera has to adjust itself first
 
@@ -118,8 +118,8 @@ const bool REJECT_AT_EDGE   = true;  // a patch touching the left / right pictur
 // 5) Camera lens correction: the wide-angle lens tints the picture edges (green / magenta)
 const bool LENS_CORRECTION  = true;
 
-// ===== PASTE HERE what "Copy as Arduino code" gives you in viewer.html =====
-// (if you paste again: put back BLUE_HUE_LOW = 110, BLUE_MAX_SAT and the line minimums, the viewer does not have them)
+// ===== COLOUR SETTINGS: read H, S, V with the mouse in camera_viewer.html and type the ranges here =====
+// (the viewer only shows H, S, V of a pixel; the ranges, BLUE_MAX_SAT and the line minimums are typed by hand)
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
 // Measured with the camera locked (yellow cast): red pillar H 15-23, green pillar H 86-95.
 // Probe on 28 Oct: red pillar H 4-22 S 204-255 V 112-136.
@@ -136,7 +136,7 @@ const int GREEN_MIN_VAL  = 130;    // was 90: the dark wall measured V 74-92, th
 
 const int  RED_MIN_PIXELS   = 30;
 const int  GREEN_MIN_PIXELS = 30;
-const int  IGNORE_TOP_ROWS = 115;
+const int  IGNORE_TOP_ROWS = 115;   // pillars are searched only from this row down. 115 was set with the robot as far as possible from the wall: a little above where the wall is seen from there (camera_viewer.html draws this line)
 const int  BOTTOM_TOL      = 8;
 const int  NEAR_ROWS       = 0;
 const int  SIDE_ZONE       = 56;
@@ -169,7 +169,7 @@ const int LINE_TRIGGER_ROW   = 236;
 const int MAGENTA_MIN_PIXELS = 250;
 const int MAGENTA_MAJORITY   = 70;
 const int TURN_CONFIRM_FRAMES = 3;
-// ===== end of the pasted part =====
+// ===== end of the colour settings =====
 
 // ---------- Floor lines (full lap, step 1) ----------
 // A floor line is a long, thin stripe. These numbers decide what counts as a line.
@@ -259,7 +259,7 @@ int framesThisPeriod = 0;
 float cameraFps = 0;
 uint8_t rawColorForStatus = 0;
 
-// ---------- Colors (same math as viewer.html) ----------
+// ---------- Colors (same math as camera_viewer.html) ----------
 
 void readPixel(const uint8_t *buf, int x, int y, int &r, int &g, int &b) {
   int i = (y * W + x) * 2;
@@ -693,7 +693,7 @@ void sendToNano(const Pillar &p, const LineInfo &blue, const LineInfo &orange) {
                  blue.found ? blue.centerRow : -1, orange.found ? orange.centerRow : -1);
 }
 
-// ---------- Picture to viewer.html (same packet as pillar_viewer) ----------
+// ---------- Picture to camera_viewer.html (the packet camera_viewer.html reads) ----------
 // Serial.write() may accept FEWER bytes than asked when the USB buffer is full.
 // writeAll() keeps offering the rest until everything is accepted; if the computer stops
 // reading for more than maxWaitMs it gives up on this picture (the next one starts clean).
@@ -727,7 +727,7 @@ void setLinePixel(int x, int y, uint8_t c) {
 
 uint16_t lineU16(int v) { return v < 0 ? 0xFFFF : (uint16_t)v; }   // -1 = 0xFFFF in the packet
 
-// Packet to viewer.html: header (37 bytes) + picture (153600) + pillar mask (19200) + line mask (19200)
+// Packet to camera_viewer.html: header (37 bytes) + picture (153600) + pillar mask (19200) + line mask (19200)
 void sendPacket(const uint8_t *picture, const Pillar &p, const LineInfo &blue, const LineInfo &orange) {
   memset(lineMask, 0, W * H / 4);
   for (int ay = 0; ay < AREA_H; ay++)
@@ -899,7 +899,7 @@ void loop() {
     cameraFps = framesThisPeriod * 1000.0 / (millis() - fpsStart);
     framesThisPeriod = 0; fpsStart = millis();
   }
-  // Pictures only when viewer.html has the port open (Serial is true), so the camera never
+  // Pictures only when camera_viewer.html has the port open (Serial is true), so the camera never
   // waits for a computer that is not there (that stopped the messages to the Nano).
   if (STREAM_TO_PC && Serial && millis() - lastStream >= STREAM_EVERY_MS) { sendPacket(frame->buf, closest, blue, orange); lastStream = millis(); }
   if (millis() - lastStatus >= STATUS_EVERY_MS && !(STREAM_TO_PC && Serial)) {   // text would land inside the picture stream

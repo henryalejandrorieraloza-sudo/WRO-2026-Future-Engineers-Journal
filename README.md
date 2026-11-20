@@ -944,7 +944,7 @@ If the upload stays at `Connecting...`: hold **BOOT**, press and release **RESET
 
 **Camera viewer** (the page we use to test the camera): upload [`camera_test`](src/hardware-tests/camera_test) (the same vision code as [`obstacle_camera`](src/obstacle-challenge/obstacle_camera)) to the camera board with `STREAM_TO_PC = true`, close the Serial Monitor, open [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) in **Chrome or Edge** (Web Serial is needed), press **Connect camera** and choose the camera port. It shows the picture, the pillar mask, the orange / blue line mask, the rows the car ignores, the status of each floor line, and the RGB / HSV of the pixel under the mouse. Set `STREAM_TO_PC = false` again before driving.
 
-The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps its own `IGNORE_TOP_ROWS`, now 115); after a RESET of the camera the page reconnects by itself.
+The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps its own `IGNORE_TOP_ROWS`); after a RESET of the camera the page reconnects by itself. **What 115 means:** `IGNORE_TOP_ROWS = 115` is the first picture row where the camera looks for pillars. It was set with the robot as far as possible from the wall: 115 is a little above where the wall is seen from that position, so the rows above it (the wall and the background) are ignored.
 
 ---
 

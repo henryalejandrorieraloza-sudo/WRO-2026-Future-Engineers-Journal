@@ -19,6 +19,11 @@
     4. Move the mouse over the picture to read the RGB and HSV of any pixel: those are the numbers
        used to tune the colour thresholds in the sketch. The IGNORED slider only moves the drawn line.
 
+  WHAT 115 MEANS (IGNORE_TOP_ROWS in the sketch)
+    The camera looks for pillars only from this picture row down. 115 was set with the robot as far as
+    possible from the wall: it is a little above where the wall is seen from that position, so the rows
+    above it (the wall and the background) are ignored.
+
   PACKET (little-endian), same as the sketch -> sendPacket(): 37-byte header, then
     W*H*2 picture (RGB565) | W*H/4 pillar mask (2 bits per pixel: 1 red, 2 green) |
     W*H/4 line mask (2 bits per pixel: 1 orange, 2 blue)
@@ -56,6 +61,7 @@
   <span class="leg" style="background:#ff0000"></span> red pillar
   <span class="leg" style="background:#00ff00"></span> green pillar
 </div>
+<div class="row" id="ignoreNote" style="font-size: 13px; max-width: 640px;">IGNORED top = 115 (the same value as IGNORE_TOP_ROWS in the sketch). It was measured with the robot as far as possible from the wall: 115 is a little above where the wall is seen from that position. Rows above this line are not searched for pillars.</div>
 <div class="row"><canvas id="cv" width="320" height="240"></canvas></div>
 <pre id="info">Close the Serial Monitor before connecting. Use Chrome or Edge. In the sketch: STREAM_TO_PC = true.</pre>
 <pre id="lines">Lines: waiting for data.</pre>

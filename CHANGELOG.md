@@ -4,7 +4,7 @@ Versions of the car and of this repository. Dates are in 2026.
 
 ## v1.9.1 — 20 November · One camera viewer, `camera_test`
 - **Only one viewer left:** `src/tools/camera_viewer/camera_viewer.html` is now the new page (pillars and floor lines, accepted-line fill, line guides, reason for each rejected line, automatic reconnect after a RESET of the camera, IGNORED-top slider set to 115). *Pillar Vision Lab* (`src/obstacle-challenge/pillar_viewer/`: `viewer.html` and `pillar_viewer.ino`) was removed; it stays in the history at commit `7442dd5`.
-- **`camera_test` added** (`src/hardware-tests/camera_test/`): the same vision code as `obstacle_camera` (v3.1, `IGNORE_TOP_ROWS = 115`), for testing the camera with the viewer.
+- **`camera_test` added** (`src/hardware-tests/camera_test/`): the same vision code as `obstacle_camera` (v3.1, `IGNORE_TOP_ROWS = 115`), for testing the camera with the viewer. `IGNORE_TOP_ROWS = 115` is the row set with the robot as far as possible from the wall (a little above where the wall is seen from there); it is explained in the sketch, the viewer and the READMEs. Old `viewer.html` / Pillar Vision Lab mentions in the sketch comments now point to `camera_viewer.html`.
 - README (§9.9, §12.5, tables) and `src/README.md` updated; links to the removed folder point to the history.
 
 ## v1.9 — 20 November · Documentation review against the rubric, Open Challenge code removed, camera viewer
