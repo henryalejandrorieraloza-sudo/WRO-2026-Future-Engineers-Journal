@@ -69,13 +69,13 @@ const int XCLK_FREQ_HZ = 10000000;   // 10 MHz: safer with the long flex cable
 const int  NANO_TX_PIN  = 43;        // camera GPIO43 -> Nano D0 (RX), as on the PCB
 const int  NANO_RX_PIN  = -1;        // GPIO44 is NOT used: the camera never listens to the Nano
 const long NANO_BAUD    = 115200;    // must match the Nano sketch
-const bool STREAM_TO_PC = false;     // true = also send pictures to viewer.html (slower). false to drive / test
-const unsigned long STREAM_EVERY_MS = 500;   // one picture to the viewer every 0.5 s (the page needs time to read it)
+const bool STREAM_TO_PC = true;     // true = also send pictures to viewer.html (slower). false to drive / test
+const unsigned long STREAM_EVERY_MS = 1;   // one picture to the viewer every 0.5 s (the page needs time to read it)
 
 // ---------- Image ----------
 const int W = 320;
 const int H = 240;
-const bool MIRROR_HORIZONTAL = false;   // checked: with true, a pillar on the car's RIGHT gave side < 0
+const bool MIRROR_HORIZONTAL = true;   // checked: with true, a pillar on the car's RIGHT gave side < 0
 const bool FLIP_VERTICAL     = false;   // both are applied by the sensor (set_hmirror / set_vflip)
 
 // ---------- Real-world sizes (from the measurements) ----------
@@ -123,36 +123,38 @@ const bool LENS_CORRECTION  = true;
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
 // Measured with the camera locked (yellow cast): red pillar H 15-23, green pillar H 86-95.
 // Probe on 28 Oct: red pillar H 4-22 S 204-255 V 112-136.
-const int RED_HUE_LOW    = 345;    // wraps through 0 up to 26
-const int RED_HUE_HIGH   = 26;
+const int RED_HUE_LOW    = 345;    // wraps through 0 up to 40
+const int RED_HUE_HIGH   = 40;     // was 26: the red pillar reads H 29-34 with the yellow cast
 const int RED_MIN_SAT    = 115;
 const int RED_MIN_VAL    = 95;
+const int RED_MAX_VAL    = 165;    // NEW: brighter than this is the orange line, not a red pillar
 
-const int GREEN_HUE_LOW  = 82;     // pillar measured H 86-95 (locked); 75 let the yellow-green floor in
+const int GREEN_HUE_LOW  = 82;
 const int GREEN_HUE_HIGH = 150;
-const int GREEN_MIN_SAT  = 150;    // floor measured S 88-156, pillar S 163+
-const int GREEN_MIN_VAL  = 90;
+const int GREEN_MIN_SAT  = 120;    // was 150: the green pillar measured S 148
+const int GREEN_MIN_VAL  = 130;    // was 90: the dark wall measured V 74-92, the pillar V 194
 
 const int  RED_MIN_PIXELS   = 30;
 const int  GREEN_MIN_PIXELS = 30;
-const int  IGNORE_TOP_ROWS = 126;
+const int  IGNORE_TOP_ROWS = 115;
 const int  BOTTOM_TOL      = 8;
-const int  NEAR_ROWS       = 32;
+const int  NEAR_ROWS       = 0;
 const int  SIDE_ZONE       = 56;
 
-// Lines, measured 2026-10-27 on the screenshots and 2026-10-28 with the probe (camera locked):
-//   orange line H 32-44 S 145-173 V 168-184 | floor H 60-85 S 81-130 V 128-220
-//   blue line H up to ~165, S 46-113, V from 72 (dark gray-teal) | green pillar S 152+
-const int ORANGE_HUE_LOW  = 29;    // red pillar ends at 22-26
-const int ORANGE_HUE_HIGH = 52;    // floor starts at 60
-const int ORANGE_MIN_SAT  = 115;   // line S 131-173
-const int ORANGE_MIN_VAL  = 110;
+// Lines, measured 19 Nov 2026 on the viewer screenshots (greenish light, camera locked):
+//   orange line H 64-75 (median 70) S 95-160 V 107-174 | floor H ~111-125 S 70-90 (pale green, not a line)
+//   blue line H 191-208 (median 197) S 110-170 V 47-143 | green pillar H 82-150
+// The old thresholds (orange H 29-52, blue S <= 120) were for the yellow light of October and miss these lines.
+const int ORANGE_HUE_LOW  = 55;    // red pillar is H <= 40; floor starts at H ~110
+const int ORANGE_HUE_HIGH = 90;    // buildCodeMap tests green first, so a green pillar (H 82+) is never orange
+const int ORANGE_MIN_SAT  = 90;
+const int ORANGE_MIN_VAL  = 100;
 
-const int BLUE_HUE_LOW    = 110;   // floor reaches H 85 at the bottom of the picture; blue line is ~160 -> 25 deg margin
-const int BLUE_HUE_HIGH   = 200;
-const int BLUE_MIN_SAT    = 30;
-const int BLUE_MAX_SAT    = 120;   // blue line S 46-113, green pillar S 152+ -> never mixed
-const int BLUE_MIN_VAL    = 65;    // lower lets the black wall in
+const int BLUE_HUE_LOW    = 165;   // floor ~111-125, blue line 191-208
+const int BLUE_HUE_HIGH   = 215;
+const int BLUE_MIN_SAT    = 80;   // the floor (S 70-90) and the dark wall stay out
+const int BLUE_MAX_SAT    = 200;   // the blue line measured S 110-170; green pillar is never at H 180+
+const int BLUE_MIN_VAL    = 40;    // one capture had V 47-79 in the line; the black wall needs the floor-above check
 
 const int MAGENTA_HUE_LOW  = 328;
 const int MAGENTA_HUE_HIGH = 353;
@@ -183,7 +185,7 @@ const int ABOVE_TO          = 6;    // ... and where it ends
 const int FLOOR_MIN_VAL     = 130;  // brightness (V) the floor above must have (floor V 128-220, black wall much lower)
 const int ABOVE_MIN_PERCENT = 60;   // % of the line's columns that must have floor above
 const int ABOVE_MIN_COLS    = 10;   // at least this many columns must be checkable
-// Color probe: prints the H, S, V range of two small boxes, to calibrate colors with exact camera numbers
+// Color probe: prints the H, S, V range (min-max) of two small boxes, to calibrate colors with exact camera numbers
 const int PROBE_X       = W / 2 + X_CENTER_OFFSET;  // straight-ahead column
 const int PROBE_NEAR_Y  = 170;  // row ~5 cm ahead of the camera: put each line / pillar here
 const int PROBE_LOW_Y   = 228;  // row at the bottom of the picture (where the false blue appeared)
@@ -211,6 +213,8 @@ uint8_t  *seen;          // BFS visited marks
 uint32_t *queue;         // BFS queue (pixel index in the area)
 uint8_t  *maskPacked;    // pillar map for the viewer, 2 bits per pixel
 uint8_t  *valueMap;      // AREA_H x W, brightness (V) of each pixel, for the floor-above check
+uint8_t  *pick;          // AREA_H x W: C_ORANGE / C_BLUE for the pixels of the lines accepted in this picture
+uint8_t  *lineMask;      // viewer: accepted orange (1) / blue (2) pixels, 2 bits per pixel
 int colTop[W], colBottom[W], colCount[W];
 int rowCount[H];
 
@@ -282,7 +286,7 @@ bool inHue(int h, int lo, int hi) {              // lo > hi means the range wrap
   return lo <= hi ? (h >= lo && h <= hi) : (h >= lo || h <= hi);
 }
 
-bool isRed(int h, int s, int v)     { return inHue(h, RED_HUE_LOW, RED_HUE_HIGH) && s >= RED_MIN_SAT && v >= RED_MIN_VAL; }
+bool isRed(int h, int s, int v)     { return inHue(h, RED_HUE_LOW, RED_HUE_HIGH) && s >= RED_MIN_SAT && v >= RED_MIN_VAL && v <= RED_MAX_VAL; }
 bool isGreen(int h, int s, int v)   { return h >= GREEN_HUE_LOW && h <= GREEN_HUE_HIGH && s >= GREEN_MIN_SAT && v >= GREEN_MIN_VAL; }
 bool isMagenta(int h, int s, int v) { return inHue(h, MAGENTA_HUE_LOW, MAGENTA_HUE_HIGH) && s >= MAGENTA_MIN_SAT && v >= MAGENTA_MIN_VAL; }
 bool isOrange(int h, int s, int v)  { return inHue(h, ORANGE_HUE_LOW, ORANGE_HUE_HIGH) && s >= ORANGE_MIN_SAT && v >= ORANGE_MIN_VAL; }
@@ -639,6 +643,8 @@ LineInfo findLine(uint8_t color, int minPixels) {
 
   line.found  = line.lowest >= 0;
   line.reason = line.found ? LINE_OK : LINE_FEW;
+  // the accepted line: keep its pixels for the viewer (queue[0..n-1] is this patch)
+  if (line.found) for (int k = 0; k < n; k++) pick[queue[k]] = color;
   return line;
 }
 
@@ -714,7 +720,22 @@ void setMaskPixel(int x, int y, uint8_t c) {
   maskPacked[pi >> 2] |= (c & 0x03) << ((pi & 3) * 2);
 }
 
-void sendPacket(const uint8_t *picture, const Pillar &p) {
+void setLinePixel(int x, int y, uint8_t c) {
+  int pi = y * W + x;
+  lineMask[pi >> 2] |= (c & 0x03) << ((pi & 3) * 2);
+}
+
+uint16_t lineU16(int v) { return v < 0 ? 0xFFFF : (uint16_t)v; }   // -1 = 0xFFFF in the packet
+
+// Packet to viewer.html: header (37 bytes) + picture (153600) + pillar mask (19200) + line mask (19200)
+void sendPacket(const uint8_t *picture, const Pillar &p, const LineInfo &blue, const LineInfo &orange) {
+  memset(lineMask, 0, W * H / 4);
+  for (int ay = 0; ay < AREA_H; ay++)
+    for (int x = 0; x < W; x++) {
+      uint8_t c = pick[ay * W + x];
+      if (c == C_ORANGE)    setLinePixel(x, AREA_TOP + ay, 1);
+      else if (c == C_BLUE) setLinePixel(x, AREA_TOP + ay, 2);
+    }
   memset(maskPacked, 0, W * H / 4);
   if (USE_BLOCKS) {                                      // the viewer shows the blocks the car really uses
     for (int by = 0; by < BH; by++)
@@ -731,12 +752,12 @@ void sendPacket(const uint8_t *picture, const Pillar &p) {
       if ((c == C_RED || c == C_GREEN) && pillarPixel(i, c)) setMaskPixel(i % W, AREA_TOP + i / W, c);
     }
   }
-  uint8_t hdr[32];
+  uint8_t hdr[40];
   int k = 0;
   hdr[k++] = 0xAA; hdr[k++] = 0x55; hdr[k++] = 0xC3; hdr[k++] = 0x3C;
   hdr[k++] = 1;
   putU16(hdr, k, W); putU16(hdr, k, H);
-  hdr[k++] = 0;                                          // flip flags: the sensor already flips, picture is final
+  hdr[k++] = 1;                                          // bit0 = 1: ready (v3.1 has no calibration step)
   hdr[k++] = p.found ? 1 : 0;
   hdr[k++] = p.color;
   putU16(hdr, k, (uint16_t)p.left);  putU16(hdr, k, (uint16_t)p.right);
@@ -744,10 +765,16 @@ void sendPacket(const uint8_t *picture, const Pillar &p) {
   putU16(hdr, k, (uint16_t)p.count);
   hdr[k++] = p.wasSplit ? 1 : 0;
   putU16(hdr, k, (uint16_t)(cameraFps * 10));
+  // floor lines, bytes 25-36
+  hdr[k++] = orange.found ? 1 : 0;  hdr[k++] = orange.reason;
+  putU16(hdr, k, lineU16(orange.found ? orange.lowest : -1)); putU16(hdr, k, lineU16(orange.found ? orange.centerRow : -1));
+  hdr[k++] = blue.found ? 1 : 0;    hdr[k++] = blue.reason;
+  putU16(hdr, k, lineU16(blue.found ? blue.lowest : -1));     putU16(hdr, k, lineU16(blue.found ? blue.centerRow : -1));
   const unsigned long WAIT_MS = 150;
   if (!writeAll(hdr, k, WAIT_MS)) return;
   if (!writeAll(picture, W * H * 2, WAIT_MS)) return;
-  writeAll(maskPacked, W * H / 4, WAIT_MS);
+  if (!writeAll(maskPacked, W * H / 4, WAIT_MS)) return;
+  writeAll(lineMask, W * H / 4, WAIT_MS);
 }
 
 // ---------- Camera ----------
@@ -814,7 +841,9 @@ void setup() {
   queue      = (uint32_t *)ps_malloc(AREA_H * W * sizeof(uint32_t));
   maskPacked = (uint8_t *)ps_malloc(W * H / 4);
   valueMap   = (uint8_t *)ps_malloc(AREA_H * W);
-  if (!psramFound() || !code || !seen || !queue || !maskPacked || !valueMap || !startCamera()) {
+  pick       = (uint8_t *)ps_malloc(AREA_H * W);
+  lineMask   = (uint8_t *)ps_malloc(W * H / 4);
+  if (!psramFound() || !code || !seen || !queue || !maskPacked || !valueMap || !pick || !lineMask || !startCamera()) {
     while (true) { Serial.println("Camera or PSRAM did not start. Check Tools -> PSRAM: OPI PSRAM, then RESET."); delay(3000); }
   }
   Serial.printf("OBSTACLE CAMERA v3.1: OK, pillar band rows %d-%d (%d x %d blocks), lines from row %d\n",
@@ -852,6 +881,7 @@ void loop() {
   if (frame == NULL) { delay(20); return; }
   if (frame->width != W || frame->height != H) { esp_camera_fb_return(frame); delay(200); return; }
 
+  memset(pick, 0, AREA_H * W);                  // lines accepted in this picture
   buildCodeMap(frame->buf);
   mergeRedMagenta();
   Pillar raw;
@@ -871,7 +901,7 @@ void loop() {
   }
   // Pictures only when viewer.html has the port open (Serial is true), so the camera never
   // waits for a computer that is not there (that stopped the messages to the Nano).
-  if (STREAM_TO_PC && Serial && millis() - lastStream >= STREAM_EVERY_MS) { sendPacket(frame->buf, closest); lastStream = millis(); }
+  if (STREAM_TO_PC && Serial && millis() - lastStream >= STREAM_EVERY_MS) { sendPacket(frame->buf, closest, blue, orange); lastStream = millis(); }
   if (millis() - lastStatus >= STATUS_EVERY_MS && !(STREAM_TO_PC && Serial)) {   // text would land inside the picture stream
     int wPx = closest.found ? closest.right - closest.left + 1 : 0;
     int xPx = closest.found ? (int)(closest.sumX / closest.count) - W / 2 : 0;
