@@ -355,7 +355,7 @@ flowchart LR
 | Pillar Vision Lab | PC browser | Shows what the camera sees, runs the same algorithm in JavaScript and checks it matches, live parameter tuning | [`viewer.html`](src/obstacle-challenge/pillar_viewer/viewer.html) |
 | Scenario Roulette | PC browser | Draws valid official track layouts to test on and scores Open Challenge attempts | [`index.html`](src/tools/scenario-roulette/index.html) |
 
-**Why we wrote our own drivers:** the BMI160 library we tried only returned zeros without reporting any error (journal Problem 14), and the servo libraries did not work with the Nano ESP32 core (journal Problem 6; on the classic Nano the standard `Servo.h` works). Our register-level and hand-pulse versions are short, fully understood and faster.
+**Why we wrote our own drivers:** the BMI160 library we tried only returned zeros without reporting any error (journal Problem 14), and the servo libraries of the first board (a Nano ESP32) did not work (journal Problem 6). On the classic Arduino Nano the standard `Servo.h` works, so steering uses it, and the BMI160 is read with our own register-level driver, which is short, fully understood and faster.
 
 **Why our own vision code instead of OpenCV:** OpenCV does not run on a microcontroller without an operating system; a Raspberry Pi would add weight, a second battery and a long boot time to a 30 × 20 cm car; and colour detection does not need a neural network. Our pipeline runs at ~25 fps and was verified pixel by pixel against its JavaScript copy. The full comparison (OpenMV, Pixy2, HuskyLens, Raspberry Pi) is in [journal §6.2](docs/ENGINEERING_JOURNAL.md#62-why-we-wrote-the-vision-ourselves-instead-of-using-opencv).
 
@@ -747,7 +747,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | Floor line measured in cm and stored on the map | Turning when the line leaves the bottom of the picture | Leaving the picture happens only ~3–5 cm ahead, with few pixels, and later at higher speed because the camera message is ~0.2 s old; a map position does not depend on speed or delay |
 | `BLUE_MAX_SAT = 120` | Only minimum thresholds | The locked camera sees the blue line grey-teal (S 48–103), the same hue as the green pillar (S ≥ 152): a maximum saturation separates them |
 | Our own BMI160 driver | DFRobot library | The library returned only zeros, without errors (journal Problem 14) |
-| Hand-generated servo pulse (on the Nano ESP32) | ESP32Servo / LEDC | Libraries did not work with that board core (journal Problem 6) |
+| Standard `Servo.h` (500–2500 µs) on the classic Nano | ESP32Servo / LEDC / hand-made pulse | Built into the AVR core and works at the first try; the ESP32 libraries did not work on the earlier Nano ESP32 (journal Problem 6) |
 | MG90 metal-gear servo | SG90 | SG90 moved in its mount (journal Problem 8) |
 | Parallel rack-and-pinion steering | Ackermann linkage | Ackermann friction stopped the servo and damaged three servos (journal Problems 17, 29, 33); the small slip of parallel steering is acceptable at our mass and speed |
 | 1 : 1 differential | Extra gear reduction | The 270 g car needs only ≈ 8 mN·m at the wheel; 1 : 1 keeps top speed and uses identical, easy-to-print gears |
