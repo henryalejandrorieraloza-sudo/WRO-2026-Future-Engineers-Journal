@@ -472,6 +472,8 @@ After the detection worked, we reviewed the question again with the hardware we 
 
 ### 6.4 Pillar Vision Lab — a web page to see what the camera sees
 
+> *20 November: Pillar Vision Lab and `pillar_viewer.ino` were removed from `main`; the camera is now tested with [`camera_test`](../src/hardware-tests/camera_test) and [`camera_viewer.html`](../src/tools/camera_viewer/camera_viewer.html). The originals stay in the [git history](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/7442dd52b04163d51598f534a4f5270128001dc8/src/obstacle-challenge/pillar_viewer).*
+
 To find errors we needed to **see** what the algorithm does, not only read numbers on the Serial Monitor. So we built two things.
 
 **`pillar_viewer.ino` (camera).** It runs the same detection and, about 10 times per second, sends a **packet** over USB with the picture, the colour map and the pillar it chose:
@@ -535,7 +537,7 @@ After uploading in BOOT mode, press **RESET** once so the new program starts.
 #### Problem 27 — The published web page could not use USB ✅
 - **What I observed:** the online version of the page said "USB is blocked here".
 - **Cause:** the published page runs inside a protected frame that does not allow access to USB ports. Safari does not support the Web Serial API at all.
-- **Solution:** open `viewer.html` from the [`src/obstacle-challenge/pillar_viewer`](../src/obstacle-challenge/pillar_viewer) folder in **Google Chrome** or **Microsoft Edge**.
+- **Solution:** open `viewer.html` (today [`camera_viewer.html`](../src/tools/camera_viewer/camera_viewer.html); the original page is in the [history](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/7442dd52b04163d51598f534a4f5270128001dc8/src/obstacle-challenge/pillar_viewer)) in **Google Chrome** or **Microsoft Edge**.
 
 #### Problem 28 — The sketch file was emptied while it was open in the Arduino IDE ✅
 - **What I observed:** `pillar_viewer.ino` was found almost empty after it had been updated from outside the editor while it was still open in the Arduino IDE.
@@ -1525,7 +1527,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Send the magenta parking walls to the Nano; test a gentle reverse before designing the parking manoeuvre.
 - [x] Camera Blocks 2 and 3: UART between the two boards (camera → Nano, 115200 baud) and the steering decision on the Nano ✅
 - [ ] Detect the parking lot (magenta pieces).
-- [ ] Calibrate the colours again on the competition field, under its lighting, with Pillar Vision Lab.
+- [ ] Calibrate the colours again on the competition field, under its lighting, with the camera viewer.
 - [ ] Add Serial Monitor screenshots and the manual-simulation video as evidence.
 - [ ] Test `open_challenge` for three laps on Scenario Roulette layouts (both directions, 600 mm and 1000 mm corridors), record the results here, and commit the final version before the scoring commit of 24 Nov.
 - [ ] Re-check both side TOF sensors after the supply change of 17 Nov and re-measure the left sensor's 18 % error (§17.4).

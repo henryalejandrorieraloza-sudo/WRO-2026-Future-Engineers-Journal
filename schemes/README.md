@@ -172,7 +172,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 - **Gyroscope:** 1000 samples (≈ 3 s) at rest right after power-on, while the car waits for the start button; the average is subtracted as offset (like taring a scale). The scale is checked with 4 hand turns (1440°) → `YAW_SCALE`.
 - **TOF sensors:** ROI 16 × 8 and mounting angle chosen with tape-measure experiments on the black wall (`tof_roi_budget_test`, journal Phase 10); only "range valid" readings; decisions from a window of 8 readings.
 - **Steering:** centre and limits measured on the real chassis with the `servo_calibration` sketch, with a 2–3° margin before each mechanical stop.
-- **Camera colours:** HSV thresholds tuned live with our Pillar Vision Lab tool under the real lighting.
+- **Camera colours:** HSV thresholds tuned live with the camera viewer under the real lighting.
 
 ---
 

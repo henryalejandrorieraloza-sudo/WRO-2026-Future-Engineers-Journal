@@ -7,28 +7,24 @@
 <!--
   CAMERA VIEWER (PC browser, Chrome or Edge) - the page we use to test the camera board.
 
-  It shows exactly the bytes that the ESP32-S3-CAM sends over USB when obstacle_camera.ino
-  runs with STREAM_TO_PC = true: the raw picture, the pillar mask, the orange / blue line
-  mask and the rows where the car thinks each floor line is.
+  It shows exactly the bytes that the ESP32-S3-CAM sends over USB when obstacle_camera.ino (or
+  camera_test.ino) runs with STREAM_TO_PC = true: the raw picture, the pillar mask, the orange /
+  blue line mask and the status of each floor line.
 
   HOW TO USE
-    1. Upload src/obstacle-challenge/obstacle_camera with STREAM_TO_PC = true.
+    1. Upload src/hardware-tests/camera_test (or src/obstacle-challenge/obstacle_camera) with STREAM_TO_PC = true.
     2. CLOSE the Arduino Serial Monitor (only one program can use the port).
-    3. Open this file in Chrome or Edge (Web Serial is needed), press "Connect camera"
-       and choose the usbmodem / COM port of the camera board.
-    4. Move the mouse over the picture to read the RGB and HSV of any pixel: those are the
-       numbers used to tune the colour thresholds in obstacle_camera.ino.
+    3. Open this file in Chrome or Edge (Web Serial is needed), press "Connect camera" and choose
+       the usbmodem / COM port of the camera board. After a RESET of the camera it reconnects by itself.
+    4. Move the mouse over the picture to read the RGB and HSV of any pixel: those are the numbers
+       used to tune the colour thresholds in the sketch. The IGNORED slider only moves the drawn line.
 
-  PACKET (little-endian), same as obstacle_camera.ino -> sendPacket():
-    4 bytes  magic 0xAA 0x55 0xC3 0x3C
-    1 byte   version | 2+2 width, height | 1 flags | 1 pillar found | 1 pillar colour (1 red, 2 green)
-    2x4      left, right, top, bottom of the closest pillar | 2 pixel count | 1 split | 2 fps x 10
-    [only in the 37-byte header] 12 bytes: orange (found, reason, lowest row, centre row) and
-                                 blue (found, reason, lowest row, centre row); row 0xFFFF = none
-    W*H*2    picture, RGB565 | W*H/4 pillar mask (2 bits per pixel: 1 red, 2 green)
-    [only in the 37-byte header] W*H/4 line mask (2 bits per pixel: 1 orange, 2 blue)
-  The viewer detects by itself whether the camera sends the short (25-byte) or the long
-  (37-byte) packet, so older and newer camera sketches both work.
+  PACKET (little-endian), same as the sketch -> sendPacket(): 37-byte header, then
+    W*H*2 picture (RGB565) | W*H/4 pillar mask (2 bits per pixel: 1 red, 2 green) |
+    W*H/4 line mask (2 bits per pixel: 1 orange, 2 blue)
+    header: magic 0xAA 0x55 0xC3 0x3C | version | width, height | flags | pillar found | pillar colour |
+            left, right, top, bottom, pixel count | split | fps x 10 |
+            orange (found, reason, lowest row, centre row) | blue (found, reason, lowest row, centre row); row 0xFFFF = none
 -->
 <style>
   :root { color-scheme: light dark; }
@@ -39,50 +35,58 @@
   button { padding: 6px 12px; margin-right: 12px; }
   label { margin-right: 14px; }
   pre { font-family: ui-monospace, monospace; white-space: pre-wrap; margin: 6px 0; }
+  .leg { display: inline-block; width: 12px; height: 12px; vertical-align: middle; margin: 0 4px 0 10px; border: 1px solid #888; }
 </style>
 </head>
 <body>
-<h2>Camera viewer (the same bytes the ESP32 sends)</h2>
+<h2>Camera viewer: pillars and floor lines (the same bytes the ESP32 sends)</h2>
 <div class="row">
   <button id="connect">Connect camera</button>
   <label><input type="checkbox" id="showPicture" checked> picture</label>
-  <label><input type="checkbox" id="showMask" checked> pillar mask</label>
-  <label><input type="checkbox" id="showLines" checked> line mask (orange / blue)</label>
-  <label><input type="checkbox" id="showIgnore" checked> IGNORED rows</label>
+  <label><input type="checkbox" id="showMask" checked> pillars (red / green)</label>
+  <label><input type="checkbox" id="showLines" checked> accepted lines (filled)</label>
+  <label><input type="checkbox" id="showGuides" checked> line guides</label>
+  <label><input type="checkbox" id="showIgnore"> IGNORED zones</label>
+  <label>IGNORED top: <input type="range" id="ignoreTop" min="100" max="140" value="115" style="vertical-align: middle; width: 160px;"> <span id="ignoreTopVal">115</span> (drawing only)</label>
+</div>
+<div class="row">
+  Legend:
+  <span class="leg" style="background:#ff8a00"></span> orange line
+  <span class="leg" style="background:#00d4ff"></span> blue line
+  <span class="leg" style="background:#ff0000"></span> red pillar
+  <span class="leg" style="background:#00ff00"></span> green pillar
 </div>
 <div class="row"><canvas id="cv" width="320" height="240"></canvas></div>
-<pre id="info">Close the Serial Monitor before connecting. Use Chrome or Edge.</pre>
-<pre id="lines"></pre>
+<pre id="info">Close the Serial Monitor before connecting. Use Chrome or Edge. In the sketch: STREAM_TO_PC = true.</pre>
+<pre id="lines">Lines: waiting for data.</pre>
 <pre id="pix">Move the mouse over the picture to read the RGB and HSV of a pixel.</pre>
 
 <script>
 const W = 320, H = 240;
-const PIC = W * H * 2, MASK = W * H / 4;
-const HDR_SHORT = 25, HDR_LONG = 37;
-const MAGIC = [0xAA, 0x55, 0xC3, 0x3C];
-
-// Same numbers as obstacle_camera.ino: pillars are searched only in rows IGNORE_TOP_ROWS .. H - NEAR_ROWS - 1
-const IGNORE_TOP_ROWS = 115, NEAR_ROWS = 0;
-// Floor lines are searched from this row down (LINE_TOP_ROW in obstacle_camera.ino)
-const LINE_TOP_ROW = 140;
-const REASON = ['yes', 'no', 'no (few pixels)', 'no (too short)', 'no (too thick)', 'no (wall above)'];
+const HDR = 37;                              // header: 25 bytes of pillar data + 12 for the floor lines
+const PIC = W * H * 2, MASK = W * H / 4, LMASK = W * H / 4;
+const PACKET = HDR + PIC + MASK + LMASK;
+const X_CENTER_OFFSET = 12, LINE_CENTER_HALF = 10;   // same numbers as the sketch
+let IGNORE_TOP_ROWS = 115;                   // moved by the slider (drawing only, the sketch keeps its own value)
+const NEAR_ROWS = 0;                         // 0 = pillars and magenta line down to the bottom edge
+// same numbers as LINE_OK, LINE_NONE, LINE_FEW, LINE_SHORT, LINE_THICK, LINE_WALL in the sketch
+const REASONS = ['yes', 'no (no line)', 'no (few pixels)', 'no (too short)', 'no (too thick)', 'no (wall above)'];
 
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const img = ctx.createImageData(W, H);
-const showPicture = document.getElementById('showPicture');
-const showMask = document.getElementById('showMask');
-const showLines = document.getElementById('showLines');
-const showIgnore = document.getElementById('showIgnore');
-const info = document.getElementById('info');
-const linesInfo = document.getElementById('lines');
-const pix = document.getElementById('pix');
+const $ = (id) => document.getElementById(id);
+const showPicture = $('showPicture'), showMask = $('showMask'), showLines = $('showLines');
+const showGuides = $('showGuides'), showIgnore = $('showIgnore');
+const info = $('info'), linesBox = $('lines'), pix = $('pix');
 
-let port = null, reader = null;
+let port = null, reader = null, running = false;
+let bytesIn = 0, lastBytes = 0;
 let buf = new Uint8Array(0);
 let lastPic = null;
 
 const u16 = (b, i) => b[i] | (b[i + 1] << 8);
+const rowOf = (v) => (v === 0xFFFF ? -1 : v);      // -1 = not there
 
 // Same math as the Arduino (rgbToHsv)
 function hsv(r, g, b) {
@@ -98,36 +102,57 @@ function hsv(r, g, b) {
   return [h, s, v];
 }
 
-function drawGuides() {
+function drawGuides(orange, blue) {
+  const cx = W / 2 + X_CENTER_OFFSET;
+  ctx.setLineDash([3, 3]);
   ctx.lineWidth = 1;
-  ctx.setLineDash([4, 3]);
-  ctx.font = '9px system-ui, sans-serif';
-  const top = IGNORE_TOP_ROWS, bottom = H - NEAR_ROWS;
-  ctx.strokeStyle = '#00e5ff'; ctx.fillStyle = '#00e5ff';
-  ctx.beginPath(); ctx.moveTo(0, top + 0.5); ctx.lineTo(W, top + 0.5); ctx.stroke();
-  ctx.fillText('pillars from row ' + top, 2, top - 3);
-  if (bottom < H) {
-    ctx.strokeStyle = '#ff4fd8'; ctx.fillStyle = '#ff4fd8';
-    ctx.beginPath(); ctx.moveTo(0, bottom + 0.5); ctx.lineTo(W, bottom + 0.5); ctx.stroke();
-    ctx.fillText('pillars up to row ' + bottom, 2, bottom - 3);
-  }
-  ctx.strokeStyle = '#ffa500'; ctx.fillStyle = '#ffa500';
-  ctx.beginPath(); ctx.moveTo(0, LINE_TOP_ROW + 0.5); ctx.lineTo(W, LINE_TOP_ROW + 0.5); ctx.stroke();
-  ctx.fillText('lines from row ' + LINE_TOP_ROW, 2, LINE_TOP_ROW - 3);
+  // straight-ahead strip (the lines are searched only here for the "center" value)
+  ctx.strokeStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(cx - LINE_CENTER_HALF + 0.5, 140); ctx.lineTo(cx - LINE_CENTER_HALF + 0.5, H);
+  ctx.moveTo(cx + LINE_CENTER_HALF + 0.5, 140); ctx.lineTo(cx + LINE_CENTER_HALF + 0.5, H);
+  ctx.stroke();
   ctx.setLineDash([]);
+  // lowest row of each accepted line (solid) and its row in the strip (short bar)
+  const items = [[orange, '#ffa000', 'orange'], [blue, '#40c8ff', 'blue']];
+  ctx.font = '9px system-ui, sans-serif';
+  for (const [ln, col, name] of items) {
+    if (!ln.found) continue;
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, ln.lowest + 0.5); ctx.lineTo(W, ln.lowest + 0.5); ctx.stroke();
+    if (ln.center >= 0) {
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx - LINE_CENTER_HALF, ln.center + 0.5); ctx.lineTo(cx + LINE_CENTER_HALF, ln.center + 0.5); ctx.stroke();
+    }
+    ctx.fillStyle = col;
+    ctx.fillText(name + ' ' + ln.lowest, 2, Math.max(10, ln.lowest - 2));
+  }
 }
 
-function rowText(v) { return v === 0xFFFF ? '-' : String(v); }
+function drawIgnoreLines() {
+  const top = IGNORE_TOP_ROWS, bottom = H - NEAR_ROWS;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#00e5ff';
+  ctx.beginPath(); ctx.moveTo(0, top + 0.5); ctx.lineTo(W, top + 0.5); ctx.stroke();
+  ctx.strokeStyle = '#ff4fd8';
+  ctx.beginPath(); ctx.moveTo(0, bottom + 0.5); ctx.lineTo(W, bottom + 0.5); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = '9px system-ui, sans-serif';
+  ctx.fillStyle = '#00e5ff'; ctx.fillText('IGNORED ' + top, 2, top - 3);
+  ctx.fillStyle = '#ff4fd8'; ctx.fillText('IGNORED ' + bottom, 2, bottom - 3);
+}
 
-function decodeFrame(b, hdr) {
-  const long = hdr === HDR_LONG;
-  const pic = b.subarray(hdr, hdr + PIC);
-  const mk = b.subarray(hdr + PIC, hdr + PIC + MASK);
-  const lk = long ? b.subarray(hdr + PIC + MASK, hdr + PIC + 2 * MASK) : null;
+function decodeFrame(b) {
+  const pic = b.subarray(HDR, HDR + PIC);
+  const mk = b.subarray(HDR + PIC, HDR + PIC + MASK);
+  const lm = b.subarray(HDR + PIC + MASK, PACKET);
   const found = b[10], color = b[11];
   const L = u16(b, 12), R = u16(b, 14), T = u16(b, 16), B = u16(b, 18);
   const count = u16(b, 20), split = b[22], fps = u16(b, 23) / 10;
-  lastPic = pic.slice();                     // the raw picture, for the mouse readout
+  const orange = { found: b[25] === 1, reason: b[26], lowest: rowOf(u16(b, 27)), center: rowOf(u16(b, 29)) };
+  const blue   = { found: b[31] === 1, reason: b[32], lowest: rowOf(u16(b, 33)), center: rowOf(u16(b, 35)) };
+  lastPic = pic.slice();
 
   const d = img.data;
   for (let i = 0; i < W * H; i++) {
@@ -139,55 +164,56 @@ function decodeFrame(b, hdr) {
     d[o + 2] = (p & 31) << 3;
     d[o + 3] = 255;
   }
+  // pillars (the blocks the car uses): 1 red, 2 green
   if (showMask.checked) {
     for (let i = 0; i < W * H; i++) {
-      const c = (mk[i >> 2] >> ((i & 3) * 2)) & 3;   // 1 red, 2 green (the blocks the car uses)
+      const c = (mk[i >> 2] >> ((i & 3) * 2)) & 3;
       if (!c) continue;
       const o = i * 4;
-      const tr = c === 1 ? 255 : 0, tg = c === 2 ? 255 : 0;
-      d[o]     = 0.5 * d[o]     + 0.5 * tr;
-      d[o + 1] = 0.5 * d[o + 1] + 0.5 * tg;
+      d[o]     = 0.5 * d[o]     + 0.5 * (c === 1 ? 255 : 0);
+      d[o + 1] = 0.5 * d[o + 1] + 0.5 * (c === 2 ? 255 : 0);
       d[o + 2] = 0.5 * d[o + 2];
     }
   }
-  if (long && showLines.checked) {
+  // accepted floor lines: 1 orange, 2 blue. Painted solid so the car's view is clear.
+  let nOrange = 0, nBlue = 0;
+  if (showLines.checked) {
     for (let i = 0; i < W * H; i++) {
-      const c = (lk[i >> 2] >> ((i & 3) * 2)) & 3;   // 1 orange, 2 blue
+      const c = (lm[i >> 2] >> ((i & 3) * 2)) & 3;
       if (!c) continue;
       const o = i * 4;
-      const col = c === 1 ? [255, 140, 0] : [0, 90, 255];
-      d[o]     = 0.4 * d[o]     + 0.6 * col[0];
-      d[o + 1] = 0.4 * d[o + 1] + 0.6 * col[1];
-      d[o + 2] = 0.4 * d[o + 2] + 0.6 * col[2];
+      if (c === 1) { nOrange++; d[o] = 255; d[o + 1] = 138; d[o + 2] = 0; }
+      else         { nBlue++;   d[o] = 0;   d[o + 1] = 212; d[o + 2] = 255; }
+    }
+  } else {
+    for (let i = 0; i < W * H; i++) {
+      const c = (lm[i >> 2] >> ((i & 3) * 2)) & 3;
+      if (c === 1) nOrange++; else if (c === 2) nBlue++;
     }
   }
   ctx.putImageData(img, 0, 0);
-  if (showIgnore.checked) drawGuides();
+  if (showGuides.checked) drawGuides(orange, blue);
+  if (showIgnore.checked) drawIgnoreLines();
   if (found) {
     ctx.strokeStyle = '#ffd400'; ctx.lineWidth = 1;
     ctx.strokeRect(L - 0.5, T - 0.5, R - L + 2, B - T + 2);
   }
-  const colorName = found ? (color === 1 ? 'RED' : 'GREEN') : 'none';
-  info.textContent =
-    `camera ${fps.toFixed(1)} fps | packet ${hdr} bytes | pillar ${colorName} | x ${L}-${R} | rows ${T}-${B} | px ${count}` +
-    (split ? ' | split from a bigger blob' : '');
-  if (long) {
-    // bytes 25..36: orange (found, reason, lowest, centre), blue (found, reason, lowest, centre)
-    const o = { f: b[25], r: b[26], low: u16(b, 27), c: u16(b, 29) };
-    const bl = { f: b[31], r: b[32], low: u16(b, 33), c: u16(b, 35) };
-    const line = (n, l) => `${n}: ${l.f ? 'FOUND' : 'not found'} (${REASON[l.r] || l.r}) | lowest row ${rowText(l.low)} | row straight ahead ${rowText(l.c)}`;
-    linesInfo.textContent = line('ORANGE line', o) + '\n' + line('BLUE line  ', bl);
-  } else {
-    linesInfo.textContent = 'This camera sketch sends the short packet: no floor-line data.';
-  }
-}
 
-function matchAt(b, i) {
-  return i + 3 < b.length && b[i] === MAGIC[0] && b[i + 1] === MAGIC[1] && b[i + 2] === MAGIC[2] && b[i + 3] === MAGIC[3];
+  const colorName = found ? (color === 1 ? 'RED' : 'GREEN') : 'none';
+  const calibrated = (b[9] & 1) === 1;
+  info.textContent = (calibrated ? '' : 'CALIBRATING: point the camera at the EMPTY white floor and wait for "CALIBRATED" (or press RESET) | ') +
+    `camera ${fps.toFixed(1)} fps | pillar ${colorName} | x ${L}-${R} | rows ${T}-${B} | px ${count}` +
+    (split ? ' | split from a bigger blob' : '');
+  const lineTxt = (name, ln, px) =>
+    `${name}: ${ln.found ? 'YES' : 'no'} | reason: ${REASONS[ln.reason] || ln.reason} | lowest row ${ln.lowest} | centre row ${ln.center} | painted pixels ${px}`;
+  linesBox.textContent = lineTxt('ORANGE', orange, nOrange) + '\n' + lineTxt('BLUE  ', blue, nBlue);
+  lastFrame = Date.now();
 }
+let lastFrame = 0;
 
 function findMagic(b) {
-  for (let i = 0; i + 3 < b.length; i++) if (matchAt(b, i)) return i;
+  for (let i = 0; i + 3 < b.length; i++)
+    if (b[i] === 0xAA && b[i + 1] === 0x55 && b[i + 2] === 0xC3 && b[i + 3] === 0x3C) return i;
   return -1;
 }
 
@@ -196,37 +222,55 @@ function parse() {
     const i = findMagic(buf);
     if (i < 0) { buf = buf.slice(Math.max(0, buf.length - 3)); return; }
     if (i > 0) buf = buf.slice(i);
-    const shortLen = HDR_SHORT + PIC + MASK, longLen = HDR_LONG + PIC + 2 * MASK;
-    if (buf.length < shortLen + 4) return;            // need to see what follows a short packet
-    let hdr;
-    if (matchAt(buf, shortLen)) hdr = HDR_SHORT;      // next packet starts right after a short one
-    else if (buf.length >= longLen + 4 && matchAt(buf, longLen)) hdr = HDR_LONG;
-    else if (buf.length < longLen + 4) return;        // wait for more bytes
-    else { buf = buf.slice(4); continue; }            // false magic inside the data: skip it
-    const len = hdr === HDR_SHORT ? shortLen : longLen;
-    decodeFrame(buf, hdr);
-    buf = buf.slice(len);
+    if (buf.length < PACKET) return;
+    decodeFrame(buf);
+    buf = buf.slice(PACKET);
   }
 }
 
 async function connect() {
+  if (running) return;
+  running = true;
   try {
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
-    // The ESP32-S3 sends pictures only while the computer says "I am here" (DTR, like the Serial Monitor does)
-    await port.setSignals({ dataTerminalReady: true, requestToSend: true });
-    reader = port.readable.getReader();
-    info.textContent = 'Connected. Waiting for a picture (the sketch needs STREAM_TO_PC = true)...';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      const n = new Uint8Array(buf.length + value.length);
-      n.set(buf); n.set(value, buf.length);
-      buf = n;
-      parse();
-    }
+    // the first time you choose the port; after a RESET of the camera the same port is reused
+    if (!port) port = await navigator.serial.requestPort();
   } catch (e) {
-    info.textContent = 'Error: ' + e.message;
+    info.textContent = 'No port chosen: ' + e.message;
+    running = false;
+    return;
+  }
+  setInterval(() => {
+    if (Date.now() - lastFrame < 3000) return;
+    info.textContent = `NO PICTURE (bytes received: ${bytesIn}). ` +
+      (bytesIn === 0 ? 'The board sends nothing: check STREAM_TO_PC = true and that the Serial Monitor is closed.'
+                     : 'Bytes arrive but no complete packet: check that the sketch is obstacle_camera or camera_test.');
+  }, 1000);
+  while (true) {
+    try {
+      await port.open({ baudRate: 115200 });
+      // the ESP32-S3 sends pictures only while the computer says "I am here" (DTR)
+      await port.setSignals({ dataTerminalReady: true, requestToSend: true });
+      reader = port.readable.getReader();
+      info.textContent = 'connected. Waiting for a picture...';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        bytesIn += value.length; lastBytes = Date.now();
+        const n = new Uint8Array(buf.length + value.length);
+        n.set(buf); n.set(value, buf.length);
+        buf = n;
+        parse();
+      }
+    } catch (e) {
+      info.textContent = 'Error: ' + e.message;
+    }
+    // the board restarted (RESET) or the port was lost: close it and open it again by itself
+    try { if (reader) reader.releaseLock(); } catch (_) {}
+    try { await port.close(); } catch (_) {}
+    reader = null;
+    buf = new Uint8Array(0);
+    info.textContent = 'Port lost (RESET on the camera?). Reconnecting...';
+    await new Promise(r => setTimeout(r, 1000));
   }
 }
 
@@ -242,7 +286,11 @@ cv.addEventListener('mousemove', (e) => {
   pix.textContent = `x ${x} y ${y} | RGB ${r},${g},${b} | H ${h} S ${s} V ${v}`;
 });
 
-document.getElementById('connect').addEventListener('click', connect);
+$('connect').addEventListener('click', connect);
+$('ignoreTop').addEventListener('input', (e) => {
+  IGNORE_TOP_ROWS = Number(e.target.value);
+  $('ignoreTopVal').textContent = IGNORE_TOP_ROWS;
+});
 </script>
 </body>
 </html>

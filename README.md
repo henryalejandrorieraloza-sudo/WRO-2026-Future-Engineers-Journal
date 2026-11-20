@@ -84,7 +84,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 ├── src/                     ← all source code (see src/README.md)
 │   ├── hardware-tests/         ← one test per component: motor + encoder, steering servo, 4 TOF + gyroscope
 │   ├── open-challenge/         ← open_challenge: the Open Challenge program (3 laps, stops at the start position)
-│   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test, Pillar Vision Lab
+│   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
 ├── models/                  ← 25 STL files of every printed part, renders, CAD v1–v3, tyre moulding
@@ -322,7 +322,7 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 - **Only "range valid" readings are used.** "Signal fail" readings gave believable but wrong numbers (e.g. 63 cm with the wall at 30 cm).
 - **Gyroscope:** 1000 samples (≈ 3 s) at rest right after power-on, while the car waits for the start button; their mean is the offset. Scale checked with 4 hand turns (1440°) against a wall → `YAW_SCALE` (§10.4).
 - **Steering:** centre and limits found with the interactive `servo_calibration` sketch, with 2–3° of margin before each mechanical stop.
-- **Camera colours:** HSV thresholds tuned live under the real lighting with Pillar Vision Lab (section 9).
+- **Camera colours:** HSV thresholds tuned live under the real lighting with the camera viewer (§12.5).
 
 **Noise and interference we considered:** sunlight and strong lamps raise the TOF ambient-light level (we print the ambient value in the diagnostic sketch); dark walls return little light, and almost none when the beam hits them at an angle (journal Phase 10), so the side sensors face the wall squarely and "signal fail" readings are ignored; objects outside the field (people, flags) can look like pillars to the camera, so only a horizontal band of the image is searched.
 
@@ -363,11 +363,9 @@ flowchart LR
 | Open Challenge program | Nano | Gyro heading hold with an integral term, fixed distance to the inner wall (or corridor centre), corner detection by a jump of the inner side TOF, 90° gyro turn, 12 turns, stop at the start position (§8.0) | [`open_challenge`](src/open-challenge/open_challenge) |
 | Earlier Open sketches | Nano | Wall-following PIDs, corner and turn sketches that led to `open_challenge` | History: [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed), [`turn_left_90_pid_brake`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/turn_left_90_pid_brake), [`wall_follow_nearest_gyro`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_follow_nearest_gyro) |
 | Camera viewer | PC browser | Test page for the camera board: live picture, pillar mask, orange / blue line mask, rows ignored, per-line status, RGB / HSV of any pixel (§12.5) | [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) |
-| Pillar detection | Camera | HSV → blobs → closest pillar → side to pass; streams picture and mask over USB | [`pillar_viewer.ino`](src/obstacle-challenge/pillar_viewer) |
 | Obstacle vision v3 | Camera | Locked camera, 4 × 4 blocks, time filter, pillar position in cm (§9.3), red / magenta vote, orange and blue lines with the long-and-thin test and the centre-row fit (§9.6); 14-field message to the Nano | [`obstacle_camera`](src/obstacle-challenge/obstacle_camera) |
 | Straight with pillars | Nano | Odometry map (encoder + gyro), pillars on the map, lateral goal → heading → gyro PD (§9.4–9.5) | [`straight_pillars`](src/obstacle-challenge/straight_pillars) |
 | Line test | Nano | Motor off; prints what the camera says about the lines and the pillar, used to measure the row → cm table | [`line_test`](src/obstacle-challenge/line_test) |
-| Pillar Vision Lab | PC browser | Shows what the camera sees, runs the same algorithm in JavaScript and checks it matches, live parameter tuning | [`viewer.html`](src/obstacle-challenge/pillar_viewer/viewer.html) |
 | Scenario Roulette | PC browser | Draws valid official track layouts to test on and scores Open Challenge attempts | [`index.html`](src/tools/scenario-roulette/index.html) |
 
 **Why we wrote our own drivers:** the BMI160 library we tried only returned zeros without reporting any error (journal Problem 14), and the servo libraries of the first board (a Nano ESP32) did not work (journal Problem 6). On the classic Arduino Nano the standard `Servo.h` works, so steering uses it, and the BMI160 is read with our own register-level driver, which is short, fully understood and faster.
@@ -760,9 +758,9 @@ This is the ground-plane perspective of a low camera: row 129 is the horizon, an
 
 After the third lap the car will find the magenta walls of the parking lot (already detected by the camera, not yet sent to the Nano) and park parallel. Starting the round **inside** the parking lot is worth 7 more points. The lot is 1.5 × the car length (≈ 18 cm for our 12–13 cm car), so parallel parking will almost certainly need **reverse**; the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested first.
 
-### 9.9 Pillar Vision Lab
+### 9.9 Camera viewer
 
-<a href="https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html">Pillar Vision Lab</a> is the calibration tool we built: a web page that receives every picture over USB (Web Serial), draws the colour mask on top, runs the same algorithm in JavaScript, checks that its result matches the camera board, and lets us tune every parameter live. It turned threshold tuning from guessing into measuring, and we also used it to tune the floor-line colours.
+The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibration tool we built: a web page that receives every picture over USB (Web Serial), draws the pillar mask and the accepted orange / blue floor lines on top, shows why each line was accepted or rejected, and prints the RGB / HSV of the pixel under the mouse. It turned threshold tuning from guessing into measuring. The earlier tool, *Pillar Vision Lab* (it also re-ran the algorithm in JavaScript), was removed from `main` on 20 November; it stays in the git history ([`pillar_viewer`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/7442dd52b04163d51598f534a4f5270128001dc8/src/obstacle-challenge/pillar_viewer)).
 
 ### 9.10 Roadmap to the complete Obstacle Challenge
 
@@ -841,7 +839,7 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | Drive gear skips on a sudden reverse (journal Problem 34) | Motor only drives forward during a run; stops with short brake |
 | I²C bus freezes and hangs the program (journal Problem 12) | `Wire.setTimeOut(50)`; check connectors; each sensor tested alone first |
 | Loose sensor wire (journal Problem 30) | Locking connectors on the PCB; hardware tests before every session |
-| Lighting at the venue differs from home | Colour thresholds re-tuned on site with Pillar Vision Lab in minutes |
+| Lighting at the venue differs from home | Colour thresholds re-tuned on site with the camera viewer in minutes |
 | Camera sees objects outside the field | Search only a horizontal band of the image |
 | Steering not centred after a mechanical change | Re-run `servo_calibration` after any change to the steering |
 | Side TOF cannot see the black wall (journal Problem 46) | Sensors straight at ~5 cm, ROI 16 × 8, only "range valid"; re-test with a tape measure after any change to the sensor mounts |
@@ -897,7 +895,7 @@ Every component is tested alone before it is joined to the rest:
 | Metric | How we measure it |
 |---|---|
 | Vision frame rate | fps printed by the camera board (~12.5 fps at 320 × 240 with pillars and lines; lower while streaming pictures to the PC) |
-| Vision correctness | Board result vs JavaScript result, compared on the same picture in Pillar Vision Lab |
+| Vision correctness | Pillar and floor-line masks drawn by the camera board on its own picture, checked by eye in the camera viewer (the earlier JavaScript comparison is in the history, §9.9) |
 | TOF quality | Reading vs tape-measure distance; valid readings out of 30; spread (p90 − p10) of repeated readings (`tof_roi_budget_test`) |
 | Gyro drift | Heading change with the car at rest over time |
 | Turn accuracy | Heading error after each 90° turn |
@@ -940,13 +938,13 @@ Every component is tested alone before it is joined to the rest:
 | Partition Scheme | 8M with spiffs (3MB APP/1.5MB SPIFFS) |
 | PSRAM | **OPI PSRAM** (without it: `frame buffer malloc failed`) |
 
-If the upload stays at `Connecting...`: hold **BOOT**, press and release **RESET**, release **BOOT**. Only one program can use the port at a time: close the Serial Monitor or Pillar Vision Lab before uploading.
+If the upload stays at `Connecting...`: hold **BOOT**, press and release **RESET**, release **BOOT**. Only one program can use the port at a time: close the Serial Monitor or the camera viewer before uploading.
 
-### 12.5 Testing the camera: camera viewer and Pillar Vision Lab
+### 12.5 Testing the camera: `camera_test` and the camera viewer
 
-**Camera viewer** (the page we use to test the camera): upload [`obstacle_camera`](src/obstacle-challenge/obstacle_camera) to the camera board with `STREAM_TO_PC = true`, close the Serial Monitor, open [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) in **Chrome or Edge** (Web Serial is needed), press **Connect camera** and choose the camera port. It shows the picture, the pillar mask, the orange / blue line mask, the rows the car ignores, the status of each floor line, and the RGB / HSV of the pixel under the mouse. Set `STREAM_TO_PC = false` again before driving.
+**Camera viewer** (the page we use to test the camera): upload [`camera_test`](src/hardware-tests/camera_test) (the same vision code as [`obstacle_camera`](src/obstacle-challenge/obstacle_camera)) to the camera board with `STREAM_TO_PC = true`, close the Serial Monitor, open [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) in **Chrome or Edge** (Web Serial is needed), press **Connect camera** and choose the camera port. It shows the picture, the pillar mask, the orange / blue line mask, the rows the car ignores, the status of each floor line, and the RGB / HSV of the pixel under the mouse. Set `STREAM_TO_PC = false` again before driving.
 
-**Pillar Vision Lab**: upload `pillar_viewer.ino` to the camera board, open `viewer.html` in the same way, press **Connect** and choose the camera port.
+The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps its own `IGNORE_TOP_ROWS`, now 115); after a RESET of the camera the page reconnects by itself.
 
 ---
 
