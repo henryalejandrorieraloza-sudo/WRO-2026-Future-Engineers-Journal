@@ -4,7 +4,7 @@ All firmware for the car. Each Arduino sketch lives in a folder with the same na
 
 ## 1. System overview
 
-The car runs two programmable boards that communicate over a wired UART link. **Every sketch that drives the car (`open_challenge`, `straight_pillars`, `line_test` and every hardware test) targets the classic Arduino Nano.** The only sketches that do not are the two that run on the camera board (`obstacle_camera`, `pillar_viewer`): an ATmega328P has 2 KB of RAM, while one 320 × 240 picture is 150 KB, so the vision has to stay on its own board.
+The car runs two programmable boards that communicate over a wired UART link. **Every sketch that drives the car (`open_challenge`, `straight_pillars`, `line_test` and every hardware test) targets the classic Arduino Nano.** The only sketches that do not are the two that run on the camera board (`obstacle_camera`, `camera_test`): an ATmega328P has 2 KB of RAM, while one 320 × 240 picture is 150 KB, so the vision has to stay on its own board.
 
 | Board | Role |
 |---|---|
@@ -29,9 +29,9 @@ The full wiring, power budget and schematic are in [`../schemes`](../schemes/REA
 
 ```
 src/
-├── hardware-tests/       Component tests (motor + encoder, steering servo, four TOF + gyroscope)
+├── hardware-tests/       Component tests (motor + encoder, steering servo, four TOF + gyroscope, camera)
 ├── open-challenge/       open_challenge: the Open Challenge program
-├── obstacle-challenge/   Camera vision, pillar avoidance, floor-line tests, Pillar Vision Lab
+├── obstacle-challenge/   Camera vision, pillar avoidance, floor-line tests
 └── tools/                Browser tools that run on a PC (camera viewer, scenario roulette)
 ```
 
@@ -46,6 +46,7 @@ Each sketch validates one component on its own before it is combined with the ot
 | [`motor_encoder_test`](hardware-tests/motor_encoder_test) | Nano | Drive motor (TB6612FNG) and encoder | Press the start button (D10): slow forward, fast forward, brake, reverse, stopped. Prints pulses, wheel turns and RPM every 200 ms, to check the motor direction (`MOTOR_REVERSED`), the encoder direction and the pulses per turn (`PULSES_PER_REV` must be measured for the real motor) |
 | [`servo_test`](hardware-tests/servo_test) | Nano | Steering servo (D9) | After the start button, sweeps the servo between `MIN_ANGLE` (10°) and `MAX_ANGLE` (170°) in steps of 2°, printing the angle and pausing at the centre and at both limits, to find the real centre and the mechanical limits without pushing the rack |
 | [`tof_and_gyro_test`](hardware-tests/tof_and_gyro_test) | Nano | 4 × TOF400C (VL53L1X) and BMI160 | Gives each TOF its own address through `XSHUT` (LEFT A3 = 0x30, RIGHT A2 = 0x31, REAR A0 = 0x32, FRONT A1 = 0x33), ranges in Short mode, reads the BMI160 by registers (chip ID 0xD1 at 0x69), calibrates the gyro offset (200 samples) and integrates the yaw. Prints `FRONT | LEFT | RIGHT | REAR | YAW`. Library: *VL53L1X* by Pololu |
+| [`camera_test`](hardware-tests/camera_test) | ESP32-S3-CAM | Camera (OV2640) and vision | The same vision code as `obstacle_camera` (v3.1), kept to test the camera on its own. With `STREAM_TO_PC = true` it sends every picture, the pillar mask and the line mask over USB to [`camera_viewer.html`](tools/camera_viewer/camera_viewer.html); it also sends the 14-field message to the Nano (TX only, GPIO43). Upload it with *PSRAM: OPI PSRAM*, close the Serial Monitor, open the viewer in Chrome or Edge and press *Connect camera* |
 
 ### Retired hardware tests
 
@@ -95,14 +96,12 @@ Later iterations (one-corner version, 12-turn loop, wall re-alignment) are docum
 | [`obstacle_camera`](obstacle-challenge/obstacle_camera) | ESP32-S3-CAM | Current vision code (v3.1), colour thresholds retuned 19 Nov (orange H 55–90, blue H 165–215; not yet validated on the track) | 320 × 240 image, camera locked after 5 s, HSV classification, red / magenta majority vote. Pillars are detected on 4 × 4 blocks with a solid-shape and plausibility check and a temporal filter, and their distance ahead and to the side is computed in **cm** (pinhole model, README §9.3). **Orange and blue floor lines** are detected with a long-and-thin test and a floor-above check (white floor above the line, so the edge of the black wall is rejected); blue starts at hue 165° (the floor sits at H 111–125, the blue line at 191–208). Earlier numbers (blue from 110°, orange H 29–52) were for the yellow light of October (README §9.6). Red pillars are accepted only up to V 165, so the bright orange line is not taken for a red pillar. Sends `$color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,orangeRow,blueCenterRow,orangeCenterRow` to the Nano at 115200 baud. With `STREAM_TO_PC = true` it also streams pictures to Pillar Vision Lab; with `false` it prints a status every 0.5 s (why each line was accepted or rejected, and a **colour probe** of two fixed boxes to recalibrate under any light) |
 | [`straight_pillars`](obstacle-challenge/straight_pillars) | Nano | Validated, 27 Oct (all cases pass) | One straight with pillars. Builds an odometry map of the straight (encoder 15.1 ticks per cm plus gyro), places every pillar on the map and sets a lateral goal 17 cm from the pillar on its correct side. The target heading is `atan2(error, distance)` (maximum 45°), followed by a gyro PD controller and the servo. Aims at the next pillar as soon as the camera passes the current one and clears it 5 cm after its centre. Waits for START (D10) and stops after `RUN_CM` or if the camera stops sending messages (README §9.4–9.5) |
 | [`line_test`](obstacle-challenge/line_test) | Nano | Measurement, 27 Oct | Motor off. Prints five times per second whether the camera sees the orange and blue lines, their lowest row and their row straight ahead, how many messages contained them, and the pillar. Used to measure the row-to-distance table of README §9.6 |
-| [`pillar_viewer/pillar_viewer.ino`](obstacle-challenge/pillar_viewer) | ESP32-S3-CAM | Development tool | Pillar detection (HSV classification, blob search, closest pillar, correct-side check). Sends every picture and its colour mask over USB |
-| [`pillar_viewer/viewer.html`](obstacle-challenge/pillar_viewer/viewer.html) | PC (Chrome / Edge) | Development tool | **Pillar Vision Lab**: shows what the camera sees, runs the same algorithm in JavaScript and checks it against the board, and allows every parameter to be tuned live. Open it [online](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/obstacle-challenge/pillar_viewer/viewer.html) or as a local file, press *Connect* and choose the camera port (close the Arduino Serial Monitor first) |
 
 ## 6. Tools (`tools/`)
 
 | File | Description |
 |---|---|
-| [`camera_viewer/camera_viewer.html`](tools/camera_viewer/camera_viewer.html) | **Camera viewer**, the page we use to test the camera board. Shows the picture exactly as the ESP32-S3-CAM sends it over USB, the pillar mask, the orange / blue line mask, the rows that are ignored, the status of each floor line (found, why rejected, rows) and the RGB / HSV of the pixel under the mouse. Upload `obstacle_camera` with `STREAM_TO_PC = true`, close the Serial Monitor, open the file in Chrome or Edge, press *Connect camera*. Reads both the short and the long packet of the camera sketch |
+| [`camera_viewer/camera_viewer.html`](tools/camera_viewer/camera_viewer.html) | **Camera viewer**, the page we use to test the camera board. Shows the picture exactly as the ESP32-S3-CAM sends it over USB, the pillar mask, the orange / blue line mask, the rows that are ignored, the status of each floor line (found, why rejected, rows) and the RGB / HSV of the pixel under the mouse. Upload `camera_test` (or `obstacle_camera`) with `STREAM_TO_PC = true`, close the Serial Monitor, open the file in Chrome or Edge, press *Connect camera*. Reads the 37-byte packet of the camera sketch, draws the accepted orange / blue lines and the pillar mask, and has an *IGNORED top* slider (default 115, drawing only) |
 | [`scenario-roulette/index.html`](tools/scenario-roulette/index.html) | **WRO 2026 Scenario Roulette** ([open online](https://henryalejandrorieraloza-sudo.github.io/WRO-2026-Future-Engineers-Journal/src/tools/scenario-roulette/)). Draws valid Open and Obstacle track scenarios with the official procedure and draws the field to scale, so realistic tests can be set up. Also logs Open Challenge attempts with the official score |
 
 ## 7. Arduino IDE settings

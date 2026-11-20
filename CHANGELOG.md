@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.1 — 20 November · One camera viewer, `camera_test`
+- **Only one viewer left:** `src/tools/camera_viewer/camera_viewer.html` is now the new page (pillars and floor lines, accepted-line fill, line guides, reason for each rejected line, automatic reconnect after a RESET of the camera, IGNORED-top slider set to 115). *Pillar Vision Lab* (`src/obstacle-challenge/pillar_viewer/`: `viewer.html` and `pillar_viewer.ino`) was removed; it stays in the history at commit `7442dd5`.
+- **`camera_test` added** (`src/hardware-tests/camera_test/`): the same vision code as `obstacle_camera` (v3.1, `IGNORE_TOP_ROWS = 115`), for testing the camera with the viewer.
+- README (§9.9, §12.5, tables) and `src/README.md` updated; links to the removed folder point to the history.
+
 ## v1.9 — 20 November · Documentation review against the rubric, Open Challenge code removed, camera viewer
 - **Review against the *Future Engineers 2026 Documentation Rubric*** (five criteria, point by point). New table at the top of the README (*How this repository answers the documentation rubric*) says where each criterion is covered.
 - **18 broken links repaired.** Links to sketches removed earlier (`servo_*`, `tof_*`, `drive_until_left_open`) and to the Open Challenge sketches now point to permalinks in the git history, in `README.md`, `src/README.md`, `models/README.md` and the journal. A script checks every relative link of every `.md` file: 0 broken.
