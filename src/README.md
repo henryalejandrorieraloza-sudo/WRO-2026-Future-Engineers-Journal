@@ -4,7 +4,7 @@ All firmware for the car. Each Arduino sketch lives in a folder with the same na
 
 ## 1. System overview
 
-The car runs two programmable boards that communicate over a wired UART link. **Every sketch that drives the car (`straight_pillars`, `line_test` and every hardware test except the camera ones) targets the classic Arduino Nano.** The only sketches that do not are the three that run on the camera board (`obstacle_camera`, `pillar_viewer`, `camera_webserver_emakefun`): an ATmega328P has 2 KB of RAM, while one 320 × 240 picture is 150 KB, so the vision has to stay on its own board.
+The car runs two programmable boards that communicate over a wired UART link. **Every sketch that drives the car (`open_challenge`, `straight_pillars`, `line_test` and every hardware test) targets the classic Arduino Nano.** The only sketches that do not are the two that run on the camera board (`obstacle_camera`, `pillar_viewer`): an ATmega328P has 2 KB of RAM, while one 320 × 240 picture is 150 KB, so the vision has to stay on its own board.
 
 | Board | Role |
 |---|---|
@@ -29,12 +29,13 @@ The full wiring, power budget and schematic are in [`../schemes`](../schemes/REA
 
 ```
 src/
-├── hardware-tests/       Component tests and measurement tools (one sketch per part)
+├── hardware-tests/       Component tests (motor + encoder, steering servo, four TOF + gyroscope)
+├── open-challenge/       open_challenge: the Open Challenge program
 ├── obstacle-challenge/   Camera vision, pillar avoidance, floor-line tests, Pillar Vision Lab
 └── tools/                Browser tools that run on a PC (camera viewer, scenario roulette)
 ```
 
-The Open Challenge sketches are not in `main` any more (removed on 20 November to be rewritten); they are listed in [section 4](#4-open-challenge-code-removed-from-main-on-20-november) with a link to each one in the git history.
+Earlier Open Challenge sketches and older hardware tests are not in `main` any more; they are listed in [section 3](#retired-hardware-tests) and [section 4](#4-open-challenge-code) with a link to each one in the git history.
 
 ## 3. Hardware tests (`hardware-tests/`)
 
@@ -42,13 +43,13 @@ Each sketch validates one component on its own before it is combined with the ot
 
 | Sketch | Board | Component | Purpose |
 |---|---|---|---|
-| [`rear_motor_loop_test`](hardware-tests/rear_motor_loop_test) | Nano | Drive motor and TB6612FNG | Cycle: forward, stop, backward, stop |
-| [`tof_servo_sensors_test`](hardware-tests/tof_servo_sensors_test) | Nano | Side TOF sensors and steering servo | Sweeps the servo left, centre, right (±25° around the rack centre 120°) while printing the LEFT and RIGHT distances in cm. Gives each VL53L1X its own address through `XSHUT` (LEFT A3 = 0x30, RIGHT A2 = 0x31) |
-| [`camera_webserver_emakefun`](hardware-tests/camera_webserver_emakefun) | ESP32-S3-CAM | Camera | Manufacturer's camera web server, used only to check the camera on the bench. Needs a 2.4 GHz Wi-Fi network and the other files of the manufacturer's example. It is never used in a round: Wi-Fi is not allowed during competition rounds (rule 11.10) |
+| [`motor_encoder_test`](hardware-tests/motor_encoder_test) | Nano | Drive motor (TB6612FNG) and encoder | Press the start button (D10): slow forward, fast forward, brake, reverse, stopped. Prints pulses, wheel turns and RPM every 200 ms, to check the motor direction (`MOTOR_REVERSED`), the encoder direction and the pulses per turn (`PULSES_PER_REV` must be measured for the real motor) |
+| [`servo_test`](hardware-tests/servo_test) | Nano | Steering servo (D9) | After the start button, sweeps the servo between `MIN_ANGLE` (10°) and `MAX_ANGLE` (170°) in steps of 2°, printing the angle and pausing at the centre and at both limits, to find the real centre and the mechanical limits without pushing the rack |
+| [`tof_and_gyro_test`](hardware-tests/tof_and_gyro_test) | Nano | 4 × TOF400C (VL53L1X) and BMI160 | Gives each TOF its own address through `XSHUT` (LEFT A3 = 0x30, RIGHT A2 = 0x31, REAR A0 = 0x32, FRONT A1 = 0x33), ranges in Short mode, reads the BMI160 by registers (chip ID 0xD1 at 0x69), calibrates the gyro offset (200 samples) and integrates the yaw. Prints `FRONT | LEFT | RIGHT | REAR | YAW`. Library: *VL53L1X* by Pololu |
 
 ### Retired hardware tests
 
-Removed from `main` on 11 November when the sensor, gyro and servo tests were merged into `tof_servo_sensors_test` and `straight_pillars`. Each one is still available in the git history (the link opens the folder at the last commit that contained it).
+Older component tests, replaced on 20 November by the three tests above. Each one is still available in the git history (the link opens the folder at the last commit that contained it). The first seven were already removed on 11 November.
 
 | Sketch | Board | Component | Purpose |
 |---|---|---|---|
@@ -59,10 +60,21 @@ Removed from `main` on 11 November when the sensor, gyro and servo tests were me
 | [`servo_only_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/servo_only_test) | Nano | Steering (rack and pinion) | Slow sweep centre, left, centre, right using `Servo.h`, to check that the servo never pushes against the mechanical limits |
 | [`servo_calibration`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/servo_calibration) | Nano | Steering servo | Interactive calibration: type an angle in the Serial Monitor (or `a` / `d` for ±1°) to find the real steering centre and limits safely |
 | [`drive_until_left_open`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/drive_until_left_open) | Nano | Drive motor and left TOF | First driving test: drives straight and brakes when the LEFT TOF reads more than 170 cm (the left wall has ended) |
+| [`rear_motor_loop_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/685ccdc1dd669fb5e4a6d7ca3f2aee6515969397/src/hardware-tests/rear_motor_loop_test) | Nano | Drive motor and TB6612FNG | Cycle: forward, stop, backward, stop (replaced by `motor_encoder_test`) |
+| [`tof_servo_sensors_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/685ccdc1dd669fb5e4a6d7ca3f2aee6515969397/src/hardware-tests/tof_servo_sensors_test) | Nano | Side TOF sensors and steering servo | Servo sweep ±25° around the rack centre while printing LEFT and RIGHT in cm (replaced by `servo_test` and `tof_and_gyro_test`) |
+| [`camera_webserver_emakefun`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/685ccdc1dd669fb5e4a6d7ca3f2aee6515969397/src/hardware-tests/camera_webserver_emakefun) | ESP32-S3-CAM | Camera | Manufacturer's web server, bench check only; needs Wi-Fi, never used in a round (rule 11.10) |
 
-## 4. Open Challenge code (removed from `main` on 20 November)
+## 4. Open Challenge code
 
-The Open Challenge program is being rewritten, so the seven sketches below were removed from `main`. **They were not lost**: each link opens the sketch at commit `f5aa0e6`, and `git checkout f5aa0e6 -- src/open-challenge` restores the whole folder. They are kept as evidence of the development process (the rubric asks for iterations): each version builds on the previous one, in the order they were developed. The strategy they implement is in [README §8](../README.md#8-open-challenge-strategy).
+### Current program
+
+| Sketch | Board | Status | Description |
+|---|---|---|---|
+| [`open_challenge`](open-challenge/open_challenge) | Nano | Added 20 Nov; three-lap results still to record | The Open Challenge program: gyro heading hold (P + I) with a fixed distance to the inner wall or the corridor centre, corner detection by a jump of the inner-side TOF, 90° turns by predicted yaw, `LAPS × 4` turns, and a stop at the **start position** measured with the encoder on lap 2 (`LSTART − D1`). Uses only the left and right TOF (front and rear held in reset). Press START (D10) or send `g` + Enter; `s` + Enter is an emergency stop; battery on first, then USB. Settings in three blocks at the top (run, tuning, car constants). Design in [README §8.0](../README.md#80-the-open-challenge-program-open_challenge-20-november) |
+
+### Earlier sketches (history)
+
+Removed from `main` on 20 November. **They were not lost**: each link opens the sketch at commit `f5aa0e6`, and `git checkout f5aa0e6 -- src/open-challenge` restores the folder. They show the development process (the rubric asks for iterations), in the order they were developed; each version builds on the previous one. The strategy of those versions is in [README §8.1–8.7](../README.md#81-idea-design-of-the-earlier-versions).
 
 | Sketch | Status | Description |
 |---|---|---|
@@ -74,7 +86,7 @@ The Open Challenge program is being rewritten, so the seven sketches below were 
 | [`corner_turn_front_trigger`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_front_trigger) | Validated, 21 Oct | First complete straight and corner. Gyro wall following on the nearest wall (`MAX_HEADING_DEG = 5`, `MOTOR_SPEED = 50`). When a side TOF reads more than 2400 mm three times in a row, the opening side is stored and the PID switches to the opposite wall without braking. A FRONT reading below 1400 mm (any sensor status accepted) starts the validated 90° turn toward the opening, or toward the farther side if no opening was seen, and the car stays braked. Safety: after 40 s of driving it compares both sides and turns anyway. LED D13 on means the front TOF is not giving a usable reading |
 | [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed) | Validated, 21 Oct | Same wall following without the front sensor, plus an **integral term on the heading loop** (`KI_HEADING = 2.5`) so the car no longer drifts to one side. It keeps the last 5 readings of each wall; when an opening is detected it switches to the opposite wall at the average of those readings (no drift when switching). After `RUN_MS` (1.8 s) it brakes: if an opening was seen it turns toward it, otherwise it averages 10 readings per side and turns toward the farther one |
 
-Later iterations (one-corner version, 12-turn loop, wall re-alignment) are documented in the [engineering journal](../docs/ENGINEERING_JOURNAL.md), section 11.
+Later iterations (one-corner version, 12-turn loop, wall re-alignment) are documented in the [engineering journal](../docs/ENGINEERING_JOURNAL.md), section 11, and ended in `open_challenge`.
 
 ## 5. Obstacle Challenge (`obstacle-challenge/`)
 

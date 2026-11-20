@@ -66,7 +66,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 | **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (25 STL, CAD v1–v3, assembly order) |
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
-| **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (69 problems with data) |
+| **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
 | **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes · 60+ commits with descriptive messages |
 
 ---
@@ -78,14 +78,15 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 ├── README.md                ← this file: complete overview of the car
 ├── CHANGELOG.md             ← versions and release notes
 ├── docs/
-│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 69 problems, data and decisions
+│   ├── ENGINEERING_JOURNAL.md  ← day-by-day engineering process: 68 problems, data and decisions
 │   └── images/                 ← plots used in the journal
 ├── schemes/                 ← schematic, wiring diagram, PCB, power budget, BOM, datasheets
 ├── src/                     ← all source code (see src/README.md)
-│   ├── hardware-tests/         ← one sketch per component (TOF + steering, motor, camera)
+│   ├── hardware-tests/         ← one test per component: motor + encoder, steering servo, 4 TOF + gyroscope
+│   ├── open-challenge/         ← open_challenge: the Open Challenge program (3 laps, stops at the start position)
 │   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test, Pillar Vision Lab
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
-│   (Open Challenge sketches: removed on 20 Nov to be rewritten, kept in the git history — see §8)
+│   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
 ├── models/                  ← 25 STL files of every printed part, renders, CAD v1–v3, tyre moulding
 ├── t-photos/                ← team photos (official and fun)
 ├── v-photos/                ← the six official views of the vehicle + all parts laid out
@@ -355,12 +356,12 @@ flowchart LR
 
 | Module | Board | What it does | Code |
 |---|---|---|---|
-| TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging, ROI 16 × 8, only "range valid" readings | [`tof_servo_sensors_test`](src/hardware-tests/tof_servo_sensors_test); four-sensor version with the gyroscope: [`tof_gyro_sensors_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_gyro_sensors_test) (history) |
-| Gyro driver | Nano | BMI160 read through I²C registers (no library), offset calibration, yaw integration (`yaw += rate × dt`) | [`straight_pillars`](src/obstacle-challenge/straight_pillars) (current); first version: [`tof_gyro_sensors_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_gyro_sensors_test) (history) |
-| Motor control | Nano | TB6612FNG forward / reverse / coast / short brake with PWM | [`rear_motor_loop_test`](src/hardware-tests/rear_motor_loop_test) |
-| Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz). Centre and limits are measured, not assumed | [`tof_servo_sensors_test`](src/hardware-tests/tof_servo_sensors_test); interactive calibration: [`servo_calibration`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/servo_calibration) (history) |
-| Wall keeping (Open) | Nano | PID that keeps the start distances to both walls, or to the nearest wall; gyro cascade version | History (code removed from `main` on 20 Nov, §8): [`wall_follow_nearest_gyro`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_follow_nearest_gyro), [`wall_keep_both_pid`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_keep_both_pid) |
-| Corner turn (Open) | Nano | Gap detection on the side TOF sensors, wall switching, 90° gyro turn with active brake | History: [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed), [`turn_left_90_pid_brake`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/turn_left_90_pid_brake) |
+| TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging, ROI 16 × 8, only "range valid" readings | [`tof_and_gyro_test`](src/hardware-tests/tof_and_gyro_test) (4 sensors), [`open_challenge`](src/open-challenge/open_challenge) (left and right, Long mode) |
+| Gyro driver | Nano | BMI160 read through I²C registers (no library), offset calibration, yaw integration (`yaw += rate × dt`) | [`tof_and_gyro_test`](src/hardware-tests/tof_and_gyro_test), [`open_challenge`](src/open-challenge/open_challenge), [`straight_pillars`](src/obstacle-challenge/straight_pillars) |
+| Motor control | Nano | TB6612FNG forward / reverse / active brake with PWM, encoder pulse counting by interrupt | [`motor_encoder_test`](src/hardware-tests/motor_encoder_test) |
+| Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz). Centre and limits are measured, not assumed | [`servo_test`](src/hardware-tests/servo_test) |
+| Open Challenge program | Nano | Gyro heading hold with an integral term, fixed distance to the inner wall (or corridor centre), corner detection by a jump of the inner side TOF, 90° gyro turn, 12 turns, stop at the start position (§8.0) | [`open_challenge`](src/open-challenge/open_challenge) |
+| Earlier Open sketches | Nano | Wall-following PIDs, corner and turn sketches that led to `open_challenge` | History: [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed), [`turn_left_90_pid_brake`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/turn_left_90_pid_brake), [`wall_follow_nearest_gyro`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_follow_nearest_gyro) |
 | Camera viewer | PC browser | Test page for the camera board: live picture, pillar mask, orange / blue line mask, rows ignored, per-line status, RGB / HSV of any pixel (§12.5) | [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) |
 | Pillar detection | Camera | HSV → blobs → closest pillar → side to pass; streams picture and mask over USB | [`pillar_viewer.ino`](src/obstacle-challenge/pillar_viewer) |
 | Obstacle vision v3 | Camera | Locked camera, 4 × 4 blocks, time filter, pillar position in cm (§9.3), red / magenta vote, orange and blue lines with the long-and-thin test and the centre-row fit (§9.6); 14-field message to the Nano | [`obstacle_camera`](src/obstacle-challenge/obstacle_camera) |
@@ -377,9 +378,40 @@ flowchart LR
 
 ## 8. Open Challenge strategy
 
-> **Code status (20 November):** the seven Open Challenge sketches were removed from `main` so the Open program can be rewritten from the pieces validated below. Nothing was lost: every sketch stays in the git history and can be restored with `git checkout f5aa0e6 -- src/open-challenge` (links to each one in [src/README.md §4](src/README.md#4-open-challenge-code-removed-from-main-on-20-november)). This section remains the design documentation of the strategy, its state machine, its safety rules and the data behind every setting.
+### 8.0 The Open Challenge program: `open_challenge` (20 November)
 
-### 8.1 Idea
+[`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it (§8.1–8.7 describe that design work) were removed from `main`; they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`) and [src/README.md §4](src/README.md#4-open-challenge-code) links each one.
+
+**Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (15.1 ticks per cm), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
+
+```mermaid
+stateDiagram-v2
+    [*] --> WAIT: power on, gyro calibrated
+    WAIT --> STRAIGHT: START button
+    STRAIGHT --> TURN: inner-side TOF jumps (corner)
+    TURN --> STRAIGHT: predicted yaw reaches heading ± 90°, turns < 4 × LAPS
+    TURN --> STRAIGHT: last turn: final leg to the start position
+    STRAIGHT --> DONE: start position reached
+    STRAIGHT --> DONE: safety (stall, no corner in 8 s, next corner too early)
+    TURN --> DONE: safety (turn longer than 4 s, stall)
+    DONE --> [*]: active brake
+```
+
+| Part | How it works |
+|---|---|
+| **Straight** | Hold the target heading (an exact multiple of 90°) with a P + I controller on the gyroscope (`KP_HEAD = 2.0`, `KI_HEAD = 4.0`); the integral learns the real straight servo angle (the car pulled left at the centre position) |
+| **Lane in the corridor** | `LANE_MODE 1`: keep a fixed distance to the **inner** wall (`INNER_TARGET_MM`); `LANE_MODE 0`: drive in the centre of the corridor using both walls, shifted toward the inner wall by `CENTER_SHIFT_MM`. The lane error changes the target heading by at most 12°, and a wall closer than `SAFE_WALL_MM` is avoided at full correction |
+| **Direction of the round** | At corner 1 the first side whose distance jumps is the **inner side** (left = counter-clockwise, right = clockwise). From then on only that side is watched |
+| **Corner detection** | The inner TOF reads `JUMP_DELTA_MM` (250 mm) above its learned normal distance, or above `JUMP_ABS_MM` (1200 mm), `JUMP_CONFIRM` readings in a row. The normal distance is an average that is updated only while a wall is seen |
+| **Turn** | Full steering toward the inner side until the **predicted** yaw (yaw + rate × `TURN_PREDICT_S`) reaches old heading ± 90°, then straight again without braking. The turn ends by angle, not by time |
+| **No false corners** | Jumps are ignored for `IGNORE_AFTER_TURN_CM` (60 cm) after a turn, and the inner wall must be seen again (closer than `ARM_WALL_MM`, `ARM_READINGS` in a row) before the next corner counts |
+| **Stopping at the start position** | `D1` = distance from the start to corner 1. With `LAPS ≥ 2`, on lap 2 the car drives the whole start straight and measures `LSTART` (end of turn 4 → corner 5). After the last turn it drives `LSTART − D1` and brakes, which is the start position. With `LAPS = 1` it estimates it from the opposite wall (less exact); if nothing was measured it stops `FALLBACK_CM` after seeing the inner wall |
+| **Safety** | Wheels blocked (`STALLED`), no corner in 8 s, a turn longer than 4 s, a corner detected before the start position, or more than `MAX_FINAL_CM` after the last turn: active brake and stop |
+| **Rules** | The gyro offset is measured by the program at power-on; the start button starts the run; nothing is entered by the team (rules 9.9, 9.11). The program prints its state every 100 ms for testing and does not depend on the Serial Monitor to drive |
+
+The settings are grouped at the top of the file in three blocks: run settings (`LAPS`, `RUN_PWM`, `TURN_PWM`, lane mode, corner thresholds), tuning (controller gains, limits) and car constants (motor and encoder direction, `GYRO_SCALE = 1.007`, servo centre / limits, pins). Test it on Scenario Roulette layouts in both directions and with 600 mm and 1000 mm corridors, and record the results in the journal.
+
+### 8.1 Idea (design of the earlier versions)
 
 **Finish the three laps safely first, then go faster.** The car drives along a side wall with a two-loop controller (wall distance → small target heading → gyroscope → steering). At the first corner it finds which side opens and fixes the direction of the round. At every corner it turns exactly 90° with the gyroscope, and at every straight the wall itself corrects the heading, so small errors cannot add up over 12 corners. After the last corner it drives a short straight and brakes actively.
 
@@ -818,11 +850,11 @@ After the third lap the car will find the magenta walls of the parking lot (alre
 | The camera sees the floor lines only up to ~22 cm (low camera) | Lines put on the map and confirmed with 2 messages; if not enough, raise / tilt the camera and recalibrate |
 | Parallel parking needs reverse, and the drive gear skipped on a sudden reverse | Gentle reverse only, tested alone before the parking manoeuvre |
 
-The complete list of the **69 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
+The complete list of the **68 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
 
 ### 10.4 Why each setting has its value
 
-Every number in the Open Challenge code comes from a measurement, from the field geometry, or from the rules. Values marked *provisional* are confirmed in the next test after the side sensors are remounted.
+The table describes the settings of the earlier Open Challenge design (§8.1–8.7); the current values of `open_challenge` are in the header of its file (§8.0). Every number in the Open Challenge code comes from a measurement, from the field geometry, or from the rules. Values marked *provisional* are confirmed in the next test after the side sensors are remounted.
 
 | Setting | Value | Why this value | Evidence |
 |---|---|---|---|
@@ -857,7 +889,7 @@ Every number in the Open Challenge code comes from a measurement, from the field
 
 Every component is tested alone before it is joined to the rest:
 
-1. **Hardware tests** ([src/hardware-tests](src/hardware-tests)): one sketch per component, printing its readings to the Serial Monitor. Driving algorithms are then developed in [src/obstacle-challenge](src/obstacle-challenge) (the Open Challenge sketches are kept in the [git history](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/)).
+1. **Hardware tests** ([src/hardware-tests](src/hardware-tests)): one sketch per component (motor + encoder, steering servo, four TOF sensors + gyroscope), printing its readings to the Serial Monitor. Driving programs are then developed in [src/open-challenge](src/open-challenge) and [src/obstacle-challenge](src/obstacle-challenge).
 2. **Hand tests:** the car or its sensors are moved by hand to check the decision logic before the car drives itself. This let us develop the algorithm while the chassis was still being built.
 3. **Measured experiments** to choose parameters: TOF ROI and mounting angle with a tape measure and a control surface (journal §8.2 and Phase 10, [`tof_roi_budget_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_roi_budget_test)), HSV thresholds in Pillar Vision Lab and in the [camera viewer](src/tools/camera_viewer/camera_viewer.html).
 4. **Driving tests on realistic layouts** generated by Scenario Roulette with the official procedure.
@@ -883,7 +915,7 @@ Every component is tested alone before it is joined to the rest:
 3. Print the 25 parts in [models/stl](models/stl) (PLA) and cast the four silicone tyres ([recipe](models/README.md#4-custom-silicone-tyres)).
 4. Assemble the drive train, the steering and the sensor brackets on the printed base following the [assembly order](models/README.md#5-assembly-order).
 5. Solder headers and connectors on the PCB, mount it on its supports and wire the external components following the [wiring diagram](schemes/README.md#3-wiring-diagram).
-6. Run the [hardware tests](src/hardware-tests) one by one, then `servo_calibration` to measure the steering centre.
+6. Run the [hardware tests](src/hardware-tests) one by one (`motor_encoder_test`, `servo_test` to find the steering centre and limits, `tof_and_gyro_test`).
 
 ### 12.2 Software
 
@@ -933,7 +965,7 @@ If the upload stays at `Connecting...`: hold **BOOT**, press and release **RESET
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
 | One complete corner (decide, turn, check, follow inner wall) | Validated 21–24 Oct (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version; in the git history) |
 | Side TOF data on the black wall | In progress — Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
-| Open Challenge program (12-turn loop) | In progress — being rewritten: the old sketches left `main` on 20 Nov (see §8); the final program must be committed before the scoring commit |
+| Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | In progress — program in the repository since 20 Nov (§8.0); three-lap results on the track still to be recorded in the journal |
 | Encoder: delays in distance instead of time (§8.7) | Planned — Next: measure ticks per mm |
 | Videos: one per challenge (≥ 30 s autonomous) | In progress — Pending (rule 7) |
 | Encoder | Done — Measured: 15.1 ticks per cm (used in the Obstacle map) |
@@ -962,7 +994,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 | Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | To confirm with the organisers |
 | Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | In progress — final Open and Obstacle programs, final README and journal still to commit; rubric review done on 20 Nov |
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
-| Code for **every** programmed component, with comments | — | In progress — Obstacle stages and hardware tests in `src/`; the Open Challenge sketches are in the git history and the final Open program is being rewritten |
+| Code for **every** programmed component, with comments | — | In progress — Obstacle stages and hardware tests in `src/`; the Open Challenge program is `open_challenge` and its earlier versions are in the git history; final results still to record |
 | Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
 | YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | In progress — one general video; Open and Obstacle videos pending |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |

@@ -1480,10 +1480,9 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 63 | Rear motor stopped (0 V between AO1 and AO2 of the TB6612FNG) | N20 motor replaced on 4 Nov (§17.1) | ✅ |
 | 64 | Front TOF never gave a valid reading while the rear one measured perfectly | Rear sensor moved to the front, XSHUT pins swapped (§17.1) | ✅ |
 | 65 | Camera board damaged (no USB port, hot) | Replacement bought, in use from 19 Nov (§17.2) | ✅ |
-| 66 | Smoke after changing the motor and uploading code (the Nano did not answer the programmer) | Battery not reconnected until shorts were checked; motors, encoder and gyro tested again on 5 Nov. Component that burned: still to identify (§17.3) | ❓ cause |
-| 67 | Right TOF reads ~27 cm almost fixed; left TOF reads ~18 % too far | Open Challenge restarted with the left sensor only; TOF supply moved back to 5 V on 17 Nov, to re-check (§17.4) | 🔄 |
+| 66 | Smoke after changing the motor and uploading code (the Nano did not answer the programmer) | Rule: no battery until the board is checked for shorts; motors, encoder and gyro tested again on 5 Nov. Component that burned: still to identify (§17.3) | ❓ cause |
+| 67 | Right TOF reads ~27 cm almost fixed; left TOF reads ~18 % too far | TOF supply moved back to 5 V on 17 Nov; front and rear TOF kept off in the Open program; to re-check (§17.4) | 🔄 |
 | 68 | New camera: green-yellow tint, floor over-exposed, picture rotated | Step-by-step colour set-up and new thresholds measured on 19 Nov (§17.5) | ✅ |
-| 69 | Replacement motor has a different encoder count (4000 ticks = 50 cm, 80 ticks per cm) | Constant of `straight_pillars` (15.1) must be measured again on the new motor (§17.3) | 🔄 |
 
 ---
 
@@ -1528,8 +1527,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Detect the parking lot (magenta pieces).
 - [ ] Calibrate the colours again on the competition field, under its lighting, with Pillar Vision Lab.
 - [ ] Add Serial Monitor screenshots and the manual-simulation video as evidence.
-- [ ] Rewrite the Open Challenge program (the old sketches were removed from `main` on 20 Nov, §17.4) and commit it before the scoring commit of 24 Nov.
-- [ ] Measure the encoder ticks per cm of the replacement motor and update `TICKS_PER_CM` in `straight_pillars` (§17.3).
+- [ ] Test `open_challenge` for three laps on Scenario Roulette layouts (both directions, 600 mm and 1000 mm corridors), record the results here, and commit the final version before the scoring commit of 24 Nov.
 - [ ] Re-check both side TOF sensors after the supply change of 17 Nov and re-measure the left sensor's 18 % error (§17.4).
 - [ ] Validate the 19 Nov colour thresholds of `obstacle_camera` on the track (pillars, orange and blue lines).
 
@@ -1556,13 +1554,13 @@ On 28 Oct the Nano received 0 bytes from the camera: the ESP32-S3-CAM no longer 
 
 I replaced the motor on 4 Nov. When I uploaded the next sketch the Nano answered *programmer is not responding* and then smoke came out. The rule after this incident is not to connect the battery again until the board has been checked for shorts (5 V / GND of the Nano, VM / GND of the TB6612FNG, resistance of the motor). The component that burned is not yet identified (Problem 66, photo in [`other/failures`](../other/failures/used_burned_components.jpg)). On 5 Nov the motors, the encoder and the gyroscope all tested fine again.
 
-**New encoder constant.** With the replacement motor I measured **4000 ticks = 50 cm, i.e. 80 ticks per cm**, very different from the 15.1 ticks per cm measured on 27 Oct (Problem 54). Everything that uses distance from the encoder must be calibrated again for this motor: the `TICKS_PER_CM` of `straight_pillars` has not been updated yet (Problem 69). I saved the working base for distance driving as the `lanchi` sketch (drive a fixed distance by encoder, then brake with both TB6612FNG inputs HIGH).
+I saved the working base for distance driving as the `lanchi` sketch (drive a fixed distance by encoder, then brake with both TB6612FNG inputs HIGH).
 
 ### 17.4 11–20 November: the Open Challenge is restarted
 
-On 11 Nov the right TOF stopped working (about 27 cm almost fixed) and the left one read about **18 % too far** (40 cm read 47–48 cm, 60 cm read 70–72 cm; with a gap it read 224–257 cm). I decided to attempt the Open Challenge with **only the left sensor**: follow the left wall and, when the gap appears, brake with both TB6612FNG inputs HIGH and turn 90° to the left with the gyroscope PD (Problem 67). The same day the repository was cleaned: the old sensor, gyro and servo tests were merged into `tof_servo_sensors_test` (commit `92ed5a6`). On 17 Nov the four TOF sensors went back on the 5 V buck rail (commit `4c156bf`); the 18 % error has to be measured again after that change.
+On 11 Nov the right TOF stopped working (about 27 cm almost fixed) and the left one read about **18 % too far** (40 cm read 47–48 cm, 60 cm read 70–72 cm; with a gap it read 224–257 cm) (Problem 67). The same day the repository was cleaned: the old sensor, gyro and servo tests were merged into `tof_servo_sensors_test` (commit `92ed5a6`). On 17 Nov the TOF sensors went back on the 5 V buck rail (commit `4c156bf`); the readings have to be checked again after that change.
 
-On 20 Nov I removed all seven Open Challenge sketches from `main` so that the new Open program is written from the validated pieces (gyro wall following, gap detection, 90° turn with active brake, encoder distances) without keeping versions that no longer match the hardware. They are not lost: `git checkout f5aa0e6 -- src/open-challenge` restores them, and [src/README.md §4](../src/README.md#4-open-challenge-code-removed-from-main-on-20-november) lists each one with its link.
+On 20 Nov I removed the seven earlier Open Challenge sketches from `main` and added a single new program, [`open_challenge`](../src/open-challenge/open_challenge/open_challenge.ino): it uses **only the left and right TOF sensors** (the front and rear ones stay soldered but held in reset with XSHUT LOW, so they cannot disturb the I²C addresses), the gyroscope and the encoder, finds the direction of the round at the first corner, and stops at the start position by measuring distances on the first and second lap (README §8.0). The earlier sketches are not lost: `git checkout f5aa0e6 -- src/open-challenge` restores them, and [src/README.md §4](../src/README.md#4-open-challenge-code) lists each one.
 
 ### 17.5 18–20 November: the new camera
 
@@ -1580,7 +1578,7 @@ The measurements under the greenish light of 19 Nov: orange line H 64–75, S 95
 | Rubric criterion | Evidence |
 |---|---|
 | Power and sensors | TOF supply decision reversed with a reason (5 V rail), ROI and mode re-tested after each mounting change, failed sensors replaced or bypassed |
-| Software | Open Challenge restarted from validated pieces; every removed sketch stays reachable in the history |
+| Software | New Open program `open_challenge` replaces seven earlier sketches, which stay reachable in the history |
 | Systems thinking | A failure in one subsystem (motor, TOF, camera) changed what the others can assume; the lessons are a spare camera board and a short check before the battery is connected again |
 | Iteration with data | Measured valid-reading rates, motor voltages step by step, HSV tables of the new camera |
 | Honesty | Two causes (the 4 Nov smoke, the 18 % TOF error) are written as *not yet known* instead of being guessed |
