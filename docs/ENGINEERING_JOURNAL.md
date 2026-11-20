@@ -643,7 +643,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **What I observed:** the servo did not reach the full left/right angles; in some tests it moved only toward one side.
 - **Probable cause:** the Ackermann linkage of the new chassis is **too tight** (too much friction), so the servo does not have the force to move it through the whole range. A second possible cause is that the servo arm was mounted far from the middle of its range, so one direction is almost at the servo's end stop.
 - **Why I did not force it:** a servo that pushes against a blocked mechanism heats up and can strip its gears. This already happened to the previous servo (Problem 17).
-- **What I prepared:** `servo_calibration.ino` ([`src/hardware-tests/servo_calibration`](../src/hardware-tests/servo_calibration)). From the Serial Monitor I type an angle (or `a` / `d` to move 1°) and the servo holds it, so I can find the real centre and the limits without forcing anything.
+- **What I prepared:** `servo_calibration.ino` ([`src/hardware-tests/servo_calibration`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/servo_calibration)). From the Serial Monitor I type an angle (or `a` / `d` to move 1°) and the servo holds it, so I can find the real centre and the limits without forcing anything.
 - **Next steps:** my teammate loosens the linkage; mount the servo arm with the servo at **90°** and the wheels straight, so there is the same range to both sides; then measure centre and limits, leaving 2–3° of margin before each mechanical stop.
 
 #### Problem 30 — A wire of the right TOF sensor came unsoldered 🔄
@@ -667,7 +667,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **Update (8 Oct):** the Nano ESP32 did not recover. It was replaced by a **classic Arduino Nano (ATmega328P)**, which fits the same PCB headers with the same pin numbers. The code was moved to the standard `Servo.h` library, which works on this board. The exact cause of the failure is still not confirmed, so the safety rule stays.
 
 #### Problem 32 — The first driving test could not be run 🔄
-- **The test:** `drive_until_left_open.ino` ([`src/hardware-tests/drive_until_left_open`](../src/hardware-tests/drive_until_left_open)). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
+- **The test:** `drive_until_left_open.ino` ([`src/hardware-tests/drive_until_left_open`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/drive_until_left_open)). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
 - **Why it was not run:** the Nano failed during the upload (Problem 31), and the steering was not working (Problem 29).
 - **Next step:** run it as soon as the Nano and the steering are fixed.
 
@@ -778,7 +778,7 @@ This reverses the earlier plan to power the sensors from the Nano's 3.3 V pin, w
 
 ## 10. Phase 8 — Smooth wall following with the gyroscope (Tuesday 20 October 2026)
 
-> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](../src/open-challenge/wall_follow_nearest_gyro).
+> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_follow_nearest_gyro).
 
 The goal of the day was simple: at the start, pick the nearest side wall and keep exactly that distance, without zigzag and without slowing the car down. It took five versions to get there. Each version fixed one problem and showed the next one.
 
@@ -840,8 +840,8 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
 
 | Date | Version | What it added | Result |
 |---|---|---|---|
-| 21 Oct | [`corner_turn_front_trigger`](../src/open-challenge/corner_turn_front_trigger) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
-| 21 Oct (night) | [`corner_turn_timed`](../src/open-challenge/corner_turn_timed) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
+| 21 Oct | [`corner_turn_front_trigger`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_front_trigger) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
+| 21 Oct (night) | [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
 | 22–23 Oct | One-corner version (10 iterations) | After the turn, a separate function `sideWallRun()` with three phases: **0** find the inner wall, **1** deviate to a target distance, **2** precise P+I+D on that wall; brake when it ends. FRONT/BACK check after the first turn | ✅ "Works excellent" |
 | 24 Oct | Open Challenge loop | Repeats straight → corner → 90° turn up to `TOTAL_TURNS`, absolute headings (90°, 180°, 270°…), FRONT/BACK check only on the first turn, final straight of 1 s and brake | 🔄 Runs, but drifted toward the inner wall lap after lap |
 
@@ -895,7 +895,7 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
 
 ### 12.1 First sign: the numbers did not make sense
 
-With [`tof_left_right_print`](../src/hardware-tests/tof_left_right_print) (only LEFT and RIGHT, robot settings: ROI 1 × 6, 33 ms) **every reading was "signal fail"**:
+With [`tof_left_right_print`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_left_right_print) (only LEFT and RIGHT, robot settings: ROI 1 × 6, 33 ms) **every reading was "signal fail"**:
 
 | Test | LEFT min / max / mean | RIGHT min / max / mean |
 |---|---|---|
@@ -906,7 +906,7 @@ We used a 165 cm threshold between both cases and it worked "quite well", but th
 
 ### 12.2 Experiment 1 — ROI and timing budget, car parallel to the wall (sensor at 30°)
 
-Sketch: [`tof_roi_budget_test`](../src/hardware-tests/tof_roi_budget_test). Car still, black track wall at a known distance (tape measure), 30 readings per configuration. Median of the readings (all of them "signal fail" or invalid):
+Sketch: [`tof_roi_budget_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_roi_budget_test). Car still, black track wall at a known distance (tape measure), 30 readings per configuration. Median of the readings (all of them "signal fail" or invalid):
 
 | Real distance | 1×6, 33 ms (robot) | 4×4, 33 ms | 8×8, 33 ms | 8×8, 50 ms | 16×16 |
 |---|---|---|---|---|---|

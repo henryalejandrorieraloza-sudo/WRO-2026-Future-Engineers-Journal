@@ -150,4 +150,4 @@ The tyres are cast in **printed moulds** with two-part silicone rubber, so they 
 4. Screw the `servo_bracket` and the MG90 to the front of the base; fit the pinion on the servo with the servo at its **centre**, then the rack and the two knuckles with the wheels straight.
 5. Mount the four TOF brackets and the camera bracket.
 6. Fix the PCB on its supports and connect everything following the [wiring diagram](../schemes/README.md#3-wiring-diagram).
-7. Run [`servo_calibration`](../src/hardware-tests/servo_calibration) to measure the steering centre and limits before driving.
+7. Run [`servo_calibration`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/servo_calibration) to measure the steering centre and limits before driving.
