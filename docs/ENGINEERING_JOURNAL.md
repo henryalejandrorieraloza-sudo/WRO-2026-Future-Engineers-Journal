@@ -1,7 +1,7 @@
 # Engineering Journal — Software and Electronics
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
-> **Period covered:** 15 September – 27 October 2026
+> **Period covered:** 15 September – 20 November 2026 (September–October in sections 2–13, November in section 17)
 > **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
@@ -28,6 +28,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 14. [Rules research](#14-rules-research)
 15. [Summary of problems and solutions](#15-summary-of-problems-and-solutions)
 16. [Next steps](#16-next-steps)
+17. [Phase 12 — November: failures, a new camera and a restart of the Open Challenge (29 Oct – 20 Nov)](#17-phase-12--november-failures-a-new-camera-and-a-restart-of-the-open-challenge-29-oct--20-nov-2026)
 
 ---
 
@@ -643,7 +644,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **What I observed:** the servo did not reach the full left/right angles; in some tests it moved only toward one side.
 - **Probable cause:** the Ackermann linkage of the new chassis is **too tight** (too much friction), so the servo does not have the force to move it through the whole range. A second possible cause is that the servo arm was mounted far from the middle of its range, so one direction is almost at the servo's end stop.
 - **Why I did not force it:** a servo that pushes against a blocked mechanism heats up and can strip its gears. This already happened to the previous servo (Problem 17).
-- **What I prepared:** `servo_calibration.ino` ([`src/hardware-tests/servo_calibration`](../src/hardware-tests/servo_calibration)). From the Serial Monitor I type an angle (or `a` / `d` to move 1°) and the servo holds it, so I can find the real centre and the limits without forcing anything.
+- **What I prepared:** `servo_calibration.ino` ([`src/hardware-tests/servo_calibration`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/servo_calibration)). From the Serial Monitor I type an angle (or `a` / `d` to move 1°) and the servo holds it, so I can find the real centre and the limits without forcing anything.
 - **Next steps:** my teammate loosens the linkage; mount the servo arm with the servo at **90°** and the wheels straight, so there is the same range to both sides; then measure centre and limits, leaving 2–3° of margin before each mechanical stop.
 
 #### Problem 30 — A wire of the right TOF sensor came unsoldered 🔄
@@ -667,7 +668,7 @@ A **large difference** means the sensor can clearly tell "wall" from "open", whi
 - **Update (8 Oct):** the Nano ESP32 did not recover. It was replaced by a **classic Arduino Nano (ATmega328P)**, which fits the same PCB headers with the same pin numbers. The code was moved to the standard `Servo.h` library, which works on this board. The exact cause of the failure is still not confirmed, so the safety rule stays.
 
 #### Problem 32 — The first driving test could not be run 🔄
-- **The test:** `drive_until_left_open.ino` ([`src/hardware-tests/drive_until_left_open`](../src/hardware-tests/drive_until_left_open)). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
+- **The test:** `drive_until_left_open.ino` ([`src/hardware-tests/drive_until_left_open`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/drive_until_left_open)). The car drives straight and stops (short brake) when the LEFT TOF reads more than **170 cm** two times in a row, which means the left wall has ended. It is the first step toward the corner detection of the Open Challenge.
 - **Why it was not run:** the Nano failed during the upload (Problem 31), and the steering was not working (Problem 29).
 - **Next step:** run it as soon as the Nano and the steering are fixed.
 
@@ -778,7 +779,7 @@ This reverses the earlier plan to power the sensors from the Nano's 3.3 V pin, w
 
 ## 10. Phase 8 — Smooth wall following with the gyroscope (Tuesday 20 October 2026)
 
-> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](../src/open-challenge/wall_follow_nearest_gyro).
+> **Result:** ✅ the car now drives along the nearest wall **straight and smooth**, at the same speed as before (`MOTOR_SPEED = 60`). Sketch: [`wall_follow_nearest_gyro`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_follow_nearest_gyro).
 
 The goal of the day was simple: at the start, pick the nearest side wall and keep exactly that distance, without zigzag and without slowing the car down. It took five versions to get there. Each version fixed one problem and showed the next one.
 
@@ -840,8 +841,8 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
 
 | Date | Version | What it added | Result |
 |---|---|---|---|
-| 21 Oct | [`corner_turn_front_trigger`](../src/open-challenge/corner_turn_front_trigger) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
-| 21 Oct (night) | [`corner_turn_timed`](../src/open-challenge/corner_turn_timed) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
+| 21 Oct | [`corner_turn_front_trigger`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_front_trigger) | Gyro wall following + opening memory + FRONT < 1400 mm starts the 90° turn | ✅ Never hit a wall; very rarely chose the wrong side |
+| 21 Oct (night) | [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed) | No front sensor: brake after `RUN_MS`, turn toward the opening or toward the farther side; integral on the heading loop | ✅ Validated |
 | 22–23 Oct | One-corner version (10 iterations) | After the turn, a separate function `sideWallRun()` with three phases: **0** find the inner wall, **1** deviate to a target distance, **2** precise P+I+D on that wall; brake when it ends. FRONT/BACK check after the first turn | ✅ "Works excellent" |
 | 24 Oct | Open Challenge loop | Repeats straight → corner → 90° turn up to `TOTAL_TURNS`, absolute headings (90°, 180°, 270°…), FRONT/BACK check only on the first turn, final straight of 1 s and brake | 🔄 Runs, but drifted toward the inner wall lap after lap |
 
@@ -895,7 +896,7 @@ The goal of the day was simple: at the start, pick the nearest side wall and kee
 
 ### 12.1 First sign: the numbers did not make sense
 
-With [`tof_left_right_print`](../src/hardware-tests/tof_left_right_print) (only LEFT and RIGHT, robot settings: ROI 1 × 6, 33 ms) **every reading was "signal fail"**:
+With [`tof_left_right_print`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_left_right_print) (only LEFT and RIGHT, robot settings: ROI 1 × 6, 33 ms) **every reading was "signal fail"**:
 
 | Test | LEFT min / max / mean | RIGHT min / max / mean |
 |---|---|---|
@@ -906,7 +907,7 @@ We used a 165 cm threshold between both cases and it worked "quite well", but th
 
 ### 12.2 Experiment 1 — ROI and timing budget, car parallel to the wall (sensor at 30°)
 
-Sketch: [`tof_roi_budget_test`](../src/hardware-tests/tof_roi_budget_test). Car still, black track wall at a known distance (tape measure), 30 readings per configuration. Median of the readings (all of them "signal fail" or invalid):
+Sketch: [`tof_roi_budget_test`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/06f5685ccd94ee9dd8e3f550c635fe16d0a5c412/src/hardware-tests/tof_roi_budget_test). Car still, black track wall at a known distance (tape measure), 30 readings per configuration. Median of the readings (all of them "signal fail" or invalid):
 
 | Real distance | 1×6, 33 ms (robot) | 4×4, 33 ms | 8×8, 33 ms | 8×8, 50 ms | 16×16 |
 |---|---|---|---|---|---|
@@ -1476,6 +1477,12 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 60 | Bottom edge of the black wall looked like a far blue line | Floor-above check: white floor above ≥ 60 % of the line's columns | ✅ |
 | 61 | Afternoon light: floor became "blue", orange vanished | Floor reached H 85° → `BLUE_HUE_LOW = 110` | ✅ |
 | 62 | Colours tuned from screenshots | Colour probe in the camera's status print | ✅ |
+| 63 | Rear motor stopped (0 V between AO1 and AO2 of the TB6612FNG) | N20 motor replaced on 4 Nov (§17.1) | ✅ |
+| 64 | Front TOF never gave a valid reading while the rear one measured perfectly | Rear sensor moved to the front, XSHUT pins swapped (§17.1) | ✅ |
+| 65 | Camera board damaged (no USB port, hot) | Replacement bought, in use from 19 Nov (§17.2) | ✅ |
+| 66 | Smoke after changing the motor and uploading code (the Nano did not answer the programmer) | Rule: no battery until the board is checked for shorts; motors, encoder and gyro tested again on 5 Nov. Component that burned: still to identify (§17.3) | ❓ cause |
+| 67 | Right TOF reads ~27 cm almost fixed; left TOF reads ~18 % too far | TOF supply moved back to 5 V on 17 Nov; front and rear TOF kept off in the Open program; to re-check (§17.4) | 🔄 |
+| 68 | New camera: green-yellow tint, floor over-exposed, picture rotated | Step-by-step colour set-up and new thresholds measured on 19 Nov (§17.5) | ✅ |
 
 ---
 
@@ -1488,7 +1495,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
 - [x] Repeat the ROI test with other sizes: done in Phase 10 — 16 × 8 replaces 1 × 6 ✅
-- [ ] Run `drive_until_left_open` (first driving test).
+- [x] First driving test (`drive_until_left_open`, now in the git history): superseded by the validated wall-following and corner sketches.
 - [x] Raise the TOF sensors (1.5 cm higher): they detect the walls much better ✅
 - [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
 - [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
@@ -1520,3 +1527,59 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Detect the parking lot (magenta pieces).
 - [ ] Calibrate the colours again on the competition field, under its lighting, with Pillar Vision Lab.
 - [ ] Add Serial Monitor screenshots and the manual-simulation video as evidence.
+- [ ] Test `open_challenge` for three laps on Scenario Roulette layouts (both directions, 600 mm and 1000 mm corridors), record the results here, and commit the final version before the scoring commit of 24 Nov.
+- [ ] Re-check both side TOF sensors after the supply change of 17 Nov and re-measure the left sensor's 18 % error (§17.4).
+- [ ] Validate the 19 Nov colour thresholds of `obstacle_camera` on the track (pillars, orange and blue lines).
+
+
+---
+
+## 17. Phase 12 — November: failures, a new camera and a restart of the Open Challenge (29 Oct – 20 Nov 2026)
+
+This phase is short on new algorithms and long on hardware failures. It is in the journal because the rubric asks for risks, failure analysis and iteration with data, and because each failure changed what the software can assume.
+
+### 17.1 29 October: a TOF swap and a dead motor
+
+**Side TOF sensors parallel to the wall.** After the 30° mounting failed (Phase 10), I mounted the side sensors parallel to the wall and repeated the range test. With ROI 4 × 13 every sensor read "open" from about 40–50 cm. With **ROI 16 × 16 in Short mode** (timing budget 33 ms, period 38 ms, about 30 Hz) the side sensors measured well up to ~60 cm (70 cm at the limit) and the empty side correctly gave "open" because the beam no longer saw the floor. Long mode made the side sensors worse, so Short mode is the one to use with this mounting.
+
+**The front TOF never gave a valid reading.** At 40 cm it returned a valid distance only 54–74 % of the time (38 cm read as 38 cm, but with 26–46 % failed readings) and nothing at 60 cm, while the rear sensor measured perfectly. Instead of searching for a lens or a wiring fault in the front sensor, I **moved the good rear sensor to the front**; with the new cable the XSHUT of the front sensor became A0 and the rear one A1. Afterwards the sensors "worked wonderfully" (Problem 64).
+
+**The rear motor stopped.** Later the same day the motor did not move even at PWM 255. I measured step by step: the battery was 11.6 V; on the TB6612FNG, VM, VCC, STBY and PWMA were correct; but between **AO1 and AO2 there was 0 V**, and AIN1 measured 5 V and AIN2 0 V (the opposite of what the code commands with `MOTOR_REVERSED = true`, which also pointed to crossed D7 / D8 wires). The remaining question was a short inside the motor or a burnt driver channel; I concluded that the N20 was damaged and the Open Challenge stayed stopped until a replacement arrived (Problem 63).
+
+### 17.2 28–31 October: the camera board
+
+On 28 Oct the Nano received 0 bytes from the camera: the ESP32-S3-CAM no longer appeared as a USB port on the computer (not even with BOOT + RESET) and it became hot. On 31 Oct we decided it was damaged and ordered the same model; it arrived on 19 Nov (Problem 65). Lesson: the camera board is on the critical path of the Obstacle Challenge, so a **spare camera board** would remove that risk.
+
+### 17.3 4–5 November: a new motor and smoke
+
+I replaced the motor on 4 Nov. When I uploaded the next sketch the Nano answered *programmer is not responding* and then smoke came out. The rule after this incident is not to connect the battery again until the board has been checked for shorts (5 V / GND of the Nano, VM / GND of the TB6612FNG, resistance of the motor). The component that burned is not yet identified (Problem 66, photo in [`other/failures`](../other/failures/used_burned_components.jpg)). On 5 Nov the motors, the encoder and the gyroscope all tested fine again.
+
+I saved the working base for distance driving as the `lanchi` sketch (drive a fixed distance by encoder, then brake with both TB6612FNG inputs HIGH).
+
+### 17.4 11–20 November: the Open Challenge is restarted
+
+On 11 Nov the right TOF stopped working (about 27 cm almost fixed) and the left one read about **18 % too far** (40 cm read 47–48 cm, 60 cm read 70–72 cm; with a gap it read 224–257 cm) (Problem 67). The same day the repository was cleaned: the old sensor, gyro and servo tests were merged into `tof_servo_sensors_test` (commit `92ed5a6`). On 17 Nov the TOF sensors went back on the 5 V buck rail (commit `4c156bf`); the readings have to be checked again after that change.
+
+On 20 Nov I removed the seven earlier Open Challenge sketches from `main` and added a single new program, [`open_challenge`](../src/open-challenge/open_challenge/open_challenge.ino): it uses **only the left and right TOF sensors** (the front and rear ones stay soldered but held in reset with XSHUT LOW, so they cannot disturb the I²C addresses), the gyroscope and the encoder, finds the direction of the round at the first corner, and stops at the start position by measuring distances on the first and second lap (README §8.0). The earlier sketches are not lost: `git checkout f5aa0e6 -- src/open-challenge` restores them, and [src/README.md §4](../src/README.md#4-open-challenge-code) lists each one.
+
+### 17.5 18–20 November: the new camera
+
+The first pictures of the new camera in the camera viewer ([`src/tools/camera_viewer`](../src/tools/camera_viewer/camera_viewer.html)) showed three problems: a **green-yellow tint**, a floor so bright that some colour channels sat at 248–252 (**over-exposed**), and a picture that was not level. I fixed them in the order the viewer showed them:
+
+1. **Orientation:** the horizon and the edge of the wall must be horizontal; both flips together mean a 180° turn, only the mirror flag means a mirrored picture.
+2. **Exposure:** looking at the empty white floor, lower `AE_LEVEL` until no probe box reports *too bright*.
+3. **White balance:** a white sheet covering the centre box, then adjust the red / green / blue gains until R ≈ G ≈ B (saturation < 15).
+4. **Measure, then set the thresholds:** with the probe boxes (pillar at ~11 cm, line and wall at ~5 cm) I wrote down H, S and V of the red pillar, green pillar, floor, orange line, blue line, black wall and magenta, and only then changed the ranges.
+
+The measurements under the greenish light of 19 Nov: orange line H 64–75, S 95–160, V 107–174; blue line H 191–208, S 110–170; floor H 111–125, S 70–90 (pale green). The thresholds of October (orange H 29–52, blue H 110–200) belonged to the yellow light of that month and missed these lines, so `obstacle_camera` now uses orange H 55–90 and blue H 165–215 (README §9.2). **Still to do:** validate these thresholds on the track, as the 28 Oct ones were (Problem 68).
+
+### 17.6 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Power and sensors | TOF supply decision reversed with a reason (5 V rail), ROI and mode re-tested after each mounting change, failed sensors replaced or bypassed |
+| Software | New Open program `open_challenge` replaces seven earlier sketches, which stay reachable in the history |
+| Systems thinking | A failure in one subsystem (motor, TOF, camera) changed what the others can assume; the lessons are a spare camera board and a short check before the battery is connected again |
+| Iteration with data | Measured valid-reading rates, motor voltages step by step, HSV tables of the new camera |
+| Honesty | Two causes (the 4 Nov smoke, the 18 % TOF error) are written as *not yet known* instead of being guessed |
+

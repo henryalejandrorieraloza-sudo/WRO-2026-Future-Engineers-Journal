@@ -2,15 +2,31 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
-## Unreleased — 20 November · Whole repository on the classic Arduino Nano
+## v1.9 — 20 November · Documentation review against the rubric, Open Challenge code removed, camera viewer
+- **Review against the *Future Engineers 2026 Documentation Rubric*** (five criteria, point by point). New table at the top of the README (*How this repository answers the documentation rubric*) says where each criterion is covered.
+- **18 broken links repaired.** Links to sketches removed earlier (`servo_*`, `tof_*`, `drive_until_left_open`) and to the Open Challenge sketches now point to permalinks in the git history, in `README.md`, `src/README.md`, `models/README.md` and the journal. A script checks every relative link of every `.md` file: 0 broken.
+- **Open Challenge: the seven earlier sketches replaced by one program, `open_challenge`** (`src/open-challenge/open_challenge/`): gyro heading hold, fixed distance to the inner wall, corner detection by a TOF jump, 90° turns, 12 turns and a stop at the start position measured with the encoder. Uses only the left and right TOF. Described in README §8.0 with a state diagram. The earlier sketches stay in the history (`git checkout f5aa0e6 -- src/open-challenge`) and `src/README.md` §4 links each one.
+- **Hardware tests replaced by three:** `motor_encoder_test`, `servo_test`, `tof_and_gyro_test` (the first one translated to English). The previous tests (`rear_motor_loop_test`, `tof_servo_sensors_test`, `camera_webserver_emakefun`) are in the history at commit `685ccdc`.
+- **Camera viewer added** (`src/tools/camera_viewer/camera_viewer.html`): the page used to test the camera board. Shows the picture, the pillar mask, the orange / blue line mask, the ignored rows, the status of each floor line and the RGB / HSV of any pixel. Reads both the short (25-byte) and the long (37-byte) packet of `obstacle_camera`. Documented in README §12.5 and `src/README.md` §6.
+- **README:** Mermaid flowchart of one straight with pillars (§9.1); colour table of §9.2 now matches the thresholds in `obstacle_camera` (19 Nov, new camera); camera frame rate stated consistently (~12.5 fps); STBY described the same way in every file; module table (§7.2), status table (§13) and submission checklist (§14.1) updated.
+- **Journal:** new section 17 (Phase 12, 29 Oct – 20 Nov: motor and camera failures, 4 Nov smoke, new encoder count, TOF problems, new camera set-up) and Problems 63–69 in the summary table.
+
+## v1.8.3 — 20 November · Whole repository on the classic Arduino Nano
 - **Every sketch that runs on the main controller targets the classic Arduino Nano (ATmega328P)**: no ESP32-only calls (`Serial.printf`, LEDC, native-USB waits, `D`-prefixed pins) remain in `src/`. The only non-Nano sketches are the three for the ESP32-S3-CAM vision board, which cannot move to a Nano (2 KB of RAM against 150 KB per picture); `src/README.md` now says so.
 - `tof_servo_sensors_test`: translated to English (repository convention), added the I²C timeout used by the other sketches, and replaced the old Ackermann servo angles (10° / 90° / 170°) by ±25° around the rack centre (120°), so the test cannot push the servo against the end of the rack. It is now listed in the `src/README.md` table.
 - `src/README.md`: Arduino IDE setting now requires Arduino AVR Boards 1.8.3 or newer (`Wire.setWireTimeout`).
 - Main README (design decisions) and `schemes/README.md` describe the classic Nano as the controller; the Nano ESP32 only appears as history (journal Problems 6 and 31) and as the origin of the PCB footprint.
+- `obstacle_camera`: colour thresholds of the orange and blue lines measured again on 19 Nov with the new camera (orange H 55–90, blue H 165–215); still to validate on the track.
+- Vehicle photos replaced with the 20 Nov set (six views of the final car).
 
-## Unreleased — 17 November · TOF sensors back on the 5 V rail
+## v1.8.2 — 17 November · TOF sensors back on the 5 V rail
 - **Power:** the four TOF400C sensors are powered from the +5 V buck rail again, not the Nano's 3.3 V pin. The classic Nano works with 5 V logic, so the sensors connect to it directly. Power budget recalculated (≈ 2.2 W typical, ≈ 10.5 W peak, ≈ 1.6 h per charge). The new failure point is servo peaks on the shared 5 V rail, to be checked with a multimeter during a servo stall.
 - Journal section 9.4, the risk table in `schemes/README.md` §4.3 and the main README were updated to match.
+
+## v1.8.1 — 11–12 November · TOF + servo test, old tests removed, viewer with line layers
+- Added `tof_servo_sensors_test` (Nano): servo sweep while the two side TOF sensors print their distance.
+- Removed the old sensor, gyro and servo test sketches (`tof_gyro_sensors_test`, `tof_left_right_print`, `tof_roi_budget_test`, `servo_simple`, `servo_only_test`, `servo_calibration`, `drive_until_left_open`); they stay in the history at commit `06f5685`.
+- Pillar Vision Lab (`viewer.html`) updated with orange, blue and magenta layers.
 
 ## v1.8 — 5 November · Repository reorganisation
 - **Sketches regrouped by purpose:** `src/hardware-tests/` now holds only component tests; the driving algorithms moved to the new `src/open-challenge/` folder (`wall_follow_nearest_pid`, `wall_keep_both_pid`, `wall_follow_nearest_gyro`, `wall_follow_gyro_corner_front`, `turn_left_90_pid_brake`, and the two renamed sketches below).
