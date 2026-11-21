@@ -9,11 +9,11 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 | File / folder | Content |
 |---|---|
-| [`stl/`](stl) | **25 STL files**, one per printed part (chassis v3), in millimetres |
+| [`stl/`](stl) | **27 STL files**: 25 printed parts (chassis v3) + 2 tyre moulds, in millimetres |
 | [`images/`](images) | A render of each part, with the same name as its STL |
 | [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |
-| Full assembly (STEP) | [ENNER VALENCIA FINAL.step on Google Drive](https://drive.google.com/file/d/1aaY1A9l4ixG30ZYil1j6IyQeutMKyjOB/view?usp=sharing) — open in Fusion 360, Onshape, FreeCAD or any CAD program to modify the design (kept on Drive, not in the repo, because of its size) |
+| [`ENNER_VALENCIA_FINAL.step`](ENNER_VALENCIA_FINAL.step) | **Full STEP assembly**, in the repository (≈48 MB) — open in Fusion 360, Onshape, FreeCAD or any CAD program to modify the design. Mirror: [Google Drive](https://drive.google.com/file/d/1aaY1A9l4ixG30ZYil1j6IyQeutMKyjOB/view?usp=sharing) |
 
 ---
 

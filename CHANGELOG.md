@@ -2,6 +2,10 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.5 — 21 November · Full STEP assembly added to the repo, STL count corrected
+- **`models/ENNER_VALENCIA_FINAL.step`** added directly to the repository (≈48 MB) so the full assembly no longer depends on an external Drive link for reproducibility; the Drive link is kept as a mirror.
+- **STL count corrected everywhere:** `README.md` and `models/README.md` said "25 STL files"; the `stl/` folder actually has **27** (25 printed parts of the car + 2 tyre moulds, `inner_wheel_mould.stl` and `outer_wheel_mould.stl`, which were already documented in §4 but not included in the total). Both files now say 27 and break it down.
+
 ## v1.9.4 — 21 November · Open Challenge documentation checked line by line against `open_challenge.ino`
 - **README §7.2 module table:** the `TOF driver` row claimed `open_challenge` only uses "range valid" readings. The actual sketch does not check the VL53L1X's range-status flag at all — `updateTof()` filters by distance magnitude only (`0 < mm < 4000`). Corrected the row to describe what the code does; the "range valid" filtering stays attributed to `tof_and_gyro_test` and to the *earlier* (superseded) Open Challenge design of §8.1–8.7 and the journal, which did check it.
 - **`src/open-challenge/open_challenge/README.md`:** the start-up gyro calibration was described as "about 1 s"; `calibrate()` actually takes about 2 s (700 ms settling + 300 samples × ~5 ms). `STOP_OFFSET_CM` was described as affecting "the final stop" in general; it only shifts the exact `LAPS ≥ 2` stop (`LSTART − D1 + STOP_OFFSET_CM`) — the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it. Both corrected.
