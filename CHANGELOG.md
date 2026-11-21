@@ -2,6 +2,9 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.2 — 20 November · Parking exit sketch added
+- **`obstacle_go_out_of_parking`** (`src/obstacle-challenge/obstacle_go_out_of_parking/`): leaves the parking space with the two side ToF sensors, a 45° gyro turn toward the open side, a countersteer to 10° and a timed reverse on the encoder count. Listed in `src/README.md` §5. Not yet tested on the track; `REVERSE_TARGET_TICKS` must be measured first.
+
 ## v1.9.1 — 20 November · One camera viewer, `camera_test`
 - **Only one viewer left:** `src/tools/camera_viewer/camera_viewer.html` is now the new page (pillars and floor lines, accepted-line fill, line guides, reason for each rejected line, automatic reconnect after a RESET of the camera, IGNORED-top slider set to 115). *Pillar Vision Lab* (`src/obstacle-challenge/pillar_viewer/`: `viewer.html` and `pillar_viewer.ino`) was removed; it stays in the history at commit `7442dd5`.
 - **`camera_test` added** (`src/hardware-tests/camera_test/`): the same vision code as `obstacle_camera` (v3.1, `IGNORE_TOP_ROWS = 115`), for testing the camera with the viewer.
