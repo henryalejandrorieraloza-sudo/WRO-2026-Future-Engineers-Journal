@@ -187,8 +187,12 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 All printed parts (25 STL files), the full STEP assembly, the CAD of every iteration and the tyre-casting process are in [models/README.md](models/README.md).
 
 <div align="center">
-  <img src="models/enner_valencia_cad.png" alt="CAD assembly, top view" height="300">
-  <br><em>CAD assembly of chassis v4, seen from above.</em>
+
+| CAD | Real |
+|---|---|
+| <img src="models/enner_valencia_cad.png" alt="CAD assembly, top view" height="300"> | <img src="v-photos/enner_valencia_real.jpg" alt="Finished car, top view" height="300"> |
+
+<em>Chassis v4, CAD assembly vs. the finished, printed and assembled car, both seen from above.</em>
 </div>
 
 ### 5.1 Chassis
@@ -198,6 +202,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
+- **Front protrusion (parking clearance):** the base plate is not a plain rectangle — it extends forward past the front axle in a narrow printed tab that carries the camera about **4 cm ahead of the wheelbase** (`CAM_FWD_CM` in the odometry code). We added this on purpose instead of mounting the camera flush with the front axle: moving the camera's point of view further forward lets it see the magenta parking-lot walls earlier, while the car still has distance left in front of it to react. That extra margin is what turns parallel parking into a manoeuvre the car can plan and correct in steps, instead of one it only starts once it is already next to the lot with no room left to adjust. The trade-off is a few extra millimetres of overall length, which we accepted because the car is still well under the 30 cm limit (§5.1 above) and the protrusion is narrow enough not to interfere with the front TOF sensor's field of view.
 
 ### 5.2 Drive
 
