@@ -4,14 +4,14 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 <div align="center">
   <img src="enner_valencia_cad.png" alt="Enner Valencia full CAD assembly" width="520">
-  <br><em>Full CAD assembly of the final car (chassis v3).</em>
+  <br><em>Full CAD assembly of the final car (chassis v4), seen from above.</em>
 </div>
 
 | File / folder | Content |
 |---|---|
 | [`stl/`](stl) | **25 STL files**, one per printed part (chassis v3), in millimetres |
 | [`images/`](images) | A render of each part, with the same name as its STL |
-| [`iterations/`](iterations) | CAD screenshots of chassis v1, v2 and v3 |
+| [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |
 | Full assembly (STEP) | [ENNER VALENCIA.step on Google Drive](https://drive.google.com/file/d/1yGU0RHlYhKcYadzgk1v2613hTOdJLxKR/view?usp=sharing) — open in Fusion 360, Onshape, FreeCAD or any CAD program to modify the design |
 
@@ -21,7 +21,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 | | Value |
 |---|---|
-| Car length × width × height | **13 cm × 9.5 cm × 6 cm** (rule limit: 30 × 20 × 30 cm) |
+| Car length × width × height | **17.5 cm × 9.5 cm × 6 cm** (rule limit: 30 × 20 × 30 cm) |
 | Mass (ready to run, with battery) | **270 g** (rule limit: 1.5 kg) |
 | Printed base plate | 120 mm × 70 mm |
 | Wheels | 36 mm printed hub + cast silicone tyre ≈ 41 mm outside diameter |
@@ -45,7 +45,7 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 | [`pcb_big_support_right.stl`](stl/pcb_big_support_right.stl) | <img src="images/pcb_big_support_right.png" height="110"> | 1 | 11 × 22 × 28 | Same, right side |
 | [`pcb_front_support.stl`](stl/pcb_front_support.stl) | <img src="images/pcb_front_support.png" height="110"> | 2 | 6 × 6 × 26 | Front standoffs for the PCB |
 | [`front_spacer.stl`](stl/front_spacer.stl) | <img src="images/front_spacer.png" height="110"> | 2 | 8 × 7 × 3 | Spacers between base and steering parts |
-| [`rear_spacer.stl`](stl/rear_spacer.stl) | <img src="images/rear_spacer.png" height="110"> | 1 | 10 × 30 × 3 | Spacer between base and differential support |
+| [`rear_spacer.stl`](stl/rear_spacer.stl) | <img src="images/rear_spacer.png" height="110"> | 2 | 10 × 30 × 3 | Spacers between base and differential support |
 
 ### Steering (rack and pinion)
 
@@ -63,11 +63,11 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 |---|---|---|---|---|
 | [`motor_gear.stl`](stl/motor_gear.stl) | <img src="images/motor_gear.png" height="110"> | 1 | Ø 22 × 8 | Gear on the N20 shaft |
 | [`motor_restrain.stl`](stl/motor_restrain.stl) | <img src="images/motor_restrain.png" height="110"> | 1 | 24 × 10 × 6 | Clamp that holds the N20 motor against the base |
-| [`differential_support.stl`](stl/differential_support.stl) | <img src="images/differential_support.png" height="110"> | 1 | 18 × 30 × 25 | Holds the differential and the rear axle |
+| [`differential_support.stl`](stl/differential_support.stl) | <img src="images/differential_support.png" height="110"> | 2 | 18 × 30 × 25 | Holds the differential and the rear axle |
 | [`differential_gear.stl`](stl/differential_gear.stl) | <img src="images/differential_gear.png" height="110"> | 1 | Ø 22 × 5 | Ring gear driven 1 : 1 by the motor gear |
 | [`differential_box.stl`](stl/differential_box.stl) | <img src="images/differential_box.png" height="110"> | 1 | 27 × 20 × 12 | Housing of the bevel gears |
 | [`diff_bevel_gear.stl`](stl/diff_bevel_gear.stl) | <img src="images/diff_bevel_gear.png" height="110"> | 4 | Ø 13 × 4 | Bevel gears that let the rear wheels turn at different speeds in corners |
-| [`diff_big_axle.stl`](stl/diff_big_axle.stl) | <img src="images/diff_big_axle.png" height="110"> | 1 | 45 × Ø 3.3 | Cross axle of the differential |
+| [`diff_big_axle.stl`](stl/diff_big_axle.stl) | <img src="images/diff_big_axle.png" height="110"> | 2 | 45 × Ø 3.3 | Cross axle of the differential |
 | [`diff_small_axle.stl`](stl/diff_small_axle.stl) | <img src="images/diff_small_axle.png" height="110"> | 2 | 7 × 7 × 7 | Short axles of the spider gears |
 
 ### Wheels
@@ -103,7 +103,10 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 |---|---|---|---|---|
 | **v1** | <img src="iterations/cad_v1.png" height="200"> | <img src="../other/mechanical-iterations/printed_v1.jpg" height="200"> | Classic Ackermann with tie rods | First complete chassis; the SG90 servo moved inside its mount (journal Problem 8) |
 | **v2** | <img src="iterations/cad_v2.png" height="200"> | <img src="../other/mechanical-iterations/printed_v2.jpg" height="200"> | Ackermann driven by a steering rack | Too much friction in the linkage: the servo could not complete its travel and **three servos were damaged** pushing against it |
-| **v3 (final)** | <img src="iterations/cad_v3.png" height="200"> | <img src="../other/mechanical-iterations/printed_v3.jpg" height="200"> | **Parallel steering with rack and pinion** | Simple, reliable, prints well, nothing is held with tape |
+| **v3** | <img src="iterations/cad_v3.png" height="200"> | <img src="../other/mechanical-iterations/printed_v3.jpg" height="200"> | **Parallel steering with rack and pinion** | Simple, reliable, prints well, nothing is held with tape |
+| **v4 (final)** | <img src="iterations/cad_v4.png" height="200"> | *printed photo pending* | Parallel steering with rack and pinion (unchanged from v3) | Chassis lengthened from 13 cm to **17.5 cm** to fit the final sensor and camera layout; side TOF sensors confirmed straight (0°) instead of angled, which is what made them reliable on the black wall (journal Phase 10); `rear_spacer`, `differential_support` and `diff_big_axle` are now printed **in pairs** (qty 2) instead of one |
+
+> The printed photo of chassis v4 is not in the repository yet; this row will be updated with it once it is taken.
 
 <div align="center">
   <img src="../other/mechanical-iterations/printed_iterations.jpg" alt="All printed iterations" width="420">

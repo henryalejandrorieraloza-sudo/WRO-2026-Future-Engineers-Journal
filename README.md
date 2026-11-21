@@ -28,7 +28,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 
 | | |
 |---|---|
-| **Size / mass** | 13 × 9.5 × 6 cm · 270 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
+| **Size / mass** | 17.5 × 9.5 × 6 cm · 270 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
 | **Main controller** | Arduino Nano (ATmega328P) |
 | **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline (320 × 240, ~12.5 fps with pillars and floor lines) |
 | **Sensors** | 4 × TOF400C laser distance sensors (VL53L1X), BMI160 gyroscope, motor encoder |
@@ -152,7 +152,7 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 
 | Rule | Requirement | How we comply |
 |---|---|---|
-| 9.17 / 11.1 | Max 300 × 200 × 300 mm | 130 × 95 × 60 mm |
+| 9.17 / 11.1 | Max 300 × 200 × 300 mm | 175 × 95 × 60 mm |
 | 11.2 | Max 1.5 kg | 270 g |
 | 11.3 / 11.4 | 4 wheels, one driving axle, one steering actuator; no omni or ball wheels; no differential-drive robot | 4 wheels, rear-wheel drive, one MG90 servo on a rack and pinion |
 | 11.5 / 11.13 | Max 2 driving motors, connected to the axle (no motor per side) | One N20 motor → 1 : 1 mechanical differential on the rear axle |
@@ -187,15 +187,14 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 All printed parts (25 STL files), the full STEP assembly, the CAD of every iteration and the tyre-casting process are in [models/README.md](models/README.md).
 
 <div align="center">
-  <img src="models/enner_valencia_cad.png" alt="CAD assembly" height="300">
-  <img src="v-photos/components_exploded.jpg" alt="All parts" height="300">
-  <br><em>CAD assembly of chassis v3, and every part of the real car laid out before assembly.</em>
+  <img src="models/enner_valencia_cad.png" alt="CAD assembly, top view" height="300">
+  <br><em>CAD assembly of chassis v4, seen from above.</em>
 </div>
 
 ### 5.1 Chassis
 
 - **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
-- **Size and mass:** 13 cm long, 9.5 cm wide, 6 cm high, **270 g**. That is less than half of the allowed length and width and under 20 % of the allowed mass.
+- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **270 g** (chassis v4; the base plate was lengthened from the 13 cm of v3 to fit the final sensor and camera layout). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
@@ -756,7 +755,7 @@ This is the ground-plane perspective of a low camera: row 129 is the horizon, an
 
 ### 9.8 Parking (planned)
 
-After the third lap the car will find the magenta walls of the parking lot (already detected by the camera, not yet sent to the Nano) and park parallel. Starting the round **inside** the parking lot is worth 7 more points. The lot is 1.5 × the car length (≈ 18 cm for our 12–13 cm car), so parallel parking will almost certainly need **reverse**; the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested first.
+After the third lap the car will find the magenta walls of the parking lot (already detected by the camera, not yet sent to the Nano) and park parallel. Starting the round **inside** the parking lot is worth 7 more points. The lot is 1.5 × the car length (≈ 26 cm for our 17.5 cm car), so parallel parking will almost certainly need **reverse**; the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested first.
 
 ### 9.9 Camera viewer
 
@@ -795,7 +794,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | TOF height on the chassis | Sensors, software | 1.5 cm higher fixed the readings over the wall without any code change |
 | TOF mounting angle | Sensors, software, strategy | At 30° the black wall returned no light and every decision based on it failed; straight sensors made the data trustworthy and the algorithm simpler |
 | Steering mechanism | Mechanics, electronics, software | Ackermann friction broke three servos; rack and pinion protects the servo and makes angle → wheel position linear |
-| Car size and mass (13 × 9.5 cm, 270 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
+| Car size and mass (17.5 × 9.5 cm, 270 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
 | TOF on the 5 V buck rail | Power, sensors | The Nano works with 5 V logic, so the sensors connect directly; they share the rail with the servo, which the 3 A buck margin covers |
 | Servo mount angle | Mechanics, software | Steering centre must be measured in software after every mechanical change |
 | Battery voltage directly to the motor | Power, control | Speed changes as the battery discharges, so turns are controlled by gyro angle, not time |
@@ -871,7 +870,7 @@ The table describes the settings of the earlier Open Challenge design (§8.1–8
 | `YAW_SCALE` | measured: 4 hand turns (1440°) against a wall, `YAW_SCALE = 1440 / measured` | Corrects a gyro that reads a few % short or long, the error behind Problem 43 | Journal Problem 43 |
 | Turn end | **90° by gyroscope**, brake `STOP_LEAD_DEG = 2°` early, slow in the last 25° | A turn by time changes with battery voltage; braking early absorbs the car's inertia. Values tuned with the printed final error | `turn_left_90_pid_brake` |
 | Close / far decision after a turn | **1 s after the turn** (`SW_MIN_MS = 1000`) | Earlier, the sensor sees the tip of the inner wall diagonally; at 1 s it chose correctly almost every time | Journal Problem 44 |
-| Straight after the wall ends, before turning | **500 ms** (*to be replaced by a distance*) | The side sensor is near the middle of the car; the rear must clear the inner corner before turning. At 0.3–0.5 m/s, 500 ms ≈ 15–25 cm, more than the 13 cm car length. A distance from the encoder would not depend on speed or battery | Car length, journal §11.2 |
+| Straight after the wall ends, before turning | **500 ms** (*to be replaced by a distance*) | The side sensor is near the middle of the car; the rear must clear the inner corner before turning. At 0.3–0.5 m/s, 500 ms ≈ 15–25 cm, close to the 17.5 cm car length. A distance from the encoder would not depend on speed or battery | Car length, journal §11.2 |
 | Speed | ≤ ≈ **0.4 m/s** while deciding | One decision needs 8 readings × 50 ms = 0.4 s. At 0.4 m/s the car moves 16 cm during one decision, about one car length; faster, a hole could be confirmed too late | Sensor rate (this table) |
 | Lower speed after turns (`SW_SPEED`) | lower PWM than on straights | Gives the sensor more readings per centimetre right where the next decision is made | Journal Problem 40 |
 | FRONT/BACK check after the first turn | undo if BACK > FRONT + margin | After a correct turn the car faces the next long straight (front far) and has the corner's outer wall behind (back near); after a wrong turn it is the opposite | Field geometry |

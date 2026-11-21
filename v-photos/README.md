@@ -1,6 +1,6 @@
-# Vehicle photos — *Enner Valencia* (chassis v3)
+# Vehicle photos — *Enner Valencia* (chassis v4)
 
-The six views required by the rules, of the final car: **13 cm long, 9.5 cm wide, 6 cm high, 270 g**.
+The six views required by the rules, of the final car: **17.5 cm long, 9.5 cm wide, 6 cm high, 270 g**.
 
 | Front | Back |
 |---|---|
@@ -17,18 +17,13 @@ The six views required by the rules, of the final car: **13 cm long, 9.5 cm wide
 | <img src="top.jpg" alt="Top" width="420"> | <img src="bottom.jpg" alt="Bottom" width="420"> |
 | Custom PCB with the Arduino Nano (blue), TB6612FNG (red) and BMI160; 3S 380 mAh battery across the front | Printed base: every part is held with screws, no tape; camera lens at the front |
 
-## All the parts of the car
-
-<div align="center">
-  <img src="components_exploded.jpg" alt="All components laid out" width="700">
-  <br><em>Every printed part, tyre, electronic module and fastener of one car, laid out before assembly.</em>
-</div>
-
 ## During development
 
-| | |
-|---|---|
-| <img src="vehicle_top_programming.jpg" width="380"> | <img src="../schemes/physical_wiring.jpeg" width="380"> |
-| Chassis 2 on the bench while uploading code | Wiring detail of chassis 2 |
+<div align="center">
+  <img src="vehicle_top_programming.jpg" width="420">
+  <br><em>Chassis 2 on the bench while uploading code.</em>
+</div>
+
+> The earlier "all parts laid out" and "physical wiring" photos were retired: we changed the model of several parts (§3 of [`models/README.md`](../models/README.md#3-design-iterations)), so those photos no longer match the current car. The [top view](top.jpg) above is used instead wherever the wiring photo was referenced.
 
 The printed parts are in [`../models`](../models/README.md) and the electronics in [`../schemes`](../schemes/README.md).

@@ -2,6 +2,13 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.3 — 20 November · Chassis v4, documentation consistency pass
+- **Chassis v4:** the printed base is now **17.5 cm long** (was 13 cm in v3), to fit the final sensor and camera layout; width (9.5 cm), height (6 cm) and mass (270 g) are unchanged. Every size reference in `README.md`, `models/README.md` and `v-photos/README.md`, and the rule 9.17/11.1 compliance row, updated to match (175 × 95 × 60 mm). Steering, drive and tyres are unchanged from v3.
+- **`models/README.md`:** `rear_spacer`, `differential_support` and `diff_big_axle` corrected to **quantity 2** (they come in pairs, like the other symmetric parts); new **v4** row in the design-iterations table with the new top-view CAD render (`models/iterations/cad_v4.png`); `models/enner_valencia_cad.png` replaced with the v4 top-view render. The printed photo of v4 is still pending.
+- **`schemes/README.md`:** added real photos of the **Arduino Nano** and the **power switch** to the BOM. Removed every remaining reference to the retired **Arduino Nano ESP32** (BOM row, datasheet, schematic and wiring captions) — the car has run on the classic Arduino Nano since chassis 2 (journal Problem 31), and the rest of the documentation already reflected that. The obsolete `physical_wiring.jpeg` photo was retired (parts changed since it was taken); the wiring section now points to the vehicle's own top-view photo instead. `pcb_soldered_top.jpg` / `pcb_soldered_back.jpg` are now explicitly labelled as photos of the **previous chassis (v3)**, kept only to show the components soldered in place.
+- **`v-photos/README.md`:** removed the outdated "all parts laid out" photo (`components_exploded.jpg`), taken before several part models changed.
+- Full pass over the repository to check every document against the current code and hardware: no remaining mismatches found; all documentation and code confirmed to already be in English.
+
 ## v1.9.2 — 20 November · Parking exit sketch added
 - **`obstacle_go_out_of_parking`** (`src/obstacle-challenge/obstacle_go_out_of_parking/`): leaves the parking space with the two side ToF sensors, a 45° gyro turn toward the open side, a countersteer to 10° and a timed reverse on the encoder count. Listed in `src/README.md` §5. Not yet tested on the track; `REVERSE_TARGET_TICKS` must be measured first.
 
