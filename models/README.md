@@ -13,7 +13,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 | [`images/`](images) | A render of each part, with the same name as its STL |
 | [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |
-| Full assembly (STEP) | [ENNER VALENCIA.step on Google Drive](https://drive.google.com/file/d/1yGU0RHlYhKcYadzgk1v2613hTOdJLxKR/view?usp=sharing) — open in Fusion 360, Onshape, FreeCAD or any CAD program to modify the design |
+| Full assembly (STEP) | [ENNER VALENCIA FINAL.step on Google Drive](https://drive.google.com/file/d/1aaY1A9l4ixG30ZYil1j6IyQeutMKyjOB/view?usp=sharing) — open in Fusion 360, Onshape, FreeCAD or any CAD program to modify the design (kept on Drive, not in the repo, because of its size) |
 
 ---
 
@@ -127,9 +127,14 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 
 The tyres are cast in **printed moulds** with two-part silicone rubber, so they have more grip on the mat than printed plastic and we can make spares ourselves.
 
+| Mould file | Content |
+|---|---|
+| [`inner_wheel_mould.stl`](stl/inner_wheel_mould.stl) | Inner half of the tyre mould — the hub sits in this half while the silicone cures |
+| [`outer_wheel_mould.stl`](stl/outer_wheel_mould.stl) | Outer half of the mould — closes over the inner half, leaving the tyre-shaped ring to fill with silicone |
+
 | Step | Photo | What we do |
 |---|---|---|
-| 1. Moulds | <img src="../other/tyres/printed_molds_1.jpg" height="140"> <img src="../other/tyres/printed_molds_2.jpg" height="140"> | Print the tyre moulds (the hub sits in the middle, the silicone fills the ring around it) |
+| 1. Moulds | <img src="../other/tyres/printed_molds_1.jpg" height="140"> <img src="../other/tyres/printed_molds_2.jpg" height="140"> | Print the tyre moulds (the hub sits in the middle, the silicone fills the ring around it) — STL files above |
 | 2. Material | <img src="../other/tyres/tyres_step_1.jpg" height="140"> | **C25 silicone rubber**, part A (base) and part B (catalyst) |
 | 3. Preparation | <img src="../other/tyres/tyres_step_2.jpg" height="140"> | Scale, cup, stirring stick, dropper and the moulds |
 | 4. Weigh part A | <img src="../other/tyres/tyres_step_3.jpg" height="140"> | **30 g** of part A on a gram scale |

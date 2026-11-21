@@ -204,6 +204,11 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
 - **Front protrusion (parking-lot rule):** the base plate is not a plain rectangle — it extends forward past the front axle in a narrow printed tab, purely to add length. It does **not** carry or move the camera: the camera's position relative to the rear (encoder) axle, `CAM_FWD_CM = 11.7 cm` in the odometry code, is fixed by where the camera board sits and is unaffected by how far the tab sticks out. The real purpose is the Obstacle Challenge parking-lot rule (rules §5, Figure 4): the lot is 20 cm wide and 1.5 × the car's declared length long. Without the tab the car measures ≈ 13.5 cm, giving a ≈ 20.25 cm lot; with it the car measures 17.5 cm, giving a ≈ 26.25 cm lot — about 6 extra cm of manoeuvring room inside the parking walls. That margin costs nothing in manoeuvrability, because neither the wheelbase (9 cm) nor the maximum steering angle (30°) — the two things that actually decide how tight the car can turn to park — change at all. The only trade-off is a few extra centimetres of overall length, which we accepted because the car is still well under the 30 cm limit (§5.1 above) and the tab is narrow enough not to interfere with the front TOF sensor's field of view.
 
+<div align="center">
+  <img src="models/images/front_protrusion.png" alt="Front protrusion close-up" height="220">
+  <br><em>Close-up of the front protrusion described above.</em>
+</div>
+
 ### 5.2 Drive
 
 - **One N20 12 V, 1000 rpm motor with a Hall encoder** drives both rear wheels through a **differential with a 1 : 1 gear ratio** (motor gear and differential gear both 22 mm). A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
