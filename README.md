@@ -365,7 +365,7 @@ flowchart LR
 
 | Module | Board | What it does | Code |
 |---|---|---|---|
-| TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging, ROI 16 × 8, only "range valid" readings | [`tof_and_gyro_test`](src/hardware-tests/tof_and_gyro_test) (4 sensors), [`open_challenge`](src/open-challenge/open_challenge) (left and right, Long mode) |
+| TOF driver | Nano | Address assignment through XSHUT (unique I²C address per sensor), continuous ranging, ROI 16 × 8 | [`tof_and_gyro_test`](src/hardware-tests/tof_and_gyro_test) (4 sensors); [`open_challenge`](src/open-challenge/open_challenge) (left and right, Long mode — filters by distance only: 0 mm or ≥ 4000 mm counts as "far/no wall", the sensor's own range-status flag is not checked) |
 | Gyro driver | Nano | BMI160 read through I²C registers (no library), offset calibration, yaw integration (`yaw += rate × dt`) | [`tof_and_gyro_test`](src/hardware-tests/tof_and_gyro_test), [`open_challenge`](src/open-challenge/open_challenge), [`straight_pillars`](src/obstacle-challenge/straight_pillars) |
 | Motor control | Nano | TB6612FNG forward / reverse / active brake with PWM, encoder pulse counting by interrupt | [`motor_encoder_test`](src/hardware-tests/motor_encoder_test) |
 | Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz). Centre and limits are measured, not assumed | [`servo_test`](src/hardware-tests/servo_test) |

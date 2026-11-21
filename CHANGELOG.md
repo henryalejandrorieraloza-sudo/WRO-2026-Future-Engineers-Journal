@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.4 — 21 November · Open Challenge documentation checked line by line against `open_challenge.ino`
+- **README §7.2 module table:** the `TOF driver` row claimed `open_challenge` only uses "range valid" readings. The actual sketch does not check the VL53L1X's range-status flag at all — `updateTof()` filters by distance magnitude only (`0 < mm < 4000`). Corrected the row to describe what the code does; the "range valid" filtering stays attributed to `tof_and_gyro_test` and to the *earlier* (superseded) Open Challenge design of §8.1–8.7 and the journal, which did check it.
+- **`src/open-challenge/open_challenge/README.md`:** the start-up gyro calibration was described as "about 1 s"; `calibrate()` actually takes about 2 s (700 ms settling + 300 samples × ~5 ms). `STOP_OFFSET_CM` was described as affecting "the final stop" in general; it only shifts the exact `LAPS ≥ 2` stop (`LSTART − D1 + STOP_OFFSET_CM`) — the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it. Both corrected.
+- Everything else checked against the code (settings tables, wiring, state diagram, corner/turn/lane logic, D1/WALL/LSTART odometry, safety stops) already matched; no other changes needed.
+
 ## v1.9.3 — 20 November · Chassis v4, documentation consistency pass
 - **Chassis v4:** the printed base is now **17.5 cm long** (was 13 cm in v3), to fit the final sensor and camera layout; width (9.5 cm), height (6 cm) and mass (270 g) are unchanged. Every size reference in `README.md`, `models/README.md` and `v-photos/README.md`, and the rule 9.17/11.1 compliance row, updated to match (175 × 95 × 60 mm). Steering, drive and tyres are unchanged from v3.
 - **`models/README.md`:** `rear_spacer`, `differential_support` and `diff_big_axle` corrected to **quantity 2** (they come in pairs, like the other symmetric parts); new **v4** row in the design-iterations table with the new top-view CAD render (`models/iterations/cad_v4.png`); `models/enner_valencia_cad.png` replaced with the v4 top-view render. The printed photo of v4 is still pending.

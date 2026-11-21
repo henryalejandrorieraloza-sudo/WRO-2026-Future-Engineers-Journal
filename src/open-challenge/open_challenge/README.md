@@ -13,7 +13,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 | `LAPS` | 3 | 1 = one lap (4 turns), 3 = the full challenge (12 turns) |
 | `RUN_PWM` | 150 | Speed on the straights (0–255). Tested with 110; raise in steps of about 20 |
 | `TURN_PWM` | 90 | Speed in the corners (90 was too weak to turn at lower values) |
-| `STOP_OFFSET_CM` | 0 | Final stop: + stops later, − stops earlier |
+| `STOP_OFFSET_CM` | 0 | Final stop: + stops later, − stops earlier. Only affects the exact `LAPS ≥ 2` method (`LSTART − D1 + STOP_OFFSET_CM`); the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it |
 | `LANE_MODE` | 1 | 0 = center of the corridor, 1 = fixed distance to the inner wall |
 | `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). Do not go below about 200 mm |
 | `CENTER_SHIFT_MM` | 200 | Shift of the center toward the inner wall (mode 0) |
@@ -42,7 +42,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 ## How it runs
 ### Start
 1. Press **START** (D10) or send `g` and Enter in the Serial Monitor.
-2. The gyro is calibrated for about 1 s (the LED blinks, **do not touch the car**). The encoder count and the walls are reset.
+2. The gyro is calibrated for about 2 s (700 ms settling + 300 samples at ~5 ms each; the LED blinks, **do not touch the car**). The encoder count and the walls are reset.
 3. The car drives straight with the wheels centered.
 
 ### Straight: heading hold and lane
