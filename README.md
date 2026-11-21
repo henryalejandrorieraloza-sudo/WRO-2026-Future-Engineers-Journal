@@ -190,9 +190,9 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 
 | CAD | Real |
 |---|---|
-| <img src="models/enner_valencia_cad.png" alt="CAD assembly, top view" height="300"> | <img src="v-photos/enner_valencia_real.jpg" alt="Finished car, top view" height="300"> |
+| <img src="models/enner_valencia_cad.png" alt="CAD assembly, three-quarter view" height="300"> | <img src="v-photos/enner_valencia_real.jpg" alt="Finished car, three-quarter view" height="300"> |
 
-<em>Chassis v4, CAD assembly vs. the finished, printed and assembled car, both seen from above.</em>
+<em>Chassis v4, CAD assembly vs. the finished, printed and assembled car. The front protrusion (§5.1) is visible on both: the narrow tab that carries the camera forward of the wheelbase.</em>
 </div>
 
 ### 5.1 Chassis

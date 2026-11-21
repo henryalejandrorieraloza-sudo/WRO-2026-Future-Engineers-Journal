@@ -4,7 +4,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 <div align="center">
   <img src="enner_valencia_cad.png" alt="Enner Valencia full CAD assembly" width="520">
-  <br><em>Full CAD assembly of the final car (chassis v4), seen from above.</em>
+  <br><em>Full CAD assembly of the final car (chassis v4). The front protrusion that carries the camera is visible below the wheelbase — see <a href="../README.md#51-chassis">main README §5.1</a> for why we added it.</em>
 </div>
 
 | File / folder | Content |
