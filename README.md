@@ -178,7 +178,7 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 | <img src="v-photos/left.jpg" width="260"> | <img src="v-photos/right.jpg" width="260"> | <img src="v-photos/bottom.jpg" width="260"> |
 
 - All vehicle photos with descriptions: [v-photos](v-photos/README.md)
-- Driving videos: [video/video.md](video/video.md) — [autonomous driving on YouTube](https://www.youtube.com/watch?v=J5yrJuZZ5P8). The rules ask for **one video per challenge** (Open and Obstacle), each with at least 30 s of autonomous driving; the list in `video.md` shows which ones are ready.
+- Driving videos: [video/video.md](video/video.md) — **Open Challenge (3 laps):** [youtube.com/watch?v=ISvP-OZAk6c](https://www.youtube.com/watch?v=ISvP-OZAk6c) · earlier autonomous driving: [youtube.com/watch?v=J5yrJuZZ5P8](https://www.youtube.com/watch?v=J5yrJuZZ5P8). The rules ask for **one video per challenge** (Open and Obstacle), each with at least 30 s of autonomous driving; the list in `video.md` shows which ones are ready.
 
 ---
 

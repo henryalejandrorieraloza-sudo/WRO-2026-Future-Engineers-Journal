@@ -4,7 +4,7 @@ Rule 7 of the WRO 2026 Future Engineers General Rules asks for **one YouTube vid
 
 | Challenge | Video | Status |
 |---|---|---|
-| Open Challenge (3 laps, random inner walls, stop in the starting section) | — | In progress — to record with the final Open Challenge program |
+| Open Challenge (3 laps, random inner walls, stop in the starting section) | https://www.youtube.com/watch?v=ISvP-OZAk6c | Done — full Open Challenge run (3 laps) |
 | Obstacle Challenge (3 laps obeying red / green pillars, then parallel parking) | — | In progress — to record with the final Obstacle Challenge program |
 | Earlier autonomous driving demonstration | https://www.youtube.com/watch?v=J5yrJuZZ5P8 | Done |
 
