@@ -75,7 +75,7 @@ const unsigned long STREAM_EVERY_MS = 1;   // one picture to the viewer every 0.
 // ---------- Image ----------
 const int W = 320;                   // picture width in pixels (QVGA)
 const int H = 240;                   // picture height in pixels
-const bool MIRROR_HORIZONTAL = true;   // checked: with true, a pillar on the car's RIGHT gave side < 0
+const bool MIRROR_HORIZONTAL = false;   // checked on the 19 Nov camera: with true, a pillar on the car's RIGHT gave side < 0 (wrong); false is correct on this board
 const bool FLIP_VERTICAL     = false;   // both are applied by the sensor (set_hmirror / set_vflip)
 
 // ---------- Real-world sizes (from the measurements) ----------
@@ -137,7 +137,7 @@ const int GREEN_MIN_VAL  = 130;    // was 90: the dark wall measured V 74-92, th
 const int  RED_MIN_PIXELS   = 30;  // a red patch needs at least this many pixels
 const int  GREEN_MIN_PIXELS = 30;  // a green patch needs at least this many pixels
 const int  IGNORE_TOP_ROWS = 115;  // rows at the top of the picture (far away) that are not searched for pillars
-const int  BOTTOM_TOL      = 8;    // columns whose bottom is within this many rows of the lowest one belong to the front pillar
+const int  BOTTOM_TOL      = 27;    // columns whose bottom is within this many rows of the lowest one belong to the front pillar
 const int  NEAR_ROWS       = 0;    // rows at the bottom of the picture left out of the pillar search
 const int  SIDE_ZONE       = 56;   // side zone size used by the older pillar search (kept from v2)
 

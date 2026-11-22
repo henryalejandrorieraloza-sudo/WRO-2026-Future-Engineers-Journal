@@ -1,443 +1,638 @@
 // =====================================================================
-// STRAIGHT WITH PILLARS - Arduino Nano (classic)
-// Camera (ESP32S3-CAM) + gyro (BMI160) + encoder + rear motor + steering servo.
+// STRAIGHT WITH PILLARS - Arduino Nano
+// Obstacle Challenge: drive down a straight lane, dodge red/green pillars on the
+// correct side, and brake as soon as the camera confirms the blue or the orange
+// floor line (these lines mark the end of this straight / the start of a corner).
 //
-// Idea: the car keeps a small MAP of the straight (odometry: encoder + gyro).
-//   - x = cm forward from the start, y = cm to the LEFT of the start line (the "home lane").
-//   - Every camera message puts the pillar on that map (ahead + side -> x, y).
-//     So when the camera loses the pillar (it leaves the picture 15 cm ahead), the car
-//     still knows where it is: there is no separate "blind" state, the map IS the blind zone.
-//   - Red  -> the pillar must stay on the car's LEFT  at >= TARGET_CM (car passes on its right)
-//     Green-> the pillar must stay on the car's RIGHT at >= TARGET_CM (car passes on its left)
-//   - Steering: wanted lateral position -> heading = atan(lateral error / distance left),
-//     limited to +-MAX_AIM_DEG -> the gyro PD turns that heading into wheel angle.
-//   - As soon as the camera passes the pillar, the car already aims at the NEXT pillar
-//     (or straightens), but it may not move sideways TOWARD the pillar it has beside it.
-//   - RETURN_AFTER_CM past the pillar center the pillar is "cleared": free to go back to the
-//     home lane (y = 0). The rear does not swing out (front steering), checked in the simulation.
-//   - Stops (coast) after RUN_CM, or if the camera stops talking.
-// Values tested in a simulation: speed 20-40 cm/s, camera 6-10 Hz with 0.2 s delay,
-// distance error +-10 %, noise 3 cm, pillars at y = +-10 cm, two pillars 100 cm apart.
-// Validated on the track (27 Oct 2026): every straight-with-pillars case passes.
+// Hardware: Arduino Nano (classic, ATmega328P) + ESP32-S3-CAM (vision) +
+//           BMI160 gyroscope (heading) + quadrature-less encoder (distance) +
+//           TB6612FNG motor driver (rear drive motor) + MG90-class steering servo.
 //
-// Wiring (team PCB): camera GPIO43 (TX) -> Nano D0 (RX) | encoder C1 = D3
-//         start button D10 | I2C: SDA=A4, SCL=A5 | Servo D9 | TB6612FNG: PWMA D6, AIN1 D7, AIN2 D8
-// UPLOADING: hold the CAMERA RESET button during the whole upload (the camera on D0 blocks it).
-// Camera sketch: obstacle_camera.ino with FOCAL_PX = 100 (reads the first 10 fields of its message).
+// -------------------------------------------------------------------
+// BIG PICTURE / ALGORITHM
+// -------------------------------------------------------------------
+// The car does NOT simply "see a pillar, turn away from it". A camera-only
+// reaction like that is noisy (the camera loses the pillar once it is beside
+// the car, right when steering still matters) and it has no memory of a pillar
+// once it leaves the frame. Instead this sketch builds a small 2D MAP of the
+// straight using odometry, and places every pillar the camera has ever reported
+// onto that map. Steering is then computed purely from the map, which is stable
+// even while the camera cannot currently see the pillar.
+//
+//   - Odometry point = the centre of the rear (encoder) axle. This is the point
+//     (carX, carY) that is integrated every loop from encoder ticks + gyro heading.
+//   - Camera point = odometry point advanced CAM_FWD_CM forward along the current
+//     heading vector (the camera lens is physically ahead of the rear axle).
+//   - Every camera message gives a pillar's distance ahead of the camera and its
+//     sideways offset. That is converted into an (x, y) point on the map:
+//         P = cameraPoint + R(heading) * (forwardDistance, leftOffset)
+//     so the pillar's position on the map does not change even after the camera
+//     stops seeing it (it is now beside or behind the car).
+//   - Rule of the challenge: RED pillar -> pass on its RIGHT (car's y stays to the
+//     right of the pillar, i.e. <= pillarY - TARGET_CM). GREEN pillar -> pass on
+//     its LEFT (car's y stays >= pillarY + TARGET_CM).
+//   - Steering target: a desired lateral position "goalY" on the map is turned
+//     into a desired heading with atan2(goalY - cameraY, lookAheadDistance),
+//     clamped to +-MAX_AIM_DEG. A PD controller (gyro heading vs. that target,
+//     plus a damping term on yaw rate) turns the heading error into a servo angle.
+//   - Once the camera's position is RETURN_AFTER_CM behind the pillar's centre,
+//     the pillar is considered "cleared": the car is free to steer back toward
+//     the home lane (y = 0) or toward the next pillar already seen.
+//
+// -------------------------------------------------------------------
+// NEW IN THIS VERSION (21 November 2026): stop on the floor line
+// -------------------------------------------------------------------
+// The camera sketch (obstacle_camera.ino, v3.1) already detects the blue and the
+// orange floor lines and reports them in EVERY message, in fields 5 (blueFound)
+// and 11 (orangeFound) of the 14-field message. Until now this sketch only read
+// the first 10 fields (through latCm) with sscanf, so blueFound was parsed into a
+// throwaway local variable and orangeFound was not parsed at all - neither one was
+// ever acted on.
+//
+// This version:
+//   1. Extends the sscanf format string in readCamera() from 10 fields to 12, so
+//      it also reads field 11 (orangeFound). Field 5 (blueFound) was already being
+//      read; the only change there is that it is now SAVED into a persistent
+//      global variable instead of being discarded after the line is parsed.
+//   2. Adds two new global variables, camBlueFound and camOrangeFound, which hold
+//      the most recent value of each flag (0 or 1) and persist between camera
+//      messages (they do not reset to 0 automatically - they only change when a
+//      new, successfully-parsed message arrives).
+//   3. Adds a new check at the very top of loop(), right after reading the camera
+//      and before any driving logic: if STOP_ON_LINE is true and either flag is 1,
+//      the car immediately commands zero speed (motorStop), centres the steering
+//      (setSteering(0, dt)), sets finished = true (the same flag used when RUN_CM
+//      is reached) and returns - so the rest of loop() (the pillar-dodging logic)
+//      never runs for the remainder of the program. The car simply stays stopped,
+//      matching the "finished" behaviour already used at the end of a run.
+//
+// Important design note: camBlueFound/camOrangeFound are confirmed as soon as the
+// camera sees ANY stretch of that line in the picture - per the camera sketch's
+// own comments, that can be from as far as ~16 cm (orange) or ~9 cm (blue) away,
+// and from anywhere in the frame, not only straight ahead. STOP_ON_LINE is kept as
+// its own named constant (not baked into the if-check) specifically so it can be
+// switched off with a single edit (set it to false) without touching or deleting
+// any of the stop logic, in case testing shows the car needs to be closer to /
+// more centred on the line before stopping (that would mean switching this check
+// to use blueCenterRow/orangeCenterRow - also sent by the camera - instead of the
+// plain found flags).
+//
+// -------------------------------------------------------------------
+// CALIBRATION HISTORY ON THIS CHASSIS (19-21 November 2026)
+// -------------------------------------------------------------------
+// Car geometry (measured 19 Nov):
+//   - Car width: 9 cm -> half width 4.5 cm.
+//   - Wheelbase (axle to axle): 9 cm.
+//   - Full length (including the front protrusion, ~4 cm): 17.5 cm.
+//   - Rear (encoder) axle to camera lens, along the car body: 11.7 cm -> CAM_FWD_CM.
+//
+// Steering servo (measured 19-21 Nov):
+//   - CENTER_ANGLE = 85 is the servo value that was actually confirmed to drive
+//     the car straight (not a theoretical midpoint).
+//   - Mechanical limits are LEFT_LIMIT = 170 and RIGHT_LIMIT = 10. With a
+//     protractor this is 40 degrees of real wheel angle in each direction
+//     (170 <-> 10 spans 160 servo degrees total, which the steering linkage turns
+//     into +-40 degrees of wheel angle).
+//   - Because CENTER_ANGLE (85) sits closer to RIGHT_LIMIT (10) than to
+//     LEFT_LIMIT (170), the usable SERVO-degree range is NOT symmetric even
+//     though the real wheel-angle range is: 85 - 10 = 75 servo degrees available
+//     to the right, 170 - 85 = 85 servo degrees available to the left.
+//   - STEER_LEFT_IS_BIGGER = false was confirmed with a steering probe test on
+//     this specific chassis: a LARGER servo number steers the wheels to the
+//     RIGHT on this car (the opposite wiring would need "true" here).
+//
+// Drive encoder (measured 21 Nov, with the motor actually running - not pushed
+// by hand, which gives different slip and is therefore unreliable):
+//   - TICKS_PER_CM = 9.27, from 190 encoder ticks over a measured 20.5 cm of real
+//     travel (190 / 20.5 = 9.27).
+//
+// Gyroscope (BMI160) calibration (measured 21 Nov with a dedicated hand-turn
+// test sketch, gyro_90_test.ino, that reuses this file's own register-level
+// BMI160 driver so the reading method is identical):
+//   - Procedure: hold the car still, press the calibration button (zeroes the
+//     integrated yaw and removes the sensor's resting bias), then turn the car
+//     EXACTLY 90 degrees to the LEFT by hand and read the yaw value the test
+//     sketch prints.
+//   - Result: the sketch printed 85 degrees for an actual 90-degree turn, and the
+//     sign was positive (yaw increased when turning left, which is the correct
+//     direction - so YAW_REVERSED stays false).
+//   - YAW_SCALE = 90 / 85 = 1.06 corrects the ~6% under-reading so that an
+//     integrated 90-degree turn in code now matches a real 90-degree turn.
+//
+// -------------------------------------------------------------------
+// THE "CRASHES RIGHT NEXT TO THE PILLAR IT JUST DODGED" BUG AND ITS FIX
+// -------------------------------------------------------------------
+// Symptom reported on the track: the car steers correctly to dodge a pillar, but
+// then swings hard back toward that same pillar's side and clips it, right after
+// passing it.
+//
+// Root cause: in headingGoal(), the moment the camera position passes
+// RETURN_AFTER_CM behind the pillar's centre, the function declares the pillar
+// "cleared" and the protective clamp ("while beside this pillar, never move
+// sideways TOWARD it") is dropped on that exact same loop iteration. goalY then
+// jumps instantly from "hugging the safe side of the pillar" to a very different
+// target (the home lane y = 0, or the next pillar's offset), with no transition
+// at all. The PD controller sees a large, sudden heading error and commands a
+// hard, immediate steering correction while the car's camera point is still only
+// just past the pillar - which is exactly when there is the least room to swing
+// back without touching it.
+//
+// Two different fixes were explored for this:
+//   1. A smoothing fix: rate-limit how fast the commanded goalY can move toward
+//      the "ideal" goalY, so the return swing is gradual instead of instant.
+//   2. A single-variable fix: simply increase RETURN_AFTER_CM, so the pillar is
+//      declared "cleared" only once the car has put more real distance between
+//      itself and the pillar before the (still instant) return swing fires. This
+//      keeps the return SHARP (which is actually wanted here, so the car reaches
+//      its target lane quickly) but DELAYS it until there is enough clearance.
+//
+// RETURN_AFTER_CM was raised from 30 to 45 cm (fix #2) and this alone was enough
+// to resolve the crash on this chassis - validated on the track together with the
+// gyro fix above. The smoothing approach (#1) was prototyped but is NOT used in
+// this file; headingGoal() here is intentionally the simple, un-smoothed version.
 // =====================================================================
 
-#include <Wire.h>                     // I2C bus library (used by the gyro)
-#include <Servo.h>                    // library for the steering servo
+#include <Wire.h>
+#include <Servo.h>
 
-// Defined at the top so the Arduino IDE knows it before any function
-struct MapPillar {                    // one pillar stored on the map
-  bool  used;                         // true if this slot holds a pillar
+// Defined at the top so the Arduino IDE knows the type before any function uses it.
+struct MapPillar {
+  bool  used;
   float x, y;        // cm on the map (pillar center)
   int   color;       // 1 red, 2 green
-  int   hits;        // how many camera messages confirmed this pillar
+  int   hits;
 };
 
 // ================= SETTINGS (change these) =================
 // --- Test ---
-const float RUN_CM = 150.0;          // distance to drive, then stop (1 m test without pillars: 100)
+const float RUN_CM = 2000.0;          // distance to drive before the normal "end of run" stop
 
-// --- Steering (same as the validated codes) ---
-const int  CENTER_ANGLE         = 120;   // servo angle for wheels straight ahead
-const int  LEFT_LIMIT           = 180;   // servo angle at full left lock (mechanical limit)
-const int  RIGHT_LIMIT          = 50;    // servo angle at full right lock (mechanical limit)
-const bool STEER_LEFT_IS_BIGGER = false;  // your validated codes: false (left = smaller servo angle)
-const int  SERVO_SPEED_DPS      = 300;   // maximum servo speed in degrees per second (smooths the steering)
+// --- Stop on floor line (new, 21 Nov) ---
+// Set this to false to disable the stop-on-line feature entirely, without deleting
+// any of the logic below - useful if a test shows it needs to trigger differently
+// (e.g. only on blueCenterRow/orangeCenterRow, once the line is centred and close,
+// instead of on any detection anywhere in the frame).
+const bool STOP_ON_LINE = true;       // true = brake as soon as EITHER the blue line OR the orange line is seen
+
+// --- Car geometry (measured 19 Nov) ---
+const float WHEELBASE_CM = 9.0;      // axle-to-axle distance (informative only: with +-40 real degrees of
+                                      // wheel angle the minimum turning radius works out to ~10.7 cm)
+const float CAM_FWD_CM   = 11.7;     // measured 20 Nov: rear (encoder) axle -> camera lens, along the car body.
+
+// --- Steering (CENTER_ANGLE is the value confirmed to drive straight; LEFT/RIGHT_LIMIT
+//     are the mechanical stops, measured as +-40 degrees of real wheel angle with a protractor) ---
+const int  CENTER_ANGLE         = 85;
+const int  LEFT_LIMIT           = 170;
+const int  RIGHT_LIMIT          = 10;
+const bool STEER_LEFT_IS_BIGGER = false;  // confirmed with the steering probe test on this chassis
+const int  SERVO_SPEED_DPS      = 300;    // how fast the servo is allowed to move, in degrees per second
+                                           // (limits how abruptly the physical steering can snap to a new angle)
 
 // --- Motor ---
-const int  DRIVE_SPEED    = 70;      // motor speed, 0-255
-const bool MOTOR_REVERSED = true;    // true if the motor wires are swapped
+const int  DRIVE_SPEED    = 70;      // 0-255 PWM duty cycle while driving
+const bool MOTOR_REVERSED = true;    // true if the two motor driver input wires are swapped for this wiring
 
-// --- Heading PD (validated values) ---
-const float KP_HEADING   = 2.0;      // steering degrees per degree of heading error
-const float KD_HEADING   = 0.10;     // steering degrees per (deg/s) of turning speed (damps the swing)
-const float MAX_STEER    = 60.0;     // max steering away from center (servo degrees)
+// --- Heading PD controller (validated values; re-check if the chassis, wheels, or battery change) ---
+const float KP_HEADING   = 2.0;      // steering degrees commanded per degree of heading error
+const float KD_HEADING   = 0.03;     // lowered from 0.10: with MAX_STEER raised, the resulting yaw rate is
+                                      // higher, and 0.10 damped (killed) the turn almost immediately, which
+                                      // looked on the track like "barely dodges the pillar"
+const float MAX_STEER    = 70.0;     // maximum steering command, in servo degrees away from CENTER_ANGLE.
+                                      // The real mechanical range with CENTER_ANGLE = 85 is NOT symmetric
+                                      // (75 degrees available to the right: 85-10; 85 degrees available to
+                                      // the left: 170-85); 70 leaves a safety margin on both sides without
+                                      // under-using the smaller (right) side of the range.
 
-// --- Pillars (from the measurements and the simulation) ---
-const float TARGET_CM       = 17.0;  // pillar center <-> car center: 4.25 + 10 cm gap + 2.5
-const float MAX_AIM_DEG     = 45.0;  // max heading while dodging (35 hit the 2nd pillar in the sim)
-const float LOOK_MIN_CM     = 12.0;  // shortest distance used in atan (avoids crazy angles near the pillar)
-const float ARRIVE_BEFORE_CM = 10.0; // be at the safe side this many cm BEFORE the pillar's front face
-const float LOOK_HOME_CM    = 20.0;  // how fast it goes back to the home lane after a pillar
-const float RETURN_AFTER_CM = 5.0;   // camera this far past the pillar center -> free to go back (was ~16.5)
-const float SAME_PILLAR_CM  = 15.0;  // a detection this close to a stored pillar is the same pillar
-const float BLEND           = 0.3;   // how much each new message moves the stored pillar (0-1)
-const float MAX_SIDE_CM     = 60.0;  // detections farther to the side are ignored
+// --- Pillars ---
+const float TARGET_CM       = 17.0;  // pillar center <-> car center clearance while passing:
+                                      // 4.5 (half car width) + 10 (safety gap) + 2.5 (half pillar width)
+const float MAX_AIM_DEG     = 60.0;  // maximum heading the car will aim for while dodging a pillar
+const float LOOK_MIN_CM     = 12.0;  // shortest look-ahead distance used in the aim-angle calculation
+                                      // (prevents an unrealistically extreme angle when very close to a pillar)
+const float ARRIVE_BEFORE_CM = 55.0; // be established on the safe side this many cm BEFORE the pillar's front face
+const float LOOK_HOME_CM    = 20.0;  // look-ahead distance used while steering back to the home lane
+const float RETURN_AFTER_CM = 45.0;  // camera point this far PAST the pillar's centre before the pillar is
+                                      // considered cleared and the car is free to swing back. Raised from 30
+                                      // to 45 on 21 Nov specifically to fix the "clips the pillar right after
+                                      // dodging it" crash described above - this alone resolved it on the track.
+const float SAME_PILLAR_CM  = 15.0;  // a new detection within this distance of a stored pillar is treated as
+                                      // a refinement of that same pillar, not a brand-new one
+const float BLEND           = 0.3;   // how much each new camera message is allowed to nudge a stored pillar's
+                                      // position (0 = ignore new data completely, 1 = replace it outright)
+const float MAX_SIDE_CM     = 60.0;  // detections farther to the side than this are treated as noise/ignored
 
 // --- Pillar size ---
-const float PILLAR_CM       = 5.0;   // pillar width in cm
-const float TICKS_PER_CM    = 15.1;  // encoder (measured: 980 ticks = 65 cm)
+const float PILLAR_CM       = 5.0;   // physical pillar width (competition rule: 50 x 50 x 100 mm)
+const float TICKS_PER_CM    = 9.27;  // measured 21 Nov WITH THE MOTOR RUNNING (not pushed by hand):
+                                      // 190 encoder ticks over 20.5 cm of real travel = 190 / 20.5
 
 // --- Camera link ---
-const long  CAMERA_BAUD       = 115200;  // speed of the link from the camera
-const unsigned long CAMERA_TIMEOUT_MS = 500;   // no camera message for this long = do not drive blind
-const bool  DEBUG_PRINTS      = true;    // true = print the state every 150 ms
+const long  CAMERA_BAUD       = 115200;
+const unsigned long CAMERA_TIMEOUT_MS = 500;   // if no valid camera line arrives for this long, stop driving blind
+const bool  DEBUG_PRINTS      = true;
 
-// --- Gyro ---
-const bool  YAW_REVERSED = false;    // true if yaw goes DOWN when you turn the car LEFT by hand
-const float YAW_SCALE    = 1.00;     // correction factor for the gyro rate
+// --- Gyro (measured 21 Nov with a 90-degree hand-turn test, see the big header comment above) ---
+const bool  YAW_REVERSED = false;    // false: yaw correctly increases when the car is turned LEFT by hand
+const float YAW_SCALE    = 1.06;     // 90 / (yaw value printed after an actual 90-degree hand turn) = 90 / 85
 // ===========================================================
 
 // ---------------- Pins ----------------
-const int SERVO_PIN   = 9;           // D9: steering servo
-const int PWMA_PIN    = 6;           // D6: motor speed
-const int AIN1_PIN    = 7;           // D7: motor direction 1
-const int AIN2_PIN    = 8;           // D8: motor direction 2
-const int BUTTON_PIN  = 10;          // D10: start button
-const int ENCODER_PIN = 3;           // D3: encoder channel (interrupt)
+const int SERVO_PIN   = 9;
+const int PWMA_PIN    = 6;
+const int AIN1_PIN    = 7;
+const int AIN2_PIN    = 8;
+const int BUTTON_PIN  = 10;
+const int ENCODER_PIN = 3;
 
-Servo steering;                      // the steering servo object
+Servo steering;
 
-// ---------------- Car state ----------------
-float yaw = 0, yawRate = 0;          // degrees, + = car turned LEFT; yawRate in deg/s
-float carX = 0, carY = 0;            // cm, camera point on the map (y + = left)
-float servoAngle = CENTER_ANGLE;     // servo angle now (moves slowly toward the target)
-unsigned long prevMicros = 0;        // time of the last gyro update, in microseconds
-long  prevTicks = 0;                 // encoder count at the last odometry update
-float traveledCm = 0;                // total distance driven, from the encoder
-bool  finished = false;              // true when RUN_CM is reached
+// ---------------- Car state (odometry point = drive axle) ----------------
+float yaw = 0, yawRate = 0;          // degrees, and degrees/second; positive = car turned LEFT
+float carX = 0, carY = 0;            // cm, drive (rear) axle position on the map (y positive = to the left)
+float servoAngle = CENTER_ANGLE;
+unsigned long prevMicros = 0;
+long  prevTicks = 0;
+float traveledCm = 0;
+bool  finished = false;              // true once the car has stopped for good (end of run, or a floor line)
 
-volatile long encoderTicks = 0;      // encoder count, changed by the interrupt
-void onEncoder() { encoderTicks++; } // interrupt routine: one more tick
+volatile long encoderTicks = 0;
+void onEncoder() { encoderTicks++; }
 
-long readTicks() {                   // safe read of the encoder count
-  noInterrupts();                    // stop interrupts while copying the value
-  long t = encoderTicks;             // copy it
-  interrupts();                      // allow interrupts again
-  return t;                          // return the copy
+long readTicks() {
+  noInterrupts();
+  long t = encoderTicks;
+  interrupts();
+  return t;
 }
+
+// Camera point on the map: the odometry point advanced CAM_FWD_CM forward along the current heading vector.
+float camPosX() { return carX + CAM_FWD_CM * cos(radians(yaw)); }
+float camPosY() { return carY + CAM_FWD_CM * sin(radians(yaw)); }
 
 // ---------------- Pillars on the map ----------------
-MapPillar current = {false, 0, 0, 0, 0};   // the pillar being dodged
-MapPillar nextOne = {false, 0, 0, 0, 0};   // a farther pillar already seen
+MapPillar current = {false, 0, 0, 0, 0};   // the pillar currently being dodged
+MapPillar nextOne = {false, 0, 0, 0, 0};   // a farther pillar that has already been seen, waiting its turn
 
 // ---------------- Last camera message ----------------
-// $color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm[, line fields of camera v3]
-int camColor = 0, camDistCm = -1, camLatCm = 0;   // pillar color (0 none, 1 red, 2 green), distance and side from the camera
-unsigned long lastCamMs = 0;         // time of the last valid camera message
-bool newCamData = false;             // true when a new message is waiting to be put on the map
+// Full 14-field message sent by obstacle_camera.ino v3.1:
+//   $color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,orangeRow,blueCenterRow,orangeCenterRow
+// This sketch only needs a subset of those fields (it does not use x, bottom, correct,
+// blueRow, seq, width, orangeRow, blueCenterRow or orangeCenterRow), so readCamera()
+// below only parses as many fields as it needs, in order, from the start of the message.
+int camColor = 0, camDistCm = -1, camLatCm = 0;
+int camBlueFound = 0, camOrangeFound = 0;   // NEW (21 Nov): persistent flags used to trigger the line-stop
+unsigned long lastCamMs = 0;
+bool newCamData = false;
 
-float goalY = 0, goalHeading = 0;    // for the debug prints
+float goalY = 0, goalHeading = 0;    // kept around just for the debug prints
 
 // ---------------- Motor ----------------
-void motorForward(int speed) {       // drive forward at this speed
-  digitalWrite(AIN1_PIN, MOTOR_REVERSED ? LOW : HIGH);   // direction pin 1 (swapped if the motor is reversed)
-  digitalWrite(AIN2_PIN, MOTOR_REVERSED ? HIGH : LOW);   // direction pin 2
-  analogWrite(PWMA_PIN, speed);      // set the speed
+void motorForward(int speed) {
+  digitalWrite(AIN1_PIN, MOTOR_REVERSED ? LOW : HIGH);
+  digitalWrite(AIN2_PIN, MOTOR_REVERSED ? HIGH : LOW);
+  analogWrite(PWMA_PIN, speed);
 }
 
-void motorStop() {                   // free stop (coast): gentle for the gearbox
-  digitalWrite(AIN1_PIN, LOW);       // both direction pins low = the motor is free to turn
+void motorStop() {                   // free stop (coast, both inputs LOW): gentle on the gearbox
+  digitalWrite(AIN1_PIN, LOW);
   digitalWrite(AIN2_PIN, LOW);
-  analogWrite(PWMA_PIN, 0);          // no speed
+  analogWrite(PWMA_PIN, 0);
 }
 
-// ---------------- BMI160 (registers, same as the validated turn) ----------------
-const float GYRO_SCALE = 65.6;       // LSB per deg/s at +-500 deg/s
-uint8_t bmiAddr = 0x68;              // I2C address in use (0x68 or 0x69, found at startup)
-float gyroBias = 0;                  // zero offset of the gyro, measured while still
+// ---------------- BMI160 (register-level driver, no external library) ----------------
+const float GYRO_SCALE = 65.6;       // LSB per deg/s at the +-500 deg/s range this sketch configures
+uint8_t bmiAddr = 0x68;
+float gyroBias = 0;
 
-void bmiWrite(uint8_t reg, uint8_t val) {   // write one byte into a gyro register
-  Wire.beginTransmission(bmiAddr);   // address the gyro
-  Wire.write(reg);                   // which register
-  Wire.write(val);                   // which value
-  Wire.endTransmission();            // send it
+void bmiWrite(uint8_t reg, uint8_t val) {
+  Wire.beginTransmission(bmiAddr);
+  Wire.write(reg);
+  Wire.write(val);
+  Wire.endTransmission();
 }
 
-bool bmiRead(uint8_t reg, uint8_t *buf, uint8_t len) {   // read len bytes starting at reg
-  Wire.beginTransmission(bmiAddr);   // address the gyro
-  Wire.write(reg);                   // which register to start at
-  if (Wire.endTransmission(false) != 0) return false;     // no answer: fail
-  if (Wire.requestFrom(bmiAddr, len) != len) return false;   // not all bytes came: fail
-  for (uint8_t i = 0; i < len; i++) buf[i] = Wire.read();   // store the bytes
-  return true;                       // success
+bool bmiRead(uint8_t reg, uint8_t *buf, uint8_t len) {
+  Wire.beginTransmission(bmiAddr);
+  Wire.write(reg);
+  if (Wire.endTransmission(false) != 0) return false;
+  if (Wire.requestFrom(bmiAddr, len) != len) return false;
+  for (uint8_t i = 0; i < len; i++) buf[i] = Wire.read();
+  return true;
 }
 
-bool bmiFound(uint8_t addr) {        // checks whether a BMI160 answers at this address
-  bmiAddr = addr;                    // try this address
-  uint8_t id = 0;                    // chip ID buffer
-  return bmiRead(0x00, &id, 1) && id == 0xD1;   // chip ID must be 0xD1
+bool bmiFound(uint8_t addr) {
+  bmiAddr = addr;
+  uint8_t id = 0;
+  return bmiRead(0x00, &id, 1) && id == 0xD1;   // BMI160's chip-ID register must read back 0xD1
 }
 
-bool startGyro() {                   // finds the gyro and starts it
-  if (!bmiFound(0x68) && !bmiFound(0x69)) return false;   // try both addresses; fail if neither works
-  bmiWrite(0x7E, 0x11); delay(50);   // accelerometer: normal mode
-  bmiWrite(0x7E, 0x15); delay(100);  // gyroscope: normal mode
-  bmiWrite(0x42, 0x2A);              // gyro 400 Hz
-  bmiWrite(0x43, 0x02);              // gyro range +-500 deg/s
-  delay(50);                         // let it settle
-  return true;                       // gyro ready
+bool startGyro() {
+  if (!bmiFound(0x68) && !bmiFound(0x69)) return false;   // try both possible I2C addresses
+  bmiWrite(0x7E, 0x11); delay(50);   // accelerometer: normal power mode
+  bmiWrite(0x7E, 0x15); delay(100);  // gyroscope: normal power mode
+  bmiWrite(0x42, 0x2A);              // gyro output data rate: 400 Hz
+  bmiWrite(0x43, 0x02);              // gyro full-scale range: +-500 deg/s
+  delay(50);
+  return true;
 }
 
-float readGyroZ() {                  // reads the rotation speed around Z, in deg/s
-  uint8_t b[2];                      // two bytes: low and high
-  if (!bmiRead(0x10, b, 2)) return NAN;   // no answer: NaN means "no value"
-  int16_t raw = (int16_t)((b[1] << 8) | b[0]);   // join the bytes into one signed number
-  float dps = raw / GYRO_SCALE;      // convert to deg/s
-  return YAW_REVERSED ? -dps : dps;  // flip the sign if the gyro is mounted the other way
+float readGyroZ() {
+  uint8_t b[2];
+  if (!bmiRead(0x10, b, 2)) return NAN;    // 0x10/0x11 = gyro Z axis, low byte then high byte
+  int16_t raw = (int16_t)((b[1] << 8) | b[0]);
+  float dps = raw / GYRO_SCALE;
+  return YAW_REVERSED ? -dps : dps;        // flip the sign here if the gyro is mounted the other way up
 }
 
-void calibrateGyro() {               // measures the zero offset while the car is still
-  float sum = 0;                     // total of the readings
-  int count = 0;                     // how many good readings
-  for (int i = 0; i < 1000; i++) {   // 1000 readings, about 3 s
-    float z = readGyroZ();           // one reading
-    if (!isnan(z)) { sum += z; count++; }   // keep the good ones
-    delay(3);                        // 3 ms between readings
+void calibrateGyro() {
+  // Averages 1000 samples (about 3 seconds at ~3 ms per sample) while the car is held
+  // still, to measure and remove the sensor's resting bias (its "zero reading" is
+  // never exactly 0 deg/s). Must be run with the car completely still, or the bias
+  // measurement is wrong and yaw will slowly drift during the run.
+  float sum = 0;
+  int count = 0;
+  for (int i = 0; i < 1000; i++) {
+    float z = readGyroZ();
+    if (!isnan(z)) { sum += z; count++; }
+    delay(3);
   }
-  gyroBias = (count > 0) ? sum / count : 0;   // average = the offset (0 if nothing was read)
+  gyroBias = (count > 0) ? sum / count : 0;
 }
 
-float updateGyro() {                 // updates the heading and returns the time step
-  unsigned long nowUs = micros();    // current time in microseconds
-  float dt = (nowUs - prevMicros) / 1000000.0;   // time since the last update, in seconds
-  prevMicros = nowUs;                // remember this time
-  float z = readGyroZ();             // read the rotation speed
-  if (!isnan(z)) {                   // a valid reading
-    yawRate = (z - gyroBias) * YAW_SCALE;   // remove the offset, apply the scale
-    yaw += yawRate * dt;             // add the rotation of this step to the heading
+float updateGyro() {
+  unsigned long nowUs = micros();
+  float dt = (nowUs - prevMicros) / 1000000.0;
+  prevMicros = nowUs;
+  float z = readGyroZ();
+  if (!isnan(z)) {
+    yawRate = (z - gyroBias) * YAW_SCALE;   // remove the resting bias, then apply the 21-Nov correction factor
+    yaw += yawRate * dt;                    // integrate angular rate into an absolute heading
   }
-  return dt;                         // give back the time step for the other functions
+  return dt;
 }
 
-// ---------------- Odometry: encoder distance + gyro heading -> position on the map ----------------
-void updateOdometry(float yawBefore) {   // moves the car point on the map
-  long t = readTicks();              // current encoder count
-  long dTicks = t - prevTicks;       // ticks since the last update
-  prevTicks = t;                     // remember the count
-  if (dTicks <= 0) return;           // no movement (or backwards): nothing to add
-  float ds = dTicks / TICKS_PER_CM;  // distance travelled in cm
-  float h = radians((yawBefore + yaw) * 0.5);   // average heading during this step
-  carX += ds * cos(h);               // move forward along the average heading (x)
-  carY += ds * sin(h);               // and sideways (y, + = left)
-  traveledCm += ds;                  // total distance so far
+// ---------------- Odometry: encoder distance + gyro heading -> drive axle position on the map ----------------
+void updateOdometry(float yawBefore) {
+  long t = readTicks();
+  long dTicks = t - prevTicks;
+  prevTicks = t;
+  if (dTicks <= 0) return;                         // ignore noise ticks / no motion this loop
+  float ds = dTicks / TICKS_PER_CM;                 // distance travelled this loop, in cm
+  float h = radians((yawBefore + yaw) * 0.5);       // average heading DURING this step (not before or after it)
+  carX += ds * cos(h);
+  carY += ds * sin(h);
+  traveledCm += ds;
 }
 
-// Pillar position seen from the car: forward (+ ahead) and left (+ left) in cm
-void relativeToCar(float px, float py, float &fwd, float &left) {   // turns map coordinates into car coordinates
-  float h = radians(yaw);            // the car's heading in radians
-  float dx = px - carX, dy = py - carY;   // vector from the car to the pillar, on the map
-  fwd  =  dx * cos(h) + dy * sin(h);      // how far ahead of the car (rotated by the heading)
-  left = -dx * sin(h) + dy * cos(h);      // how far to the left of the car
+// Pillar position seen from the CAMERA point: forward (+ ahead) and left (+ left), in cm,
+// rotated into the car's current reference frame.
+void relativeToCar(float px, float py, float &fwd, float &left) {
+  float h = radians(yaw);
+  float dx = px - camPosX(), dy = py - camPosY();
+  fwd  =  dx * cos(h) + dy * sin(h);
+  left = -dx * sin(h) + dy * cos(h);
 }
 
 // ---------------- Steering ----------------
-float maxLeftSteer()  { return STEER_LEFT_IS_BIGGER ? (LEFT_LIMIT - CENTER_ANGLE) : (CENTER_ANGLE - RIGHT_LIMIT); }   // how far the wheels can turn left, in servo degrees
-float maxRightSteer() { return STEER_LEFT_IS_BIGGER ? (CENTER_ANGLE - RIGHT_LIMIT) : (LEFT_LIMIT - CENTER_ANGLE); }   // how far they can turn right
+float maxLeftSteer()  { return STEER_LEFT_IS_BIGGER ? (LEFT_LIMIT - CENTER_ANGLE) : (CENTER_ANGLE - RIGHT_LIMIT); }
+float maxRightSteer() { return STEER_LEFT_IS_BIGGER ? (CENTER_ANGLE - RIGHT_LIMIT) : (LEFT_LIMIT - CENTER_ANGLE); }
 
-// steerLeft: + = left, - = right (servo degrees away from center)
-void setSteering(float steerLeft, float dt) {   // moves the wheels toward the wanted angle, smoothly
-  steerLeft = constrain(steerLeft, -maxRightSteer(), maxLeftSteer());   // keep the wanted angle inside the limits
-  float target = CENTER_ANGLE + (STEER_LEFT_IS_BIGGER ? steerLeft : -steerLeft);   // convert to a servo angle
-  target = constrain(target, RIGHT_LIMIT, LEFT_LIMIT);   // never past the mechanical limits
-  float maxStep = SERVO_SPEED_DPS * dt;   // the most the servo may move in this time
-  if (target > servoAngle + maxStep)      servoAngle += maxStep;   // move up by the limit
-  else if (target < servoAngle - maxStep) servoAngle -= maxStep;   // move down by the limit
-  else                                    servoAngle = target;     // close enough: go straight there
-  steering.write((int)(servoAngle + 0.5));   // send the angle, rounded to a whole degree
+// steerLeft: positive = steer left, negative = steer right (servo degrees away from CENTER_ANGLE).
+// The servo is also rate-limited here (SERVO_SPEED_DPS) so a big commanded change does not make
+// the physical wheels snap instantly - they ramp toward the target at a bounded angular speed.
+void setSteering(float steerLeft, float dt) {
+  steerLeft = constrain(steerLeft, -maxRightSteer(), maxLeftSteer());
+  float target = CENTER_ANGLE + (STEER_LEFT_IS_BIGGER ? steerLeft : -steerLeft);
+  target = constrain(target, RIGHT_LIMIT, LEFT_LIMIT);
+  float maxStep = SERVO_SPEED_DPS * dt;
+  if (target > servoAngle + maxStep)      servoAngle += maxStep;
+  else if (target < servoAngle - maxStep) servoAngle -= maxStep;
+  else                                    servoAngle = target;
+  steering.write((int)(servoAngle + 0.5));
 }
 
 // ---------------- Camera messages ----------------
-char lineBuf[80];                    // buffer for one message; camera v3 sends 14 fields, only the first 10 are used here
-uint8_t lineLen = 0;                 // how many characters are in the buffer
+char lineBuf[64];
+uint8_t lineLen = 0;
 
-void readCamera() {                  // reads the bytes from the camera and builds messages
-  while (Serial.available()) {       // while bytes are waiting
-    char c = Serial.read();          // read one byte
-    if (c == '$') { lineLen = 0; continue; }   // '$' starts a new message
-    if (c == '\n') {                 // end of the message
-      lineBuf[lineLen] = '\0';       // close the text
-      int col, x, b, ok, bf, br, w, d, lat;   // one variable per field used
-      unsigned long seq;             // frame number (not used here)
-      int n = sscanf(lineBuf, "%d,%d,%d,%d,%d,%d,%lu,%d,%d,%d", &col, &x, &b, &ok, &bf, &br, &seq,
-                     &w, &d, &lat);  // split the text into numbers
-      if (n == 10) {                 // a complete message
-        camColor = col; camDistCm = d; camLatCm = lat;   // keep the pillar data
-        lastCamMs = millis();        // remember when it arrived
-        newCamData = true;           // tell the loop there is new data
+void readCamera() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '$') { lineLen = 0; continue; }          // '$' marks the start of a new message: reset the buffer
+    if (c == '\n') {
+      lineBuf[lineLen] = '\0';
+      int col, x, b, ok, bf, br, w, d, lat, of, orow;
+      unsigned long seq;
+      // Message layout (14 fields total, only the first 12 are parsed here):
+      //   $color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,orangeRow,blueCenterRow,orangeCenterRow
+      // Before 21 Nov this only read the first 10 fields (through latCm): blueFound (bf) was parsed
+      // into a local variable and then thrown away at the end of this function, and orangeFound was
+      // not read at all. It is now extended to 12 fields specifically to also capture orangeFound (of),
+      // and both bf and of are saved into persistent globals below so the new stop-on-line check in
+      // loop() can see them on every iteration, not just the instant the message arrives.
+      int n = sscanf(lineBuf, "%d,%d,%d,%d,%d,%d,%lu,%d,%d,%d,%d,%d", &col, &x, &b, &ok, &bf, &br, &seq,
+                     &w, &d, &lat, &of, &orow);
+      if (n == 12) {
+        camColor = col; camDistCm = d; camLatCm = lat;
+        camBlueFound = bf; camOrangeFound = of;   // NEW (21 Nov): persisted so loop() can check them
+        lastCamMs = millis();
+        newCamData = true;
       }
-      lineLen = 0;                   // get ready for the next message
+      lineLen = 0;
       continue;
     }
-    if (lineLen < sizeof(lineBuf) - 1) lineBuf[lineLen++] = c;   // store the character if there is room
+    if (lineLen < sizeof(lineBuf) - 1) lineBuf[lineLen++] = c;
   }
 }
 
-// Put the pillar of the last message on the map
-void onCameraMessage() {             // converts the camera data into a pillar on the map
-  if (camColor == 0 || camDistCm <= 0) return;   // no pillar in this message
-  if (fabs((float)camLatCm) > MAX_SIDE_CM) return;   // too far to the side: not a pillar of this straight
+// Places the pillar reported in the last camera message onto the map (measured from the camera point).
+void onCameraMessage() {
+  if (camColor == 0 || camDistCm <= 0) return;             // no pillar in this message
+  if (fabs((float)camLatCm) > MAX_SIDE_CM) return;         // too far to the side: treat as noise
 
-  float fwd  = camDistCm + PILLAR_CM / 2;        // camera measures to the front face -> add half the width for the center
-  float left = -camLatCm;                        // camera: + = right; map: + = left, so flip the sign
-  float h = radians(yaw);            // heading of the car now
-  float px = carX + fwd * cos(h) - left * sin(h);   // pillar x on the map
-  float py = carY + fwd * sin(h) + left * cos(h);   // pillar y on the map
+  float fwd  = camDistCm + PILLAR_CM / 2;        // camera measures to the pillar's front face -> convert to its centre
+  float left = -camLatCm;                        // camera convention: + = right; map convention: + = left
+  float h = radians(yaw);
+  float cx = camPosX(), cy = camPosY();
+  float px = cx + fwd * cos(h) - left * sin(h);
+  float py = cy + fwd * sin(h) + left * cos(h);
 
-  // Same pillar as one we already have? -> refine its position
-  MapPillar *slots[2] = { &current, &nextOne };   // the two stored pillars
-  for (int i = 0; i < 2; i++) {      // check both
+  // Is this the same pillar we already have stored (same colour, close position)? If so, just refine
+  // its stored position a little instead of creating a duplicate pillar.
+  MapPillar *slots[2] = { &current, &nextOne };
+  for (int i = 0; i < 2; i++) {
     MapPillar *p = slots[i];
-    if (p->used && p->color == camColor && hypot(p->x - px, p->y - py) < SAME_PILLAR_CM) {   // same color and close: same pillar
-      p->x += BLEND * (px - p->x);   // move the stored position a little toward the new one
+    if (p->used && p->color == camColor && hypot(p->x - px, p->y - py) < SAME_PILLAR_CM) {
+      p->x += BLEND * (px - p->x);
       p->y += BLEND * (py - p->y);
-      p->hits++;                     // one more confirmation
-      return;                        // done, it was not a new pillar
+      p->hits++;
+      return;
     }
   }
-  // A new pillar
-  MapPillar fresh = {true, px, py, camColor, 1};   // a new pillar, seen once
-  if (!current.used) {               // no pillar is being dodged yet
-    current = fresh;                 // this one becomes the current pillar
+  // Otherwise this is a brand-new pillar.
+  MapPillar fresh = {true, px, py, camColor, 1};
+  if (!current.used) {
+    current = fresh;
     if (DEBUG_PRINTS) { Serial.print(F(">> NEW PILLAR ")); Serial.println(camColor == 1 ? F("RED") : F("GREEN")); }
-  } else if (px > current.x + SAME_PILLAR_CM) {   // it is farther ahead than the current one
-    nextOne = fresh;                 // keep it for later
+  } else if (px > current.x + SAME_PILLAR_CM) {
+    nextOne = fresh;                             // farther ahead than the current one: hold it for later
   }
 }
 
-// ---------------- The control: where to go -> which heading ----------------
-// Wanted lateral position next to one pillar (never pulls the car back toward the pillar)
-// (plain numbers, no MapPillar in the parameters: the Arduino IDE breaks on that)
-float goalFor(int color, float pillarY) {   // the lateral position (y) the car should have for this pillar
-  if (color == 1) return min(carY, pillarY - TARGET_CM);   // red: car to its right (y smaller than the pillar)
-  return max(carY, pillarY + TARGET_CM);                    // green: car to its left (y bigger than the pillar)
+// ---------------- The control: decide where to go -> turn that into a heading ----------------
+// Desired lateral position (at the camera point) alongside one pillar. Written so it can never pull
+// the car sideways BACK toward the pillar it is passing (only straightening or moving further away).
+float goalFor(int color, float pillarY) {
+  float cy = camPosY();
+  if (color == 1) return min(cy, pillarY - TARGET_CM);   // red pillar: car passes on its right
+  return max(cy, pillarY + TARGET_CM);                    // green pillar: car passes on its left
 }
 
-float headingGoal() {                // returns the heading (degrees) the car should aim at now
-  float fwd = 0, left = 0;           // pillar position relative to the car
+float headingGoal() {
+  float fwd = 0, left = 0;
 
-  // 1) Current pillar far enough behind the camera? -> cleared, the next one becomes current
-  if (current.used) {                // a pillar is being dodged
-    relativeToCar(current.x, current.y, fwd, left);   // where is it relative to the car?
-    if (fwd < -RETURN_AFTER_CM) {    // it is behind the car by more than the limit
+  // 1) Is the current pillar now far enough behind the camera point to call it cleared?
+  //    If so, promote nextOne (if any) to current, and recompute fwd/left for the new current pillar.
+  if (current.used) {
+    relativeToCar(current.x, current.y, fwd, left);
+    if (fwd < -RETURN_AFTER_CM) {
       if (DEBUG_PRINTS) Serial.println(F(">> PILLAR CLEARED"));
-      current = nextOne;             // the next pillar (if any) becomes the current one
-      nextOne.used = false;          // the next slot is empty again
-      if (current.used) relativeToCar(current.x, current.y, fwd, left);   // update the position for the new current
+      current = nextOne;
+      nextOne.used = false;
+      if (current.used) relativeToCar(current.x, current.y, fwd, left);
     }
   }
 
-  // 2) Which pillar do we aim at?
-  //    camera still before the current pillar -> that one
-  //    camera already past its center (beside it) -> the next one (or the home lane)
-  bool beside = current.used && fwd < 0;   // true when the car is already level with the pillar
-  const MapPillar *target = current.used ? (beside ? (nextOne.used ? &nextOne : NULL) : &current) : NULL;   // which pillar to aim at, or none
+  // 2) Which pillar (if any) should the car currently be aiming around?
+  bool beside = current.used && fwd < 0;          // camera point is already alongside/behind the current pillar
+  const MapPillar *target = current.used ? (beside ? (nextOne.used ? &nextOne : NULL) : &current) : NULL;
 
-  goalY = 0;                         // default: the home lane (y = 0)
-  float look = LOOK_HOME_CM;         // distance used to aim: default for going home
-  if (target != NULL) {              // there is a pillar to aim at
-    goalY = goalFor(target->color, target->y);   // the lateral position we want next to it
-    float toFace = (target->x - PILLAR_CM / 2) - carX - ARRIVE_BEFORE_CM;   // distance until we must be at the safe side
-    look = max(LOOK_MIN_CM, toFace); // aim this far ahead, but not closer than LOOK_MIN_CM
+  goalY = 0;                                      // default: aim for the home lane
+  float look = LOOK_HOME_CM;
+  if (target != NULL) {
+    goalY = goalFor(target->color, target->y);
+    float toFace = (target->x - PILLAR_CM / 2) - camPosX() - ARRIVE_BEFORE_CM;
+    look = max(LOOK_MIN_CM, toFace);
   }
 
-  // 3) Beside a pillar: never move sideways TOWARD it (straightening or moving away is fine)
+  // 3) While still beside the current pillar: never let goalY move sideways TOWARD it.
+  //    (Straightening out or moving further away is fine; moving closer is exactly how a crash happens.)
   if (beside) {
-    if (current.color == 1) goalY = min(goalY, carY);      // red is on our left: do not move left
-    else                    goalY = max(goalY, carY);      // green is on our right: do not move right
+    if (current.color == 1) goalY = min(goalY, camPosY());   // red is on our left: never move further left
+    else                    goalY = max(goalY, camPosY());   // green is on our right: never move further right
   }
 
-  // 4) Heading that leads there
-  float h = degrees(atan2(goalY - carY, look));   // angle from the car to the goal point, in degrees
-  return constrain(h, -MAX_AIM_DEG, MAX_AIM_DEG); // limit the angle to MAX_AIM_DEG
+  // 4) Convert the desired lateral position into a heading the PD loop can chase.
+  float h = degrees(atan2(goalY - camPosY(), look));
+  return constrain(h, -MAX_AIM_DEG, MAX_AIM_DEG);
 }
 
 // ---------------- SETUP ----------------
-void setup() {                       // runs once when the Nano starts
-  Serial.begin(CAMERA_BAUD);         // RX = camera, TX = Serial Monitor
+void setup() {
+  Serial.begin(CAMERA_BAUD);                     // RX = camera link, TX = Serial Monitor (shared USB UART)
 
-  pinMode(PWMA_PIN, OUTPUT);         // motor pins are outputs
+  pinMode(PWMA_PIN, OUTPUT);
   pinMode(AIN1_PIN, OUTPUT);
   pinMode(AIN2_PIN, OUTPUT);
-  motorStop();                       // motor off
+  motorStop();
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP);  // start button with pull-up
-  pinMode(ENCODER_PIN, INPUT_PULLUP); // encoder pin with pull-up
-  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN), onEncoder, RISING);   // count every rising edge
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(ENCODER_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN), onEncoder, RISING);
 
-  Wire.begin();                      // start the I2C bus
-  Wire.setClock(400000);             // 400 kHz: fast bus for the gyro
-  Wire.setWireTimeout(25000, true);  // reset the bus if it hangs for 25 ms
-  if (!startGyro()) {                // find and start the gyro
+  Wire.begin();
+  Wire.setClock(400000);
+  Wire.setWireTimeout(25000, true);
+  if (!startGyro()) {
     Serial.println(F("ERROR: BMI160 not found"));
-    while (true) delay(1000);        // stop here: the heading cannot work without the gyro
+    while (true) delay(1000);                    // no gyro -> heading control is impossible, so stop here for good
   }
 
-  steering.attach(SERVO_PIN, 500, 2500);   // connect the servo, with pulse limits of 0.5 to 2.5 ms
-  steering.write(CENTER_ANGLE);      // wheels straight
+  steering.attach(SERVO_PIN, 500, 2500);
+  steering.write(CENTER_ANGLE);
 
   Serial.println(F("STRAIGHT WITH PILLARS - press START"));
-  while (digitalRead(BUTTON_PIN) == HIGH) {      // waiting for START; also shows if the camera talks
-    readCamera();                    // keep reading the camera while waiting
-    static unsigned long t = 0;      // time of the last camera check
-    if (millis() - t > 1000) {       // once a second
+  while (digitalRead(BUTTON_PIN) == HIGH) {      // wait for the start button; also shows if the camera is talking
+    readCamera();
+    static unsigned long t = 0;
+    if (millis() - t > 1000) {
       t = millis();
       Serial.print(F("camera: "));
-      Serial.println(millis() - lastCamMs < 500 ? F("OK") : F("no messages (10-field camera code?)"));   // is the camera talking?
+      Serial.println(millis() - lastCamMs < 500 ? F("OK") : F("no messages (camera on, RX wired to D0?)"));
     }
   }
   Serial.println(F("Calibrating gyro... do not move the car"));
-  calibrateGyro();                   // measure the gyro offset while the car is still
-  yaw = 0;                           // the heading starts at zero
-  carX = carY = 0;                   // the car starts at the origin of the map
-  traveledCm = 0;                    // no distance yet
-  prevTicks = readTicks();           // start counting ticks from now
-  prevMicros = micros();             // start the gyro clock now
-  lastCamMs = millis();              // do not time out before the first message
-  newCamData = false;                // no data waiting
+  calibrateGyro();
+  yaw = 0;
+  carX = carY = 0;
+  traveledCm = 0;
+  prevTicks = readTicks();
+  prevMicros = micros();
+  lastCamMs = millis();
+  newCamData = false;
 }
 
 // ---------------- LOOP ----------------
-void loop() {                        // runs again and again after setup()
-  float yawBefore = yaw;             // heading before this step
-  float dt = updateGyro();           // update the heading
-  updateOdometry(yawBefore);         // update the car position on the map
-  readCamera();                      // read the camera messages
+void loop() {
+  float yawBefore = yaw;
+  float dt = updateGyro();
+  updateOdometry(yawBefore);
+  readCamera();
 
-  if (finished) { motorStop(); setSteering(0, dt); return; }   // finished: stop and keep the wheels straight
+  if (finished) { motorStop(); setSteering(0, dt); return; }   // already stopped for good: just hold position
 
-  if (traveledCm >= RUN_CM) {        // driven the whole distance
-    finished = true;                 // remember that we are done
-    motorStop();                     // stop the motor
-    Serial.print(F(">> DONE | x ")); Serial.print(carX, 1);   // final position
+  // NEW (21 Nov): stop as soon as the camera has confirmed the blue line OR the orange line.
+  // This check runs before anything else in the loop (including the pillar-dodging logic) so a line
+  // detection always wins, even in the middle of dodging a pillar.
+  if (STOP_ON_LINE && (camBlueFound || camOrangeFound)) {
+    finished = true;
+    motorStop();
+    setSteering(0, dt);
+    Serial.print(F(">> LINE DETECTED: STOP (blue=")); Serial.print(camBlueFound);
+    Serial.print(F(" orange=")); Serial.print(camOrangeFound); Serial.println(F(")"));
+    return;
+  }
+
+  if (traveledCm >= RUN_CM) {
+    finished = true;
+    motorStop();
+    Serial.print(F(">> DONE | x ")); Serial.print(carX, 1);
     Serial.print(F(" | y ")); Serial.print(carY, 1);
     Serial.print(F(" | yaw ")); Serial.println(yaw, 1);
     return;
   }
 
-  if (millis() - lastCamMs > CAMERA_TIMEOUT_MS) {   // no camera -> do not drive blind
-    motorStop();                     // stop the motor
-    setSteering(0, dt);              // wheels straight
-    static unsigned long t = 0;      // time of the last message
-    if (millis() - t > 500) { t = millis(); Serial.println(F("WAITING FOR CAMERA")); }   // print the warning every 0.5 s
-    return;                          // do not drive
+  if (millis() - lastCamMs > CAMERA_TIMEOUT_MS) {   // camera link silent for too long: do not drive blind
+    motorStop();
+    setSteering(0, dt);
+    static unsigned long t = 0;
+    if (millis() - t > 500) { t = millis(); Serial.println(F("WAITING FOR CAMERA")); }
+    return;
   }
 
-  if (newCamData) { newCamData = false; onCameraMessage(); }   // put the new pillar on the map
+  if (newCamData) { newCamData = false; onCameraMessage(); }
 
-  goalHeading = headingGoal();       // which heading we want now
-  float steer = KP_HEADING * (goalHeading - yaw) - KD_HEADING * yawRate;   // PD control: error (P) and turning speed (D)
-  setSteering(constrain(steer, -MAX_STEER, MAX_STEER), dt);   // steer, limited to MAX_STEER
-  motorForward(DRIVE_SPEED);         // drive forward
+  goalHeading = headingGoal();
+  float steer = KP_HEADING * (goalHeading - yaw) - KD_HEADING * yawRate;
+  setSteering(constrain(steer, -MAX_STEER, MAX_STEER), dt);
+  motorForward(DRIVE_SPEED);
 
-  static unsigned long lastPrint = 0;   // time of the last debug line
-  if (DEBUG_PRINTS && millis() - lastPrint >= 150) {   // every 150 ms
+  static unsigned long lastPrint = 0;
+  if (DEBUG_PRINTS && millis() - lastPrint >= 150) {
     lastPrint = millis();
-    Serial.print(F("x ")); Serial.print(carX, 0);      // position along the straight
-    Serial.print(F(" y ")); Serial.print(carY, 1);     // lateral position
-    Serial.print(F(" | yaw ")); Serial.print(yaw, 1);  // heading
-    Serial.print(F(" goal ")); Serial.print(goalHeading, 1);   // wanted heading
-    Serial.print(F(" | goalY ")); Serial.print(goalY, 1);      // wanted lateral position
-    Serial.print(F(" | pillar "));     // the pillar being dodged
+    Serial.print(F("eje x ")); Serial.print(carX, 0);
+    Serial.print(F(" y ")); Serial.print(carY, 1);
+    Serial.print(F(" | yaw ")); Serial.print(yaw, 1);
+    Serial.print(F(" goal ")); Serial.print(goalHeading, 1);
+    Serial.print(F(" | goalY ")); Serial.print(goalY, 1);
+    Serial.print(F(" | pillar "));
     if (current.used) {
       Serial.print(current.color == 1 ? F("RED (") : F("GREEN ("));
       Serial.print(current.x, 0); Serial.print(F(",")); Serial.print(current.y, 0); Serial.print(F(")"));
-    } else Serial.print(F("-"));       // no pillar
-    Serial.print(F(" | cam ")); Serial.print(camColor); Serial.print(F(" ")); Serial.print(camDistCm);   // raw camera data
-    Serial.print(F("/")); Serial.println(camLatCm);
+    } else Serial.print(F("-"));
+    Serial.print(F(" | cam ")); Serial.print(camColor); Serial.print(F(" ")); Serial.print(camDistCm);
+    Serial.print(F("/")); Serial.print(camLatCm);
+    Serial.print(F(" | line blue ")); Serial.print(camBlueFound);
+    Serial.print(F(" orange ")); Serial.println(camOrangeFound);
   }
 }

@@ -584,9 +584,10 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 
 | Stage | Status |
 |---|---|
-| Vision: pillars, magenta parking walls, orange and blue lines | Done — `obstacle_camera` v3 |
-| One straight with pillars (map + steering law) | Validated 27 Oct: every case passes ([`straight_pillars`](src/obstacle-challenge/straight_pillars)) |
+| Vision: pillars, magenta parking walls, orange and blue lines | Done — `obstacle_camera` v3.1 |
+| One straight with pillars (map + steering law) | Validated 27 Oct, re-tuned and re-validated 21 Nov after the new camera and chassis: gyro calibrated with a real 90° hand turn, `TICKS_PER_CM` re-measured with the motor running, and a crash right after dodging a pillar fixed ([`straight_pillars`](src/obstacle-challenge/straight_pillars), journal §18) |
 | Floor lines measured in cm | Done — Row → cm formula measured 27 Oct (error ≤ 1 cm) |
+| Stop on the floor line | Done, 21 Nov — the Nano now brakes as soon as either line is confirmed (`STOP_ON_LINE`); not yet validated on the track (journal §18.3) |
 | Corners, laps, stop in the starting section | Planned — next (plan in §9.7 and §9.10) |
 | Parking | In design (§9.8) |
 
@@ -600,12 +601,12 @@ flowchart TD
     P -- no --> G
     M --> G["Choose the current pillar<br>red: pass on its right, green: pass on its left"]
     G --> L["Lateral goal 17 cm from the pillar<br>never moving toward it"]
-    L --> H["Target heading = atan2(goal, look)<br>limited to 45 degrees"]
+    L --> H["Target heading = atan2(goal, look)<br>limited to 60 degrees"]
     H --> D["Gyro PD gives the servo angle<br>motor drives forward"]
-    D --> C{"Camera passed the pillar centre<br>by 5 cm?"}
+    D --> C{"Camera passed the pillar centre<br>by 45 cm?"}
     C -- yes --> N["Pillar cleared: aim at the next pillar<br>or return to the home lane"]
     C -- no --> E
-    N --> E{"RUN_CM reached or<br>camera silent?"}
+    N --> E{"RUN_CM reached, floor<br>line seen, or camera silent?"}
     E -- no --> R
     E -- yes --> F(["Active brake, stay still"])
 ```
@@ -666,13 +667,13 @@ side   = ahead · xc / f                   cm to the side (+ right, − left)
 The Nano keeps the position of the camera point on a map of the current straight: **x = cm forward, y = cm to the left** of the lane where the straight started (the "home lane").
 
 ```
-ds    = new encoder ticks / 15.1              cm driven in this loop
+ds    = new encoder ticks / 9.27              cm driven in this loop
 h     = (yaw before + yaw now) / 2            average heading in this loop
 carX += ds · cos h
 carY += ds · sin h
 ```
 
-- **15.1 ticks per cm** was measured by pushing the car by hand: 980 ticks = 66 / 65.5 / 63.5 cm (average 65 cm). The first value we used, 19.6, made the map think every distance was **23 % shorter** than it was, and the car reacted late.
+- **9.27 ticks per cm** (21 Nov) was measured **with the motor actually running** — 190 ticks over 20.5 cm of real travel. Earlier values were measured by pushing the car by hand (15.1, then 12.67 ticks/cm on the 20 Nov chassis): hand-rolling gives different wheel slip than driving under its own power, so those numbers were not reliable for a sketch that drives itself. The very first value used, 19.6, made the map think every distance was **23 % shorter** than it was, and the car reacted late.
 - **Putting a pillar on the map:** the camera gives `ahead` (front face) and `side`. The pillar centre is `fwd = ahead + 2.5 cm` ahead and `left = −side` to the left, and in map coordinates:
 
 ```
@@ -695,29 +696,31 @@ green (pass on its left):   goalY = max(carY, pillarY + 17)
 
 The `min` / `max` mean "never move back toward the pillar": if the car is already farther than 17 cm, it stays where it is.
 
-**2. Heading toward the goal.** The car must be at the goal lateral position **10 cm before the pillar's front face** (`ARRIVE_BEFORE_CM`):
+**2. Heading toward the goal.** The car must be at the goal lateral position (currently) **55 cm before the pillar's front face** (`ARRIVE_BEFORE_CM`, raised from 10 cm on 21 Nov so the car commits to the safe lane earlier):
 
 ```
-look    = max(12 cm, pillarX − 2.5 − carX − 10)
-heading = atan2(goalY − carY, look)            limited to ±45°
+look    = max(12 cm, pillarX − 2.5 − carX − 55)
+heading = atan2(goalY − carY, look)            limited to ±60°
 ```
 
-`look` never goes below 12 cm, so the angle does not explode next to the pillar. ±45° is the largest angle that still reached the second pillar in the simulation (35° hit it).
+`look` never goes below 12 cm, so the angle does not explode next to the pillar. ±45° was the largest angle that still reached the second pillar in the October simulation (35° hit it); it was raised to ±60° (`MAX_AIM_DEG`) on 21 Nov together with the other steering retuning.
 
-**3. Gyro PD → wheels** (the same values as the validated Open Challenge code):
+**3. Gyro PD → wheels:**
 
 ```
-steering = 2.0 · (heading − yaw) − 0.10 · yawRate        limited to ±60° of servo, max 300 °/s
+steering = 2.0 · (heading − yaw) − 0.03 · yawRate        limited to ±70° of servo, max 300 °/s
 ```
+
+The damping term (`KD_HEADING`) was lowered from 0.10 to 0.03 on 21 Nov: with the wider steering range above, the resulting yaw rate during a dodge is higher, and 0.10 damped (killed) the turn almost immediately — on the track this looked like the car "barely dodging" the pillar.
 
 **4. While passing and after the pillar.**
 - As soon as the camera passes the pillar centre, the car already aims at the **next** pillar (or straightens), but it may not move sideways **toward** the pillar beside it.
-- 5 cm after the pillar centre (`RETURN_AFTER_CM`) the pillar is cleared: the next pillar becomes the current one, or the car returns to the home lane (`look = 20 cm`). The rear does not swing into the pillar because only the front wheels steer.
-- In the first version the car drove ~25 cm after a pillar before reacting, and there was no room left for a second pillar 100 cm later; aiming at the next pillar earlier fixed it.
+- **45 cm** after the pillar centre (`RETURN_AFTER_CM`, raised from 5/30 cm on 21 Nov) the pillar is cleared: the next pillar becomes the current one, or the car returns to the home lane (`look = 20 cm`). The rear does not swing into the pillar because only the front wheels steer.
+- In the first version the car drove ~25 cm after a pillar before reacting, and there was no room left for a second pillar 100 cm later; aiming at the next pillar earlier fixed it. Later (21 Nov) the opposite problem showed up on the track: clearing the pillar too early made the car swing back and clip it, because the protective "don't move toward the pillar" clamp is dropped the instant it is cleared. Raising `RETURN_AFTER_CM` to 45 delays that swing until there is real clearance — see journal §18.2 for the full diagnosis.
 
-**Example:** car at (0, 0), red pillar centre at (40, +10) → goalY = min(0, 10 − 17) = −7 cm, look = 40 − 2.5 − 0 − 10 = 27.5 cm, heading = atan2(−7, 27.5) = **−14°** (to the right). With yaw = 0 the servo moves 2.0 · 14 = 28° to the right of centre, and less as the car turns.
+**Example:** car at (0, 0), red pillar centre at (40, +10) → goalY = min(0, 10 − 17) = −7 cm, look = max(12, 40 − 2.5 − 0 − 55) = 12 cm, heading = atan2(−7, 12) = **−30.3°** (to the right). With yaw = 0 the servo moves 2.0 · 30.3 ≈ 61° to the right of centre (clamped to the available range), and less as the car turns.
 
-**Tested:** first in a simulation (car model + camera at 6–10 Hz with 0.2 s delay, ±10 % distance error, 3 cm noise, speed 20–40 cm/s, pillars at ±10 cm, two pillars 100 cm apart), then on the track: **every straight-with-pillars case passed on 27 Oct**. Known limit: the car must start straight (5° off at the start failed in the simulation).
+**Tested:** first in a simulation (car model + camera at 6–10 Hz with 0.2 s delay, ±10 % distance error, 3 cm noise, speed 20–40 cm/s, pillars at ±10 cm, two pillars 100 cm apart), then on the track: every straight-with-pillars case passed on 27 Oct, and the sketch was re-tuned and re-validated on 21 Nov after the new camera/chassis (journal §18). Known limit: the car must start straight (5° off at the start failed in the simulation).
 
 ### 9.6 Floor lines in centimetres (27 October)
 
@@ -975,9 +978,11 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | In progress — program in the repository since 20 Nov (§8.0); three-lap results on the track still to be recorded in the journal |
 | Encoder: delays in distance instead of time (§8.7) | Planned — Next: measure ticks per mm |
 | Videos: one per challenge (≥ 30 s autonomous) | In progress — Pending (rule 7) |
-| Encoder | Done — Measured: 15.1 ticks per cm (used in the Obstacle map) |
-| Camera → Nano UART link | Done — Working (14-field message) |
-| Obstacle: one straight with pillars (map + steering law) | Validated 27 Oct (`straight_pillars`) |
+| Encoder | Done — Measured 21 Nov with the motor running: 9.27 ticks per cm (used in the Obstacle map) |
+| Gyroscope (Obstacle Challenge) | Done — Calibrated 21 Nov with a real 90° hand turn (`gyro_90_test`): `YAW_SCALE = 1.06`, `YAW_REVERSED = false` |
+| Camera → Nano UART link | Done — Working (14-field message, now 12 of them read by `straight_pillars`) |
+| Obstacle: one straight with pillars (map + steering law) | Validated 27 Oct, re-tuned and re-validated 21 Nov (gyro/encoder recalibration, dodge-crash fix; `straight_pillars`) |
+| Obstacle: stop on the floor line | Done, 21 Nov — brakes on `blueFound`/`orangeFound` (`STOP_ON_LINE`); not yet validated on the track |
 | Obstacle: orange and blue lines in cm | Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
 | Obstacle: corners, 3 laps, stop | Planned — Next: measure the turn while driving, then the corner rehearsal (README §9.7, §9.10) |
 | Parking | In design — Being designed |

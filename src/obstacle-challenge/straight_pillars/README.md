@@ -1,8 +1,10 @@
 # Straight with pillars (`straight_pillars.ino`)
 
-Arduino Nano sketch for the **straight section of the Obstacle Challenge**: the car drives forward along a straight with red and green pillars, passing each pillar on the correct side. It works together with the camera sketch (`obstacle_camera.ino`), which runs on the ESP32-S3-CAM and sends the pillar data over a serial link.
+Arduino Nano sketch for the **straight section of the Obstacle Challenge**: the car drives forward along a straight with red and green pillars, passing each pillar on the correct side, and **brakes as soon as the camera confirms the blue or the orange floor line** (added 21 November 2026 — these lines mark the end of the straight / the start of a corner). It works together with the camera sketch (`obstacle_camera.ino`), which runs on the ESP32-S3-CAM and sends the pillar and floor-line data over a serial link.
 
 The main idea is that the car keeps a small **map** of the straight. The camera sees a pillar only while it is close, so the Nano remembers where each pillar is and keeps steering correctly even when the camera can no longer see it.
+
+**Status (21 Nov 2026):** validated on the track — gyro calibrated with a real 90° hand turn, the "clips the pillar right after dodging it" crash fixed, and the new line-stop tested. See `PARAMETERS.md` in this folder for the full calibration history and the car's measured dimensions.
 
 ## Hardware
 
@@ -17,7 +19,7 @@ The main idea is that the car keeps a small **map** of the straight. The camera 
 
 **Upload note:** the camera is connected to D0 (RX), which blocks the upload. Hold the camera **RESET** button during the whole upload.
 
-The camera must run `obstacle_camera.ino` with `FOCAL_PX = 100`. This sketch reads only the first 10 fields of the camera message.
+The camera must run `obstacle_camera.ino` with `FOCAL_PX = 100`. This sketch reads the first **12** of the camera's 14 message fields (through `orangeFound`), so it can both dodge pillars and brake on either floor line.
 
 ## How it works
 
@@ -52,10 +54,16 @@ The wanted lateral position is turned into a heading with `atan2`, using a look-
 - The steering is limited to `MAX_STEER` and the servo moves at most `SERVO_SPEED_DPS` degrees per second, so the wheels do not jump.
 - The motor runs at `DRIVE_SPEED` forward. When the run is finished, the motor stops (coast).
 
-### 5. Safety stops
+### 5. Stopping on the floor line (new, 21 Nov)
+
+The camera already reports `blueFound` and `orangeFound` in every message (fields 5 and 11). `readCamera()` now parses both into persistent variables (`camBlueFound`, `camOrangeFound`), and the very first check in `loop()` — before the pillar logic runs — is: if `STOP_ON_LINE` is true and either flag is 1, brake, centre the steering, and set `finished = true` for the rest of the program.
+
+`blueFound`/`orangeFound` are confirmed the moment the line appears **anywhere** in the picture (per the camera's own comments, from as far as ~16 cm for orange and ~9 cm for blue, not only straight ahead). If testing shows the car stops too early — for example glimpsing the line from the side while still dodging a pillar — switch the check to use `blueCenterRow`/`orangeCenterRow` instead (already sent by the camera, just not read by this sketch yet), which are only non-negative once the line is inside the straight-ahead strip. `STOP_ON_LINE` exists as its own constant precisely so this behaviour can be turned off with one edit without touching the rest of the logic.
+
+### 6. Other safety stops
 
 - **Camera timeout:** if no valid camera message arrives for `CAMERA_TIMEOUT_MS` (500 ms), the car stops and keeps the wheels straight. It does not drive blind.
-- **Distance reached:** when the encoder distance reaches `RUN_CM` (150 cm by default), the car stops and prints the final position.
+- **Distance reached:** when the encoder distance reaches `RUN_CM`, the car stops and prints the final position.
 - **No gyro:** if the BMI160 is not found at startup, the program stops and prints an error, because the heading cannot work without it.
 
 ## Startup sequence
@@ -70,32 +78,33 @@ The wanted lateral position is turned into a heading with `atan2`, using a look-
 
 | Constant | Default | Meaning |
 |---|---|---|
-| `RUN_CM` | 150 | Distance to drive before stopping (use 100 for a test without pillars) |
-| `CENTER_ANGLE` | 120 | Servo angle with the wheels straight |
-| `LEFT_LIMIT` / `RIGHT_LIMIT` | 180 / 50 | Mechanical steering limits (servo angles) |
-| `STEER_LEFT_IS_BIGGER` | false | Direction of the servo; `false` means a smaller servo angle is left |
+| `RUN_CM` | 2000 | Distance to drive before the normal end-of-run stop (in practice the line stop fires first) |
+| `STOP_ON_LINE` | true | Brake as soon as `blueFound` or `orangeFound` is 1. Set `false` to disable without deleting the logic |
+| `CENTER_ANGLE` | 85 | Servo angle confirmed (on the track) to drive the wheels straight |
+| `LEFT_LIMIT` / `RIGHT_LIMIT` | 170 / 10 | Mechanical steering limits (servo angles); ±40° of real wheel angle measured with a protractor |
+| `STEER_LEFT_IS_BIGGER` | false | Confirmed with a steering probe test: on this chassis a bigger servo number steers right |
 | `SERVO_SPEED_DPS` | 300 | Maximum servo speed, degrees per second |
 | `DRIVE_SPEED` | 70 | Motor speed, 0 to 255 |
 | `MOTOR_REVERSED` | true | Set to `true` if the motor wires are swapped |
-| `KP_HEADING` / `KD_HEADING` | 2.0 / 0.10 | Steering PD gains |
-| `MAX_STEER` | 60 | Maximum steering away from the centre (servo degrees) |
-| `TARGET_CM` | 17 | Distance from the pillar centre to the car centre |
-| `MAX_AIM_DEG` | 45 | Maximum heading used to dodge a pillar |
+| `KP_HEADING` / `KD_HEADING` | 2.0 / 0.03 | Steering PD gains. `KD` lowered from 0.10 because at the current `MAX_STEER` it was damping the dodge almost instantly |
+| `MAX_STEER` | 70 | Maximum steering away from the centre (servo degrees); the real range is asymmetric (75° right, 85° left) because `CENTER_ANGLE` sits off-centre between the limits |
+| `TARGET_CM` | 17 | Distance from the pillar centre to the car centre while passing it |
+| `MAX_AIM_DEG` | 60 | Maximum heading used to dodge a pillar |
 | `LOOK_MIN_CM` | 12 | Shortest look-ahead distance (avoids extreme angles near a pillar) |
-| `ARRIVE_BEFORE_CM` | 10 | Be on the safe side this far before the pillar face |
+| `ARRIVE_BEFORE_CM` | 55 | Be on the safe side this far before the pillar face |
 | `LOOK_HOME_CM` | 20 | Look-ahead distance when returning to the home lane |
-| `RETURN_AFTER_CM` | 5 | Distance past the pillar centre before it counts as cleared |
+| `RETURN_AFTER_CM` | 45 | Distance past the pillar centre before it counts as cleared. Raised from 30 on 21 Nov to fix a crash — see "Known limits / history" below |
 | `SAME_PILLAR_CM` | 15 | Distance within which a detection is the same pillar |
 | `BLEND` | 0.3 | How much each new detection moves a stored pillar (0 to 1) |
 | `MAX_SIDE_CM` | 60 | Detections further to the side are ignored |
 | `PILLAR_CM` | 5 | Pillar width |
-| `TICKS_PER_CM` | 15.1 | Encoder ticks per cm |
+| `TICKS_PER_CM` | 9.27 | Encoder ticks per cm, measured 21 Nov **with the motor running** (190 ticks = 20.5 cm) |
 | `CAMERA_BAUD` | 115200 | Serial speed of the camera link |
 | `CAMERA_TIMEOUT_MS` | 500 | Stop if the camera is silent this long |
 | `DEBUG_PRINTS` | true | Print the state every 150 ms |
-| `YAW_REVERSED` / `YAW_SCALE` | false / 1.00 | Gyro sign and correction factor |
+| `YAW_REVERSED` / `YAW_SCALE` | false / 1.06 | Gyro sign (confirmed correct) and correction factor (`90 / 85`, from a real 90° hand-turn test, see `PARAMETERS.md`) |
 
-The values were measured on the car and checked in a simulation, as described in the header comment of the sketch. Check them again if the car, the wheels or the battery change.
+The values were measured on the car (ruler, protractor, counted ticks, a hand-turn gyro test) and validated on the track. Check them again if the car, the wheels or the battery change.
 
 ## Serial output
 
@@ -103,9 +112,10 @@ The values were measured on the car and checked in a simulation, as described in
 - `Calibrating gyro... do not move the car`: calibration in progress.
 - `>> NEW PILLAR RED` / `GREEN`: a pillar was taken as the one to dodge.
 - `>> PILLAR CLEARED`: the car has passed the pillar.
+- `>> LINE DETECTED: STOP (blue=.. orange=..)`: the car braked because a floor line was confirmed.
 - `WAITING FOR CAMERA`: no camera message for more than 500 ms.
-- `x .. y .. | yaw .. goal .. | goalY .. | pillar .. | cam color dist/lat`: state line every 150 ms.
-- `>> DONE | x .. | y .. | yaw ..`: final position after `RUN_CM`.
+- `x .. y .. | yaw .. goal .. | goalY .. | pillar .. | cam color dist/lat | line blue .. orange ..`: state line every 150 ms.
+- `>> DONE | x .. | y .. | yaw ..`: final position after `RUN_CM` (only reached if `STOP_ON_LINE` is off or no line is seen).
 
 ## How to use
 
@@ -120,4 +130,13 @@ The values were measured on the car and checked in a simulation, as described in
 - The map depends on the encoder and the gyro. Wheel slip or a wrong `TICKS_PER_CM` moves the whole map.
 - The camera only sees the pillar near the car, so the first detection sets the position of each pillar. A wrong first detection changes all later steering.
 - The sketch has no obstacle-free fallback for a missing camera: it stops. This is intended.
+- `camBlueFound`/`camOrangeFound` trigger on any detection anywhere in the frame, not only a centred one directly ahead — see "Stopping on the floor line" above if that turns out to be too early.
 - `PARAMETERS.md` in this folder describes the car measurements and how each value was obtained.
+
+## History: the "crashes right after dodging" bug (21 Nov 2026)
+
+**Symptom:** the car steered correctly around a pillar, then swung hard back toward that same side and clipped the pillar right after passing it.
+
+**Cause:** in `headingGoal()`, the instant the camera point passes `RETURN_AFTER_CM` behind the pillar, the pillar is declared "cleared" and the protective clamp (never move sideways toward the pillar while beside it) is dropped on that same loop. `goalY` then jumps instantly to a very different target (the home lane, or the next pillar), and the PD controller commands a hard, immediate correction right next to the pillar — exactly where there is the least room to swing back.
+
+**Fix used:** raising `RETURN_AFTER_CM` from 30 to 45 cm. This keeps the return swing sharp (which is wanted, so the car reaches its target lane quickly) but delays it until there is more real clearance from the pillar. Validated on the track together with the gyro fix (`YAW_SCALE`). A smoothing alternative (rate-limiting how fast the commanded `goalY` can move toward its target, instead of jumping instantly) was prototyped but was not needed once `RETURN_AFTER_CM` alone fixed it, so it is not in this file.

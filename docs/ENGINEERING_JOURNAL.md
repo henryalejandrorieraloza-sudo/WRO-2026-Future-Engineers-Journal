@@ -1532,6 +1532,11 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Test `open_challenge` for three laps on Scenario Roulette layouts (both directions, 600 mm and 1000 mm corridors), record the results here, and commit the final version before the scoring commit of 24 Nov.
 - [ ] Re-check both side TOF sensors after the supply change of 17 Nov and re-measure the left sensor's 18 % error (§17.4).
 - [ ] Validate the 19 Nov colour thresholds of `obstacle_camera` on the track (pillars, orange and blue lines).
+- [x] Calibrate the gyroscope with a real 90° hand-turn test (`gyro_90_test`): `YAW_SCALE = 1.06`, `YAW_REVERSED = false` (Phase 13) ✅
+- [x] Re-measure `TICKS_PER_CM` with the motor running, not by hand: 9.27 (Phase 13) ✅
+- [x] Fix the "clips the pillar right after dodging it" crash: `RETURN_AFTER_CM` 30 → 45 (Phase 13) ✅
+- [x] Read `orangeFound` on the Nano and stop on either floor line (`STOP_ON_LINE`, Phase 13) ✅
+- [ ] Validate the floor-line stop on the track; switch to `blueCenterRow`/`orangeCenterRow` if it triggers too early from the side.
 
 
 ---
@@ -1584,4 +1589,46 @@ The measurements under the greenish light of 19 Nov: orange line H 64–75, S 95
 | Systems thinking | A failure in one subsystem (motor, TOF, camera) changed what the others can assume; the lessons are a spare camera board and a short check before the battery is connected again |
 | Iteration with data | Measured valid-reading rates, motor voltages step by step, HSV tables of the new camera |
 | Honesty | Two causes (the 4 Nov smoke, the 18 % TOF error) are written as *not yet known* instead of being guessed |
+
+## 18. Phase 13 — 21 November: gyro calibration, the dodge-crash fix, and stopping on the floor line
+
+With the new camera mounted and mirrored correctly (Phase 12), the Obstacle Challenge straight (`straight_pillars.ino`) still had two open items from earlier phases: the gyroscope had never been calibrated with an actual measured turn (`YAW_SCALE` was still the placeholder `1.00`), and the car's real geometry (servo centre, encoder ticks per cm) had only been measured by hand, not with the motor running. Fixing those surfaced a steering bug that had been hiding underneath them, and the session ended with a new feature: stopping on the blue/orange floor line.
+
+### 18.1 Gyro calibration with a real 90° hand turn
+
+**Method:** a new stand-alone sketch, [`gyro_90_test`](../src/hardware-tests/gyro_90_test), reuses `straight_pillars.ino`'s own register-level BMI160 driver (same registers, same scale factor, same integration) so that whatever it measures transfers directly with no conversion. It zeroes the yaw on a button press, then prints the live integrated yaw while the car is turned by hand.
+
+**Test:** car held still, button pressed, then turned by hand exactly 90° to the left in one motion. The sketch printed **yaw = 85°** for the intended 90° turn.
+
+**Result:** the sign was positive (yaw increased when turning left, as it should), so `YAW_REVERSED` stays `false` — the long-standing "PENDIENTE" (pending) note on that value is now closed. The magnitude needed a correction: `YAW_SCALE = 90 / 85 = 1.06` (raised from the placeholder `1.00`). At the same time, `TICKS_PER_CM` was re-measured **with the motor actually running** (190 ticks over 20.5 cm of real travel = 9.27 ticks/cm), replacing the 20 Nov value (12.67) that had been measured by hand-rolling the car, which gives different wheel slip and is therefore unreliable for a sketch that drives itself.
+
+### 18.2 The "clips the pillar right after dodging it" bug
+
+**Symptom found on the track once the gyro was finally trustworthy:** the car steered correctly around a pillar, but then swung hard back toward that same side and clipped the pillar right after passing it — it looked like the car "changed its mind" mid-dodge.
+
+**Diagnosis:** in `headingGoal()`, the moment the camera's position passes `RETURN_AFTER_CM` behind the pillar's centre, the pillar is declared "cleared" and the protective clamp (never move sideways toward a pillar while still beside it) is dropped on that exact same control loop iteration. The lateral goal `goalY` then jumps instantly from "hugging the pillar's safe side" to a very different target (the home lane, or the next pillar already seen), with zero transition. The PD controller reacts to a large, sudden heading error with a hard, immediate steering command — exactly when the car has the least room to swing back without touching the pillar it just passed.
+
+**Two fixes were considered:**
+1. *Smoothing fix* — rate-limit how fast the commanded `goalY` is allowed to move toward its "ideal" value each loop, so the return swing becomes gradual instead of instantaneous. Prototyped in a throwaway version of the sketch.
+2. *Single-variable fix* — simply raise `RETURN_AFTER_CM`, so the pillar is declared cleared only once there is more real distance between the car and the pillar, before the (still instantaneous) return swing fires. This keeps the return sharp — which is actually desirable, since the car should reach its target lane quickly — but delays it until it is safe.
+
+**Outcome:** `RETURN_AFTER_CM` was raised from 30 to 45 cm (fix #2 only). Combined with the gyro and encoder fixes above, this alone resolved the crash on the track — the smoothing fix (#1) was not needed and is not in the committed sketch.
+
+### 18.3 Stopping on the blue/orange floor line
+
+The camera sketch (`obstacle_camera.ino` v3.1) had already been sending `blueFound` and `orangeFound` in every message for several phases (fields 5 and 11 of its 14-field message), but `straight_pillars.ino`'s `readCamera()` only parsed the first 10 fields — `blueFound` was read into a throwaway local variable and immediately discarded, and `orangeFound` was never parsed at all.
+
+**Change made:** `readCamera()`'s `sscanf` format string was extended from 10 to 12 fields (adding `orangeFound`), and both flags are now saved into persistent globals (`camBlueFound`, `camOrangeFound`). A new check at the very top of `loop()` — before the pillar-dodging logic, so a line always wins even mid-dodge — brakes the car, centres the steering, and sets `finished = true` (reusing the existing end-of-run behaviour) as soon as either flag is 1. The feature is gated by a single named constant, `STOP_ON_LINE`, so it can be switched off without touching any of the surrounding logic.
+
+**Open question, not yet tested on the track:** both flags are confirmed as soon as the camera sees the line *anywhere* in the frame (per the camera sketch's own comments: from as far as ~16 cm for orange and ~9 cm for blue), not only when it is centred straight ahead. If this proves too early in practice — for example the car glimpsing the line from the side while still mid-dodge — the check can be switched to `blueCenterRow`/`orangeCenterRow` instead (already sent by the camera, just not read by this sketch yet), which are only non-negative once the line is inside the straight-ahead strip.
+
+### 18.4 What this phase gives the rubric
+
+| Rubric criterion | Evidence |
+|---|---|
+| Sensors | Gyroscope calibrated against a real, physically-measured 90° reference instead of an assumed value; encoder ticks/cm re-measured with the motor running instead of by hand, because hand-rolling gives different slip |
+| Software | Root-caused a steering bug to a specific, named instant in the control loop (the clamp being dropped the same iteration the goal jumps); the camera's floor-line fields, already transmitted for several phases, are finally read and acted on |
+| Iteration with data | Two competing fixes for the dodge-crash (smoothing vs. a single-variable delay) were both designed before picking the one validated on the track |
+| Systems thinking | The gyro and encoder fixes did not themselves fix the crash — they only made it *visible* clearly enough to diagnose, since the crash depended on real distances and real headings being right in the first place |
+| Honesty | The line-stop's trigger condition (any detection vs. centred/close detection) is recorded as an open question still to validate on the track, not claimed as finished |
 
