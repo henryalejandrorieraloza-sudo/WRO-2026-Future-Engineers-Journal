@@ -101,17 +101,24 @@ Heading and steering:
 - `goalHeading = atan2(goalY − C_y, look)`, limited to ±`MAX_AIM_DEG`
 - `steer = KP_HEADING · (goalHeading − yaw) − KD_HEADING · yawRate`, limited to ±`MAX_STEER`
 
-## 9. Stop on the floor line (new, 21 Nov)
+## 9. After the floor line: ignore pillars, drive to the wall, stop (updated 21 Nov)
 
-`obstacle_camera.ino` v3.1 reports `blueFound` (field 5) and `orangeFound` (field 11) in every message. `straight_pillars.ino` now parses 12 of the 14 fields (up from 10) to read `orangeFound` as well, saves both flags into persistent globals `camBlueFound`/`camOrangeFound`, and checks them first thing in `loop()`:
+`obstacle_camera.ino` v3.1 reports `blueFound` (field 5) and `orangeFound` (field 11) in every message. `straight_pillars.ino` parses 12 of the 14 fields (up from 10) to read `orangeFound` as well, and saves both flags into persistent globals `camBlueFound`/`camOrangeFound`.
+
+The first version of this feature stopped the car immediately on either flag. It now instead arms a self-contained block (`startFrontTof()` + `handleLineStop()`, placed just above `setup()`) that:
 
 ```cpp
-if (STOP_ON_LINE && (camBlueFound || camOrangeFound)) {
-  finished = true; motorStop(); setSteering(0, dt); return;
+if (STOP_ON_LINE && (camBlueFound || camOrangeFound || lineStopArmed)) {
+  handleLineStop(dt);   // the ONLY other line in loop() that changed for this feature
+  return;
 }
 ```
 
-`STOP_ON_LINE` is a dedicated constant so this can be disabled with one edit. Both flags are confirmed as soon as the line appears anywhere in the frame (camera-side range: orange from ~16 cm, blue from ~9 cm), not only when centred ahead — if that proves too early on the track, switch to `blueCenterRow`/`orangeCenterRow` (already sent, −1 unless the line is in the straight-ahead strip).
+1. Powers on the **front VL53L1X TOF sensor** the first time it runs (same wiring as `open_challenge.ino`: XSHUT `A1`; left/right/rear XSHUT `A3`/`A2`/`A0` are held low so only the front sensor answers on the shared I2C bus), and sets `lineStopArmed = true` permanently.
+2. From then on **ignores the pillar map and every colour message**, steers to heading 0 (same `KP_HEADING`/`KD_HEADING` gains) and keeps driving forward.
+3. Stops for good once the front sensor reads less than `FRONT_STOP_MM` (400 mm = 40 cm).
+
+Both flags are confirmed as soon as the line appears anywhere in the frame (camera-side range: orange from ~16 cm, blue from ~9 cm), not only when centred ahead — this is considered acceptable now because the only effect of triggering is arming the "go find the wall" mode, not an immediate stop; if an early trigger mid-dodge turns out to be a problem on the track, switch to `blueCenterRow`/`orangeCenterRow` instead (already sent, −1 unless the line is in the straight-ahead strip).
 
 ## 10. History: the "crashes right after dodging" bug (21 Nov)
 
@@ -142,5 +149,5 @@ if (STOP_ON_LINE && (camBlueFound || camOrangeFound)) {
 1. ~~Check the direction of the gyroscope (`YAW_REVERSED`).~~ Done 21 Nov: confirmed `false`.
 2. ~~Calibrate `YAW_SCALE` with a hand-turned 90°.~~ Done 21 Nov: `1.06`.
 3. ~~Fix the crash right after dodging a pillar.~~ Done 21 Nov: `RETURN_AFTER_CM` 30 → 45.
-4. Validate the new line-stop with `camBlueFound`/`camOrangeFound` over several real runs; switch to the centre-row fields if it stops too early.
+4. Validate the new after-line behaviour (`handleLineStop` / front TOF / `FRONT_STOP_MM`) over several real runs; switch to the centre-row fields for the trigger if ignoring pillars starts too early.
 5. Keep tuning `KP_HEADING` / `KD_HEADING` if the dodge still feels too sharp or too soft on different battery levels.

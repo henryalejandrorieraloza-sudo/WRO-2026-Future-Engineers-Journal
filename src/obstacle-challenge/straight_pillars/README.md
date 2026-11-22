@@ -16,6 +16,7 @@ The main idea is that the car keeps a small **map** of the straight. The camera 
 | Steering servo | **D9** |
 | Motor driver TB6612FNG | PWMA **D6**, AIN1 **D7**, AIN2 **D8** |
 | Gyroscope BMI160 | I2C: SDA **A4**, SCL **A5**, address 0x68 or 0x69 |
+| Front TOF sensor (VL53L1X), used only after the floor line | XSHUT **A1** (same wiring as `open_challenge.ino`); left/right/rear TOF XSHUT (**A3**/**A2**/**A0**) are held low to keep them off the I2C bus |
 
 **Upload note:** the camera is connected to D0 (RX), which blocks the upload. Hold the camera **RESET** button during the whole upload.
 
@@ -54,11 +55,18 @@ The wanted lateral position is turned into a heading with `atan2`, using a look-
 - The steering is limited to `MAX_STEER` and the servo moves at most `SERVO_SPEED_DPS` degrees per second, so the wheels do not jump.
 - The motor runs at `DRIVE_SPEED` forward. When the run is finished, the motor stops (coast).
 
-### 5. Stopping on the floor line (new, 21 Nov)
+### 5. After the floor line: drive to the wall, then stop (updated, 21 Nov)
 
-The camera already reports `blueFound` and `orangeFound` in every message (fields 5 and 11). `readCamera()` now parses both into persistent variables (`camBlueFound`, `camOrangeFound`), and the very first check in `loop()` — before the pillar logic runs — is: if `STOP_ON_LINE` is true and either flag is 1, brake, centre the steering, and set `finished = true` for the rest of the program.
+The camera already reports `blueFound` and `orangeFound` in every message (fields 5 and 11). `readCamera()` parses both into persistent variables (`camBlueFound`, `camOrangeFound`), and the first check in `loop()` — before the pillar logic runs — is: if `STOP_ON_LINE` is true and either flag is 1 (or the car is already in this mode), hand control to `handleLineStop()`.
 
-`blueFound`/`orangeFound` are confirmed the moment the line appears **anywhere** in the picture (per the camera's own comments, from as far as ~16 cm for orange and ~9 cm for blue, not only straight ahead). If testing shows the car stops too early — for example glimpsing the line from the side while still dodging a pillar — switch the check to use `blueCenterRow`/`orangeCenterRow` instead (already sent by the camera, just not read by this sketch yet), which are only non-negative once the line is inside the straight-ahead strip. `STOP_ON_LINE` exists as its own constant precisely so this behaviour can be turned off with one edit without touching the rest of the logic.
+The car does **not** stop the instant the line is seen. Instead `handleLineStop()`:
+1. The first time it runs, powers on the **front TOF sensor** (`startFrontTof()`) — the same VL53L1X wired for `open_challenge.ino`, held in reset by every sketch that does not need it — and sets `lineStopArmed = true` for good (it never resets to `false`).
+2. From then on it **ignores every pillar and every colour message completely**, straightens the car out (target heading 0, same PD gains) and keeps driving forward.
+3. Once the front sensor reads less than `FRONT_STOP_MM` (40 cm), it brakes, centres the steering and sets `finished = true`.
+
+This whole behaviour is one self-contained block (constants, globals, `startFrontTof()`, `handleLineStop()`) placed just above `setup()`. It does not read or change any pillar/map/camera code elsewhere in the file — the **only** line changed outside that block is the trigger in `loop()`, which now calls `handleLineStop(dt)` instead of stopping immediately. Deleting the whole block and that one line reverts to the plain "stop as soon as the line is seen" behaviour.
+
+`blueFound`/`orangeFound` are confirmed the moment the line appears **anywhere** in the picture (per the camera's own comments, from as far as ~16 cm for orange and ~9 cm for blue). That is fine here precisely because the car no longer reacts to the line itself — it only uses it as the signal to arm the "ignore pillars, go find the wall" mode.
 
 ### 6. Other safety stops
 
@@ -79,7 +87,8 @@ The camera already reports `blueFound` and `orangeFound` in every message (field
 | Constant | Default | Meaning |
 |---|---|---|
 | `RUN_CM` | 2000 | Distance to drive before the normal end-of-run stop (in practice the line stop fires first) |
-| `STOP_ON_LINE` | true | Brake as soon as `blueFound` or `orangeFound` is 1. Set `false` to disable without deleting the logic |
+| `STOP_ON_LINE` | true | Arm the after-line behaviour as soon as `blueFound` or `orangeFound` is 1. Set `false` to disable without deleting the logic |
+| `FRONT_STOP_MM` | 400 | After a floor line, stop once the front TOF reads less than this (40 cm) |
 | `CENTER_ANGLE` | 85 | Servo angle confirmed (on the track) to drive the wheels straight |
 | `LEFT_LIMIT` / `RIGHT_LIMIT` | 170 / 10 | Mechanical steering limits (servo angles); ±40° of real wheel angle measured with a protractor |
 | `STEER_LEFT_IS_BIGGER` | false | Confirmed with a steering probe test: on this chassis a bigger servo number steers right |
@@ -112,9 +121,11 @@ The values were measured on the car (ruler, protractor, counted ticks, a hand-tu
 - `Calibrating gyro... do not move the car`: calibration in progress.
 - `>> NEW PILLAR RED` / `GREEN`: a pillar was taken as the one to dodge.
 - `>> PILLAR CLEARED`: the car has passed the pillar.
-- `>> LINE DETECTED: STOP (blue=.. orange=..)`: the car braked because a floor line was confirmed.
+- `>> FRONT TOF READY` / `>> FRONT TOF NOT FOUND`: printed once, the moment the floor line is first seen.
+- `LINE STOP MODE | yaw .. | front .. mm`: state line every 150 ms while driving straight after the line, looking for the wall.
+- `>> WALL AHEAD: STOP (front .. mm)`: the car braked because the front sensor read less than `FRONT_STOP_MM`.
 - `WAITING FOR CAMERA`: no camera message for more than 500 ms.
-- `x .. y .. | yaw .. goal .. | goalY .. | pillar .. | cam color dist/lat | line blue .. orange ..`: state line every 150 ms.
+- `x .. y .. | yaw .. goal .. | goalY .. | pillar .. | cam color dist/lat | line blue .. orange ..`: normal state line every 150 ms, before any line is seen.
 - `>> DONE | x .. | y .. | yaw ..`: final position after `RUN_CM` (only reached if `STOP_ON_LINE` is off or no line is seen).
 
 ## How to use
@@ -130,7 +141,8 @@ The values were measured on the car (ruler, protractor, counted ticks, a hand-tu
 - The map depends on the encoder and the gyro. Wheel slip or a wrong `TICKS_PER_CM` moves the whole map.
 - The camera only sees the pillar near the car, so the first detection sets the position of each pillar. A wrong first detection changes all later steering.
 - The sketch has no obstacle-free fallback for a missing camera: it stops. This is intended.
-- `camBlueFound`/`camOrangeFound` trigger on any detection anywhere in the frame, not only a centred one directly ahead — see "Stopping on the floor line" above if that turns out to be too early.
+- `camBlueFound`/`camOrangeFound` trigger on any detection anywhere in the frame, not only a centred one directly ahead. Since the only effect now is arming the "ignore pillars, drive straight, find the wall" mode, an early trigger mid-dodge would make the car straighten out and stop reacting to the pillar it was still beside — if that happens on the track, switch to `blueCenterRow`/`orangeCenterRow` instead (already sent by the camera, just not read by this sketch yet).
+- The front TOF and the left/right/rear TOF share the same I2C bus and the same XSHUT pins as `open_challenge.ino`. Both sketches cannot run at the same time with all four sensors powered — this sketch only ever brings up the front one and holds the other three in reset.
 - `PARAMETERS.md` in this folder describes the car measurements and how each value was obtained.
 
 ## History: the "crashes right after dodging" bug (21 Nov 2026)

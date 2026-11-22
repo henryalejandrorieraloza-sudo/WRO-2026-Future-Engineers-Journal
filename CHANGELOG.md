@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.7 — 21 November · After the floor line: ignore pillars, drive to the wall, stop
+- **Revised the "stop on the floor line" feature from v1.9.6**, same day: an immediate stop on seeing the line was replaced with `handleLineStop()`, a self-contained block (new constants/globals + `startFrontTof()` + `handleLineStop()`, placed just above `setup()`) that: powers on the **front VL53L1X TOF sensor** (same wiring as `open_challenge.ino`) the first time a line is confirmed; from then on **ignores the pillar map and every colour message** and steers straight (heading 0); and only brakes once the front sensor reads less than `FRONT_STOP_MM` (40 cm).
+- The only line changed outside that new block is the trigger in `loop()`, which now calls `handleLineStop(dt)` instead of stopping immediately — everything else in the sketch (pillar map, camera parsing, odometry) is untouched.
+- Updated `src/obstacle-challenge/straight_pillars/README.md` §5 and `PARAMETERS.md` §9, and `docs/ENGINEERING_JOURNAL.md` §18.3.
+
 ## v1.9.6 — 21 November · Gyro calibrated, dodge-crash fixed, stop on the floor line
 - **`straight_pillars.ino` fully re-validated on the track and brought up to date in the repo** (the committed version was stale: `RETURN_AFTER_CM = 5`, `TICKS_PER_CM = 15.1`, `YAW_SCALE = 1.00`, 10-field camera parsing). Replaced with the current, track-tested sketch and rewrote every comment as detailed English explaining the algorithm, the calibration history and the bug fix below.
 - **Gyroscope calibrated with a real 90° hand turn:** new stand-alone test sketch [`gyro_90_test`](src/hardware-tests/gyro_90_test) (reuses `straight_pillars.ino`'s own register-level BMI160 driver). Measured yaw = 85° for an intended 90° turn → `YAW_SCALE = 90/85 = 1.06` (was the placeholder `1.00`); sign confirmed correct (`YAW_REVERSED = false`).

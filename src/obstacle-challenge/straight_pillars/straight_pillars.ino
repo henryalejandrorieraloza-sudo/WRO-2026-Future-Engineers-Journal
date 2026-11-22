@@ -154,6 +154,8 @@
 
 #include <Wire.h>
 #include <Servo.h>
+#include <VL53L1X.h>          // Pololu library, for the front distance sensor used in the "after the
+                               // line" block near the end of this file (see handleLineStop())
 
 // Defined at the top so the Arduino IDE knows the type before any function uses it.
 struct MapPillar {
@@ -527,6 +529,90 @@ float headingGoal() {
   return constrain(h, -MAX_AIM_DEG, MAX_AIM_DEG);
 }
 
+// =====================================================================
+// NEW (21 Nov), INDEPENDENT BLOCK: what to do AFTER the floor line.
+// -------------------------------------------------------------------
+// Everything in this block is new and self-contained: it does not read or change any pillar/map/
+// camera code above, and nothing above reads any variable from this block except for the single
+// trigger line in loop() (search for "handleLineStop(dt)") that was changed to call into it instead
+// of stopping the car immediately. Delete this whole block and that one line reverts to the plain
+// "stop as soon as the line is seen" behaviour.
+//
+// What it does: the first time a floor line is confirmed, it powers on the FRONT distance sensor
+// (VL53L1X / TOF400C) - the same sensor wired for open_challenge.ino, shared on this Nano's I2C bus,
+// normally held in reset by every sketch that does not need it. From that moment on the car ignores
+// every pillar and every colour message completely (it ARMS itself with lineStopArmed = true, which
+// never goes back to false), straightens out to heading 0 and keeps driving forward, until the front
+// sensor reads less than FRONT_STOP_MM - only then does it brake and stop for good.
+// =====================================================================
+
+// Front TOF pins, shared wiring with open_challenge.ino: FRONT = A1 (used here), LEFT = A3, RIGHT = A2,
+// REAR = A0 (all three held in reset here, so only the front sensor answers on the shared I2C bus).
+const int XSHUT_FRONT = A1, XSHUT_LEFT = A3, XSHUT_RIGHT = A2, XSHUT_REAR = A0;
+const long TOF_BUDGET_US = 50000;     // 50 ms per measurement (same setting as open_challenge.ino)
+const int  FRONT_STOP_MM = 400;       // stop once the front sensor reads less than this -> 40 cm
+
+VL53L1X frontTof;
+bool  frontTofOk    = false;   // true once the front sensor answered init() successfully
+bool  lineStopArmed = false;   // becomes true on the first line detection and then never resets to false
+int   frontMm       = -1;      // last distance read from the front sensor, in mm (-1 = no reading yet)
+
+// Powers on only the front sensor (the other three stay in reset) and configures it exactly like the
+// left/right sensors in open_challenge.ino: Long range mode, 50 ms timing budget, a 16 x 8 pixel
+// region of interest (narrower than default, so it is less fooled by reflections from the sides).
+bool startFrontTof() {
+  pinMode(XSHUT_LEFT,  OUTPUT); digitalWrite(XSHUT_LEFT,  LOW);
+  pinMode(XSHUT_RIGHT, OUTPUT); digitalWrite(XSHUT_RIGHT, LOW);
+  pinMode(XSHUT_REAR,  OUTPUT); digitalWrite(XSHUT_REAR,  LOW);
+  pinMode(XSHUT_FRONT, INPUT); delay(10);     // release the front sensor's reset: it wakes up at 0x29
+  frontTof.setTimeout(200);
+  if (!frontTof.init()) return false;         // it is the only TOF on the bus, so no address change is needed
+  frontTof.setDistanceMode(VL53L1X::Long);
+  frontTof.setMeasurementTimingBudget(TOF_BUDGET_US);
+  frontTof.setROISize(16, 8);
+  frontTof.startContinuous(TOF_BUDGET_US / 1000);
+  return true;
+}
+
+// Called every loop once a floor line has been confirmed, instead of stopping immediately. Starts the
+// front sensor the first time it runs, then drives straight (target heading 0, the same PD gains as
+// the rest of the sketch) while completely ignoring the pillar map and every new colour message, until
+// the front sensor reports a wall closer than FRONT_STOP_MM - only then does it brake and stay stopped.
+void handleLineStop(float dt) {
+  if (!lineStopArmed) {
+    lineStopArmed = true;
+    frontTofOk = startFrontTof();
+    if (DEBUG_PRINTS) Serial.println(frontTofOk ? F(">> FRONT TOF READY") : F(">> FRONT TOF NOT FOUND"));
+  }
+
+  if (frontTofOk && frontTof.dataReady()) {
+    frontTof.read(false);                              // false = read the value already there, do not wait
+    uint16_t v = frontTof.ranging_data.range_mm;
+    frontMm = (v > 0 && v < 4000) ? v : 4000;           // 0 or >= 4000 = nothing in range = treat as far
+  }
+
+  if (frontTofOk && frontMm > 0 && frontMm < FRONT_STOP_MM) {
+    finished = true;
+    motorStop();
+    setSteering(0, dt);
+    Serial.print(F(">> WALL AHEAD: STOP (front ")); Serial.print(frontMm); Serial.println(F(" mm)"));
+    return;
+  }
+
+  float steer = KP_HEADING * (0 - yaw) - KD_HEADING * yawRate;   // target heading 0: drive straight
+  setSteering(constrain(steer, -MAX_STEER, MAX_STEER), dt);
+  motorForward(DRIVE_SPEED);
+
+  if (DEBUG_PRINTS) {
+    static unsigned long lastPrint = 0;
+    if (millis() - lastPrint >= 150) {
+      lastPrint = millis();
+      Serial.print(F("LINE STOP MODE | yaw ")); Serial.print(yaw, 1);
+      Serial.print(F(" | front ")); Serial.print(frontTofOk ? frontMm : -1); Serial.println(F(" mm"));
+    }
+  }
+}
+
 // ---------------- SETUP ----------------
 void setup() {
   Serial.begin(CAMERA_BAUD);                     // RX = camera link, TX = Serial Monitor (shared USB UART)
@@ -581,15 +667,15 @@ void loop() {
 
   if (finished) { motorStop(); setSteering(0, dt); return; }   // already stopped for good: just hold position
 
-  // NEW (21 Nov): stop as soon as the camera has confirmed the blue line OR the orange line.
-  // This check runs before anything else in the loop (including the pillar-dodging logic) so a line
-  // detection always wins, even in the middle of dodging a pillar.
-  if (STOP_ON_LINE && (camBlueFound || camOrangeFound)) {
-    finished = true;
-    motorStop();
-    setSteering(0, dt);
-    Serial.print(F(">> LINE DETECTED: STOP (blue=")); Serial.print(camBlueFound);
-    Serial.print(F(" orange=")); Serial.print(camOrangeFound); Serial.println(F(")"));
+  // NEW (21 Nov): as soon as the camera confirms the blue line OR the orange line, hand control to
+  // the independent handleLineStop() block (defined above setup()) instead of stopping immediately:
+  // it straightens the car out, ignores every pillar/colour message from then on, and only stops once
+  // the front TOF sensor reports a wall closer than FRONT_STOP_MM. This is the ONLY line in loop() that
+  // changed for that feature; everything else in this function is exactly as before. lineStopArmed is
+  // set to true inside handleLineStop() and never reset, so this check keeps calling it on every later
+  // loop even on a camera message where camBlueFound/camOrangeFound happen to read 0 again.
+  if (STOP_ON_LINE && (camBlueFound || camOrangeFound || lineStopArmed)) {
+    handleLineStop(dt);
     return;
   }
 
