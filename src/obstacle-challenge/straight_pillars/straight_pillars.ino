@@ -542,7 +542,8 @@ float headingGoal() {
 // (VL53L1X / TOF400C) - the same sensor wired for open_challenge.ino, shared on this Nano's I2C bus,
 // normally held in reset by every sketch that does not need it. From that moment on the car ignores
 // every pillar and every colour message completely (it ARMS itself with lineStopArmed = true, which
-// never goes back to false), straightens out to heading 0 and keeps driving forward, until the front
+// never goes back to false), steers back to the home lane position (y = 0, not just a fixed compass
+// heading) and keeps driving forward, until the front
 // sensor reads less than FRONT_STOP_MM - only then does it brake and stop for good.
 // =====================================================================
 
@@ -575,9 +576,11 @@ bool startFrontTof() {
 }
 
 // Called every loop once a floor line has been confirmed, instead of stopping immediately. Starts the
-// front sensor the first time it runs, then drives straight (target heading 0, the same PD gains as
-// the rest of the sketch) while completely ignoring the pillar map and every new colour message, until
-// the front sensor reports a wall closer than FRONT_STOP_MM - only then does it brake and stay stopped.
+// front sensor the first time it runs, then steers back toward the HOME LANE POSITION (camPosY() = 0),
+// not just a fixed compass heading - same atan2/look-ahead formula and the same PD gains headingGoal()
+// already uses to return to the home lane once every pillar is cleared - while completely ignoring the
+// pillar map and every new colour message, until the front sensor reports a wall closer than
+// FRONT_STOP_MM - only then does it brake and stay stopped.
 void handleLineStop(float dt) {
   if (!lineStopArmed) {
     lineStopArmed = true;
@@ -599,7 +602,13 @@ void handleLineStop(float dt) {
     return;
   }
 
-  float steer = KP_HEADING * (0 - yaw) - KD_HEADING * yawRate;   // target heading 0: drive straight
+  // Steer back toward the home lane POSITION (y = 0), the same way headingGoal() already does once a
+  // pillar is cleared and there is no target left - NOT a fixed compass heading. If the car was still
+  // offset to one side (mid-dodge) the instant the line was seen, a fixed heading = 0 would just drive
+  // it straight in parallel, offset forever; aiming at y = 0 actually brings it back to the centre lane.
+  float targetHeading = degrees(atan2(0 - camPosY(), LOOK_HOME_CM));
+  targetHeading = constrain(targetHeading, -MAX_AIM_DEG, MAX_AIM_DEG);
+  float steer = KP_HEADING * (targetHeading - yaw) - KD_HEADING * yawRate;
   setSteering(constrain(steer, -MAX_STEER, MAX_STEER), dt);
   motorForward(DRIVE_SPEED);
 

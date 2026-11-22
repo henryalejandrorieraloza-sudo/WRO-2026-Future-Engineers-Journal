@@ -61,7 +61,7 @@ The camera already reports `blueFound` and `orangeFound` in every message (field
 
 The car does **not** stop the instant the line is seen. Instead `handleLineStop()`:
 1. The first time it runs, powers on the **front TOF sensor** (`startFrontTof()`) — the same VL53L1X wired for `open_challenge.ino`, held in reset by every sketch that does not need it — and sets `lineStopArmed = true` for good (it never resets to `false`).
-2. From then on it **ignores every pillar and every colour message completely**, straightens the car out (target heading 0, same PD gains) and keeps driving forward.
+2. From then on it **ignores every pillar and every colour message completely**, and steers back toward the **home lane position** (`camPosY() = 0`, the same `atan2`/look-ahead formula `headingGoal()` already uses once a pillar is cleared — not just a fixed compass heading, so the car actually recentres even if it was still mid-dodge when the line was seen) and keeps driving forward.
 3. Once the front sensor reads less than `FRONT_STOP_MM` (40 cm), it brakes, centres the steering and sets `finished = true`.
 
 This whole behaviour is one self-contained block (constants, globals, `startFrontTof()`, `handleLineStop()`) placed just above `setup()`. It does not read or change any pillar/map/camera code elsewhere in the file — the **only** line changed outside that block is the trigger in `loop()`, which now calls `handleLineStop(dt)` instead of stopping immediately. Deleting the whole block and that one line reverts to the plain "stop as soon as the line is seen" behaviour.
