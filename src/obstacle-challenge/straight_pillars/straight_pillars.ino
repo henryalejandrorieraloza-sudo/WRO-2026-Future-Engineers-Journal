@@ -576,11 +576,12 @@ bool startFrontTof() {
 }
 
 // Called every loop once a floor line has been confirmed, instead of stopping immediately. Starts the
-// front sensor the first time it runs, then steers back toward the HOME LANE POSITION (camPosY() = 0),
-// not just a fixed compass heading - same atan2/look-ahead formula and the same PD gains headingGoal()
-// already uses to return to the home lane once every pillar is cleared - while completely ignoring the
-// pillar map and every new colour message, until the front sensor reports a wall closer than
-// FRONT_STOP_MM - only then does it brake and stay stopped.
+// front sensor the first time it runs, then every loop does ONE continuous thing (not separate "return"
+// and "drive" phases): it recomputes a heading that steers back toward the home lane position
+// (camPosY() = 0) and immediately drives forward with that heading, so the car naturally straightens
+// out as it gets closer to the centre lane while it keeps moving the whole time - all while completely
+// ignoring the pillar map and every new colour message - until the front sensor reports a wall closer
+// than FRONT_STOP_MM, at which point it brakes and stays stopped.
 void handleLineStop(float dt) {
   if (!lineStopArmed) {
     lineStopArmed = true;
