@@ -551,7 +551,7 @@ float headingGoal() {
 // REAR = A0 (all three held in reset here, so only the front sensor answers on the shared I2C bus).
 const int XSHUT_FRONT = A1, XSHUT_LEFT = A3, XSHUT_RIGHT = A2, XSHUT_REAR = A0;
 const long TOF_BUDGET_US = 50000;     // 50 ms per measurement (same setting as open_challenge.ino)
-const int  FRONT_STOP_MM = 400;       // stop once the front sensor reads less than this -> 40 cm
+const int  FRONT_STOP_MM = 1200;      // stop once the front sensor reads less than this -> 120 cm
 
 VL53L1X frontTof;
 bool  frontTofOk    = false;   // true once the front sensor answered init() successfully

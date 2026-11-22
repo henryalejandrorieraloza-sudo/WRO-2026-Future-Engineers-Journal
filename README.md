@@ -587,7 +587,7 @@ The camera does not only say *"there is a red pillar on the left"*: it measures 
 | Vision: pillars, magenta parking walls, orange and blue lines | Done — `obstacle_camera` v3.1 |
 | One straight with pillars (map + steering law) | Validated 27 Oct, re-tuned and re-validated 21 Nov after the new camera and chassis: gyro calibrated with a real 90° hand turn, `TICKS_PER_CM` re-measured with the motor running, and a crash right after dodging a pillar fixed ([`straight_pillars`](src/obstacle-challenge/straight_pillars), journal §18) |
 | Floor lines measured in cm | Done — Row → cm formula measured 27 Oct (error ≤ 1 cm) |
-| After the floor line | Done, 21 Nov — once either line is confirmed, the Nano ignores every pillar, straightens out and drives to the wall on the front TOF sensor, stopping under 40 cm (`STOP_ON_LINE`); not yet validated on the track (journal §18.3) |
+| After the floor line | Done, 21 Nov — once either line is confirmed, the Nano ignores every pillar, straightens out and drives to the wall on the front TOF sensor, stopping under 120 cm (`STOP_ON_LINE`); not yet validated on the track (journal §18.3) |
 | Corners, laps, stop in the starting section | Planned — next (plan in §9.7 and §9.10) |
 | Parking | In design (§9.8) |
 
@@ -982,7 +982,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Gyroscope (Obstacle Challenge) | Done — Calibrated 21 Nov with a real 90° hand turn (`gyro_90_test`): `YAW_SCALE = 1.06`, `YAW_REVERSED = false` |
 | Camera → Nano UART link | Done — Working (14-field message, now 12 of them read by `straight_pillars`) |
 | Obstacle: one straight with pillars (map + steering law) | Validated 27 Oct, re-tuned and re-validated 21 Nov (gyro/encoder recalibration, dodge-crash fix; `straight_pillars`) |
-| Obstacle: after the floor line | Done, 21 Nov — ignores pillars, drives straight to the wall on the front TOF, stops under 40 cm (`STOP_ON_LINE`); not yet validated on the track |
+| Obstacle: after the floor line | Done, 21 Nov — ignores pillars, drives straight to the wall on the front TOF, stops under 120 cm (`STOP_ON_LINE`); not yet validated on the track |
 | Obstacle: orange and blue lines in cm | Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
 | Obstacle: corners, 3 laps, stop | Planned — Next: measure the turn while driving, then the corner rehearsal (README §9.7, §9.10) |
 | Parking | In design — Being designed |

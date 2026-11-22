@@ -62,7 +62,7 @@ The camera already reports `blueFound` and `orangeFound` in every message (field
 The car does **not** stop the instant the line is seen. Instead `handleLineStop()`:
 1. The first time it runs, powers on the **front TOF sensor** (`startFrontTof()`) — the same VL53L1X wired for `open_challenge.ino`, held in reset by every sketch that does not need it — and sets `lineStopArmed = true` for good (it never resets to `false`).
 2. From then on it **ignores every pillar and every colour message completely**, and steers back toward the **home lane position** (`camPosY() = 0`, the same `atan2`/look-ahead formula `headingGoal()` already uses once a pillar is cleared — not just a fixed compass heading, so the car actually recentres even if it was still mid-dodge when the line was seen) and keeps driving forward.
-3. Once the front sensor reads less than `FRONT_STOP_MM` (40 cm), it brakes, centres the steering and sets `finished = true`.
+3. Once the front sensor reads less than `FRONT_STOP_MM` (120 cm), it brakes, centres the steering and sets `finished = true`.
 
 This whole behaviour is one self-contained block (constants, globals, `startFrontTof()`, `handleLineStop()`) placed just above `setup()`. It does not read or change any pillar/map/camera code elsewhere in the file — the **only** line changed outside that block is the trigger in `loop()`, which now calls `handleLineStop(dt)` instead of stopping immediately. Deleting the whole block and that one line reverts to the plain "stop as soon as the line is seen" behaviour.
 
@@ -88,7 +88,7 @@ This whole behaviour is one self-contained block (constants, globals, `startFron
 |---|---|---|
 | `RUN_CM` | 2000 | Distance to drive before the normal end-of-run stop (in practice the line stop fires first) |
 | `STOP_ON_LINE` | true | Arm the after-line behaviour as soon as `blueFound` or `orangeFound` is 1. Set `false` to disable without deleting the logic |
-| `FRONT_STOP_MM` | 400 | After a floor line, stop once the front TOF reads less than this (40 cm) |
+| `FRONT_STOP_MM` | 1200 | After a floor line, stop once the front TOF reads less than this (120 cm) |
 | `CENTER_ANGLE` | 85 | Servo angle confirmed (on the track) to drive the wheels straight |
 | `LEFT_LIMIT` / `RIGHT_LIMIT` | 170 / 10 | Mechanical steering limits (servo angles); ±40° of real wheel angle measured with a protractor |
 | `STEER_LEFT_IS_BIGGER` | false | Confirmed with a steering probe test: on this chassis a bigger servo number steers right |
