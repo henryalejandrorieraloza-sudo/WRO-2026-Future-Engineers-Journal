@@ -35,8 +35,13 @@
 //         colors with exact camera numbers (no viewer needed).
 //       - Measured range: orange line from 16 cm, blue line from 9 cm.
 // It can also keep sending the pictures to viewer.html over USB (STREAM_TO_PC), or serve a live
-// MJPEG view over WiFi at http://<ip>/ with no cable needed (WIFI_STREAM, off by default: set your
-// WiFi name/password below and turn it on only for bench testing, since it slows the vision loop).
+// MJPEG view over WiFi at http://<ip>/ with no cable needed (WIFI_STREAM, ON by default: whenever
+// the camera is powered, opening that address shows exactly what the car sees, live, with the
+// SAME pillar/line segmentation colors viewer.html draws -- red/green pillar blocks blended onto
+// the picture, the accepted orange/blue line pixels painted solid, a yellow box around the pillar
+// actually chosen. Set your WiFi name/password below. It costs almost nothing while no browser is
+// watching (one cheap "anyone connected?" check per loop); while someone IS watching it does slow
+// the vision loop (JPEG encoding + sending take real time), so close the browser tab before a timed run).
 //
 // Tools: ESP32S3 Dev Module | USB CDC On Boot: Enabled | Flash Size: 8MB
 //        Partition: 8M with spiffs (3MB APP/1.5MB SPIFFS) | PSRAM: OPI PSRAM
@@ -78,17 +83,20 @@ const unsigned long STREAM_EVERY_MS = 1;   // one picture to the viewer every 0.
 
 // ---------- Live view over WiFi (independent of STREAM_TO_PC, no USB cable needed) ----------
 // With this on, open http://<the printed IP>/ in any phone/laptop browser on the same WiFi to see
-// exactly what the camera sees, live, while the car drives around untethered. It reuses the same
-// frame already grabbed for the pillar/line vision code (no extra camera capture), and only pays
-// the JPEG-encoding cost on frames actually being watched -- with no browser open, the cost is one
-// cheap "is a client connected?" check per loop. Still, encoding + sending a JPEG over WiFi takes
-// real time (tens of ms), so this WILL lower the frames/sec reaching the Nano while someone is
-// actually watching: fine for bench testing and calibration, turn OFF (false) for a timed run.
-const bool  WIFI_STREAM        = false;             // master switch for this whole block
+// exactly what the camera sees, live, while the car drives around untethered -- same picture AND
+// same segmentation (pillar blocks, accepted lines, chosen-pillar box) that viewer.html shows over
+// USB (WIFI_STREAM_OVERLAY, see below). It reuses the same frame already grabbed for the pillar/line
+// vision code (no extra camera capture), and only pays the JPEG-encoding + overlay-drawing cost on
+// frames actually being watched -- with no browser open, the cost is one cheap "is a client
+// connected?" check per loop. Still, while someone IS watching it DOES slow the vision loop
+// (encoding + sending a JPEG takes real time): close the browser tab before a timed run if every
+// frame/sec matters, or set WIFI_STREAM to false below to remove the cost entirely.
+const bool  WIFI_STREAM        = true;              // master switch: on by default, always watchable while the camera is powered
 const char *WIFI_STREAM_SSID   = "YOUR_WIFI_NAME";      // <-- put your WiFi name here (2.4 GHz only, ESP32-S3 can't do 5 GHz)
 const char *WIFI_STREAM_PASS   = "YOUR_WIFI_PASSWORD";  // <-- put your WiFi password here
 const int   WIFI_STREAM_PORT   = 80;                // standard HTTP port, so a plain http://ip/ works
 const int   WIFI_STREAM_QUALITY = 12;                // JPEG quality for the stream: 10 (best/biggest) .. 30 (worst/smallest)
+const bool  WIFI_STREAM_OVERLAY = true;             // true = paint the viewer.html segmentation colors onto the WiFi picture too (see drawSegmentationOverlay)
 
 // ---------- Image ----------
 const int W = 320;                   // picture width in pixels (QVGA)
@@ -846,13 +854,79 @@ bool startCamera() {
 }
 
 // =====================================================================
-// WIFI LIVE VIEW -- fully self-contained block. Touches nothing else in this file except:
+// WIFI LIVE VIEW -- fully self-contained block (reads the detection globals, writes to none of
+// them). Touches nothing else in this file except:
 //   (1) one call to connectWifiStream() at the end of setup(), and
-//   (2) one call to serveWifiStream(frame) in loop(), right before the frame is given back.
-// Turning WIFI_STREAM off (the default) compiles this out to two near-free checks per loop.
+//   (2) one call to serveWifiStream(frame, closest, blue, orange) in loop(), right before the
+//       frame is given back -- the three extra arguments are only read here, to draw the overlay.
+// Turning WIFI_STREAM off compiles this down to one near-free check per loop.
 // =====================================================================
 WiFiServer wifiStreamServer(WIFI_STREAM_PORT);   // listens for a browser to connect
 WiFiClient wifiStreamClient;                     // the one browser currently watching (if any)
+
+// Writes one RGB565 pixel into the picture buffer (same 16-bit packing readPixel() reads back).
+inline void putPixel565(uint8_t *buf, int x, int y, int r, int g, int b) {
+  int i = (y * W + x) * 2;
+  uint16_t v = (((uint16_t)r >> 3) << 11) | (((uint16_t)g >> 2) << 5) | ((uint16_t)b >> 3);
+  buf[i] = v >> 8; buf[i + 1] = v & 0xFF;
+}
+
+// Paints the SAME segmentation colors camera_viewer.html draws over USB, but directly onto this
+// frame before it is JPEG-encoded for the WiFi stream -- so a browser watching over WiFi sees
+// exactly how the car is seeing and segmenting the picture right now, with no separate viewer
+// app and no USB cable. Reuses the globals the detection code above already filled in this same
+// loop iteration (blockCode, code, pick) -- nothing here changes what the car decides, it only
+// draws on top of the picture that is about to be sent.
+//   1) pillar blocks (or raw pillar pixels, pixel mode): blended 50% red / 50% green onto the
+//      picture, same blend viewer.html does.
+//   2) accepted orange / blue floor-line pixels: painted solid, same colors viewer.html uses.
+//   3) a yellow box around the pillar the car actually chose (closest valid, after the time filter).
+void drawSegmentationOverlay(uint8_t *buf, const Pillar &p, const LineInfo &blue, const LineInfo &orange) {
+  if (USE_BLOCKS) {
+    for (int by = 0; by < BH; by++) {
+      for (int bx = 0; bx < BW; bx++) {
+        uint8_t c = blockCode[by * BW + bx];
+        if (c == C_NONE) continue;
+        for (int dy = 0; dy < BLOCK; dy++) {
+          int y = BAND_TOP + by * BLOCK + dy;
+          for (int dx = 0; dx < BLOCK; dx++) {
+            int x = bx * BLOCK + dx;
+            int r, g, b; readPixel(buf, x, y, r, g, b);
+            r = (c == C_RED)   ? (r + 255) / 2 : r / 2;
+            g = (c == C_GREEN) ? (g + 255) / 2 : g / 2;
+            putPixel565(buf, x, y, r, g, b / 2);
+          }
+        }
+      }
+    }
+  } else {
+    for (int i = 0; i < AREA_H * W; i++) {
+      uint8_t c = code[i];
+      if ((c != C_RED && c != C_GREEN) || !pillarPixel(i, c)) continue;
+      int x = i % W, y = AREA_TOP + i / W;
+      int r, g, b; readPixel(buf, x, y, r, g, b);
+      r = (c == C_RED)   ? (r + 255) / 2 : r / 2;
+      g = (c == C_GREEN) ? (g + 255) / 2 : g / 2;
+      putPixel565(buf, x, y, r, g, b / 2);
+    }
+  }
+
+  for (int ay = 0; ay < AREA_H; ay++) {
+    for (int x = 0; x < W; x++) {
+      uint8_t c = pick[ay * W + x];
+      if (c == C_NONE) continue;
+      int y = AREA_TOP + ay;
+      if (c == C_ORANGE)    putPixel565(buf, x, y, 255, 138, 0);   // same orange as viewer.html
+      else if (c == C_BLUE) putPixel565(buf, x, y, 0, 212, 255);   // same cyan-blue as viewer.html
+    }
+  }
+
+  if (p.found) {
+    int L = max(0, p.left), R = min(W - 1, p.right), T = max(0, p.top), B = min(H - 1, p.bottom);
+    for (int x = L; x <= R; x++) { putPixel565(buf, x, T, 255, 212, 0); putPixel565(buf, x, B, 255, 212, 0); }
+    for (int y = T; y <= B; y++) { putPixel565(buf, L, y, 255, 212, 0); putPixel565(buf, R, y, 255, 212, 0); }
+  }
+}
 
 // Connects to WiFi and starts the HTTP server. Called once from setup(). This part IS blocking
 // (it waits for the WiFi to connect before continuing), which is fine: it only runs once, at
@@ -875,7 +949,7 @@ void connectWifiStream() {
 // Called once per loop, after the frame has already been used for pillar/line detection.
 // Sends it as one JPEG frame of a standard "multipart/x-mixed-replace" MJPEG stream, which every
 // browser already knows how to play as a live video with no extra page or library needed.
-void serveWifiStream(camera_fb_t *frame) {
+void serveWifiStream(camera_fb_t *frame, const Pillar &p, const LineInfo &blue, const LineInfo &orange) {
   if (!WIFI_STREAM) return;
 
   if (!wifiStreamClient || !wifiStreamClient.connected()) {   // no one watching (yet) -- look for a new browser
@@ -890,6 +964,11 @@ void serveWifiStream(camera_fb_t *frame) {
     wifiStreamClient = incoming;                              // this browser is now "the" viewer
     Serial.println("WIFI_STREAM: viewer connected");
   }
+
+  // Paint the pillar/line segmentation onto the picture actually being sent, same as viewer.html
+  // (frame->buf has already done its job for this loop -- detection and, if STREAM_TO_PC, the USB
+  // packet were both built from it earlier -- so drawing on it now, right before encoding, is safe).
+  if (WIFI_STREAM_OVERLAY) drawSegmentationOverlay(frame->buf, p, blue, orange);
 
   uint8_t *jpgBuf = NULL;
   size_t   jpgLen = 0;
@@ -999,6 +1078,6 @@ void loop() {                                      // runs again and again
     printProbe("bottom", frame->buf, PROBE_X, PROBE_LOW_Y);     // color probe at the bottom
     lastStatus = millis();                         // remember when the status was printed
   }
-  serveWifiStream(frame);                          // no-op unless WIFI_STREAM is true (see above)
+  serveWifiStream(frame, closest, blue, orange);   // no-op unless WIFI_STREAM is true (see above)
   esp_camera_fb_return(frame);                     // give the picture back to the camera
 }

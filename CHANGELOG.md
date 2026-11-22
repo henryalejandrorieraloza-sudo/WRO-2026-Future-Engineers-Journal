@@ -2,6 +2,13 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.10 — 22 November · WiFi live view now shows the segmentation, on by default
+- **`WIFI_STREAM` turned on by default** (`obstacle_camera.ino`): whenever the camera is powered, `http://<printed IP>/` streams live with no USB cable, instead of needing to be switched on for each bench test.
+- **New: `WIFI_STREAM_OVERLAY`** paints the same pillar/line segmentation colours `camera_viewer.html` draws over USB — pillar blocks blended 50 % red/green, accepted orange/blue line pixels painted solid, a yellow box around the pillar actually chosen — directly onto the picture before it is sent over WiFi, via the new self-contained `drawSegmentationOverlay()`. It only *reads* the detection globals the vision code already filled that loop (`blockCode`, `code`, `pick`); it changes nothing the car decides.
+- Cost is unchanged while nobody is watching (one cheap "anyone connected?" check per loop); while a browser *is* watching, the overlay + JPEG-encoding still slow the vision loop, so close the tab before a timed run if every frame matters.
+- **Still needs your own WiFi name/password** filled into `WIFI_STREAM_SSID` / `WIFI_STREAM_PASS` (2.4 GHz only) before flashing — those stay as placeholders, since nothing in the repo knows that.
+- Updated `obstacle_camera/README.md` and `src/README.md` to match.
+
 ## v1.9.9 — 22 November · Live camera view over WiFi, no USB cable needed
 - **New, self-contained `WIFI_STREAM` block in `obstacle_camera.ino`** (off by default): connects to a 2.4 GHz WiFi network and serves a live MJPEG view at `http://<ip>/`, viewable from any phone or laptop browser while the car drives around untethered. Reuses the exact frame already captured for pillar/line detection (no extra camera capture) and only pays the JPEG-encoding cost while a browser is actually connected and watching.
 - Touches nothing else in the sketch except two call sites (`connectWifiStream()` in `setup()`, `serveWifiStream(frame)` in `loop()` right before the frame is returned), same self-contained-block pattern as the front-TOF line-stop feature.

@@ -1638,3 +1638,14 @@ The result is `handleLineStop()`, a self-contained block (new constants, new glo
 | Systems thinking | The gyro and encoder fixes did not themselves fix the crash — they only made it *visible* clearly enough to diagnose, since the crash depended on real distances and real headings being right in the first place |
 | Honesty | The line-stop's trigger condition (any detection vs. centred/close detection) is recorded as an open question still to validate on the track, not claimed as finished |
 
+## 19. Phase 14 — 22 November: the WiFi view now shows what the car actually sees, not just the raw picture
+
+`obstacle_camera.ino` already had a `WIFI_STREAM` block (added in an earlier session) that serves a live MJPEG feed at `http://<ip>/`, so the camera can be watched from a phone or laptop with no USB cable — but it streamed the raw camera picture, off by default. Two things were missing for it to actually replace tethering to `camera_viewer.html` for day-to-day debugging: it had to be on by default, not a bench-only switch to remember to flip; and it had to show the **segmentation** — which pixels the car is calling pillar, which it is calling line, which pillar it picked — not just the plain picture, since that is what actually needs watching when something looks wrong on the track.
+
+**Change 1 — `WIFI_STREAM` on by default.** Whenever the camera is powered, `http://<printed IP>/` is already serving; nothing needs to be toggled first. The cost model is unchanged: with no browser connected it is still one cheap "anyone watching?" check per loop.
+
+**Change 2 — `drawSegmentationOverlay()`, a new self-contained function.** Called from `serveWifiStream()` only once a browser is actually connected (so it costs nothing when nobody is watching), it paints onto the RGB565 frame — *before* it is JPEG-encoded and sent — the exact same segmentation `camera_viewer.html` already draws over USB from the separate pillar/line mask bytes: the pillar blocks blended 50 % red/green onto the picture, the accepted orange/blue line pixels painted solid, and a yellow box around the pillar the car actually chose (after the time filter). It reads the same globals the detection code already filled earlier in that same loop iteration (`blockCode`, `code`, `pick`) and writes only pixels of the picture buffer that is about to be thrown away after sending — it cannot change anything the car decides, by construction, since it runs after `sendToNano()` has already been called.
+
+A new `WIFI_STREAM_OVERLAY` switch keeps the two changes independent: `WIFI_STREAM_OVERLAY = false` would fall back to the plain raw-picture stream from the earlier session, with `WIFI_STREAM` still on by default.
+
+**Still outstanding:** `WIFI_STREAM_SSID` / `WIFI_STREAM_PASS` are still the placeholder strings — they need the team's real 2.4 GHz network name and password filled in before the next flash, since nothing in the repository can know those.
