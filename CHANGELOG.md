@@ -2,6 +2,12 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.8 — 21 November · Don't stop diagonal: straighten to yaw = 0 first
+- **`FRONT_STOP_MM` raised from 400 to 1200** (40 cm → 120 cm): the car now stops with more clearance from whatever is ahead after the floor line.
+- **New: the car is no longer allowed to stop at an angle.** Once the front TOF reads under `FRONT_STOP_MM`, it only brakes if also within the new `STOP_YAW_TOL_DEG` (5°) of yaw = 0 — the same direction it faced at START. If it is close to the wall but still diagonal, it steers at full lock (`±MAX_STEER`) toward yaw = 0 instead of easing into it with the normal PD gains, to fix the heading in the least time possible, and only stops once both conditions hold together.
+- Fixed a stale comment directly above `handleLineStop()` left over from the very first version of this feature, which still said the car "does NOT try to steer back to any particular lateral position" — contradicting the recentring behaviour added in the previous commit.
+- Updated `straight_pillars/README.md` §5, `PARAMETERS.md` §9, and `docs/ENGINEERING_JOURNAL.md` §18.3 to match.
+
 ## v1.9.7 — 21 November · After the floor line: ignore pillars, drive to the wall, stop
 - **Revised the "stop on the floor line" feature from v1.9.6**, same day, twice: an immediate stop on seeing the line was replaced with `handleLineStop()`, a self-contained block (new constants/globals + `startFrontTof()` + `handleLineStop()`, placed just above `setup()`) that: powers on the **front VL53L1X TOF sensor** (same wiring as `open_challenge.ino`) the first time a line is confirmed; from then on **ignores the pillar map and every colour message** and steers back toward the **home lane position** (`camPosY() = 0`, the same `atan2`/look-ahead formula and PD gains `headingGoal()` already uses to return to the home lane — not a fixed compass heading, so the car still recentres even if it was mid-dodge when the line was seen); and only brakes once the front sensor reads less than `FRONT_STOP_MM` (now 120 cm).
 - The only line changed outside that new block is the trigger in `loop()`, which now calls `handleLineStop(dt)` instead of stopping immediately — everything else in the sketch (pillar map, camera parsing, odometry) is untouched.

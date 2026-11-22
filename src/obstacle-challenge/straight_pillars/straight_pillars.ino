@@ -552,6 +552,9 @@ float headingGoal() {
 const int XSHUT_FRONT = A1, XSHUT_LEFT = A3, XSHUT_RIGHT = A2, XSHUT_REAR = A0;
 const long TOF_BUDGET_US = 50000;     // 50 ms per measurement (same setting as open_challenge.ino)
 const int  FRONT_STOP_MM = 1200;      // stop once the front sensor reads less than this -> 120 cm
+const float STOP_YAW_TOL_DEG = 5.0;   // only allowed to stop while within this many degrees of yaw = 0
+                                       // (the same compass direction the car had at START) - i.e. not
+                                       // stopped sitting at an angle/diagonal to the straight
 
 VL53L1X frontTof;
 bool  frontTofOk    = false;   // true once the front sensor answered init() successfully
@@ -581,7 +584,11 @@ bool startFrontTof() {
 // (camPosY() = 0) and immediately drives forward with that heading, so the car naturally straightens
 // out as it gets closer to the centre lane while it keeps moving the whole time - all while completely
 // ignoring the pillar map and every new colour message - until the front sensor reports a wall closer
-// than FRONT_STOP_MM, at which point it brakes and stays stopped.
+// than FRONT_STOP_MM. Even then it is only allowed to actually stop while yaw is within
+// STOP_YAW_TOL_DEG of 0 (the same direction the car faced at START) - it must not end the run sitting
+// at an angle. If it is close to the wall but still diagonal, it steers at full lock toward yaw = 0
+// (whichever side is closer) instead of easing into it, to fix the heading in the least time possible,
+// and only stops once both conditions hold at the same time.
 void handleLineStop(float dt) {
   if (!lineStopArmed) {
     lineStopArmed = true;
@@ -596,10 +603,29 @@ void handleLineStop(float dt) {
   }
 
   if (frontTofOk && frontMm > 0 && frontMm < FRONT_STOP_MM) {
-    finished = true;
-    motorStop();
-    setSteering(0, dt);
-    Serial.print(F(">> WALL AHEAD: STOP (front ")); Serial.print(frontMm); Serial.println(F(" mm)"));
+    if (fabs(yaw) <= STOP_YAW_TOL_DEG) {
+      // Close to the wall AND pointing the same way it started (within STOP_YAW_TOL_DEG): stop for good.
+      finished = true;
+      motorStop();
+      setSteering(0, dt);
+      Serial.print(F(">> WALL AHEAD: STOP (front ")); Serial.print(frontMm);
+      Serial.print(F(" mm, yaw ")); Serial.print(yaw, 1); Serial.println(F(")"));
+      return;
+    }
+    // Close enough to the wall, but still at an angle: do NOT stop diagonal. Steer at full lock
+    // toward yaw = 0 (whichever side is closer) while still driving forward, so the heading is fixed
+    // in the least time possible instead of easing into it with the PD gains.
+    float steer = (yaw > 0) ? -MAX_STEER : MAX_STEER;
+    setSteering(steer, dt);
+    motorForward(DRIVE_SPEED);
+    if (DEBUG_PRINTS) {
+      static unsigned long lastPrint = 0;
+      if (millis() - lastPrint >= 150) {
+        lastPrint = millis();
+        Serial.print(F("STRAIGHTENING BEFORE STOP | yaw ")); Serial.print(yaw, 1);
+        Serial.print(F(" | front ")); Serial.print(frontMm); Serial.println(F(" mm"));
+      }
+    }
     return;
   }
 
