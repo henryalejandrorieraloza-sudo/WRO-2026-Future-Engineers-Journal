@@ -112,6 +112,7 @@ Every half second (only when not streaming) the status prints the H, S and V ran
 | Constant | Default | Meaning |
 |---|---|---|
 | `STREAM_TO_PC` | true | Send pictures to `viewer.html` over USB. Set to `false` when driving, because the stream is slower |
+| `WIFI_STREAM` | false | Serve a live MJPEG view over WiFi at `http://<ip>/`, no USB cable needed — see "Live view over WiFi" below. Off by default: turn it on only for bench testing, never for a timed run |
 | `LOCK_CAMERA` / `LOCK_AFTER_MS` | true / 5000 | Freeze the camera settings and when |
 | `USE_BLOCKS` | true | Block method for the pillars |
 | `USE_TIME_FILTER` | true | Require several pictures before a pillar counts |
@@ -150,6 +151,15 @@ With `STREAM_TO_PC = true`, the same USB port carries binary picture packets (he
 3. Connect the camera TX to the Nano RX (D0) and power the Nano.
 4. To check the colours: set `STREAM_TO_PC = false` and read the `PROBE` lines, or open `viewer.html` with `STREAM_TO_PC = true`.
 5. To drive, set `STREAM_TO_PC = false` (faster messages).
+
+## Live view over WiFi
+
+An independent, self-contained block (no changes to the pillar/line code): set `WIFI_STREAM = true`, fill in `WIFI_STREAM_SSID` / `WIFI_STREAM_PASS` with a real 2.4 GHz network (the ESP32-S3 cannot join a 5 GHz network), flash, and open the Serial Monitor once just to read the printed IP address (e.g. `http://192.168.1.42/`). Open that address in any phone or laptop browser on the same WiFi — no app, no extra page, it just plays as a live video (standard MJPEG stream). The car does not need to stay plugged into the computer: this is the whole point, so you can watch what the camera sees while it drives around the track.
+
+- It reuses the exact frame already captured for the pillar/line detection — nothing is captured twice.
+- With no browser connected, the cost is one cheap "anyone watching?" check per loop — effectively free.
+- While someone *is* watching, every frame also gets JPEG-encoded and sent over WiFi, which takes real time (tens of ms) and lowers the frames/second reaching the Nano. Fine for calibration on the bench; turn it back to `false` before a timed run.
+- Only one viewer at a time is served (simplest possible server, by design, to keep the extra code small and self-contained); opening a second browser tab just waits until the first one disconnects.
 
 ## Known limits
 

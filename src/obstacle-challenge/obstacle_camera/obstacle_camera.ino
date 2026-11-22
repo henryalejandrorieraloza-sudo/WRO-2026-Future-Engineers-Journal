@@ -34,7 +34,9 @@
 //       - Color probe: H, S, V of two fixed boxes printed in the status, to calibrate the
 //         colors with exact camera numbers (no viewer needed).
 //       - Measured range: orange line from 16 cm, blue line from 9 cm.
-// It can also keep sending the pictures to viewer.html over USB (STREAM_TO_PC).
+// It can also keep sending the pictures to viewer.html over USB (STREAM_TO_PC), or serve a live
+// MJPEG view over WiFi at http://<ip>/ with no cable needed (WIFI_STREAM, off by default: set your
+// WiFi name/password below and turn it on only for bench testing, since it slows the vision loop).
 //
 // Tools: ESP32S3 Dev Module | USB CDC On Boot: Enabled | Flash Size: 8MB
 //        Partition: 8M with spiffs (3MB APP/1.5MB SPIFFS) | PSRAM: OPI PSRAM
@@ -44,6 +46,8 @@
 // =====================================================================
 
 #include "esp_camera.h"                 // ESP32 camera driver library
+#include "img_converters.h"             // fmt2jpg(): converts the raw RGB565 frame to a JPEG, for WIFI_STREAM
+#include <WiFi.h>                       // only used if WIFI_STREAM is true (see below)
 
 // ---------- Camera pins (emakefun ESP32S3-CAM) ----------
 #define PWDN_GPIO_NUM   -1              // power-down pin: not used on this board
@@ -71,6 +75,20 @@ const int  NANO_RX_PIN  = -1;        // GPIO44 is NOT used: the camera never lis
 const long NANO_BAUD    = 115200;    // must match the Nano sketch
 const bool STREAM_TO_PC = true;     // true = also send pictures to viewer.html (slower). false to drive / test
 const unsigned long STREAM_EVERY_MS = 1;   // one picture to the viewer every 0.5 s (the page needs time to read it)
+
+// ---------- Live view over WiFi (independent of STREAM_TO_PC, no USB cable needed) ----------
+// With this on, open http://<the printed IP>/ in any phone/laptop browser on the same WiFi to see
+// exactly what the camera sees, live, while the car drives around untethered. It reuses the same
+// frame already grabbed for the pillar/line vision code (no extra camera capture), and only pays
+// the JPEG-encoding cost on frames actually being watched -- with no browser open, the cost is one
+// cheap "is a client connected?" check per loop. Still, encoding + sending a JPEG over WiFi takes
+// real time (tens of ms), so this WILL lower the frames/sec reaching the Nano while someone is
+// actually watching: fine for bench testing and calibration, turn OFF (false) for a timed run.
+const bool  WIFI_STREAM        = false;             // master switch for this whole block
+const char *WIFI_STREAM_SSID   = "YOUR_WIFI_NAME";      // <-- put your WiFi name here (2.4 GHz only, ESP32-S3 can't do 5 GHz)
+const char *WIFI_STREAM_PASS   = "YOUR_WIFI_PASSWORD";  // <-- put your WiFi password here
+const int   WIFI_STREAM_PORT   = 80;                // standard HTTP port, so a plain http://ip/ works
+const int   WIFI_STREAM_QUALITY = 12;                // JPEG quality for the stream: 10 (best/biggest) .. 30 (worst/smallest)
 
 // ---------- Image ----------
 const int W = 320;                   // picture width in pixels (QVGA)
@@ -827,6 +845,66 @@ bool startCamera() {
   return true;                                     // camera ready
 }
 
+// =====================================================================
+// WIFI LIVE VIEW -- fully self-contained block. Touches nothing else in this file except:
+//   (1) one call to connectWifiStream() at the end of setup(), and
+//   (2) one call to serveWifiStream(frame) in loop(), right before the frame is given back.
+// Turning WIFI_STREAM off (the default) compiles this out to two near-free checks per loop.
+// =====================================================================
+WiFiServer wifiStreamServer(WIFI_STREAM_PORT);   // listens for a browser to connect
+WiFiClient wifiStreamClient;                     // the one browser currently watching (if any)
+
+// Connects to WiFi and starts the HTTP server. Called once from setup(). This part IS blocking
+// (it waits for the WiFi to connect before continuing), which is fine: it only runs once, at
+// power-on, before the car is asked to do anything.
+void connectWifiStream() {
+  if (!WIFI_STREAM) return;
+  Serial.printf("WIFI_STREAM: connecting to \"%s\"...\n", WIFI_STREAM_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_STREAM_SSID, WIFI_STREAM_PASS);
+  unsigned long startMs = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startMs < 15000) { delay(300); Serial.print("."); }   // give up after 15 s
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("\nWIFI_STREAM: could not connect (check SSID/password/2.4GHz) -- continuing without it.");
+    return;
+  }
+  wifiStreamServer.begin();
+  Serial.printf("\nWIFI_STREAM: ready. Open http://%s/ in a browser on the same WiFi.\n", WiFi.localIP().toString().c_str());
+}
+
+// Called once per loop, after the frame has already been used for pillar/line detection.
+// Sends it as one JPEG frame of a standard "multipart/x-mixed-replace" MJPEG stream, which every
+// browser already knows how to play as a live video with no extra page or library needed.
+void serveWifiStream(camera_fb_t *frame) {
+  if (!WIFI_STREAM) return;
+
+  if (!wifiStreamClient || !wifiStreamClient.connected()) {   // no one watching (yet) -- look for a new browser
+    WiFiClient incoming = wifiStreamServer.available();
+    if (!incoming) return;                                    // still no one: nothing more to do this loop
+    while (incoming.connected() && !incoming.available()) delay(1);   // wait briefly for the request line
+    while (incoming.available()) incoming.read();             // discard it (every path gets the same stream)
+    incoming.println("HTTP/1.1 200 OK");
+    incoming.println("Content-Type: multipart/x-mixed-replace; boundary=frame");
+    incoming.println("Access-Control-Allow-Origin: *");
+    incoming.println();
+    wifiStreamClient = incoming;                              // this browser is now "the" viewer
+    Serial.println("WIFI_STREAM: viewer connected");
+  }
+
+  uint8_t *jpgBuf = NULL;
+  size_t   jpgLen = 0;
+  if (!fmt2jpg(frame->buf, frame->len, frame->width, frame->height, PIXFORMAT_RGB565, WIFI_STREAM_QUALITY, &jpgBuf, &jpgLen)) {
+    return;                                                   // conversion failed: skip this frame, try again next loop
+  }
+  wifiStreamClient.print("--frame\r\n");
+  wifiStreamClient.printf("Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", (unsigned)jpgLen);
+  wifiStreamClient.write(jpgBuf, jpgLen);
+  wifiStreamClient.print("\r\n");
+  free(jpgBuf);                                                // fmt2jpg allocates this buffer; we own freeing it
+
+  if (!wifiStreamClient.connected()) Serial.println("WIFI_STREAM: viewer disconnected");   // browser closed the tab
+}
+
 void setup() {                                     // runs once at power-on
   Serial.setTxBufferSize(16384);                   // large USB output buffer for the pictures
   Serial.begin(115200);                            // USB serial to the computer
@@ -851,6 +929,7 @@ void setup() {                                     // runs once at power-on
                 LOCK_CAMERA, USE_BLOCKS, USE_TIME_FILTER, LOCK_AFTER_MS);   // show the switches
   bootMs = millis();                               // remember the power-on time (for the lock)
   fpsStart = millis();                             // start the fps window
+  connectWifiStream();                             // no-op unless WIFI_STREAM is true (see above)
 }
 
 // Prints the H, S, V range (min-max) of the pixels in a small box centered at (cx, cy)
@@ -920,5 +999,6 @@ void loop() {                                      // runs again and again
     printProbe("bottom", frame->buf, PROBE_X, PROBE_LOW_Y);     // color probe at the bottom
     lastStatus = millis();                         // remember when the status was printed
   }
+  serveWifiStream(frame);                          // no-op unless WIFI_STREAM is true (see above)
   esp_camera_fb_return(frame);                     // give the picture back to the camera
 }
