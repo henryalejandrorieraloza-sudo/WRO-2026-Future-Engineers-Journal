@@ -4,7 +4,7 @@ Versions of the car and of this repository. Dates are in 2026.
 
 ## v1.9.8 — 21 November · Don't stop diagonal: straighten to yaw = 0 first
 - **`FRONT_STOP_MM` raised from 400 to 1200** (40 cm → 120 cm): the car now stops with more clearance from whatever is ahead after the floor line.
-- **New: the car is no longer allowed to stop at an angle.** Once the front TOF reads under `FRONT_STOP_MM`, it only brakes if also within the new `STOP_YAW_TOL_DEG` (5°) of yaw = 0 — the same direction it faced at START. If it is close to the wall but still diagonal, it steers at full lock (`±MAX_STEER`) toward yaw = 0 instead of easing into it with the normal PD gains, to fix the heading in the least time possible, and only stops once both conditions hold together.
+- **New: the car is no longer allowed to stop at an angle.** Once the front TOF reads under `FRONT_STOP_MM`, it only brakes if also within the new `STOP_YAW_TOL_DEG` (2°, kept tight on purpose) of yaw = 0 — the same direction it faced at START. If it is close to the wall but still diagonal, it steers at full lock (`±MAX_STEER`) toward yaw = 0 instead of easing into it with the normal PD gains, to fix the heading in the least time possible, and only stops once both conditions hold together.
 - Fixed a stale comment directly above `handleLineStop()` left over from the very first version of this feature, which still said the car "does NOT try to steer back to any particular lateral position" — contradicting the recentring behaviour added in the previous commit.
 - Updated `straight_pillars/README.md` §5, `PARAMETERS.md` §9, and `docs/ENGINEERING_JOURNAL.md` §18.3 to match.
 

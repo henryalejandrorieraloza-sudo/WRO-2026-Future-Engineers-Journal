@@ -552,9 +552,11 @@ float headingGoal() {
 const int XSHUT_FRONT = A1, XSHUT_LEFT = A3, XSHUT_RIGHT = A2, XSHUT_REAR = A0;
 const long TOF_BUDGET_US = 50000;     // 50 ms per measurement (same setting as open_challenge.ino)
 const int  FRONT_STOP_MM = 1200;      // stop once the front sensor reads less than this -> 120 cm
-const float STOP_YAW_TOL_DEG = 5.0;   // only allowed to stop while within this many degrees of yaw = 0
+const float STOP_YAW_TOL_DEG = 2.0;   // only allowed to stop while within this many degrees of yaw = 0
                                        // (the same compass direction the car had at START) - i.e. not
-                                       // stopped sitting at an angle/diagonal to the straight
+                                       // stopped sitting at an angle/diagonal to the straight.
+                                       // Kept tight (2 deg) on purpose: the car must actually finish
+                                       // facing the way it started, not just "close enough".
 
 VL53L1X frontTof;
 bool  frontTofOk    = false;   // true once the front sensor answered init() successfully
