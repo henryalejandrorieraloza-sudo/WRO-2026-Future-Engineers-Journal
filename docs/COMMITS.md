@@ -29,7 +29,7 @@ The WRO 2026 rules require at least three commits: the first no later than two m
 
 | Requirement | Deadline | Commit that meets it |
 |---|---|---|
-| First commit (≥ 1/5 of code) | 8 Oct 2026 | `f3a9770` (timing met; code requirement not met, see above) |
+| First commit with ≥ 1/5 of code | 8 Oct 2026 | `814ddcf` (4 Oct 2026, 31.2 %, same day as the first commit). Note: `f3a9770` is the first commit in the history and contains no code. |
 | Second commit | 8 Nov 2026 | `06f5685` (5 Nov) |
 | Third commit | 24 Nov 2026 | `e8cc71d` (23 Nov) and later commits |
 
