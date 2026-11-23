@@ -24,7 +24,7 @@ const unsigned long REVERSE_TARGET_TICKS = 1024;  // encoder ticks for FIVE whee
 // ---------- Steering and motor ----------
 const byte SERVO_PIN = 9;         // Nano pin that sends the signal to the steering servo
 const byte LEFT_LOCK = 10;        // servo angle for full LEFT lock (wheels turned left)
-const byte CENTER = 90;           // servo angle for wheels straight ahead
+const byte CENTER = 85;           // servo angle for wheels straight ahead (measured 21 Nov, same as straight_pillars)
 const byte RIGHT_LOCK = 170;      // servo angle for full RIGHT lock (wheels turned right)
 
 const byte PWMA = 6;              // TB6612FNG PWM pin: sets the motor speed

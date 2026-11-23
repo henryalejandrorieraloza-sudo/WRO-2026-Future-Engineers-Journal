@@ -14,7 +14,7 @@ Servo steeringServo;                  // the servo object used to move the steer
 // Configurable sweep parameters
 const int MIN_ANGLE = 10;             // Left limit in degrees (adjust if the linkage collides)
 const int MAX_ANGLE = 170;            // Right limit in degrees (adjust if the linkage collides)
-const int CENTER    = 90;             // Reference midpoint: wheels straight ahead
+const int CENTER    = 85;             // Reference midpoint: wheels straight ahead (measured 21 Nov, same as straight_pillars)
 const int STEP      = 2;              // Degrees moved per step
 const int DELAY_MS  = 30;             // Sweep speed: milliseconds between steps
 

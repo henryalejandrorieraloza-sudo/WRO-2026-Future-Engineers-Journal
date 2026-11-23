@@ -389,7 +389,7 @@ flowchart LR
 
 [`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it (§8.1–8.7 describe that design work) were removed from `main`; they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`) and [src/README.md §4](src/README.md#4-open-challenge-code) links each one.
 
-**Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (15.1 ticks per cm, measured by hand; the motor-running value of 9.27 used by the Obstacle programs is not used here yet, see the table below), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
+**Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (9.27 ticks per cm, measured with the motor running; see the table below), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
 
 ```mermaid
 stateDiagram-v2
@@ -422,9 +422,9 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 
 | Constant | `open_challenge` (Open) | `straight_pillars` (Obstacle) | Why they differ | Status |
 |---|---|---|---|---|
-| Encoder `TICKS_PER_CM` | 15.1 | 9.27 | 15.1 was measured by pushing the car by hand. 9.27 was measured with the motor running (190 ticks = 20.5 cm, 21 Nov), which is the condition the program drives under | Open item: re-measure and test on the track before changing `open_challenge` |
+| Encoder `TICKS_PER_CM` | 9.27 | 9.27 | Measured with the motor running (190 ticks = 20.5 cm, 21 Nov), the condition the programs drive under. `open_challenge` used 15.1 (measured by pushing the car by hand) until 22 Nov | Same value in both programs since 22 Nov |
 | Gyro scale | `GYRO_SCALE = 1.007` | `YAW_SCALE = 1.06` (= 90 / 85) | Two calibrations of the same gyro: `1.007` came from a 3-lap test; `1.06` from a real 90° hand turn (`gyro_90_test`, 21 Nov). The names differ because the two sketches read the gyro in different ways | Not unified; both are the measured value for their own program |
-| Steering centre | `STEER_CENTER = 90` | `CENTER_ANGLE = 85` | 85 was measured on chassis v3 (21 Nov, `servo_calibration`); `open_challenge` still has the old value | Open item: re-measure, then test |
+| Steering centre | `STEER_CENTER = 85` | `CENTER_ANGLE = 85` | 85 was measured on chassis v3 (21 Nov, `servo_calibration`). `open_challenge` used 90 until 22 Nov | Same value in both programs since 22 Nov |
 | Steering limits | 10 (left) / 170 (right) | 170 / 10, with `STEER_LEFT_IS_BIGGER = false` | The probe test showed that a smaller servo angle steers left. The name `LEFT_LIMIT = 170` in `straight_pillars` is the opposite of its real meaning | Same physical direction in all programs; the name in `straight_pillars` is to be corrected |
 
 ### 8.1 Idea (design of the earlier versions)
@@ -981,13 +981,13 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Obstacle vision v3.2 (QQVGA, half resolution) | In progress — written 22 Nov (`obstacle_camera_v3_2`), not validated on the track; v3.1 is still the reference |
 | Live camera view over WiFi | Done for bench tests only — `WIFI_STREAM = false` in the competition build (rule 11.6: no radio during rounds) |
 | Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (27 STL files published: 25 printed parts + 2 tyre moulds; full STEP assembly in `models/`) |
-| Steering calibration on v3 | Done 21 Nov for `straight_pillars` — centre 85, limits 170 / 10 (servo units). `open_challenge` still uses centre 90 and must be re-measured before it is changed |
+| Steering calibration on v3 | Done 21 Nov — centre 85, limits 170 / 10 (servo units). Used by `straight_pillars`, `open_challenge`, the parking sketch and the tests since 22 Nov |
 | Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
 | One complete corner (decide, turn, check, follow inner wall) | Validated 21–24 Oct (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version; in the git history) |
 | Side TOF data on the black wall | In progress — Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
-| Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | In progress — program in the repository since 20 Nov (§8.0); three-lap results on the track still to be recorded in the journal |
-| Encoder: delays in distance instead of time (§8.7) | Planned — the ticks per cm are already measured (9.27, 21 Nov); the distance-based delays are not in `open_challenge` yet |
+| Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | Three laps completed on the first attempt, stopping in the starting section near the same wall (journal §19.2). Program in the repository since 20 Nov (§8.0) |
+| Encoder: delays in distance instead of time (§8.7) | Planned — the ticks per cm (9.27, 21 Nov) are now used in `open_challenge` too; the distance-based delays are not in the code yet |
 | Videos: one per challenge (≥ 30 s autonomous) | In progress — Open Challenge video done (`video/video.md`); Obstacle video pending (rule 7) |
 | Encoder | Done — Measured 21 Nov with the motor running: 9.27 ticks per cm (used in the Obstacle map) |
 | Gyroscope (Obstacle Challenge) | Done — Calibrated 21 Nov with a real 90° hand turn (`gyro_90_test`): `YAW_SCALE = 1.06`, `YAW_REVERSED = false` |
@@ -1017,7 +1017,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 | Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | To confirm with the organisers |
 | Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | In progress — final Open and Obstacle programs, final README and journal still to commit; rubric review done on 20 Nov |
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
-| Code for **every** programmed component, with comments | — | In progress — Obstacle stages and hardware tests in `src/`; the Open Challenge program is `open_challenge` and its earlier versions are in the git history; final results still to record |
+| Code for **every** programmed component, with comments | — | In progress — Obstacle stages and hardware tests in `src/`; the Open Challenge program is `open_challenge` and its earlier versions are in the git history; the three-lap run is recorded in the journal (§19.2) |
 | Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
 | YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | In progress — Open Challenge video done; Obstacle video pending (`video/video.md`) |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |

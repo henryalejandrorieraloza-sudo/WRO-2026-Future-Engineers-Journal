@@ -72,7 +72,7 @@ Older component tests, replaced on 20 November by the three tests above. Each on
 
 | Sketch | Board | Status | Description |
 |---|---|---|---|
-| [`open_challenge`](open-challenge/open_challenge) | Nano | Added 20 Nov; three-lap results still to record | The Open Challenge program: gyro heading hold (P + I) with a fixed distance to the inner wall or the corridor centre, corner detection by a jump of the inner-side TOF, 90° turns by predicted yaw, `LAPS × 4` turns, and a stop at the **start position** measured with the encoder on lap 2 (`LSTART − D1`). Uses only the left and right TOF (front and rear held in reset). Press START (D10) or send `g` + Enter; `s` + Enter is an emergency stop; battery on first, then USB. Settings in three blocks at the top (run, tuning, car constants). Design in [README §8.0](../README.md#80-the-open-challenge-program-open_challenge-20-november) |
+| [`open_challenge`](open-challenge/open_challenge) | Nano | Added 20 Nov; three-lap run recorded 22 Nov (journal §19.2); constants aligned with `straight_pillars` on 22 Nov | The Open Challenge program: gyro heading hold (P + I) with a fixed distance to the inner wall or the corridor centre, corner detection by a jump of the inner-side TOF, 90° turns by predicted yaw, `LAPS × 4` turns, and a stop at the **start position** measured with the encoder on lap 2 (`LSTART − D1`). Uses only the left and right TOF (front and rear held in reset). Press START (D10) or send `g` + Enter; `s` + Enter is an emergency stop; battery on first, then USB. Settings in three blocks at the top (run, tuning, car constants). Design in [README §8.0](../README.md#80-the-open-challenge-program-open_challenge-20-november) |
 
 ### Earlier sketches (history)
 

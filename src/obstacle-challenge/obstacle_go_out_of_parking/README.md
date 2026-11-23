@@ -36,7 +36,7 @@ The motor is driven only through the TB6612FNG, on the rear wheels. The reverse 
 |---|---|---|
 | `CALIBRATE_ENCODER` | `false` | `true` = only count encoder ticks, the motor stays off |
 | `REVERSE_TARGET_TICKS` | `1024` (placeholder) | Encoder ticks for five wheel turns. **Must be measured** |
-| `LEFT_LOCK` / `CENTER` / `RIGHT_LOCK` | 10 / 90 / 170 | Servo angles. `CENTER = 90` has not been re-measured on the current chassis (`straight_pillars` uses 85) |
+| `LEFT_LOCK` / `CENTER` / `RIGHT_LOCK` | 10 / 85 / 170 | Servo angles. `CENTER = 85` is the same value as `straight_pillars` (measured 21 Nov) |
 | `DRIVE_PWM` / `REVERSE_PWM` / `REVERSE_SLOW_PWM` | 90 / 90 / 75 | Motor speeds (0–255) |
 | `FIRST_ANGLE_DEG` / `RETURN_ANGLE_DEG` | 45 / 10 | Size of the first turn and of the countersteer |
 | `PAUSE_BEFORE_REVERSE_MS` | 500 | Motor off before reversing |

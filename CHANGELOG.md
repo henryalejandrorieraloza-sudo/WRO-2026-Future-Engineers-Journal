@@ -2,6 +2,12 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.14 — 22 November · One set of car constants, three-lap run recorded
+- **`open_challenge` now uses the same constants as `straight_pillars`:** `TICKS_PER_CM` 15.1 → **9.27** (motor-running measurement) and `STEER_CENTER` 90 → **85** (measured on this chassis). The stop position and the steering are expected to change; the first run after this change must be checked on the track.
+- **The same centre (85) in the other sketches:** the parking sketch (`obstacle_go_out_of_parking`, was 90), `line_test` (was 120) and `servo_test` (was 90).
+- **Three-lap run recorded** in the journal (§19.2): three laps completed on the first attempt, stop in the starting section near the same wall, narrow corridors. Lap time and direction are still to be added.
+- README §8.0 table, §13, the `open_challenge` and parking READMEs, and `src/README.md` updated to the new values.
+
 ## v1.9.13 — 22 November · Submission checklist: comments, constants, parking README
 - **`open_challenge` comments now match the values.** `TURN_PWM = 90` no longer says "90 was too weak" (lower values were too weak). `INNER_TARGET_MM = 100` now says openly that 100 is below the 200 mm margin, and that 200 should be used if the car touches the inner corner in a turn. README updated to match. The value itself is unchanged, pending the track test.
 - **Constants that differ between programs are documented** (README §8.0): encoder 15.1 (hand-measured) against 9.27 (motor running); gyro `GYRO_SCALE = 1.007` against `YAW_SCALE = 1.06`, each with its own measurement; steering centre 90 against 85; and the steering limit names. No value was changed, because each change alters how the car drives and needs a track test first (journal §19.1).

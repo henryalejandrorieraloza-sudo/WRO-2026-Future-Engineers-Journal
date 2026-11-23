@@ -14,7 +14,7 @@
 
 // ================= SETTINGS =================
 const long CAMERA_BAUD          = 115200;   // speed of the link from the camera (must match the camera)
-const int  CENTER_ANGLE         = 120;      // servo angle that keeps the wheels straight
+const int  CENTER_ANGLE         = 85;       // servo angle that keeps the wheels straight (measured 21 Nov, same as straight_pillars)
 const unsigned long PRINT_EVERY_MS    = 200;   // one line of text 5 times a second
 const unsigned long CAMERA_TIMEOUT_MS = 500;   // no camera message for this long = camera is not sending
 // ============================================

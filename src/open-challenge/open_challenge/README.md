@@ -24,9 +24,9 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 `KP_HEAD` (2.0), `KI_HEAD` (4.0), `I_MAX` (25), `K_LAT` (0.03), `KI_LAT` (0.02), `LAT_MAX_DEG` (12), `ARM_WALL_MM` (900), `ARM_READINGS` (5), `MAX_TURN_MS` (4000), `MAX_STRAIGHT_MS` (8000), `STALL_MS` (500).
 
 **3. Car constants** (measured on this car)
-`MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 90`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 15.1`, and the pins.
+`MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 85`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 9.27`, and the pins.
 
-**Note on the two constants that differ from the Obstacle programs:** `TICKS_PER_CM = 15.1` was measured by pushing the car by hand. The motor-running value is `9.27` (21 Nov), used by `straight_pillars`, and `STEER_CENTER = 90` has not been re-measured (`straight_pillars` uses 85). Both changes alter how this program drives, so they must be measured and tested on the track before they are made. The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
+**Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the same values as `straight_pillars`, the program that was last validated on the track. Until 22 Nov this program used 90 and 15.1. Those values were changed on 22 Nov without a new track test, so the first run after the change should be watched closely, especially the stop position (it is computed from the encoder). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
 
 ## Wiring
 | Part | Nano pin |
