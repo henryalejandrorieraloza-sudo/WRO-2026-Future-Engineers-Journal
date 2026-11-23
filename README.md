@@ -28,7 +28,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 
 | | |
 |---|---|
-| **Size / mass** | 17.5 × 9.5 × 6 cm · 270 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
+| **Size / mass** | 17.5 × 9.5 × 6 cm · 248 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
 | **Main controller** | Arduino Nano (ATmega328P) |
 | **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline (320 × 240, ~12.5 fps with pillars and floor lines) |
 | **Sensors** | 4 × TOF400C laser distance sensors (VL53L1X), BMI160 gyroscope, motor encoder |
@@ -63,7 +63,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 | Rubric criterion | What it asks for | Where it is |
 |---|---|---|
-| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (27 STL — 25 printed parts + 2 tyre moulds, full STEP assembly, CAD v1–v3, assembly order) |
+| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 25 printed parts + 2 tyre moulds + the JIMMY_BUMP perturbation piece, full STEP assembly, CAD v1–v3, assembly order) |
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
@@ -87,7 +87,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 │   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
-├── models/                  ← 27 STL files (25 printed parts + 2 tyre moulds), renders, full STEP assembly, CAD v1–v3
+├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + JIMMY_BUMP), renders, full STEP assembly, CAD v1–v3
 ├── t-photos/                ← team photos (official and fun)
 ├── v-photos/                ← the six official views of the vehicle + all parts laid out
 ├── video/                   ← links to the driving videos
@@ -102,7 +102,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 | Vehicle photos | [v-photos/README.md](v-photos/README.md) |
 | Team photos | [t-photos/README.md](t-photos/README.md) |
 | Videos | [video/video.md](video/video.md) |
-| 3D models (27 STL), full STEP assembly, CAD iterations, tyre casting | [models/README.md](models/README.md) |
+| 3D models (28 STL), full STEP assembly, CAD iterations, tyre casting | [models/README.md](models/README.md) |
 | Build process, retired parts | [other/README.md](other/README.md) |
 
 ---
@@ -153,7 +153,7 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 | Rule | Requirement | How we comply |
 |---|---|---|
 | 9.17 / 11.1 | Max 300 × 200 × 300 mm | 175 × 95 × 60 mm |
-| 11.2 | Max 1.5 kg | 270 g |
+| 11.2 | Max 1.5 kg | 248 g |
 | 11.3 / 11.4 | 4 wheels, one driving axle, one steering actuator; no omni or ball wheels; no differential-drive robot | 4 wheels, rear-wheel drive, one MG90 servo on a rack and pinion |
 | 11.5 / 11.13 | Max 2 driving motors, connected to the axle (no motor per side) | One N20 motor → 1 : 1 mechanical differential on the rear axle |
 | 11.6 / 11.10 / 11.17 | Autonomous; no radio, Bluetooth or Wi-Fi during rounds; only wired links between components | The Nano has no radio. The camera board's Wi-Fi is **never started** in the competition code (the camera talks to the Nano by UART cable). `camera_webserver_emakefun` uses Wi-Fi and is a **bench test only** |
@@ -198,7 +198,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 ### 5.1 Chassis
 
 - **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
-- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **270 g** (chassis v4; the base plate was lengthened from the 13 cm of v3 to fit the final sensor and camera layout). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
+- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (chassis v4; the base plate was lengthened from the 13 cm of v3 to fit the final sensor and camera layout). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
@@ -213,7 +213,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 
 - **One N20 12 V, 1000 rpm motor with a Hall encoder** drives both rear wheels through a **differential with a 1 : 1 gear ratio** (motor gear and differential gear both 22 mm). A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
 - **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so 1000 rpm at 1 : 1 gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. That is far more than we need: our control loop is designed for ≈ 0.3–0.4 m/s, where the side TOF sensors (one reading every 50 ms) see a new value every 1.5–2 cm and one 8-reading decision takes less than one car length (§10.4). We drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
-- **Torque reasoning:** to accelerate the 270 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.27 × (1 + 0.05 × 9.81) ≈ **0.40 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed.
+- **Torque reasoning:** to accelerate the 248 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.248 × (1 + 0.05 × 9.81) ≈ **0.37 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed.
 - **Why 1 : 1:** a reduction would give more torque that we do not need and less top speed; a step-up would make low speeds harder to control. 1 : 1 also means both gears are the same printed part size, which is simple to print and to replace.
 - **Braking:** the TB6612FNG short-brake mode (both inputs HIGH) stops the motor actively, much faster and more repeatably than coasting. The motor only drives forward during a run: a sudden reverse made one gear of the drive train skip (journal Problem 34).
 
@@ -230,7 +230,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 
 - **Geometry:** the pitch diameter of the pinion is m × z = 1 × 12 = **12 mm**, so each degree of servo rotation moves the rack π × 12 / 360 ≈ **0.105 mm**. The relation between servo angle and rack position is linear and has no dead zone, so the angle we command is the angle we get.
 - **Why we left Ackermann:** in theory Ackermann is better, because the inner wheel turns more than the outer one and neither tyre slips. In practice our Ackermann linkages (v1 and v2) had too many printed joints and too much friction: the servo could not complete its travel (journal Problem 29) and **three servos were damaged** pushing against the linkage (journal Problems 17 and 33).
-- **Trade-off we accepted:** with parallel steering both front wheels turn the same angle, so in a turn the inner wheel slips a little. On a 270 g car at 0.3–0.6 m/s that slip is small, and the 1 : 1 differential at the rear already removes the larger scrubbing of the driven wheels. We traded a small geometric error for a mechanism that is **reliable, easy to print and does not break servos**.
+- **Trade-off we accepted:** with parallel steering both front wheels turn the same angle, so in a turn the inner wheel slips a little. On a 248 g car at 0.3–0.6 m/s that slip is small, and the 1 : 1 differential at the rear already removes the larger scrubbing of the driven wheels. We traded a small geometric error for a mechanism that is **reliable, easy to print and does not break servos**.
 - **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_calibration` after any mechanical change (on v3, measured on 21 Nov: centre 85, left limit 170, right limit 10, in servo units).
 
 ### 5.4 Wheels and tyres
@@ -387,22 +387,11 @@ flowchart LR
 
 ### 8.0 The Open Challenge program: `open_challenge` (20 November)
 
-[`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it (§8.1–8.7 describe that design work) were removed from `main`; they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`) and [src/README.md §4](src/README.md#4-open-challenge-code) links each one.
+[`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it (§8.1–8.7 describe that design work) were removed from `main`; they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`).
 
 **Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (9.27 ticks per cm, measured with the motor running; see the table below), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
 
-```mermaid
-stateDiagram-v2
-    [*] --> WAIT: power on, gyro calibrated
-    WAIT --> STRAIGHT: START button
-    STRAIGHT --> TURN: inner-side TOF jumps (corner)
-    TURN --> STRAIGHT: predicted yaw reaches heading ± 90°, turns < 4 × LAPS
-    TURN --> STRAIGHT: last turn: final leg to the start position
-    STRAIGHT --> DONE: start position reached
-    STRAIGHT --> DONE: safety (stall, no corner in 8 s, next corner too early)
-    TURN --> DONE: safety (turn longer than 4 s, stall)
-    DONE --> [*]: active brake
-```
+The states and transitions are drawn in [§8.2](#82-state-machine).
 
 | Part | How it works |
 |---|---|
@@ -435,35 +424,33 @@ How we got here: a sudden-jump detector (Sharp sensors, journal §2.4) → keepi
 
 ### 8.2 State machine
 
+The sketch has four states, named `WAIT`, `STRAIGHT`, `TURN` and `DONE` (the names printed on the Serial Monitor). Four variables decide the transitions: `dir` (the inner side, 0 until corner 1), `corners` (turns done), `finalLeg` (all turns done, the car now looks for the start position) and `stopAtCm` (the odometry value where it stops).
+
 ```mermaid
 stateDiagram-v2
-    [*] --> WAITING
-    WAITING --> FIRST_STRAIGHT: start button, gyro calibrated
-    FIRST_STRAIGHT --> DECIDE: one side becomes NO WALL, or time is up
-    DECIDE --> DECIDE: NOT SURE, stop and measure again
-    DECIDE --> FIRST_TURN: side chosen
-    FIRST_TURN --> CHECK: 90 deg turned
-    CHECK --> FIRST_TURN: BACK farther than FRONT, undo and turn other side
-    CHECK --> FOLLOW_WALL: turn correct, direction fixed
-    FOLLOW_WALL --> TURN: followed wall becomes NO WALL
-    TURN --> FOLLOW_WALL: 90 deg turned, turns below 12
-    TURN --> FINAL_STRAIGHT: 12 turns
-    FOLLOW_WALL --> SAFE_STOP: front too close or timeout
-    FINAL_STRAIGHT --> FINISHED: short time driven
-    FINISHED --> [*]: active brake
-    SAFE_STOP --> [*]: active brake
+    [*] --> WAIT: power on, gyro calibrated
+    WAIT --> STRAIGHT: START button or g
+    DONE --> STRAIGHT: g (new run)
+    STRAIGHT --> TURN: corner detected, not in the final leg
+    TURN --> STRAIGHT: 90 deg turned, corners below 4 x LAPS
+    TURN --> STRAIGHT: 4 x LAPS corners done, final leg starts
+    STRAIGHT --> DONE: final leg, start position reached
+    STRAIGHT --> DONE: safety, corner in the final leg or final leg too long
+    STRAIGHT --> DONE: safety, no corner in 8 s or wheels stalled
+    TURN --> DONE: safety, turn longer than 4 s or wheels stalled
+    STRAIGHT --> DONE: s + Enter, emergency stop
+    TURN --> DONE: s + Enter, emergency stop
+    DONE --> [*]: active brake, motor off after 1 s
 ```
 
 | State | What the car does |
 |---|---|
-| **WAITING** | Calibrates the gyroscope at rest (offset), waits for the start button |
-| **FIRST_STRAIGHT** | Gyro wall following on the nearest wall. Keeps a window of the last readings of each side to see which side opens |
-| **DECIDE** | Car **stopped**. Turn side = the side that became NO WALL. If the readings are NOT SURE, it measures again with the car still instead of guessing |
-| **FIRST_TURN / CHECK** | 90° gyro turn. Then FRONT vs BACK: if the back is clearly farther than the front, the turn was wrong → undo it and turn to the other side. Only done once; the direction is fixed for the round |
-| **FOLLOW_WALL** | Follows the **inner wall** at a target distance inside the sensor's reliable range, with the cascade controller. While on target and parallel, it stores the yaw as the real direction of this wall |
-| **TURN** | Drives straight a short time after the wall ends, then turns 90° from the corrected heading (wall direction + 90°) |
-| **FINAL_STRAIGHT → FINISHED** | After 12 turns: straight for a tuned time with the gyroscope, then active brake (both TB6612FNG inputs HIGH) |
-| **SAFE_STOP** | Any safety rule (8.5) brakes the car instead of letting it drive blind |
+| **WAIT** | Calibrates the gyro offset with the car still (the LED blinks, then stays on) and waits for START or `g` |
+| **STRAIGHT** | Holds the target heading (a multiple of 90°) with the gyro and keeps its lane (`LANE_MODE`). **Corner 1** (`dir = 0`): the side that jumps while the other does not becomes the inner side and sets `dir`. **Later corners**: only the inner side is watched, and only after `ARM_READINGS` close readings of the inner wall. A corner sends the car to TURN, unless `finalLeg` is set. In the final leg it drives on until `stopAtCm` |
+| **TURN** | Full steering toward the inner side until the predicted yaw reaches the old heading ± 90°. Then the target heading changes by 90°, `corners` goes up, the walls are forgotten and the car returns to STRAIGHT. When `corners` reaches `4 × LAPS`, `finalLeg` becomes true |
+| **DONE** | Wheels straight and active brake (both TB6612FNG inputs HIGH). One second later the motor is switched off and the final report prints (yaw, heading, error, corners, D1, WALL, LSTART, time) |
+
+**Where the car stops.** Corner 1 sets `D1`. With `LAPS ≥ 2`, `LSTART` is measured on lap 2 (end of turn 4 → corner 5). When the last turn ends, `stopAtCm` = turn end + (`LSTART − D1 + STOP_OFFSET_CM`). With `LAPS = 1` the stop is `WALL − D1` after the inner wall is seen, or `FALLBACK_CM` if nothing was measured.
 
 ### 8.3 Wall or no wall: how the side sensors are read
 
@@ -816,7 +803,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | TOF height on the chassis | Sensors, software | 1.5 cm higher fixed the readings over the wall without any code change |
 | TOF mounting angle | Sensors, software, strategy | At 30° the black wall returned no light and every decision based on it failed; straight sensors made the data trustworthy and the algorithm simpler |
 | Steering mechanism | Mechanics, electronics, software | Ackermann friction broke three servos; rack and pinion protects the servo and makes angle → wheel position linear |
-| Car size and mass (17.5 × 9.5 cm, 270 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
+| Car size and mass (17.5 × 9.5 cm, 248 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
 | TOF on the 5 V buck rail | Power, sensors | The Nano works with 5 V logic, so the sensors connect directly; they share the rail with the servo, which the 3 A buck margin covers |
 | Servo mount angle | Mechanics, software | Steering centre must be measured in software after every mechanical change |
 | Battery voltage directly to the motor | Power, control | Speed changes as the battery discharges, so turns are controlled by gyro angle, not time |
@@ -841,7 +828,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | Standard `Servo.h` (500–2500 µs) on the classic Nano | ESP32Servo / LEDC / hand-made pulse | Built into the AVR core and works at the first try; the ESP32 libraries did not work on the earlier Nano ESP32 (journal Problem 6) |
 | MG90 metal-gear servo | SG90 | SG90 moved in its mount (journal Problem 8) |
 | Parallel rack-and-pinion steering | Ackermann linkage | Ackermann friction stopped the servo and damaged three servos (journal Problems 17, 29, 33); the small slip of parallel steering is acceptable at our mass and speed |
-| 1 : 1 differential | Extra gear reduction | The 270 g car needs only ≈ 8 mN·m at the wheel; 1 : 1 keeps top speed and uses identical, easy-to-print gears |
+| 1 : 1 differential | Extra gear reduction | The 248 g car needs only ≈ 8 mN·m at the wheel; 1 : 1 keeps top speed and uses identical, easy-to-print gears |
 | Cast silicone tyres | Printed or O-ring tyres | More grip on the mat; repeatable recipe (B = ¾ A) gives four identical tyres |
 | Screws on every joint | Tape and hand fixes | Geometry stays the same after crashes and disassembly |
 | Classic Arduino Nano | New Nano ESP32 | Same footprint (no new PCB); standard `Servo.h` works; available immediately after the ESP32 was damaged |
@@ -980,7 +967,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Pillar detection | Done — Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
 | Obstacle vision v3.2 (QQVGA, half resolution) | In progress — written 22 Nov (`obstacle_camera_v3_2`), not validated on the track; v3.1 is still the reference |
 | Live camera view over WiFi | Done for bench tests only — `WIFI_STREAM = false` in the competition build (rule 11.6: no radio during rounds) |
-| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (27 STL files published: 25 printed parts + 2 tyre moulds; full STEP assembly in `models/`) |
+| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 25 printed parts + 2 tyre moulds + JIMMY_BUMP; full STEP assembly in `models/`) |
 | Steering calibration on v3 | Done 21 Nov — centre 85, limits 170 / 10 (servo units). Used by `straight_pillars`, `open_challenge`, the parking sketch and the tests since 22 Nov |
 | Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
