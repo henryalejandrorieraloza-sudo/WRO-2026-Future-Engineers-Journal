@@ -114,7 +114,7 @@ const int  OFF_NEED         = 3;     // empty pictures (of HISTORY) needed to dr
 //    Uses the known pillar size (5 cm) and the track (corridor 100 cm wide).
 const bool USE_PLAUSIBILITY = true;  // true = reject patches that cannot be a real pillar
 const int  MIN_AHEAD_CM     = 5;     // closer than this cannot be a pillar the camera measures
-const int  MAX_AHEAD_CM     = 130;   // farther than this is not a pillar on this track
+const int  MAX_AHEAD_CM     = 40;    // farther than this is not a pillar on this track (cm)
 const int  MAX_SIDE_CM      = 70;    // |sideways| beyond this is outside the corridor
 const bool USE_SHAPE_FILTER = true;  // floor / wall look-alikes are speckled; a pillar is a solid chunk
 const int  MIN_FILL_PERCENT = 75;    // a pillar is one solid block: pixels / (width x height) must be at least this %

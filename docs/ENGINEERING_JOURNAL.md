@@ -1696,3 +1696,55 @@ The change to items 1 and 2 was made without a new track test. Its effect is che
 The value of `INNER_TARGET_MM` (100 mm) was kept. It is the value that ran the three laps, and the comment in the code now says so.
 
 **Not recorded for this run:** the lap time and the direction (clockwise or counter-clockwise) of the run. Add them here when they are known.
+
+---
+
+## 20. Phase 15 — 23 November: the Obstacle code is consolidated
+
+### 20.1 What changed
+
+The Obstacle Challenge had accumulated several sketches (`straight_pillars`, `straight_pillars_measurements`, `obstacle_camera` v3.1, `line_test`, `obstacle_camera_v3_2`, and the parking sketch). The team sent two sketches that are the current ones and that work: a driving program that combines the laps and the pillar dodging, and the camera sketch v3.2. This phase keeps only the current Obstacle code in `src/obstacle-challenge`:
+
+| Folder | Content |
+|---|---|
+| `obstacle_challenge` | The driving program (new in `src`, with its README) |
+| `obstacle_camera_v3_2` | The vision used by the driving program (`MAX_AHEAD_CM` changed from 130 to 40 cm) |
+| `obstacle_go_out_of_parking` | The start from inside the parking lot (unchanged code) |
+
+The earlier sketches were removed from `src` and remain in the git history.
+
+### 20.2 How the code was checked
+
+The sketches in `src` were compared with the two sketches the team sent, with the comments removed:
+
+- **Driving program:** the logic is the same. The only differences are the texts printed on the Serial Monitor, which were already translated to English in `src`.
+- **Camera sketch:** the logic is the same, including `MAX_AHEAD_CM = 40`. The comments are in English.
+
+### 20.3 What the code actually does (read from the sketch)
+
+- The **first line** sets the direction (blue = left, orange = right) and is accepted after 10 cm of driving. Later corners use only that colour, and a corner is a rising edge of it. After a corner, lines are ignored for 4 s.
+- A **turn** starts when the front ToF reads 40 cm. It is a reverse turn with the steering on the opposite side, and it ends when the predicted yaw has changed by 90°. The car then reverses until the rear ToF reads 20 cm.
+- After **12 turns** the next line is the last one: the car drives 0.45 s more and stops.
+- A **pillar** is placed on the map at its centre, and it stays on the map after the camera stops seeing it. It is removed 25 cm after the car passes its centre. The car steers toward a lateral goal of 17 cm from the pillar, never toward it.
+- Without a pillar, the car **centres between the walls** with the side ToF sensors. A side above 1200 mm is treated as no wall.
+- The Nano reads **12 of the 14 fields** sent by the camera. The last two (`blueCenterRow`, `orangeCenterRow`) are not used.
+
+### 20.4 Differences found and left for the track
+
+| Item | Where | Value | Note |
+|---|---|---|---|
+| Gyro scale | `obstacle_challenge` / `open_challenge` | `GYRO_SCALE = 1.007` | The 21 Nov hand turn gave `YAW_SCALE = 1.06` for `straight_pillars`. Check the yaw per corner in the final report |
+| Farthest pillar | camera v3.1 / v3.2 | 130 cm / 40 cm | v3.2 reads pillars up to 40 cm. Check that the pillars are not seen too late at the start of a straight |
+| Focal length | camera v3.2 | `FOCAL_PX = 50` | Halved from the 320 × 240 value and not measured again |
+| Unused constants | `obstacle_challenge` | `MAX_FINAL_CM`, `STOP_OFFSET_CM`, `FALLBACK_CM` | Declared, never used. Can be removed |
+| Magenta walls | camera v3.2 | not in the message | The camera removes them from the pillars but does not send them, so parking at the end is not possible yet |
+| Parking start | `obstacle_go_out_of_parking` | no START button, `REVERSE_TARGET_TICKS = 1024` | Placeholder; the button and the encoder count are still to be added and measured |
+
+### 20.5 What is not recorded yet
+
+- Lap times, the direction of each round, and the stop position for the run of `obstacle_challenge`. Add them here when they are known.
+- Whether the pillars are passed on the correct side in every test, and whether the car stays centred between the walls.
+
+### 20.6 What this phase gives the rubric
+
+The code of every programmed Obstacle stage is in `src`, with an English README for each stage, and the documentation now describes the same program as the code. The checks above are listed so that a reader can see what is measured and what is not.

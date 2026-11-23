@@ -1,10 +1,10 @@
 # Obstacle camera v3.2, half resolution (`obstacle_camera_v3_2.ino`)
 
-Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at the track and tells the Arduino Nano where the **pillars** and the **floor lines** are. It is the vision half of the Obstacle Challenge and sends the same message as `obstacle_camera` (v3.1), so `straight_pillars` can read it without changes.
+Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at the track and tells the Arduino Nano where the **pillars** and the **floor lines** are. It is the vision half of the Obstacle Challenge. The driving half, [`obstacle_challenge`](../obstacle_challenge/README.md), reads its messages (the first 12 of the 14 fields).
 
-**Status: not yet validated on the track.** Every pixel-count, row and column constant was scaled from the 320 x 240 calibration as a starting guess. Re-check them with `camera_viewer.html` before trusting this version.
+**Status: used by `obstacle_challenge` since 23 Nov 2026, not yet validated on the track with these constants.** Every pixel-count, row and column constant was scaled from the 320 x 240 calibration as a starting guess. Re-check them with `camera_viewer.html` before a long run. The previous 320 x 240 version (v3.1, folder `obstacle_camera`) is no longer in `src/`; it is in the git history.
 
-## What changed from v3.1 (`obstacle_camera`)
+## What changed from v3.1 (`obstacle_camera`, in the git history)
 
 | Item | v3.1 (`obstacle_camera`) | v3.2 (this sketch) |
 |---|---|---|
@@ -14,6 +14,7 @@ Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at th
 | Colour ranges (HSV) | 19 Nov values | unchanged |
 | WiFi live view | on by default | **not in this sketch** (same vision code, no WiFi) |
 | Message to the Nano | 14 fields | 14 fields, same format |
+| Farthest pillar used (`MAX_AHEAD_CM`) | 130 cm | **40 cm** |
 
 Each constant in the sketch has a comment with its old value, for example `HALVED from 115`, `QUARTERED from 250`, or `UNCHANGED (colour, not resolution)`.
 
@@ -73,7 +74,7 @@ Two methods exist, chosen with `USE_BLOCKS`:
 Either way the sketch then:
 
 1. Keeps only the **front** pillar of each patch (the columns whose bottom is within `BOTTOM_TOL` of the lowest one).
-2. Runs the **plausibility** checks (size, distance between `MIN_AHEAD_CM` and `MAX_AHEAD_CM`, side within `MAX_SIDE_CM`, solid shape with `MIN_FILL_PERCENT`, and no touching the picture edge).
+2. Runs the **plausibility** checks (size, distance between `MIN_AHEAD_CM` (5 cm) and `MAX_AHEAD_CM` (40 cm), side within `MAX_SIDE_CM` (70 cm), solid shape with `MIN_FILL_PERCENT`, and no touching the picture edge). A pillar farther than 40 cm is not sent.
 3. Keeps the closest valid patch (the lowest bottom row wins).
 
 ### 3. Magenta parking walls
@@ -131,11 +132,11 @@ status: camera 12.4 fps (locked) | pillar RED 42 cm ahead, 17 cm side
 1. Upload `obstacle_camera_v3_2` with the board settings above.
 2. Power the camera while it looks at the empty floor, and wait 5 s for the lock.
 3. Optional: set `STREAM_TO_PC = true`, close the Serial Monitor, and open `camera_viewer.html` in Chrome or Edge to check the masks and the line rows.
-4. Power the Nano and the camera together. While the Nano waits for START, `straight_pillars` prints `camera: OK` once messages from this sketch arrive.
+4. Power the Nano and the camera together. When `obstacle_challenge` runs, its status line shows the pillar (`pillar R` or `G`) and the line counts (`line B/O`) as soon as messages from this sketch arrive.
 
 ## Limits
 
 - **Not validated on the track.** The 320 x 240 tuning does not carry over exactly to 160 x 120.
 - The camera fps increases, but each pixel covers more real distance. At 20 cm a 5 cm pillar is about 12 pixels wide here, against about 25 at 320 x 240, so distance estimates are coarser.
-- No WiFi stream in this version. Use the USB viewer, or switch to `obstacle_camera` for the WiFi live view.
+- No WiFi stream in this version. Use the USB viewer. The WiFi live view of v3.1 is in the git history (`obstacle_camera`), and it is off in the competition build (rule 11.6: no radio during rounds).
 - The sketch keeps its own memory in PSRAM. If the camera does not start, check `Tools → PSRAM: OPI PSRAM` and press RESET.

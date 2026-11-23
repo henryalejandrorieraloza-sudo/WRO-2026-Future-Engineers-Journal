@@ -2,6 +2,13 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.15 — 23 November · Obstacle Challenge consolidated in `src/obstacle-challenge`
+- **`obstacle_challenge` added:** the driving program of the round. It combines the floor-line laps (the first line sets the direction, every corner is a 90° turn in reverse with the gyro and the front and rear ToF), the pillar dodging on an odometry map, and the wall centring between pillars. It has its own README with the constants, the state and flow diagrams, the camera fields it uses and the stop messages.
+- **`obstacle_camera_v3_2` is the vision used by `obstacle_challenge`.** Its farthest pillar (`MAX_AHEAD_CM`) changed from 130 to **40 cm**. Its README now names `obstacle_challenge` and describes the plausibility range and the 12 fields the Nano reads.
+- **Only the current Obstacle code stays in `src/obstacle-challenge`:** `obstacle_challenge`, `obstacle_camera_v3_2` and `obstacle_go_out_of_parking`. The earlier sketches (`obstacle_camera` v3.1, `straight_pillars`, `straight_pillars_measurements`, `line_test`) are in the git history. The Open Challenge and the hardware tests were not changed by this version.
+- **`obstacle_go_out_of_parking` README:** links and the centre-servo reference now point to the current programs.
+- **Documentation made consistent with the code:** README §9 (Obstacle Challenge strategy) rewritten for the program that is in `src`, with the vision, the map, the wall centring, the laps and the parking start described from the code; `src/README.md` (Obstacle section and the layout); the camera viewer's help text; the module table and the status table in the root README; this entry and journal §20.
+
 ## v1.9.14 — 22 November · One set of car constants, three-lap run recorded
 - **`open_challenge` now uses the same constants as `straight_pillars`:** `TICKS_PER_CM` 15.1 → **9.27** (motor-running measurement) and `STEER_CENTER` 90 → **85** (measured on this chassis). The stop position and the steering are expected to change; the first run after this change must be checked on the track.
 - **The same centre (85) in the other sketches:** the parking sketch (`obstacle_go_out_of_parking`, was 90), `line_test` (was 120) and `servo_test` (was 90).

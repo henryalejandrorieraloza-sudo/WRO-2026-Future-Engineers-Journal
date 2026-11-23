@@ -36,7 +36,7 @@ The motor is driven only through the TB6612FNG, on the rear wheels. The reverse 
 |---|---|---|
 | `CALIBRATE_ENCODER` | `false` | `true` = only count encoder ticks, the motor stays off |
 | `REVERSE_TARGET_TICKS` | `1024` (placeholder) | Encoder ticks for five wheel turns. **Must be measured** |
-| `LEFT_LOCK` / `CENTER` / `RIGHT_LOCK` | 10 / 85 / 170 | Servo angles. `CENTER = 85` is the same value as `straight_pillars` (measured 21 Nov) |
+| `LEFT_LOCK` / `CENTER` / `RIGHT_LOCK` | 10 / 85 / 170 | Servo angles. `CENTER = 85` is the same value as `obstacle_challenge` (measured 21 Nov) |
 | `DRIVE_PWM` / `REVERSE_PWM` / `REVERSE_SLOW_PWM` | 90 / 90 / 75 | Motor speeds (0–255) |
 | `FIRST_ANGLE_DEG` / `RETURN_ANGLE_DEG` | 45 / 10 | Size of the first turn and of the countersteer |
 | `PAUSE_BEFORE_REVERSE_MS` | 500 | Motor off before reversing |
@@ -45,7 +45,7 @@ The motor is driven only through the TB6612FNG, on the rear wheels. The reverse 
 ## Before the first run
 
 1. **Measure the encoder for reverse.** Set `CALIBRATE_ENCODER = true`, upload, open the Serial Monitor at 115200 baud, send `z`, turn the wheel by hand exactly five revolutions, then send `p`. Put the printed count in `REVERSE_TARGET_TICKS` and set `CALIBRATE_ENCODER = false`.
-2. **Check the steering.** Confirm with the servo test that 10 is the left lock and 170 the right lock on this chassis, and re-measure the centre (see `src/hardware-tests/servo_calibration`).
+2. **Check the steering.** Confirm with the servo test that 10 is the left lock and 170 the right lock on this chassis, and re-measure the centre (use the servo test in the git history, `src/hardware-tests/servo_test`).
 3. **Test the wheels off the floor first**, then on the floor with the car parked against a wall.
 
 ## Stop messages

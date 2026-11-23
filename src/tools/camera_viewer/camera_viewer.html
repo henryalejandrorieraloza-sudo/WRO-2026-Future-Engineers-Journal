@@ -7,12 +7,12 @@
 <!--
   CAMERA VIEWER (PC browser, Chrome or Edge) - the page we use to test the camera board.
 
-  It shows exactly the bytes that the ESP32-S3-CAM sends over USB when obstacle_camera.ino (or
+  It shows exactly the bytes that the ESP32-S3-CAM sends over USB when obstacle_camera_v3_2.ino (or
   camera_test.ino) runs with STREAM_TO_PC = true: the raw picture, the pillar mask, the orange /
   blue line mask and the status of each floor line.
 
   HOW TO USE
-    1. Upload src/hardware-tests/camera_test (or src/obstacle-challenge/obstacle_camera) with STREAM_TO_PC = true.
+    1. Upload src/hardware-tests/camera_test (or src/obstacle-challenge/obstacle_camera_v3_2) with STREAM_TO_PC = true.
     2. CLOSE the Arduino Serial Monitor (only one program can use the port).
     3. Open this file in Chrome or Edge (Web Serial is needed), press "Connect camera" and choose
        the usbmodem / COM port of the camera board. After a RESET of the camera it reconnects by itself.
@@ -243,7 +243,7 @@ async function connect() {
     if (Date.now() - lastFrame < 3000) return;
     info.textContent = `NO PICTURE (bytes received: ${bytesIn}). ` +
       (bytesIn === 0 ? 'The board sends nothing: check STREAM_TO_PC = true and that the Serial Monitor is closed.'
-                     : 'Bytes arrive but no complete packet: check that the sketch is obstacle_camera or camera_test.');
+                     : 'Bytes arrive but no complete packet: check that the sketch is obstacle_camera_v3_2 or camera_test.');
   }, 1000);
   while (true) {
     try {
