@@ -52,8 +52,7 @@ const float STOP_OFFSET_CM = 0;       // final stop: + = stop later (further), -
 const int   LANE_MODE = 1;            // 0 = CENTER of the corridor (uses both walls)
                                       // 1 = fixed distance to the INNER wall (INNER_TARGET_MM)
 const int   INNER_TARGET_MM = 100;    // LANE_MODE 1: distance to keep from the inner wall (mm)
-                                      //   smaller = closer to the inner wall. 100 is BELOW the 200 mm margin:
-                                      //   in the turn the car could touch the inner corner. If it does, use 200
+                                      //   smaller = closer to the inner wall. 100 is the value used in the 3-lap run (22 Nov)
 const int   CENTER_SHIFT_MM = 200;    // LANE_MODE 0: move the "center" toward the INNER wall by this
                                       //   many mm (0 = exact center, 100 = 10 cm closer to the inner wall)
 const int   SAFE_WALL_MM = 70;        // any wall closer than this: steer away at full correction

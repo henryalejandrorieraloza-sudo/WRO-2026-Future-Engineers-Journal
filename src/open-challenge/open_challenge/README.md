@@ -15,7 +15,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 | `TURN_PWM` | 90 | Speed in the corners. Lower values were too weak to turn the car, so 90 is the value in use |
 | `STOP_OFFSET_CM` | 0 | Final stop: + stops later, − stops earlier. Only affects the exact `LAPS ≥ 2` method (`LSTART − D1 + STOP_OFFSET_CM`); the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it |
 | `LANE_MODE` | 1 | 0 = center of the corridor, 1 = fixed distance to the inner wall |
-| `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). 100 is below the 200 mm safety margin: the car may touch the inner corner in a turn. If it does, set 200 |
+| `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). 100 is the value used in the 3-lap run (22 Nov) |
 | `CENTER_SHIFT_MM` | 200 | Shift of the center toward the inner wall (mode 0) |
 | `JUMP_DELTA_MM` / `JUMP_ABS_MM` | 250 / 1200 | How much a reading must jump to count as a corner |
 | `TURN_PREDICT_S` | 0.12 | Ends the turn early by turn rate × this. Raise it if the car overshoots 90° |

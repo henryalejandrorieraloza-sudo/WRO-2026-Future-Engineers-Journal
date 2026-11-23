@@ -1693,6 +1693,6 @@ The change to items 1 and 2 was made without a new track test. Its effect is che
 | `CENTER_ANGLE` (`line_test`) | 120 | 85 | Same chassis, same centre. |
 | `CENTER` (`servo_test`) | 90 | 85 | Same chassis, same centre. |
 
-The value of `INNER_TARGET_MM` (100 mm) was not changed. The comment in the code now says that 100 mm is below the 200 mm margin, and that 200 mm should be used if the car touches the inner corner in a turn.
+The value of `INNER_TARGET_MM` (100 mm) was kept. It is the value that ran the three laps, and the comment in the code now says so.
 
 **Not recorded for this run:** the lap time and the direction (clockwise or counter-clockwise) of the run. Add them here when they are known.
