@@ -9,7 +9,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 | File / folder | Content |
 |---|---|
-| [`stl/`](stl) | **27 STL files**: 25 printed parts (chassis v3) + 2 tyre moulds, in millimetres |
+| [`stl/`](stl) | **28 STL files**: 25 printed parts (chassis v3), 2 tyre moulds and the `JIMMY_BUMP` perturbation piece, in millimetres |
 | [`images/`](images) | A render of each part, with the same name as its STL |
 | [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |
@@ -22,7 +22,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 | | Value |
 |---|---|
 | Car length × width × height | **17.5 cm × 9.5 cm × 6 cm** (rule limit: 30 × 20 × 30 cm) |
-| Mass (ready to run, with battery) | **270 g** (rule limit: 1.5 kg) |
+| Mass (ready to run, with battery) | **248 g** (rule limit: 1.5 kg) |
 | Printed base plate | 120 mm × 70 mm |
 | Wheels | 36 mm printed hub + cast silicone tyre ≈ 41 mm outside diameter |
 | Steering | 12-tooth pinion, module 1 mm, on a 68 mm rack |
@@ -77,6 +77,12 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 | [`front_wheel.stl`](stl/front_wheel.stl) | <img src="images/front_wheel.png" height="110"> | 2 | Ø 36 × 10 | Front hub; the silicone tyre is cast on it (see [tyres](#4-custom-silicone-tyres)) |
 | [`rear_wheel.stl`](stl/rear_wheel.stl) | <img src="images/rear_wheel.png" height="110"> | 2 | Ø 36 × 11 | Rear hub, keyed to the differential output |
 
+### Test piece (perturbation)
+
+| Part | Render | Qty | Size (mm) | Function |
+|---|---|---|---|---|
+| [`JIMMY_BUMP.stl`](stl/JIMMY_BUMP.stl) | <img src="images/JIMMY_BUMP.png" height="110"> | 1 | 31 × 65 × 1 | Perturbation (bump) used to test the car. It is **not** part of the car |
+
 ### Sensor and camera mounts
 
 | Part | Render | Qty | Size (mm) | Function |
@@ -90,6 +96,7 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 
 ### Printing notes
 
+- **Printer:** every 3D-printed part was printed on a **Bambu Lab X1 Carbon**.
 - **Material:** PLA (white and black parts in the photos).
 - **Gears (pinion, rack, differential):** print flat on the bed, with a fine layer height so the teeth are clean; they were designed with module 1 mm so the pinion and the rack mesh without filing.
 - **Tolerances:** chassis v3 has clearances adjusted so that moving parts (knuckles, rack, gears) turn freely without wobbling. If your printer over-extrudes, test the pinion on the rack before printing everything.
@@ -127,14 +134,14 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 
 The tyres are cast in **printed moulds** with two-part silicone rubber, so they have more grip on the mat than printed plastic and we can make spares ourselves.
 
-| Mould file | Content |
-|---|---|
-| [`inner_wheel_mould.stl`](stl/inner_wheel_mould.stl) | Inner half of the tyre mould — the hub sits in this half while the silicone cures |
-| [`outer_wheel_mould.stl`](stl/outer_wheel_mould.stl) | Outer half of the mould — closes over the inner half, leaving the tyre-shaped ring to fill with silicone |
+| Mould file | Render | Qty | Content |
+|---|---|---|---|
+| [`inner_wheel_mould.stl`](stl/inner_wheel_mould.stl) | <img src="images/inner_wheel_mould.png" height="110"> | 4 | Inner half of the tyre mould — the hub sits in this half while the silicone cures |
+| [`outer_wheel_mould.stl`](stl/outer_wheel_mould.stl) | <img src="images/outer_wheel_mould.png" height="110"> | 4 | Outer half of the mould — closes over the inner half, leaving the tyre-shaped ring to fill with silicone |
 
 | Step | Photo | What we do |
 |---|---|---|
-| 1. Moulds | <img src="../other/tyres/printed_molds_1.jpg" height="140"> <img src="../other/tyres/printed_molds_2.jpg" height="140"> | Print the tyre moulds (the hub sits in the middle, the silicone fills the ring around it) — STL files above |
+| 1. Moulds | <img src="../other/tyres/printed_molds_1.jpg" height="140"> <img src="../other/tyres/printed_molds_2.jpg" height="140"> | Print **4 inner and 4 outer** moulds (the hub sits in the middle, the silicone fills the ring around it) — STL files above |
 | 2. Material | <img src="../other/tyres/tyres_step_1.jpg" height="140"> | **C25 silicone rubber**, part A (base) and part B (catalyst) |
 | 3. Preparation | <img src="../other/tyres/tyres_step_2.jpg" height="140"> | Scale, cup, stirring stick, dropper and the moulds |
 | 4. Weigh part A | <img src="../other/tyres/tyres_step_3.jpg" height="140"> | **30 g** of part A on a gram scale |
