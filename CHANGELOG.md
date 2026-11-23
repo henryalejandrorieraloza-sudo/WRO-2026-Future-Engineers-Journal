@@ -2,7 +2,17 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
-## v1.9.10 — 22 November · WiFi live view now shows the segmentation, on by default
+## v1.9.12 — 22 November · English throughout, half-resolution camera sketch, coherence review
+- **The whole repository is in English:** comments, serial messages and the names of the scenario-roulette page's CSS classes and HTML ids (`legend`, `line`, `rule-note`, `chart`).
+- **`obstacle_camera_v3_2` added** (already on `main` in ca0054e, listed here for the history): the v3.1 vision code at QQVGA (160 × 120), about four times fewer pixels. Not validated on the track; v3.1 remains the reference.
+- **`straight_pillars_medidas` renamed to `straight_pillars_measurements`** (folder and sketch). Comments translated. The stale "pending" note on `YAW_SCALE` / `YAW_REVERSED` was replaced by the 21 Nov result.
+- **Coherence review:** README steering values, ticks per cm in the `straight_pillars` README, video status and the rubric checklist were updated to match the code. The journal (§19.1) lists the open items that were found but not changed: `open_challenge` still uses 15.1 ticks/cm and steering centre 90, and `line_test` still uses centre 120.
+
+## v1.9.11 — 22 November · WiFi live view off in the competition build
+- **`WIFI_STREAM` set back to `false`** (`obstacle_camera.ino`). The v1.9.10 change had turned it on by default, which would have let the camera start a Wi-Fi radio during a round. Rule 11.6 of the WRO 2026 Future Engineers General Rules forbids radio communication during rounds. The README already said the competition code never starts Wi-Fi, so the code now matches the documentation.
+- The Wi-Fi block stays in the sketch for bench tests (`WIFI_STREAM = true`, plus your own SSID and password). `obstacle_camera/README.md` and the journal (§19) were corrected to match.
+
+## v1.9.10 — 22 November · WiFi live view now shows the segmentation (later set back to off, see v1.9.11)
 - **`WIFI_STREAM` turned on by default** (`obstacle_camera.ino`): whenever the camera is powered, `http://<printed IP>/` streams live with no USB cable, instead of needing to be switched on for each bench test.
 - **New: `WIFI_STREAM_OVERLAY`** paints the same pillar/line segmentation colours `camera_viewer.html` draws over USB — pillar blocks blended 50 % red/green, accepted orange/blue line pixels painted solid, a yellow box around the pillar actually chosen — directly onto the picture before it is sent over WiFi, via the new self-contained `drawSegmentationOverlay()`. It only *reads* the detection globals the vision code already filled that loop (`blockCode`, `code`, `pick`); it changes nothing the car decides.
 - Cost is unchanged while nobody is watching (one cheap "anyone connected?" check per loop); while a browser *is* watching, the overlay + JPEG-encoding still slow the vision loop, so close the tab before a timed run if every frame matters.

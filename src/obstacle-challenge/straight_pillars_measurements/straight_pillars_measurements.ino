@@ -1,40 +1,40 @@
 // =====================================================================
-// STRAIGHT WITH PILLARS - Arduino Nano (medidas del carro nuevo, 19 nov;
-//                                        angulo real de llanta medido 21 nov;
-//                                        servo 85/170/10 (centro real) y TICKS_PER_CM
-//                                        medido con el motor corriendo, 21 nov)
-// Camara (ESP32S3-CAM) + giroscopio (BMI160) + encoder + motor trasero + servo de direccion.
+// STRAIGHT WITH PILLARS - Arduino Nano (measurement version of the new car, 19 Nov;
+//                                        real wheel angle measured 21 Nov;
+//                                        servo 85/170/10 (real centre) and TICKS_PER_CM
+//                                        measured with the motor running, 21 Nov)
+// Camera (ESP32S3-CAM) + gyroscope (BMI160) + encoder + rear motor + steering servo.
 //
-// Idea: el carro guarda un MAPA de la recta (odometria con encoder + giroscopio).
-//   - Punto de odometria = centro del eje de las llantas con encoder (eje trasero).
-//   - Punto de la camara = odometria + CAM_FWD_CM en la direccion del carro (vector).
-//   - Cada mensaje de la camara ubica el pilar en el mapa: P = C_cam + R(h)*(adelante, izquierda).
-//   - Rojo  -> el pilar queda a la IZQUIERDA del carro, a >= TARGET_CM (el carro pasa por su derecha)
-//     Verde -> el pilar queda a la DERECHA del carro, a >= TARGET_CM (el carro pasa por su izquierda)
-//   - Direccion: posicion lateral deseada -> rumbo = atan(error lateral / distancia que falta),
-//     limitado a +-MAX_AIM_DEG -> el PD del giroscopio lo convierte en angulo del servo.
-//   - Pasado el pilar (RETURN_AFTER_CM) el carro vuelve a la linea de inicio (y = 0).
+// Idea: the car keeps a MAP of the straight (odometry from the encoder + gyroscope).
+//   - Odometry point = centre of the encoder axle (rear axle).
+//   - Camera point = odometry point + CAM_FWD_CM along the car's direction (vector).
+//   - Each camera message places the pillar on the map: P = C_cam + R(h)*(forward, left).
+//   - Red   -> the pillar is on the LEFT of the car, at >= TARGET_CM (the car passes on its right)
+//     Green -> the pillar is on the RIGHT of the car, at >= TARGET_CM (the car passes on its left)
+//   - Steering: desired lateral position -> heading = atan(lateral error / distance left),
+//     limited to +-MAX_AIM_DEG -> the gyro PD turns it into a servo angle.
+//   - After passing the pillar (RETURN_AFTER_CM) the car returns to the start line (y = 0).
 //
-// Medidas (19-21 nov):
-//   ancho del carro 9 cm -> mitad 4.5 cm
-//   distancia entre ejes 9 cm
-//   largo total 17.5 cm (incluye protuberancia frontal ~4 cm)
-//   eje de encoder -> lente de la camara: 11.7 cm (CAM_FWD_CM)
-//   servo: centro REAL 85 (confirmado yendo recto), izquierda 170, derecha 10
-//          (170/10 = 40 grados de llanta reales medidos con transportador; con centro en 85 el
-//           recorrido ya no es simetrico: 75 hacia la derecha, 85 hacia la izquierda en unidades de servo)
-//   STEER_LEFT_IS_BIGGER = false (confirmado con el probe: en este carro, numero de servo mas alto = derecha)
-//   TICKS_PER_CM = 9.27, medido con el MOTOR CORRIENDO el 21 nov (190 ticks / 20.5 cm reales).
-//     (el valor viejo, 12.67, estaba medido empujando a mano -> quedaba mal escalado y hacia que el
-//      carro calculara su propia posicion equivocada apenas perdia de vista un pilar.)
+// Measurements (19-21 Nov):
+//   car width 9 cm -> half width 4.5 cm
+//   wheelbase 9 cm
+//   total length 17.5 cm (includes a ~4 cm front protrusion)
+//   encoder axle -> camera lens: 11.7 cm (CAM_FWD_CM)
+//   servo: REAL centre 85 (confirmed by driving straight), left 170, right 10
+//          (170/10 = 40 real wheel degrees, measured with a protractor; with the centre at 85 the
+//           travel is no longer symmetric: 75 to the right, 85 to the left, in servo units)
+//   STEER_LEFT_IS_BIGGER = false (confirmed with the probe: on this car, a higher servo number = right)
+//   TICKS_PER_CM = 9.27, measured with the MOTOR RUNNING on 21 Nov (190 ticks / 20.5 real cm).
+//     (The old value, 12.67, was measured by pushing the car by hand. It gave the wrong scale, so
+//      the car calculated its own position wrongly as soon as it lost sight of a pillar.)
 //
-// PENDIENTE (todavia sin medir en este chasis): YAW_REVERSED / YAW_SCALE del giroscopio
-// (prueba: giro de 90 grados a mano, ver cuanto marca el yaw impreso).
+// Gyroscope: YAW_SCALE = 1.06 and YAW_REVERSED = false were measured on 21 Nov with a real
+// 90-degree hand turn (see gyro_90_test). Keep these values unless the gyroscope is remounted.
 //
-// Conexiones: camara GPIO43 (TX) -> Nano D0 (RX) | encoder D3 | boton START D10
+// Wiring: camera GPIO43 (TX) -> Nano D0 (RX) | encoder D3 | START button D10
 //   I2C: SDA=A4, SCL=A5 | servo D9 | TB6612FNG: PWMA D6, AIN1 D7, AIN2 D8
-// SUBIR: manten presionado el RESET de la CAMARA durante toda la subida (la camara esta en D0).
-// Sketch de la camara: obstacle_camera v3.1b (mensaje de 14 campos; el Nano lee los 10 primeros).
+// UPLOAD: hold the CAMERA's RESET button down for the whole upload (the camera is on D0).
+// Camera sketch: obstacle_camera v3.1b (14-field message; the Nano reads the first 10 fields).
 // =====================================================================
 
 #include <Wire.h>                         // I2C bus library (used by the BMI160 gyroscope)
@@ -43,7 +43,7 @@
 // Defined at the top so the Arduino IDE knows it before any function
 struct MapPillar {                        // one pillar stored on the odometry map
   bool  used;                             // true if this slot holds a real pillar
-  float x, y;        // cm on the map (pillar center)
+  float x, y;        // cm on the map (pillar centre)
   int   color;       // 1 red, 2 green
   int   hits;        // how many camera messages confirmed this pillar (used to refine its position)
 };  // end of the MapPillar structure
@@ -52,15 +52,15 @@ struct MapPillar {                        // one pillar stored on the odometry m
 // --- Test ---
 const float RUN_CM = 2000.0;          // distance to drive (in cm of encoder travel), then stop
 
-// --- Car geometry (measured 19 nov) ---
-const float WHEELBASE_CM = 9.0;      // distancia entre ejes (informativo: radio minimo ~10.7 cm con 40 grados reales)
-const float CAM_FWD_CM   = 11.7;     // medido 20 nov: eje de las llantas con encoder -> lente de la camara, a lo largo del carro.
+// --- Car geometry (measured 19 Nov) ---
+const float WHEELBASE_CM = 9.0;      // wheelbase (informative: minimum radius ~10.7 cm with 40 real degrees)
+const float CAM_FWD_CM   = 11.7;     // measured 20 Nov: encoder wheel axle -> camera lens, along the car.
 
-// --- Steering (centro real confirmado 85; topes mecanicos 170/10 = 40 grados de llanta) ---
+// --- Steering (real centre confirmed at 85; mechanical stops 170/10 = 40 wheel degrees) ---
 const int  CENTER_ANGLE         = 85;     // servo angle that drives straight (confirmed by test)
 const int  LEFT_LIMIT           = 170;    // mechanical limit of the servo on the left side
 const int  RIGHT_LIMIT          = 10;     // mechanical limit of the servo on the right side
-const bool STEER_LEFT_IS_BIGGER = false;  // confirmado con el probe en este carro (higher servo number = right)
+const bool STEER_LEFT_IS_BIGGER = false;  // confirmed with the probe on this car (higher servo number = right)
 const int  SERVO_SPEED_DPS      = 300;    // max servo speed in degrees per second (software limit, protects the rack)
 
 // --- Motor ---
@@ -69,29 +69,29 @@ const bool MOTOR_REVERSED = true;    // true = flip the motor direction pins for
 
 // --- Heading PD (validated values; check them in the first test) ---
 const float KP_HEADING   = 2.0;      // steering degrees per degree of heading error (proportional gain)
-const float KD_HEADING   = 0.03;     // bajado de 0.10: con MAX_STEER mas alto el yawRate es mayor y
-                                      // 0.10 frenaba el giro casi de inmediato (se veia "esquiva poquito")
-const float MAX_STEER    = 70.0;     // rango mecanico real con centro 85: 75 a la derecha (85-10),
-                                      // 85 a la izquierda (170-85); 70 deja margen sin sub-usar el rango
+const float KD_HEADING   = 0.03;     // lowered from 0.10: with a higher MAX_STEER the yawRate is larger, and
+                                      // 0.10 braked the turn almost at once (it looked like a small dodge)
+const float MAX_STEER    = 70.0;     // real mechanical range with centre 85: 75 to the right (85-10),
+                                      // 85 to the left (170-85); 70 leaves a margin without using the whole range
 
 // --- Pillars ---
-const float TARGET_CM       = 17.0;  // pillar center <-> camera (side): 4.5 (half car) + 10 gap + 2.5 (half pillar)
-                                      // (vuelto a 17, el valor que sale de las medidas reales; sube esto
-                                      //  si quieres mas separacion, pero ya no es un numero arbitrario)
+const float TARGET_CM       = 17.0;  // pillar centre <-> camera (side): 4.5 (half car) + 10 gap + 2.5 (half pillar)
+                                      // (back to 17, the value that comes out of the real measurements; raise it
+                                      //  if you want more separation, but it is no longer an arbitrary number)
 const float MAX_AIM_DEG     = 60.0;  // max heading while dodging (degrees)
 const float LOOK_MIN_CM     = 12.0;  // shortest distance used in atan (avoids a huge angle when very close)
 const float ARRIVE_BEFORE_CM = 55.0; // be at the safe side this many cm BEFORE the pillar's front face
 const float LOOK_HOME_CM    = 20.0;  // how fast it goes back to the home lane after a pillar
-const float RETURN_AFTER_CM = 45.0;  // camera this far past the pillar center -> free to go back
-                                      // (minimo geometrico: CAM_FWD_CM 11.7 + medio pilar 2.5 = 14.2;
-                                      //  30 deja el doble de margen mientras se confirma el giroscopio)
+const float RETURN_AFTER_CM = 45.0;  // camera this far past the pillar centre -> free to go back
+                                      // (geometric minimum: CAM_FWD_CM 11.7 + half pillar 2.5 = 14.2;
+                                      //  30 leaves double the margin while the gyroscope is being confirmed)
 const float SAME_PILLAR_CM  = 15.0;  // a detection this close to a stored pillar is the same pillar
 const float BLEND           = 0.3;   // how much each new message moves the stored pillar (0-1, 0.3 = 30 % of the way)
 const float MAX_SIDE_CM     = 60.0;  // detections farther to the side are ignored (outside the corridor)
 
 // --- Pillar size ---
 const float PILLAR_CM       = 5.0;   // real pillar width in cm (rules: 50 x 50 x 100 mm)
-const float TICKS_PER_CM    = 9.27;  // medido con el motor corriendo el 21 nov: 190 ticks / 20.5 cm reales (encoder pulses per cm of travel)
+const float TICKS_PER_CM    = 9.27;  // measured with the motor running on 21 Nov: 190 ticks / 20.5 real cm (encoder pulses per cm of travel)
 
 // --- Camera link ---
 const long  CAMERA_BAUD       = 115200;     // speed of the UART link from the camera (must match the camera)
@@ -397,7 +397,7 @@ void setup() {                                   // runs once at power-on
   steering.attach(SERVO_PIN, 500, 2500);         // attach the servo on D9 with pulse width 500-2500 microseconds
   steering.write(CENTER_ANGLE);                  // put the wheels straight
 
-  Serial.println(F("STRAIGHT WITH PILLARS (medidas 19-21 nov) - press START"));  // print the start message
+  Serial.println(F("STRAIGHT WITH PILLARS (measurement version, 19-21 Nov) - press START"));  // print the start message
   while (digitalRead(BUTTON_PIN) == HIGH) {      // waiting until START is pressed (LOW = pressed); also shows if the camera talks
     readCamera();                                // keep reading the camera so lastCamMs is updated
     static unsigned long t = 0;                  // time of the last status print (static: keeps its value between calls)
@@ -454,7 +454,7 @@ void loop() {  // runs again and again: one control step per call
   static unsigned long lastPrint = 0;            // time of the last debug print (static: keeps its value)
   if (DEBUG_PRINTS && millis() - lastPrint >= 150) {   // every 150 ms when debugging is on
     lastPrint = millis();  // remember the time of this print (150 ms interval)
-    Serial.print(F("eje x ")); Serial.print(carX, 0);    // drive axle position x, no decimals
+    Serial.print(F("drive axle x ")); Serial.print(carX, 0);    // drive axle position x, no decimals
     Serial.print(F(" y ")); Serial.print(carY, 1);       // y with one decimal
     Serial.print(F(" | yaw ")); Serial.print(yaw, 1);    // heading
     Serial.print(F(" goal ")); Serial.print(goalHeading, 1);   // heading we want

@@ -35,8 +35,9 @@
 //         colors with exact camera numbers (no viewer needed).
 //       - Measured range: orange line from 16 cm, blue line from 9 cm.
 // It can also keep sending the pictures to viewer.html over USB (STREAM_TO_PC), or serve a live
-// MJPEG view over WiFi at http://<ip>/ with no cable needed (WIFI_STREAM, ON by default: whenever
-// the camera is powered, opening that address shows exactly what the car sees, live, with the
+// MJPEG view over WiFi at http://<ip>/ with no cable needed (WIFI_STREAM, OFF in the competition
+// build: rule 11.6 forbids radio during rounds; set it to true only for bench tests. When it is on,
+// opening that address shows exactly what the car sees, live, with the
 // SAME pillar/line segmentation colors viewer.html draws -- red/green pillar blocks blended onto
 // the picture, the accepted orange/blue line pixels painted solid, a yellow box around the pillar
 // actually chosen. Set your WiFi name/password below. It costs almost nothing while no browser is
@@ -91,7 +92,7 @@ const unsigned long STREAM_EVERY_MS = 1;   // one picture to the viewer every 0.
 // connected?" check per loop. Still, while someone IS watching it DOES slow the vision loop
 // (encoding + sending a JPEG takes real time): close the browser tab before a timed run if every
 // frame/sec matters, or set WIFI_STREAM to false below to remove the cost entirely.
-const bool  WIFI_STREAM        = true;              // master switch: on by default, always watchable while the camera is powered
+const bool  WIFI_STREAM        = false;             // master switch: OFF for the competition (rule 11.6: no radio during rounds). true = bench tests only
 const char *WIFI_STREAM_SSID   = "YOUR_WIFI_NAME";      // <-- put your WiFi name here (2.4 GHz only, ESP32-S3 can't do 5 GHz)
 const char *WIFI_STREAM_PASS   = "YOUR_WIFI_PASSWORD";  // <-- put your WiFi password here
 const int   WIFI_STREAM_PORT   = 80;                // standard HTTP port, so a plain http://ip/ works

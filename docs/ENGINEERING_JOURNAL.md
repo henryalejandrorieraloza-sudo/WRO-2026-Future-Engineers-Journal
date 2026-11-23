@@ -1423,7 +1423,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 4 | Fixed-reference "fix" worked worse | Reverted to the validated version (10 cm / 62 cm) | ✅ |
 | 5 | RIGHT sensor saw a wall that was not there | Not resolved; Sharp replaced | ❓ |
 | 6 | Servo libraries did not work | Manual pulse (`servo_simple`) | ✅ |
-| 7 | Steering centre at 120°, not 90° | Measured and used in the code | ✅ |
+| 7 | Steering centre at 120°, not 90° | Measured and used in the code (re-measured on 21 Nov: 85 in `straight_pillars`, see the steering checklist in §16) | ✅ |
 | 8 | SG90 moved inside its mount | Replaced by MG90 | ✅ |
 | 9 | Pins without the D prefix | Always use `D` | ✅ |
 | 10 | First Serial messages lost | Wait for Serial in `setup()` | ✅ |
@@ -1492,7 +1492,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
-- [ ] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°).
+- [x] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°). Done on 21 Nov for `straight_pillars`: centre 85, limits 170 / 10. `open_challenge` still uses 90 and must be re-measured.
 - [ ] Measure the 5 V buck rail during a servo stall while the four TOF sensors are ranging (section 9.4).
 - [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
@@ -1509,8 +1509,8 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] New Open Challenge version: ROI 16 × 8, only "range valid", WALL / NO WALL / NOT SURE window of 8 readings, target distance inside the reliable range (< 45 cm), all safety rules of §12.7.
 - [ ] Measure encoder ticks per millimetre and the full-lock turning radius, then code the decision tree of §12.10 (delays in encoder turns instead of time).
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
-- [ ] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component.
-- [ ] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`.
+- [ ] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(22 Nov: `open_challenge` and the camera sketch are in the repository; the final Obstacle run — corners, laps, stop, parking — is not written yet.)*
+- [ ] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(22 Nov: the Open Challenge video is done; the Obstacle video is pending.)*
 - [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring) and send the link before the organisers' deadline (≈ 17 Nov).
 - [ ] Print the README and this journal as the **hard copy** for the International Final (8–10 Dec 2026, San Juan).
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
@@ -1600,7 +1600,7 @@ With the new camera mounted and mirrored correctly (Phase 12), the Obstacle Chal
 
 **Test:** car held still, button pressed, then turned by hand exactly 90° to the left in one motion. The sketch printed **yaw = 85°** for the intended 90° turn.
 
-**Result:** the sign was positive (yaw increased when turning left, as it should), so `YAW_REVERSED` stays `false` — the long-standing "PENDIENTE" (pending) note on that value is now closed. The magnitude needed a correction: `YAW_SCALE = 90 / 85 = 1.06` (raised from the placeholder `1.00`). At the same time, `TICKS_PER_CM` was re-measured **with the motor actually running** (190 ticks over 20.5 cm of real travel = 9.27 ticks/cm), replacing the 20 Nov value (12.67) that had been measured by hand-rolling the car, which gives different wheel slip and is therefore unreliable for a sketch that drives itself.
+**Result:** the sign was positive (yaw increased when turning left, as it should), so `YAW_REVERSED` stays `false` — the long-standing "pending" note on that value is now closed. The magnitude needed a correction: `YAW_SCALE = 90 / 85 = 1.06` (raised from the placeholder `1.00`). At the same time, `TICKS_PER_CM` was re-measured **with the motor actually running** (190 ticks over 20.5 cm of real travel = 9.27 ticks/cm), replacing the 20 Nov value (12.67) that had been measured by hand-rolling the car, which gives different wheel slip and is therefore unreliable for a sketch that drives itself.
 
 ### 18.2 The "clips the pillar right after dodging it" bug
 
@@ -1642,10 +1642,39 @@ The result is `handleLineStop()`, a self-contained block (new constants, new glo
 
 `obstacle_camera.ino` already had a `WIFI_STREAM` block (added in an earlier session) that serves a live MJPEG feed at `http://<ip>/`, so the camera can be watched from a phone or laptop with no USB cable — but it streamed the raw camera picture, off by default. Two things were missing for it to actually replace tethering to `camera_viewer.html` for day-to-day debugging: it had to be on by default, not a bench-only switch to remember to flip; and it had to show the **segmentation** — which pixels the car is calling pillar, which it is calling line, which pillar it picked — not just the plain picture, since that is what actually needs watching when something looks wrong on the track.
 
-**Change 1 — `WIFI_STREAM` on by default.** Whenever the camera is powered, `http://<printed IP>/` is already serving; nothing needs to be toggled first. The cost model is unchanged: with no browser connected it is still one cheap "anyone watching?" check per loop.
+**Change 1 — `WIFI_STREAM` on by default (reverted the same day, see Correction below).** Whenever the camera is powered, `http://<printed IP>/` would be serving; nothing needs to be toggled first. The cost model is unchanged: with no browser connected it is still one cheap "anyone watching?" check per loop.
+
+**Correction, same day.** Turning Wi-Fi on by default was a mistake for the competition. Rule 11.6 forbids radio communication during rounds, and our own README says the competition code never starts the camera's Wi-Fi. `WIFI_STREAM` is therefore **`false`** in the competition build, and the Wi-Fi block is only switched on for bench tests (with our own network name and password). Lesson: a feature that is convenient on the bench must be checked against the rules before it becomes the default.
 
 **Change 2 — `drawSegmentationOverlay()`, a new self-contained function.** Called from `serveWifiStream()` only once a browser is actually connected (so it costs nothing when nobody is watching), it paints onto the RGB565 frame — *before* it is JPEG-encoded and sent — the exact same segmentation `camera_viewer.html` already draws over USB from the separate pillar/line mask bytes: the pillar blocks blended 50 % red/green onto the picture, the accepted orange/blue line pixels painted solid, and a yellow box around the pillar the car actually chose (after the time filter). It reads the same globals the detection code already filled earlier in that same loop iteration (`blockCode`, `code`, `pick`) and writes only pixels of the picture buffer that is about to be thrown away after sending — it cannot change anything the car decides, by construction, since it runs after `sendToNano()` has already been called.
 
-A new `WIFI_STREAM_OVERLAY` switch keeps the two changes independent: `WIFI_STREAM_OVERLAY = false` would fall back to the plain raw-picture stream from the earlier session, with `WIFI_STREAM` still on by default.
+A new `WIFI_STREAM_OVERLAY` switch keeps the two changes independent: `WIFI_STREAM_OVERLAY = false` would fall back to the plain raw-picture stream from the earlier session. Both only matter when `WIFI_STREAM = true`, which is bench-only.
 
 **Still outstanding:** `WIFI_STREAM_SSID` / `WIFI_STREAM_PASS` are still the placeholder strings — they need the team's real 2.4 GHz network name and password filled in before the next flash, since nothing in the repository can know those.
+
+### 19.1 Other changes on 22 November
+
+These changes were made on the same day as the Wi-Fi work above. They are listed here so the journal matches the repository.
+
+- **Camera sketch at half resolution (`obstacle_camera_v3_2`).** The v3.1 vision code was copied to a new folder and set to QQVGA (160 × 120 instead of 320 × 240). That is about four times fewer pixels per picture, so more frames per second, with every halved or quartered constant commented with its old value. It is **not validated on the track yet**. `obstacle_camera` (v3.1) remains the reference version for the competition. This sketch has no Wi-Fi.
+- **Measurement sketch renamed.** `straight_pillars_medidas` became `straight_pillars_measurements`. It is the map-and-heading version used during the 19–21 November measurements, and it is kept for the history. Its comments were translated and it now prints English messages.
+- **A stale note was corrected.** The header of the measurement sketch still said that the gyroscope `YAW_SCALE` and `YAW_REVERSED` were pending. They were measured on 21 November (`YAW_SCALE = 1.06`, `YAW_REVERSED = false`, from the real 90° hand turn in `gyro_90_test`), so the note now says that.
+- **The whole repository is in English.** Comments, serial messages and the names of the tool's CSS classes and HTML ids in the scenario-roulette page were translated or renamed. Apart from those text changes, the logic of these sketches is unchanged (the Wi-Fi setting is covered above).
+
+**Coherence review (what did not match the code, and what we changed):**
+
+| Where | What the documents said | What the code does (22 Nov) | Action |
+|---|---|---|---|
+| Wi-Fi in `obstacle_camera` | On by default (v1.9.10) | Off (`WIFI_STREAM = false`) | Code set back to off to follow rule 11.6; docs corrected (§19, CHANGELOG v1.9.11) |
+| Steering centre in the README | 120°, provisional | 85 in `straight_pillars` (measured 21 Nov); 90 in `open_challenge` | README updated for `straight_pillars` |
+| Ticks per cm in `straight_pillars` README | 15.1 | 9.27 (motor running, 21 Nov) | README updated |
+| Video status in the README | One general video, Open and Obstacle pending | Open Challenge video is done; Obstacle pending (`video/video.md`) | README updated |
+| Camera fields read by `straight_pillars` | 12 | 12 (`sscanf` with 12 fields) | Consistent; no change |
+
+**Open items found, not changed yet (they change how the car drives, so they need a decision and a test first):**
+
+1. `open_challenge.ino` still uses `TICKS_PER_CM = 15.1`. That value was measured by pushing the car by hand, and §13.2 explains why it is not reliable. The motor-running value (9.27) is used only by `straight_pillars`.
+2. `open_challenge.ino` still uses a steering centre of 90 (`STEER_CENTER`), while `straight_pillars` uses 85, measured on this chassis on 21 November.
+3. `line_test.ino` still centres the steering at 120°, the old provisional value.
+
+Items 1 and 2 must be re-measured with the motor running, and then tested on the track, before they are changed.
