@@ -155,7 +155,7 @@ flowchart TD
     A([Loop in STRAIGHT]) --> B{Camera message<br>less than 500 ms old?}
     B -- no --> Z[Target speed 0<br>the car does not drive blind]
     B -- yes --> C{Floor line seen?}
-    C -- "yes, first line of the run" --> D["Lock the colour:<br>blue = left, orange = right<br>then PRE_TURN"]
+    C -- "yes, first line of the run,<br>after 10 cm of driving" --> D["Lock the colour:<br>blue = left, orange = right<br>then PRE_TURN"]
     C -- "yes, locked colour, new line<br>and not in the 4 s ignore window" --> E["Corner: PRE_TURN"]
     C -- no --> F{Pillar on the map<br>not yet passed?}
     F -- yes --> G["PILLAR mode<br>aim at the lateral goal<br>(max 60 degrees)"]
@@ -293,7 +293,7 @@ This program reads the **first 12 fields** (`sscanf` with 12 values). The last t
 | `color` (1 red, 2 green, 0 none) | Which side to pass the pillar on |
 | `x`, `width` | Kept in the message, not used for steering (the distance and side are used) |
 | `bottom`, `correct` | Read but not used in the steering law |
-| `blueFound`, `blueRow`, `orangeFound`, `orangeRow` | The floor lines (corners) |
+| `blueFound`, `orangeFound` | The floor lines (corners). Their rows (`blueRow`, `orangeRow`) are read but not used |
 | `seq` | Message counter (printed as a number, not checked) |
 | `distCm`, `latCm` | Position of the pillar: how far ahead and to the side (cm) |
 

@@ -1748,3 +1748,14 @@ The sketches in `src` were compared with the two sketches the team sent, with th
 ### 20.6 What this phase gives the rubric
 
 The code of every programmed Obstacle stage is in `src`, with an English README for each stage, and the documentation now describes the same program as the code. The checks above are listed so that a reader can see what is measured and what is not.
+
+### 20.7 Documentation check against the code (same day)
+
+Every number, state and message in the Obstacle docs was compared with the sketches:
+
+- **Constants and state diagrams** in the driving README and the root section 9 match the code. The driving README diagram now says the first line counts after 10 cm of driving.
+- **Camera fields:** the driving README and the root README said the line rows (`blueRow`, `orangeRow`) are used. The code reads them but only uses the `found` flags. The docs now say so.
+- **Parking README:** a stop message that the code can print (an unmeasured reverse count) was missing from the table. It was added.
+- **Open Challenge state diagram** (section 8.2) matches its sketch: states `WAIT`, `STRAIGHT`, `TURN`, `DONE`.
+
+Nothing in the code was changed.

@@ -61,6 +61,7 @@ Every stop prints its reason to the Serial Monitor:
 | `No forward encoder tick. Check D3.` | The encoder is not counting. Check the wire on D3 |
 | `Reverse stopped: no encoder pulses for 1.5 seconds.` | The wheel is blocked or the encoder stopped |
 | `Five-turn encoder target reached. Motor stopped.` | Normal end of the reverse |
+| `Enter the measured five-turn count in REVERSE_TARGET_TICKS.` | The count is 0: the reverse was never measured. The maneuver is not run |
 
 ## Known gaps
 

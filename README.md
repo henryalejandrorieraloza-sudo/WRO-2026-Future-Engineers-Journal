@@ -631,7 +631,7 @@ The line ranges were measured on 19 Nov with the locked camera: the orange line 
 $color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,orangeRow,blueCenterRow,orangeCenterRow
 ```
 
-The Nano reads the first 12 fields. The pillar is `color`, `distCm` (ahead) and `latCm` (to the side); the lines are `blueFound`/`blueRow` and `orangeFound`/`orangeRow`.
+The Nano reads the first 12 fields. The pillar is `color`, `distCm` (ahead) and `latCm` (to the side); the lines are `blueFound` and `orangeFound`; the row values are read but not used by the driving program.
 
 ### 9.3 From pixels to centimetres
 
