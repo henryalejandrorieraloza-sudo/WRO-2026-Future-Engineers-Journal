@@ -732,6 +732,8 @@ void setLinePixel(int x, int y, uint8_t c) {       // set the 2-bit code of one 
 uint16_t lineU16(int v) { return v < 0 ? 0xFFFF : (uint16_t)v; }   // -1 = 0xFFFF in the packet (means "not found")
 
 // Packet to viewer.html: header (37 bytes) + picture (153600) + pillar mask (19200) + line mask (19200)
+// Sends one picture and its masks to the PC viewer (camera_viewer.html) over USB. Only used when
+// STREAM_TO_PC is true, because it is slow. The header is 37 bytes, then the picture and two masks.
 void sendPacket(const uint8_t *picture, const Pillar &p, const LineInfo &blue, const LineInfo &orange) {  // send one full picture packet to viewer.html (header, picture, pillar mask, line mask)
   memset(lineMask, 0, W * H / 4);                  // clear the line mask
   for (int ay = 0; ay < AREA_H; ay++)              // each row of the area
@@ -783,6 +785,8 @@ void sendPacket(const uint8_t *picture, const Pillar &p, const LineInfo &blue, c
 
 // ---------- Camera ----------
 // Freeze white balance, exposure and gain at the values the camera found by itself.
+// Freezes white balance, exposure and gain at the values the camera has reached.
+// This keeps the colours of the pillars and lines the same during the round.
 void lockCamera() {  // freeze white balance, exposure and gain of the camera
   sensor_t *cam = esp_camera_sensor_get();         // the sensor settings
   cam->set_whitebal(cam, 0);                       // turn off automatic white balance
@@ -794,6 +798,8 @@ void lockCamera() {  // freeze white balance, exposure and gain of the camera
   if (!(STREAM_TO_PC && Serial)) Serial.println("\nCAMERA LOCKED: white balance, exposure and gain are frozen.");   // tell the Serial Monitor (not while streaming pictures)
 }
 
+// Configures the OV2640 (QQVGA RGB565, two frame buffers in PSRAM, latest frame only) and
+// starts it. The automatic settings stay on until lockCamera() runs. Returns false if the camera does not answer.
 bool startCamera() {  // configure the sensor and start the camera; returns false if it fails
   camera_config_t config = {};                     // camera configuration, all fields zero first
   config.ledc_channel = LEDC_CHANNEL_0;            // clock channel used for XCLK (PWM generator channel)
@@ -878,6 +884,10 @@ void printProbe(const char *name, const uint8_t *buf, int cx, int cy) {  // prin
                 name, cx, cy, hMin, hMax, sMin, sMax, vMin, vMax);  // values for the print format above
 }
 
+// Arduino loop(), once per camera frame: freeze the camera after LOCK_AFTER_MS; classify each pixel (buildCodeMap);
+// merge red and magenta patches (mergeRedMagenta); find the pillar (blocks or pixels) and apply the time filter;
+// find the orange and blue lines; send one message to the Nano; optionally send the viewer packet;
+// print the status every 500 ms; return the frame buffer.
 void loop() {                                      // runs again and again
   if (LOCK_CAMERA && !cameraLocked && millis() - bootMs >= LOCK_AFTER_MS) lockCamera();   // freeze the camera once it has adjusted (after LOCK_AFTER_MS)
 

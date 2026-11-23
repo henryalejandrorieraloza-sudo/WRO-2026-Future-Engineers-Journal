@@ -79,6 +79,7 @@ unsigned long lastReversePulseMs = 0;     // time of the last new encoder pulse 
 unsigned long stageStartMs = 0;           // time when the current stage started (for timeouts)
 unsigned long lastGyroUs = 0;             // time of the last gyro update, in microseconds
 
+// Interrupt routine for the wheel encoder. Runs on every rising edge; counts one tick.
 void encoderRise() {              // interrupt routine: runs on every rising edge of the encoder
   ++encoderTicks;                 // count one wheel pulse
 }
@@ -90,6 +91,8 @@ unsigned long readTicks() {       // returns the tick count safely
   return count;                   // give back the copy
 }
 
+// Used only when CALIBRATE_ENCODER is true: counts encoder ticks with the motor off, so the ticks for five
+// wheel turns can be measured by hand.
 void runCalibration() {           // used only when CALIBRATE_ENCODER is true
   if (!Serial.available()) return;  // no key pressed: do nothing
   char command = Serial.read();     // read one character sent from the computer
@@ -105,6 +108,7 @@ void runCalibration() {           // used only when CALIBRATE_ENCODER is true
   }
 }
 
+// Stops the motor and the steering, prints the reason and the state, and sets the final stop flag.
 void stopCar(const __FlashStringHelper *reason) {  // stops everything and prints why
   analogWrite(PWMA, 0);           // motor speed to zero
   steering.write(CENTER);         // wheels straight
@@ -113,6 +117,7 @@ void stopCar(const __FlashStringHelper *reason) {  // stops everything and print
 }
 
 // ---------- BMI160 ----------
+// Reads 'count' bytes starting at register 'reg' of the BMI160 over I2C.
 bool readRegisters(byte reg, byte *data, byte count) {  // read 'count' bytes starting at register 'reg'
   Wire.beginTransmission(gyroAddress);  // address the gyro
   Wire.write(reg);                      // send the register number
@@ -125,6 +130,7 @@ bool readRegisters(byte reg, byte *data, byte count) {  // read 'count' bytes st
   return true;                          // success
 }
 
+// Writes one byte to a BMI160 register over I2C. Returns false if the write failed.
 bool writeRegister(byte reg, byte value) {  // write one byte into a gyro register
   Wire.beginTransmission(gyroAddress);  // address the gyro
   Wire.write(reg);                      // which register
@@ -132,6 +138,7 @@ bool writeRegister(byte reg, byte value) {  // write one byte into a gyro regist
   return Wire.endTransmission() == 0;   // true if the gyro acknowledged
 }
 
+// Reads the rotation speed around the vertical (Z) axis and returns it in degrees per second.
 bool readGyroZ(float &rate) {     // reads the rotation speed around the vertical axis (Z)
   byte data[2];                   // two bytes: low and high
   if (!readRegisters(0x10, data, 2)) return false; // register 0x10 = gyro Z, fail if read fails
@@ -140,6 +147,7 @@ bool readGyroZ(float &rate) {     // reads the rotation speed around the vertica
   return true;                    // success
 }
 
+// Finds and starts the BMI160 (tries the two possible I2C addresses), then measures its zero offset with the car still.
 bool initGyro() {                 // finds and starts the BMI160, then measures its zero offset
   const byte addresses[] = {0x69, 0x68};  // the two possible I2C addresses of the BMI160
   bool found = false;             // becomes true when the chip answers
@@ -174,6 +182,7 @@ bool initGyro() {                 // finds and starts the BMI160, then measures 
   return true;                    // gyro ready
 }
 
+// Adds the rotation since the last call to yawDeg, using the gyro rate and the elapsed time.
 bool updateYaw() {                // adds the rotation since the last call to yawDeg
   unsigned long now = micros();   // current time in microseconds
   unsigned long elapsed = now - lastGyroUs;  // time since the last update
@@ -187,11 +196,13 @@ bool updateYaw() {                // adds the rotation since the last call to ya
 }
 
 // ---------- VL53L1X ----------
+// Keeps one ToF sensor switched off (XSHUT LOW) during start-up, so the other sensors can be addressed first.
 void holdInReset(byte pin) {      // keeps a ToF sensor switched off during startup
   digitalWrite(pin, LOW);         // pull the XSHUT pin low = sensor off
   pinMode(pin, OUTPUT);           // make it an output so it stays low
 }
 
+// Starts one VL53L1X and gives it its own I2C address.
 bool initTof(VL53L1X &tof, byte xshut, byte address) {  // starts one ToF sensor and gives it a new address
   pinMode(xshut, INPUT);          // release the sensor: it turns on
   delay(10);                      // give it time to wake up
@@ -205,6 +216,7 @@ bool initTof(VL53L1X &tof, byte xshut, byte address) {  // starts one ToF sensor
       && !Wire.getWireTimeoutFlag();                 // no bus timeout happened
 }
 
+// Reads one distance from a ToF sensor in mm, prints it with the label, and returns it.
 int measure(VL53L1X &tof, const __FlashStringHelper *label,  // reads one distance and prints it
             bool shortMode) {                                 // shortMode: short or long range this time
   Wire.clearWireTimeoutFlag();    // forget old bus timeouts
@@ -235,6 +247,7 @@ int measure(VL53L1X &tof, const __FlashStringHelper *label,  // reads one distan
   return mm <= 4000 ? mm : 0;     // accept distances up to 4 m, otherwise treat as no reading
 }
 
+// Measures the left and right distances and starts the first turn toward the side with more free space.
 void chooseDirection() {          // measures both sides and starts the first turn toward the open side
   static int left = 0, right = 0; // keep the last valid readings between calls (0 = not read yet)
   static bool shortMode = false;  // alternates between short and long mode on each call
@@ -263,6 +276,7 @@ void chooseDirection() {          // measures both sides and starts the first tu
 }
 
 // ---------- Reverse maneuver ----------
+// Switches the motor to reverse at the reverse speed and starts counting encoder ticks for the back-up.
 void startReverse() {             // sets the motor direction to backward and starts counting
   // Motor PWM has been zero throughout the pause.
   digitalWrite(AIN2, LOW);        // direction: AIN2 low ...
@@ -277,6 +291,8 @@ void startReverse() {             // sets the motor direction to backward and st
   Serial.println(F("Reversing straight."));  // report
 }
 
+// Runs every loop while reversing: slows the motor down near the target, and stops when the target
+// tick count is reached, when the motor has been reversing too long, or when the encoder stalls.
 void updateReverse() {            // runs every loop while reversing
   unsigned long traveled = readTicks() - reverseStartTicks;  // ticks counted since reverse started
   unsigned long now = millis();   // current time
@@ -304,6 +320,8 @@ void updateReverse() {            // runs every loop while reversing
   }
 }
 
+// Arduino setup(): configures the pins, the encoder interrupt and the servo, starts the gyro and the
+// side sensors, and prints the start-up status.
 void setup() {                    // runs once at power on or reset
   pinMode(PWMA, OUTPUT);          // motor speed pin is an output
   pinMode(AIN1, OUTPUT);          // direction pin 1 is an output
@@ -356,6 +374,10 @@ void setup() {                    // runs once at power on or reset
   Serial.println(F("Waiting for both side distances."));
 }
 
+// Arduino loop(), repeated forever. The parking maneuver is a stage machine (enum Stage). setup() leaves it in
+// WAIT_FOR_SIDES, so it starts on power-up with no START button (see the README). The stages run in this order:
+// WAIT_FOR_SIDES -> FIRST_TURN -> DRIVE_STRAIGHT -> RETURN_TURN -> PAUSE_BEFORE_REVERSE -> REVERSING -> FINISHED.
+// REVERSING and PAUSE_BEFORE_REVERSE are handled before the gyro read; the rest are handled in the switch below.
 void loop() {                     // runs over and over after setup()
   if (CALIBRATE_ENCODER) {        // calibration mode
     runCalibration();             // handle the keys z and p
