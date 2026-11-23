@@ -83,6 +83,8 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 |---|---|---|---|---|
 | [`front_protrusion.stl`](stl/front_protrusion.stl) | <img src="images/front_protrusion.png" height="110"> | 1 | 31 × 65 × 1 | Front protrusion of chassis v4: a separate plate screwed to the front of the base. It adds length to the car and is **part of the car** |
 
+> The plate's top face touches the bottom face of the base (Z = 0 mm). The plate extends 1 mm below the base (Z = -1 mm in the STL).
+
 ### Sensor and camera mounts
 
 | Part | Render | Qty | Size (mm) | Function |
