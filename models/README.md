@@ -9,7 +9,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 | File / folder | Content |
 |---|---|
-| [`stl/`](stl) | **28 STL files**: 25 printed parts (chassis v3), 2 tyre moulds and the `JIMMY_BUMP` perturbation piece, in millimetres |
+| [`stl/`](stl) | **28 STL files**: 25 printed parts (chassis v3), 2 tyre moulds and the `BUMP` perturbation piece, in millimetres |
 | [`images/`](images) | A render of each part, with the same name as its STL |
 | [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |
@@ -81,7 +81,7 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 
 | Part | Render | Qty | Size (mm) | Function |
 |---|---|---|---|---|
-| [`JIMMY_BUMP.stl`](stl/JIMMY_BUMP.stl) | <img src="images/JIMMY_BUMP.png" height="110"> | 1 | 31 × 65 × 1 | Perturbation (bump) used to test the car. It is **not** part of the car |
+| [`BUMP.stl`](stl/BUMP.stl) | <img src="images/BUMP.png" height="110"> | 1 | 31 × 65 × 1 | Perturbation (bump) used to test the car. It is **not** part of the car |
 
 ### Sensor and camera mounts
 

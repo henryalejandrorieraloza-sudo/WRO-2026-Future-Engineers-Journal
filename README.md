@@ -63,7 +63,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 | Rubric criterion | What it asks for | Where it is |
 |---|---|---|
-| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 25 printed parts + 2 tyre moulds + the JIMMY_BUMP perturbation piece, full STEP assembly, CAD v1–v3, assembly order) |
+| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 25 printed parts + 2 tyre moulds + the BUMP perturbation piece, full STEP assembly, CAD v1–v3, assembly order) |
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
@@ -87,7 +87,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 │   ├── obstacle-challenge/     ← camera vision, straight with pillars, line test
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
-├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + JIMMY_BUMP), renders, full STEP assembly, CAD v1–v3
+├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + BUMP), renders, full STEP assembly, CAD v1–v3
 ├── t-photos/                ← team photos (official and fun)
 ├── v-photos/                ← the six official views of the vehicle + all parts laid out
 ├── video/                   ← links to the driving videos
@@ -967,7 +967,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Pillar detection | Done — Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
 | Obstacle vision v3.2 (QQVGA, half resolution) | In progress — written 22 Nov (`obstacle_camera_v3_2`), not validated on the track; v3.1 is still the reference |
 | Live camera view over WiFi | Done for bench tests only — `WIFI_STREAM = false` in the competition build (rule 11.6: no radio during rounds) |
-| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 25 printed parts + 2 tyre moulds + JIMMY_BUMP; full STEP assembly in `models/`) |
+| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 25 printed parts + 2 tyre moulds + BUMP; full STEP assembly in `models/`) |
 | Steering calibration on v3 | Done 21 Nov — centre 85, limits 170 / 10 (servo units). Used by `straight_pillars`, `open_challenge`, the parking sketch and the tests since 22 Nov |
 | Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
