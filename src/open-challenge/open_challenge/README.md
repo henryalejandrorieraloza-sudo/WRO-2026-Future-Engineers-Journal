@@ -12,10 +12,10 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 |---|---|---|
 | `LAPS` | 3 | 1 = one lap (4 turns), 3 = the full challenge (12 turns) |
 | `RUN_PWM` | 150 | Speed on the straights (0–255). Tested with 110; raise in steps of about 20 |
-| `TURN_PWM` | 90 | Speed in the corners (90 was too weak to turn at lower values) |
+| `TURN_PWM` | 90 | Speed in the corners. Lower values were too weak to turn the car, so 90 is the value in use |
 | `STOP_OFFSET_CM` | 0 | Final stop: + stops later, − stops earlier. Only affects the exact `LAPS ≥ 2` method (`LSTART − D1 + STOP_OFFSET_CM`); the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it |
 | `LANE_MODE` | 1 | 0 = center of the corridor, 1 = fixed distance to the inner wall |
-| `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). Do not go below about 200 mm |
+| `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). 100 is below the 200 mm safety margin: the car may touch the inner corner in a turn. If it does, set 200 |
 | `CENTER_SHIFT_MM` | 200 | Shift of the center toward the inner wall (mode 0) |
 | `JUMP_DELTA_MM` / `JUMP_ABS_MM` | 250 / 1200 | How much a reading must jump to count as a corner |
 | `TURN_PREDICT_S` | 0.12 | Ends the turn early by turn rate × this. Raise it if the car overshoots 90° |
@@ -25,6 +25,8 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 
 **3. Car constants** (measured on this car)
 `MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 90`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 15.1`, and the pins.
+
+**Note on the two constants that differ from the Obstacle programs:** `TICKS_PER_CM = 15.1` was measured by pushing the car by hand. The motor-running value is `9.27` (21 Nov), used by `straight_pillars`, and `STEER_CENTER = 90` has not been re-measured (`straight_pillars` uses 85). Both changes alter how this program drives, so they must be measured and tested on the track before they are made. The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
 
 ## Wiring
 | Part | Nano pin |

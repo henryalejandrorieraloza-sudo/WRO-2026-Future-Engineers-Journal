@@ -45,15 +45,15 @@
 // --- Race ---
 const int   LAPS     = 3;             // 1 = one lap (4 turns), 3 = the full Open Challenge (12 turns)
 const int   RUN_PWM  = 150;           // speed on the straights (0-255). Tested: 110. Raise in steps of ~20
-const int   TURN_PWM = 90;            // speed in the corners (90 was too weak to turn)
+const int   TURN_PWM = 90;            // speed in the corners. Lower values were too weak to turn the car; 90 is the value in use
 const float STOP_OFFSET_CM = 0;       // final stop: + = stop later (further), - = stop earlier
 
 // --- Where the car drives in the corridor (lane) ---
 const int   LANE_MODE = 1;            // 0 = CENTER of the corridor (uses both walls)
                                       // 1 = fixed distance to the INNER wall (INNER_TARGET_MM)
 const int   INNER_TARGET_MM = 100;    // LANE_MODE 1: distance to keep from the inner wall (mm)
-                                      //   smaller = closer to the inner wall. Do not go below ~200:
-                                      //   in the turn the car could touch the inner corner
+                                      //   smaller = closer to the inner wall. 100 is BELOW the 200 mm margin:
+                                      //   in the turn the car could touch the inner corner. If it does, use 200
 const int   CENTER_SHIFT_MM = 200;    // LANE_MODE 0: move the "center" toward the INNER wall by this
                                       //   many mm (0 = exact center, 100 = 10 cm closer to the inner wall)
 const int   SAFE_WALL_MM = 70;        // any wall closer than this: steer away at full correction
