@@ -130,11 +130,11 @@
 
   .diagrama{display:flex; flex-direction:column; align-items:center; gap:10px;}
   .diagrama svg{width:100%; max-width:620px; height:auto; display:block;}
-  .leyenda{display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; font-size:11.5px; color:var(--sub);}
-  .leyenda span{display:inline-flex; align-items:center; gap:5px;}
-  .leyenda i{width:10px; height:10px; border-radius:50%; display:inline-block; flex:none;}
-  .leyenda i.linea{width:14px; height:3px; border-radius:2px;}
-  .nota-regla{font-size:12px; color:var(--sub); text-align:center; margin:2px 0 0; max-width:60ch; line-height:1.45;}
+  .legend{display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; font-size:11.5px; color:var(--sub);}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:10px; height:10px; border-radius:50%; display:inline-block; flex:none;}
+  .legend i.line{width:14px; height:3px; border-radius:2px;}
+  .rule-note{font-size:12px; color:var(--sub); text-align:center; margin:2px 0 0; max-width:60ch; line-height:1.45;}
 
   details.tiradas{margin-top:16px; border-top:1px dashed var(--line); padding-top:10px;}
   details.tiradas summary{cursor:pointer; font-size:13px; color:var(--sub); font-weight:600;}
@@ -272,7 +272,7 @@
       </div>
     </div>
     <div class="chart-wrap" id="chartWrap">
-      <div id="grafico"></div>
+      <div id="chart"></div>
       <div class="chart-tooltip" id="chartTooltip"></div>
     </div>
 
@@ -928,24 +928,24 @@
   }
 
   function legendObstacle(){
-    return '<div class="leyenda">' +
+    return '<div class="legend">' +
       '<span><i style="background:var(--pillar-green);border-radius:1px;"></i>Green pillar (pass on its left)</span>' +
       '<span><i style="background:var(--pillar-red);border-radius:1px;"></i>Red pillar (pass on its right)</span>' +
       '<span><i style="background:transparent;border:2px dashed var(--ink);"></i>Single-pillar section</span>' +
-      '<span><i class="linea" style="background:var(--magenta);"></i>Parking pieces</span>' +
+      '<span><i class="line" style="background:var(--magenta);"></i>Parking pieces</span>' +
       '<span><i style="background:transparent;border:1.5px solid var(--seat-ring);border-radius:50%;"></i>Empty seat</span>' +
-      '<span><i class="linea" style="background:var(--line-orange);"></i><i class="linea" style="background:var(--line-blue);"></i>Corner lines</span>' +
+      '<span><i class="line" style="background:var(--line-orange);"></i><i class="line" style="background:var(--line-blue);"></i>Corner lines</span>' +
       '</div>' + rulerNote();
   }
   function rulerNote(){
-    return '<p class="nota-regla">Rulers in mm from the outer wall. Seats sit on the 1000 / 1500 / 2000 lines, in two rows at <b>400</b> and <b>600&nbsp;mm</b> from the outer wall.</p>';
+    return '<p class="rule-note">Rulers in mm from the outer wall. Seats sit on the 1000 / 1500 / 2000 lines, in two rows at <b>400</b> and <b>600&nbsp;mm</b> from the outer wall.</p>';
   }
   function legendOpen(){
-    return '<div class="leyenda">' +
-      '<span><i class="linea" style="background:var(--ink);"></i>Inner wall, wide (1000&nbsp;mm)</span>' +
-      '<span><i class="linea" style="background:var(--accent);"></i>Narrow (600&nbsp;mm)</span>' +
+    return '<div class="legend">' +
+      '<span><i class="line" style="background:var(--ink);"></i>Inner wall, wide (1000&nbsp;mm)</span>' +
+      '<span><i class="line" style="background:var(--accent);"></i>Narrow (600&nbsp;mm)</span>' +
       '<span><i style="background:var(--accent);border-radius:2px;"></i>Start zone + robot heading</span>' +
-      '<span><i class="linea" style="background:var(--line-orange);"></i><i class="linea" style="background:var(--line-blue);"></i>Corner lines</span>' +
+      '<span><i class="line" style="background:var(--line-orange);"></i><i class="line" style="background:var(--line-blue);"></i>Corner lines</span>' +
       '</div>' + rulerNote();
   }
 
@@ -955,7 +955,7 @@
   var CHART_W = 640, CHART_H = 220, CHART_PAD_L = 34, CHART_PAD_R = 14, CHART_PAD_T = 14, CHART_PAD_B = 26;
 
   function renderChart(filteredAttempts){
-    var el = document.getElementById("grafico");
+    var el = document.getElementById("chart");
     var scored = filteredAttempts.filter(function(i){ return i.score; });
     if (!scored.length){
       el.innerHTML = '<p style="color:var(--sub); font-size:13px; padding:24px 0; text-align:center;">' +

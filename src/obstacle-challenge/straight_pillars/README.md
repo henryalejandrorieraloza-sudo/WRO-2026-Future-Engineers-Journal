@@ -26,7 +26,7 @@ The camera must run `obstacle_camera.ino` with `FOCAL_PX = 100`. This sketch rea
 
 ### 1. Odometry (the map)
 
-- **Distance:** every encoder tick adds `1 / TICKS_PER_CM` cm (15.1 ticks per cm, measured: 980 ticks = 65 cm).
+- **Distance:** every encoder tick adds `1 / TICKS_PER_CM` cm (9.27 ticks per cm, measured on 21 Nov with the motor running: 190 ticks = 20.5 cm; the earlier 15.1 came from pushing the car by hand).
 - **Heading:** the gyroscope gives the turning speed around Z. The code subtracts a zero offset measured at start and adds the rotation to `yaw`.
 - **Position:** each distance step is added to `(carX, carY)` along the average heading of that step. `x` is forward from the start and `y` is to the left (positive).
 
