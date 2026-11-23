@@ -244,4 +244,5 @@ The boards arrived in under two weeks and have worked without a single failure s
 | TB6612FNG | [TB6612FNG.PDF](datasheets/TB6612FNG.PDF) | Truth table (forward, reverse, coast, short brake), current limits |
 | CN3903 buck | [CN3903.PDF](datasheets/CN3903.PDF) | Input range, 3 A output |
 | N20 motor | [N20_motors.pdf](datasheets/N20_motors.pdf) | Speed, current, encoder |
-| SG90 servo (original choice, not on the current car) | [SG90.PDF](datasheets/SG90.PDF) | Kept for the history only. The car steers with an MG90 metal-gear servo, and the datasheet of that servo is not in this folder yet |
+| SG90 servo (original choice, not on the current car) | [SG90.PDF](datasheets/SG90.PDF) | Kept for the history only |
+| MG90S metal-gear servo (steering on the current car) | [MG90S datasheet (external PDF)](https://www.tinytronics.nl/product_files/000263_Data_Sheet_of_MG90S_Analog_Servo_Motor.pdf) | Pulse range, torque, gear type. Linked, not copied into this folder, because the file is not from the team; the car's label should be checked against it |
