@@ -18,7 +18,7 @@ ORANGE YES low 218 center 205 (12/20)  |  BLUE no (3/20)  |  pillar RED 42 cm
 - `center`: row of the line straight ahead, or `-` if it is not in the center strip.
 - `(12/20)`: in how many of the last 20 messages the line was seen.
 
-The motor driver pins are set to stop the motor, and the steering servo is centered at 120°.
+The motor driver pins are set to stop the motor, and the steering servo is centered at 120° (an old provisional value; the measured centre of this chassis is 85, see `straight_pillars/PARAMETERS.md`).
 
 ## Message format it expects
 The camera sends 14 fields (see `obstacle_camera`, version 3 or later):

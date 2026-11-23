@@ -744,7 +744,7 @@ void loop() {
   static unsigned long lastPrint = 0;
   if (DEBUG_PRINTS && millis() - lastPrint >= 150) {
     lastPrint = millis();
-    Serial.print(F("eje x ")); Serial.print(carX, 0);
+    Serial.print(F("drive axle x ")); Serial.print(carX, 0);
     Serial.print(F(" y ")); Serial.print(carY, 1);
     Serial.print(F(" | yaw ")); Serial.print(yaw, 1);
     Serial.print(F(" goal ")); Serial.print(goalHeading, 1);

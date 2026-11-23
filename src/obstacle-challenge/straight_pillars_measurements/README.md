@@ -1,4 +1,4 @@
-# Straight with pillars, measurement version (`straight_pillars_medidas.ino`)
+# Straight with pillars, measurement version (`straight_pillars_measurements.ino`)
 
 Arduino Nano sketch that drives one straight with pillars using the camera messages, the odometry map and the gyroscope. It is the **measurement snapshot** of 19–21 November 2026: the car measurements, the real steering centre (85) and the wheel angle (40°) were taken in this version.
 
@@ -6,7 +6,7 @@ It is **not the current program**. The validated version, used on the track on 2
 
 ## What is different from `straight_pillars`
 
-| | `straight_pillars_medidas` (this folder) | `straight_pillars` (validated 21 Nov) |
+| | `straight_pillars_measurements` (this folder) | `straight_pillars` (validated 21 Nov) |
 |---|---|---|
 | Measurements | Car geometry from 19 Nov, wheel angle 21 Nov | Later measurements and fixes (see its PARAMETERS.md) |
 | Floor lines (`blueFound` / `orangeFound`) | Read by the camera message, **not used** | Stops on the floor line and drives to the wall |
@@ -69,7 +69,7 @@ The camera sketch it expects is `obstacle_camera` v3.1b (14 fields; this sketch 
 
 - `NEW PILLAR RED` / `NEW PILLAR GREEN`: a pillar was added to the map.
 - `PILLAR CLEARED`: the car passed a pillar and the next one became current.
-- `eje x … y … | yaw … goal … | goalY … | pillar … | cam …`: every 150 ms when `DEBUG_PRINTS` is on.
+- `drive axle x … y … | yaw … goal … | goalY … | pillar … | cam …`: every 150 ms when `DEBUG_PRINTS` is on.
 - `WAITING FOR CAMERA`: no valid message for 500 ms; the motor is stopped.
 - `DONE | x … | y … | yaw …`: the run distance was reached.
 

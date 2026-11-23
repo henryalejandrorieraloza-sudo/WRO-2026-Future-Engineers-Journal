@@ -231,7 +231,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 - **Geometry:** the pitch diameter of the pinion is m × z = 1 × 12 = **12 mm**, so each degree of servo rotation moves the rack π × 12 / 360 ≈ **0.105 mm**. The relation between servo angle and rack position is linear and has no dead zone, so the angle we command is the angle we get.
 - **Why we left Ackermann:** in theory Ackermann is better, because the inner wheel turns more than the outer one and neither tyre slips. In practice our Ackermann linkages (v1 and v2) had too many printed joints and too much friction: the servo could not complete its travel (journal Problem 29) and **three servos were damaged** pushing against the linkage (journal Problems 17 and 33).
 - **Trade-off we accepted:** with parallel steering both front wheels turn the same angle, so in a turn the inner wheel slips a little. On a 270 g car at 0.3–0.6 m/s that slip is small, and the 1 : 1 differential at the rear already removes the larger scrubbing of the driven wheels. We traded a small geometric error for a mechanism that is **reliable, easy to print and does not break servos**.
-- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_calibration` after any mechanical change (on v3: centre 120°, left limit 180°, right limit 50°, provisional).
+- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_calibration` after any mechanical change (on v3, measured on 21 Nov: centre 85, left limit 170, right limit 10, in servo units).
 
 ### 5.4 Wheels and tyres
 
@@ -389,7 +389,7 @@ flowchart LR
 
 [`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it (§8.1–8.7 describe that design work) were removed from `main`; they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`) and [src/README.md §4](src/README.md#4-open-challenge-code) links each one.
 
-**Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (15.1 ticks per cm), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
+**Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (15.1 ticks per cm, measured by hand; the motor-running value of 9.27 is not used here yet), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
 
 ```mermaid
 stateDiagram-v2
@@ -969,15 +969,17 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Gyroscope heading | Done — Working (own driver) |
 | Drive motor through TB6612FNG | Done — Tested |
 | Pillar detection | Done — Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
+| Obstacle vision v3.2 (QQVGA, half resolution) | In progress — written 22 Nov (`obstacle_camera_v3_2`), not validated on the track; v3.1 is still the reference |
+| Live camera view over WiFi | Done for bench tests only — `WIFI_STREAM = false` in the competition build (rule 11.6: no radio during rounds) |
 | Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (27 STL files published: 25 printed parts + 2 tyre moulds; full STEP assembly in `models/`) |
-| Steering calibration on v3 | In progress — Provisional centre 120°, limits 180° / 50° |
+| Steering calibration on v3 | Done 21 Nov for `straight_pillars` — centre 85, limits 170 / 10 (servo units). `open_challenge` still uses centre 90 and must be re-measured before it is changed |
 | Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
 | One complete corner (decide, turn, check, follow inner wall) | Validated 21–24 Oct (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version; in the git history) |
 | Side TOF data on the black wall | In progress — Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
 | Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | In progress — program in the repository since 20 Nov (§8.0); three-lap results on the track still to be recorded in the journal |
 | Encoder: delays in distance instead of time (§8.7) | Planned — Next: measure ticks per mm |
-| Videos: one per challenge (≥ 30 s autonomous) | In progress — Pending (rule 7) |
+| Videos: one per challenge (≥ 30 s autonomous) | In progress — Open Challenge video done (`video/video.md`); Obstacle video pending (rule 7) |
 | Encoder | Done — Measured 21 Nov with the motor running: 9.27 ticks per cm (used in the Obstacle map) |
 | Gyroscope (Obstacle Challenge) | Done — Calibrated 21 Nov with a real 90° hand turn (`gyro_90_test`): `YAW_SCALE = 1.06`, `YAW_REVERSED = false` |
 | Camera → Nano UART link | Done — Working (14-field message, now 12 of them read by `straight_pillars`) |
@@ -1008,7 +1010,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
 | Code for **every** programmed component, with comments | — | In progress — Obstacle stages and hardware tests in `src/`; the Open Challenge program is `open_challenge` and its earlier versions are in the git history; final results still to record |
 | Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
-| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | In progress — one general video; Open and Obstacle videos pending |
+| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | In progress — Open Challenge video done; Obstacle video pending (`video/video.md`) |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
 | Repository public until at least December 2027 | — | Done — public; do not delete or make private |
 | Hard copy of the documentation at the International Final | 8 Dec 2026 | Planned — print README + journal |
