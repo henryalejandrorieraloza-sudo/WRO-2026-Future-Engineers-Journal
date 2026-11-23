@@ -4,6 +4,7 @@ Drive motor used on the vehicle.
 
 - **Product:** Anreak "Motor codificador N20 DC 12V 1000RPM para Arduino 3-12V 7.5-3000RPM Motor de alta precisión con retroalimentación (12-1000)"
 - **Amazon ASIN:** B0DB28BC6S (style "12 V, 1000 RPM", pack of 2)
+- **Model number:** GA12-N20-S0310D-E-12-1000-2Pcs
 - **Product URL:** https://www.amazon.com/dp/B0DB28BC6S
 - **Purchase:** last order 20 Aug 2026, 2 pieces
 
@@ -13,19 +14,24 @@ This file replaces the earlier `N20_motors.pdf`, which describes a different mot
 
 | Parameter | Value |
 |---|---|
+| Motor type | Brushed DC gear motor, metal gears, high precision |
 | Rated voltage | 12 V DC |
 | No-load speed | 1000 RPM |
-| Output power | 1 W (listing field "Potencia") |
+| Output power | 1 W |
 | Encoder | Hall sensor, 7 PPR (pulses per motor revolution) |
-| Shaft | 10 mm N20 shaft (listing bullet text) |
-| Gearbox | Metal gears, micro gear M0.15 (listing bullet text) |
-| Coil | 99.95% oxygen-free copper |
-| Magnets | High-torque magnets |
+| Shaft | Plain D-shaft, 10 mm (0.394 in) |
 | Material | Metal |
+| Package | 2 motors, 2 encoder cables (about 15 cm / 5.906 in) |
+
+The listing also states:
+
+- The motor works at other voltages (3 V, 6 V, 12 V variants exist). Lower voltage reduces speed, current and torque proportionally. Higher voltage wears the motor.
+- Reversing polarity reverses the rotation direction.
+- Operating above the rated load causes excess current, overheating, and possible burnout.
 
 ## Not yet confirmed for this ASIN
 
-- **Gear ratio.** The listing does not state it. The encoder count at the output shaft is 7 PPR × gear ratio, so this must be known before the odometry constants are used.
+- **Gear ratio.** Not stated on the listing. The encoder count at the output shaft is 7 PPR × gear ratio, so this must be known before the odometry constants are used.
 - **Stall current and stall torque.** Not stated on the listing.
 - **Rated (nominal) torque and current.** Not stated on the listing.
 
@@ -60,7 +66,7 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which does not mat
 
 ## To do
 
-1. Find the gear ratio and stall current on the Anreak listing or its datasheet, and record them here.
+1. Find the gear ratio and stall current on the Anreak datasheet or the motor's label, and record them here.
 2. Replace the 1.0 A design value with the confirmed stall current.
 3. Replace `schemes/datasheets/N20_motors.pdf` with the datasheet or a saved copy of the listing.
 4. Update `schemes/README.md` §4.2, §5.2 and the encoder constants that depend on counts per output revolution.
