@@ -4,12 +4,12 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 <div align="center">
   <img src="enner_valencia_cad.png" alt="Enner Valencia full CAD assembly" width="520">
-  <br><em>Full CAD assembly of the final car (chassis v4). The front protrusion that carries the camera is visible below the wheelbase — see <a href="../README.md#51-chassis">main README §5.1</a> for why we added it.</em>
+  <br><em>Full CAD assembly of the final car (chassis v4). The front protrusion is visible below the wheelbase. It adds length to the car (17.5 cm in total) and does not carry the camera — see <a href="../README.md#51-chassis">main README §5.1</a> for why we added it.</em>
 </div>
 
 | File / folder | Content |
 |---|---|
-| [`stl/`](stl) | **28 STL files**: 25 printed parts (chassis v3), 2 tyre moulds and the `BUMP` perturbation piece, in millimetres |
+| [`stl/`](stl) | **28 STL files**: 25 printed parts (chassis v3), 2 tyre moulds and the `front_protrusion` piece, in millimetres |
 | [`images/`](images) | A render of each part, with the same name as its STL |
 | [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |
@@ -77,11 +77,11 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 | [`front_wheel.stl`](stl/front_wheel.stl) | <img src="images/front_wheel.png" height="110"> | 2 | Ø 36 × 10 | Front hub; the silicone tyre is cast on it (see [tyres](#4-custom-silicone-tyres)) |
 | [`rear_wheel.stl`](stl/rear_wheel.stl) | <img src="images/rear_wheel.png" height="110"> | 2 | Ø 36 × 11 | Rear hub, keyed to the differential output |
 
-### Test piece (perturbation)
+### Front protrusion
 
 | Part | Render | Qty | Size (mm) | Function |
 |---|---|---|---|---|
-| [`BUMP.stl`](stl/BUMP.stl) | <img src="images/BUMP.png" height="110"> | 1 | 31 × 65 × 1 | Perturbation (bump) used to test the car. It is **not** part of the car |
+| [`front_protrusion.stl`](stl/front_protrusion.stl) | <img src="images/front_protrusion.png" height="110"> | 1 | 31 × 65 × 1 | Front protrusion of chassis v4: a separate plate screwed to the front of the base. It adds length to the car and is **part of the car** |
 
 ### Sensor and camera mounts
 
@@ -111,7 +111,7 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 | **v1** | <img src="iterations/cad_v1.png" height="200"> | <img src="../other/mechanical-iterations/printed_v1.jpg" height="200"> | Classic Ackermann with tie rods | First complete chassis; the SG90 servo moved inside its mount (journal Problem 8) |
 | **v2** | <img src="iterations/cad_v2.png" height="200"> | <img src="../other/mechanical-iterations/printed_v2.jpg" height="200"> | Ackermann driven by a steering rack | Too much friction in the linkage: the servo could not complete its travel and **three servos were damaged** pushing against it |
 | **v3** | <img src="iterations/cad_v3.png" height="200"> | <img src="../other/mechanical-iterations/printed_v3.jpg" height="200"> | **Parallel steering with rack and pinion** | Simple, reliable, prints well, nothing is held with tape |
-| **v4 (final)** | <img src="iterations/cad_v4.png" height="200"> | *printed photo pending* | Parallel steering with rack and pinion (unchanged from v3) | Chassis lengthened from 13 cm to **17.5 cm** to fit the final sensor and camera layout; side TOF sensors confirmed straight (0°) instead of angled, which is what made them reliable on the black wall (journal Phase 10); `rear_spacer`, `differential_support` and `diff_big_axle` are now printed **in pairs** (qty 2) instead of one |
+| **v4 (final)** | <img src="iterations/cad_v4.png" height="200"> | *printed photo pending* | Parallel steering with rack and pinion (unchanged from v3) | Front protrusion added (screwed to the base), car now **17.5 cm** long, to enlarge the parking-lot space (see [main README �5.1](../README.md#51-chassis)); side TOF sensors confirmed straight (0°) instead of angled, which is what made them reliable on the black wall (journal Phase 10); `rear_spacer`, `differential_support` and `diff_big_axle` are now printed **in pairs** (qty 2) instead of one |
 
 > The printed photo of chassis v4 is not in the repository yet; this row will be updated with it once it is taken.
 
