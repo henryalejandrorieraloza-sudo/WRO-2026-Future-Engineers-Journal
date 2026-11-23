@@ -12,10 +12,10 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 |---|---|---|
 | `LAPS` | 3 | 1 = one lap (4 turns), 3 = the full challenge (12 turns) |
 | `RUN_PWM` | 150 | Speed on the straights (0–255). Tested with 110; raise in steps of about 20 |
-| `TURN_PWM` | 90 | Speed in the corners (90 was too weak to turn at lower values) |
+| `TURN_PWM` | 90 | Speed in the corners. Lower values were too weak to turn the car, so 90 is the value in use |
 | `STOP_OFFSET_CM` | 0 | Final stop: + stops later, − stops earlier. Only affects the exact `LAPS ≥ 2` method (`LSTART − D1 + STOP_OFFSET_CM`); the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it |
 | `LANE_MODE` | 1 | 0 = center of the corridor, 1 = fixed distance to the inner wall |
-| `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). Do not go below about 200 mm |
+| `INNER_TARGET_MM` | 100 | Distance to keep from the inner wall (mode 1). 100 is the value used in the 3-lap run (22 Nov) |
 | `CENTER_SHIFT_MM` | 200 | Shift of the center toward the inner wall (mode 0) |
 | `JUMP_DELTA_MM` / `JUMP_ABS_MM` | 250 / 1200 | How much a reading must jump to count as a corner |
 | `TURN_PREDICT_S` | 0.12 | Ends the turn early by turn rate × this. Raise it if the car overshoots 90° |
@@ -24,7 +24,9 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 `KP_HEAD` (2.0), `KI_HEAD` (4.0), `I_MAX` (25), `K_LAT` (0.03), `KI_LAT` (0.02), `LAT_MAX_DEG` (12), `ARM_WALL_MM` (900), `ARM_READINGS` (5), `MAX_TURN_MS` (4000), `MAX_STRAIGHT_MS` (8000), `STALL_MS` (500).
 
 **3. Car constants** (measured on this car)
-`MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 90`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 15.1`, and the pins.
+`MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 85`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 9.27`, and the pins.
+
+**Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the same values as `straight_pillars`, the program that was last validated on the track. Until 22 Nov this program used 90 and 15.1. Those values were changed on 22 Nov without a new track test, so the first run after the change should be watched closely, especially the stop position (it is computed from the encoder). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
 
 ## Wiring
 | Part | Nano pin |

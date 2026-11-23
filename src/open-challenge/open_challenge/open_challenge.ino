@@ -45,15 +45,14 @@
 // --- Race ---
 const int   LAPS     = 3;             // 1 = one lap (4 turns), 3 = the full Open Challenge (12 turns)
 const int   RUN_PWM  = 150;           // speed on the straights (0-255). Tested: 110. Raise in steps of ~20
-const int   TURN_PWM = 90;            // speed in the corners (90 was too weak to turn)
+const int   TURN_PWM = 90;            // speed in the corners. Lower values were too weak to turn the car; 90 is the value in use
 const float STOP_OFFSET_CM = 0;       // final stop: + = stop later (further), - = stop earlier
 
 // --- Where the car drives in the corridor (lane) ---
 const int   LANE_MODE = 1;            // 0 = CENTER of the corridor (uses both walls)
                                       // 1 = fixed distance to the INNER wall (INNER_TARGET_MM)
 const int   INNER_TARGET_MM = 100;    // LANE_MODE 1: distance to keep from the inner wall (mm)
-                                      //   smaller = closer to the inner wall. Do not go below ~200:
-                                      //   in the turn the car could touch the inner corner
+                                      //   smaller = closer to the inner wall. 100 is the value used in the 3-lap run (22 Nov)
 const int   CENTER_SHIFT_MM = 200;    // LANE_MODE 0: move the "center" toward the INNER wall by this
                                       //   many mm (0 = exact center, 100 = 10 cm closer to the inner wall)
 const int   SAFE_WALL_MM = 70;        // any wall closer than this: steer away at full correction
@@ -93,9 +92,9 @@ const bool  MOTOR_REVERSED   = true;  // motor wires not swapped yet (forward in
 const bool  ENCODER_REVERSED = true;  // encoder counts backward: flip the sign of the odometry
 const int   YAW_SIGN         = 1;     // +1: turning LEFT makes yaw go UP
 const float GYRO_SCALE       = 1.007; // gyro read ~0.7 % less than the real rotation (3-lap test)
-const int   STEER_CENTER = 90, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // LEFT = smaller angle
+const int   STEER_CENTER = 85, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // wheels straight = 85 (measured 21 Nov, same as straight_pillars). LEFT = smaller angle
 const int   RAMP_STEP = 5;            // PWM per 20 ms (soft start)
-const float TICKS_PER_CM = 15.1;      // encoder ticks per cm of wheel travel (measured)
+const float TICKS_PER_CM = 9.27;      // encoder ticks per cm, measured 21 Nov WITH THE MOTOR RUNNING (190 ticks = 20.5 cm), same as straight_pillars
 const uint8_t BMI = 0x69;             // I2C address of the BMI160 gyro
 const float GYRO_LSB_PER_DPS = 65.6;  // gyro raw counts per degree/second (sensitivity of the range used)
 const uint32_t TOF_BUDGET_US = 50000; // ToF measurement time: 50 ms

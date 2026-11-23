@@ -1492,7 +1492,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
-- [x] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°). Done on 21 Nov for `straight_pillars`: centre 85, limits 170 / 10. `open_challenge` still uses 90 and must be re-measured.
+- [x] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°). Done on 21 Nov for `straight_pillars`: centre 85, limits 170 / 10. `open_challenge` used 90 until 22 Nov, when it was changed to 85 (§19.2).
 - [ ] Measure the 5 V buck rail during a servo stall while the four TOF sensors are ranging (section 9.4).
 - [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
@@ -1671,10 +1671,28 @@ These changes were made on the same day as the Wi-Fi work above. They are listed
 | Video status in the README | One general video, Open and Obstacle pending | Open Challenge video is done; Obstacle pending (`video/video.md`) | README updated |
 | Camera fields read by `straight_pillars` | 12 | 12 (`sscanf` with 12 fields) | Consistent; no change |
 
-**Open items found, not changed yet (they change how the car drives, so they need a decision and a test first):**
+**Open items from the review, and what was done with them on 22 November:**
 
-1. `open_challenge.ino` still uses `TICKS_PER_CM = 15.1`. That value was measured by pushing the car by hand, and §13.2 explains why it is not reliable. The motor-running value (9.27) is used only by `straight_pillars`.
-2. `open_challenge.ino` still uses a steering centre of 90 (`STEER_CENTER`), while `straight_pillars` uses 85, measured on this chassis on 21 November.
-3. `line_test.ino` still centres the steering at 120°, the old provisional value.
+1. `open_challenge.ino` used `TICKS_PER_CM = 15.1`, a value measured by pushing the car by hand (§13.2 explains why it is not reliable). It now uses **9.27**, the motor-running value that `straight_pillars` uses.
+2. `open_challenge.ino` used a steering centre of 90. It now uses **85**, the centre measured on this chassis on 21 November and used by `straight_pillars`.
+3. `line_test.ino` centred the steering at 120°, the old provisional value. It now uses 85. The same change was made in `servo_test.ino` and in the parking sketch (`obstacle_go_out_of_parking`), which used 90.
 
-Items 1 and 2 must be re-measured with the motor running, and then tested on the track, before they are changed.
+The change to items 1 and 2 was made without a new track test. Its effect is checked in the first run after the change (§19.2).
+
+### 19.2 Open Challenge: the three-lap run, and the constants aligned
+
+**The run.** The Open Challenge program (`open_challenge`) completed the **three laps (12 turns)** on the first attempt. The car stopped in the starting section, close to the same wall it started from (not on the exact same spot). The corridors were narrow. The stop was made by the program, not by hand.
+
+**Constants changed on the same day, to match `straight_pillars`:**
+
+| Constant | Before | After | Reason |
+|---|---|---|---|
+| `TICKS_PER_CM` (`open_challenge`) | 15.1 | 9.27 | Motor-running measurement (§13.2). The stop position is computed from this value, so the stop is expected to move. |
+| `STEER_CENTER` (`open_challenge`) | 90 | 85 | Centre measured on this chassis (21 Nov). The steering is expected to drive straighter. |
+| `CENTER` (parking sketch) | 90 | 85 | Same chassis, same centre. |
+| `CENTER_ANGLE` (`line_test`) | 120 | 85 | Same chassis, same centre. |
+| `CENTER` (`servo_test`) | 90 | 85 | Same chassis, same centre. |
+
+The value of `INNER_TARGET_MM` (100 mm) was kept. It is the value that ran the three laps, and the comment in the code now says so.
+
+**Not recorded for this run:** the lap time and the direction (clockwise or counter-clockwise) of the run. Add them here when they are known.
