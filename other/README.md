@@ -33,5 +33,5 @@ Every part on this table was replaced for a reason recorded in the [engineering 
 - **First PCB with the Nano ESP32** — the Nano ESP32 overheated and stopped working (journal Problem 31); the car now uses a classic Arduino Nano.
 - **Perforated prototype board** — too bulky for the car; replaced by the custom PCB.
 - **4 × Sharp infrared sensors** — unreliable beyond 50–60 cm (journal Problem 3); replaced by TOF400C.
-- **SG90 and MG90S servos** — the SG90 moved inside its mount (Problem 8) and the Ackermann linkages of chassis 1 and 2 damaged three servos (Problems 17, 29 and 33). This led to the rack-and-pinion steering of chassis v3.
+- **SG90 and MG90 servos** — the SG90 moved inside its mount (Problem 8) and the Ackermann linkages of chassis 1 and 2 damaged three servos (Problems 17, 29 and 33). This led to the rack-and-pinion steering of chassis v3.
 - **Early tyres** and spare modules that were replaced during testing.
