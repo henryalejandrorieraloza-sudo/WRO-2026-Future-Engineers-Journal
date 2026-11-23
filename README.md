@@ -63,7 +63,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 | Rubric criterion | What it asks for | Where it is |
 |---|---|---|
-| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 25 printed parts + 2 tyre moulds + the BUMP perturbation piece, full STEP assembly, CAD v1–v3, assembly order) |
+| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 25 printed parts + 2 tyre moulds + the front protrusion, full STEP assembly, CAD v1–v3, assembly order) |
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
@@ -87,7 +87,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 │   ├── obstacle-challenge/     ← the Obstacle Challenge: driving program, camera vision (v3.2), parking start
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
-├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + BUMP), renders, full STEP assembly, CAD v1–v3
+├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + front protrusion), renders, full STEP assembly, CAD v1–v3
 ├── t-photos/                ← team photos (official and fun)
 ├── v-photos/                ← the six official views of the vehicle + all parts laid out
 ├── video/                   ← links to the driving videos
@@ -192,17 +192,17 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 |---|---|
 | <img src="models/enner_valencia_cad.png" alt="CAD assembly, three-quarter view" height="300"> | <img src="v-photos/enner_valencia_real.jpg" alt="Finished car, three-quarter view" height="300"> |
 
-<em>Chassis v4, CAD assembly vs. the finished, printed and assembled car. The front protrusion (§5.1) is visible on both: a narrow tab that adds to the car's declared length without moving the camera or anything that affects manoeuvring.</em>
+<em>Chassis v4, CAD assembly vs. the finished, printed and assembled car. The front protrusion (§5.1) is visible on both: a narrow plate screwed to the base that adds to the car's declared length without moving the camera or anything that affects manoeuvring.</em>
 </div>
 
 ### 5.1 Chassis
 
 - **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
-- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (chassis v4; the base plate was lengthened from the 13 cm of v3 to fit the final sensor and camera layout). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
+- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see �5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
-- **Front protrusion (parking-lot rule):** the base plate is not a plain rectangle — it extends forward past the front axle in a narrow printed tab, purely to add length. It does **not** carry or move the camera: the camera's position relative to the rear (encoder) axle, `CAM_FWD_CM = 11.7 cm` in the odometry code, is fixed by where the camera board sits and is unaffected by how far the tab sticks out. The real purpose is the Obstacle Challenge parking-lot rule (rules §5, Figure 4): the lot is 20 cm wide and 1.5 × the car's declared length long. Without the tab the car measures ≈ 13.5 cm, giving a ≈ 20.25 cm lot; with it the car measures 17.5 cm, giving a ≈ 26.25 cm lot — about 6 extra cm of manoeuvring room inside the parking walls. That margin costs nothing in manoeuvrability, because neither the wheelbase (9 cm) nor the maximum steering angle (30°) — the two things that actually decide how tight the car can turn to park — change at all. The only trade-off is a few extra centimetres of overall length, which we accepted because the car is still well under the 30 cm limit (§5.1 above) and the tab is narrow enough not to interfere with the front TOF sensor's field of view.
+- **Front protrusion (parking-lot rule):** the front protrusion is a separate narrow printed plate (31 × 65 × 1 mm) that is screwed to the front of the 120 mm base and extends it forward, purely to add length. It does **not** carry or move the camera: the camera's position relative to the rear (encoder) axle, `CAM_FWD_CM = 11.7 cm` in the odometry code, is fixed by where the camera board sits and is unaffected by how far the tab sticks out. The real purpose is the Obstacle Challenge parking-lot rule (rules §5, Figure 4): the lot is 20 cm wide and 1.5 × the car's declared length long. Without the protrusion the car measures ≈ 13.5 cm (the 12 cm base plus the small overhang of the camera), giving a ≈ 20.25 cm lot; with it the car measures 17.5 cm, giving a ≈ 26.25 cm lot — about 6 extra cm of manoeuvring room inside the parking walls. That margin costs nothing in manoeuvrability, because neither the wheelbase (9 cm) nor the maximum steering angle (30°) — the two things that actually decide how tight the car can turn to park — change at all. The only trade-off is a few extra centimetres of overall length, which we accepted because the car is still well under the 30 cm limit (§5.1 above) and the tab is narrow enough not to interfere with the front TOF sensor's field of view.
 
 <div align="center">
   <img src="models/images/front_protrusion.png" alt="Front protrusion close-up" height="220">
@@ -912,7 +912,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Pillar detection | Done — Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
 | Obstacle vision v3.2 (QQVGA, half resolution) | Used by the driving program since 23 Nov (`obstacle_camera_v3_2`); the pixel constants are not validated on the track yet |
 | Live camera view over WiFi | Done for bench tests only — `WIFI_STREAM = false` in the competition build (rule 11.6: no radio during rounds) |
-| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 25 printed parts + 2 tyre moulds + BUMP; full STEP assembly in `models/`) |
+| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 25 printed parts + 2 tyre moulds + front protrusion; full STEP assembly in `models/`) |
 | Steering calibration on v3 | Done 21 Nov — centre 85, limits 170 / 10 (servo units). Used by `obstacle_challenge`, `open_challenge`, the parking sketch and the tests since 22 Nov |
 | Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
