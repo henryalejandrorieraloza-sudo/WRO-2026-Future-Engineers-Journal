@@ -245,4 +245,4 @@ The boards arrived in under two weeks and have worked without a single failure s
 | CN3903 buck | [CN3903.PDF](datasheets/CN3903.PDF) | Input range, 3 A output |
 | N20 motor | [N20_motors.pdf](datasheets/N20_motors.pdf) | Speed, current, encoder |
 | SG90 servo (original choice, not on the current car) | [SG90.PDF](datasheets/SG90.PDF) | Kept for the history only |
-| MG90S metal-gear servo (steering on the current car) | [MG90S datasheet (external PDF)](https://www.tinytronics.nl/product_files/000263_Data_Sheet_of_MG90S_Analog_Servo_Motor.pdf) | Pulse range, torque, gear type. Linked, not copied into this folder, because the file is not from the team; the car's label should be checked against it |
+| MG90 metal-gear servo (steering on the current car) | [MG90 / MG90S datasheet (external PDF)](https://www.tinytronics.nl/product_files/000263_Data_Sheet_of_MG90S_Analog_Servo_Motor.pdf) | Pulse range, torque, gear type. Linked, not copied into this folder, because the file is not from the team. The MG90 and MG90S are the same family with the same pulse range |
