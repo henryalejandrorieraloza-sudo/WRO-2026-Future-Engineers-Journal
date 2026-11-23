@@ -45,7 +45,7 @@ $color,x,bottom,correct,blueFound,blueRow,seq,width,distCm,latCm,orangeFound,ora
 | Field | Meaning |
 |---|---|
 | `color` | 0 none, 1 red, 2 green |
-| `x` | Pillar centre in pixels from the middle of the picture, −160 (left) to +159 (right) |
+| `x` | Pillar centre in pixels from the middle of the picture, −80 (left) to +79 (right) at 160 x 120 |
 | `bottom` | Lowest row of the pillar (bigger = closer) |
 | `correct` | 1 if the pillar centre is at least `SAFE_LAT_CM` (17 cm) on its correct side (red: left, green: right) |
 | `blueFound`, `blueRow` | Blue line found (0/1) and its lowest row (−1 = none) |

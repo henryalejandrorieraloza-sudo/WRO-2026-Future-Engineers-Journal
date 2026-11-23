@@ -1,6 +1,6 @@
 # gyro_90_test
 
-Standalone hand-turn calibration test for the **BMI160 gyroscope**, used to measure `YAW_SCALE` and confirm `YAW_REVERSED` for `straight_pillars.ino` (Obstacle Challenge). It reuses that sketch's exact register-level BMI160 driver (no external gyro library), so a value measured here applies directly to the main sketch with no conversion.
+Standalone hand-turn calibration test for the **BMI160 gyroscope**, used to measure `YAW_SCALE` and confirm `YAW_REVERSED` (it was written for the earlier `straight_pillars.ino` sketch, now only in the git history; the current programs use `GYRO_SCALE = 1.007` and `YAW_SIGN`) (Obstacle Challenge). It reuses that sketch's exact register-level BMI160 driver (no external gyro library), so a value measured here applies directly to the main sketch with no conversion.
 
 ## Why this is needed
 

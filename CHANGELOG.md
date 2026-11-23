@@ -2,6 +2,10 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.16 — 23 November · Videos added and documents reconciled with the code
+- **Videos:** Open Challenge `4p94mWkXhsk` and Obstacle Challenge `ccAdp2c7_7Y` added to `video/` and the root README.
+- **Docs corrected to match the sketches** (no `.ino` behaviour changed): TOF addresses of the driving programs (0x2A–0x2D), gyro calibration (300 samples), `servo_calibration` → `servo_test`, constants table of §8.0, old design sections marked as history, camera x range (−80…+79), `camera_test` = v3.1, gyro scale 1.007 in both programs, reverse-turn rule note. Details in journal §21.
+
 ## v1.9.15 — 23 November · Obstacle Challenge consolidated in `src/obstacle-challenge`
 - **`obstacle_challenge` added:** the driving program of the round. It combines the floor-line laps (the first line sets the direction, every corner is a 90° turn in reverse with the gyro and the front and rear ToF), the pillar dodging on an odometry map, and the wall centring between pillars. It has its own README with the constants, the state and flow diagrams, the camera fields it uses and the stop messages.
 - **`obstacle_camera_v3_2` is the vision used by `obstacle_challenge`.** Its farthest pillar (`MAX_AHEAD_CM`) changed from 130 to **40 cm**. Its README now names `obstacle_challenge` and describes the plausibility range and the 12 fields the Nano reads.

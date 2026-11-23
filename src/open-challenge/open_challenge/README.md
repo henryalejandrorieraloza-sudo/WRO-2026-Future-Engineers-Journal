@@ -26,7 +26,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 **3. Car constants** (measured on this car)
 `MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 85`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 9.27`, and the pins.
 
-**Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the same values as `straight_pillars`, the program that was last validated on the track. Until 22 Nov this program used 90 and 15.1. Those values were changed on 22 Nov without a new track test, so the first run after the change should be watched closely, especially the stop position (it is computed from the encoder). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
+**Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the values measured on 21 Nov and also used by `obstacle_challenge`. Until 22 Nov this program used 90 and 15.1. Those values were changed on 22 Nov without a new track test, so the first run after the change should be watched closely, especially the stop position (it is computed from the encoder). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
 
 ## Wiring
 | Part | Nano pin |

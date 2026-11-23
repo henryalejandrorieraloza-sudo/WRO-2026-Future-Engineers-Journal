@@ -8,6 +8,8 @@ This journal records, in chronological order, everything I worked on: what I bui
 
 **Status marks:** ✅ solved / validated · 🔄 in progress · ❓ still open
 
+> **Reading note (23 Nov).** This journal is a diary: older sections keep the numbers that were true on their date. Where an old number differs from the code (gyro calibration with 1000 samples, `straight_pillars` constants, the 1.06 gyro scale, the 12-turn decision tree), the current code and the READMEs win. The reconciliation is in §21.
+
 ---
 
 ## Contents
@@ -29,6 +31,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 15. [Summary of problems and solutions](#15-summary-of-problems-and-solutions)
 16. [Next steps](#16-next-steps)
 17. [Phase 12 — November: failures, a new camera and a restart of the Open Challenge (29 Oct – 20 Nov)](#17-phase-12--november-failures-a-new-camera-and-a-restart-of-the-open-challenge-29-oct--20-nov-2026)
+18. [Phases 13–16 — 21–23 November (sections 18–21)](#21-phase-16--23-november-videos-added-and-every-document-checked-against-the-code)
 
 ---
 
@@ -282,7 +285,7 @@ I tested every component on its own before combining them.
 - **Solution (my own method):**
   1. At startup, turn all 4 sensors off (XSHUT LOW).
   2. Turn them on **one by one**, and give each one a unique address with `setAddress` before turning on the next one:
-     LEFT = **0x30**, RIGHT = **0x31**, BACK = **0x32**, FRONT = **0x33**.
+     LEFT = **0x30**, RIGHT = **0x31**, BACK = **0x32**, FRONT = **0x33** (this was the address set of the test sketches; the driving programs `open_challenge` and `obstacle_challenge` use 0x2A, 0x2B, 0x2C, 0x2D).
   3. Then all 4 sensors run in continuous mode.
 - **Final test code:** `tof_sensors_test.ino` (3 Oct):
   - Long mode, 100 ms timing budget, 100 ms period.
@@ -1510,7 +1513,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Measure encoder ticks per millimetre and the full-lock turning radius, then code the decision tree of §12.10 (delays in encoder turns instead of time).
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
 - [ ] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(22 Nov: `open_challenge` and the camera sketch are in the repository; the final Obstacle run — corners, laps, stop, parking — is not written yet.)*
-- [ ] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(22 Nov: the Open Challenge video is done; the Obstacle video is pending.)*
+- [x] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(23 Nov: both videos are done — Open `4p94mWkXhsk`, Obstacle `ccAdp2c7_7Y`.)*
 - [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring) and send the link before the organisers' deadline (≈ 17 Nov).
 - [ ] Print the README and this journal as the **hard copy** for the International Final (8–10 Dec 2026, San Juan).
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
@@ -1759,3 +1762,35 @@ Every number, state and message in the Obstacle docs was compared with the sketc
 - **Open Challenge state diagram** (section 8.2) matches its sketch: states `WAIT`, `STRAIGHT`, `TURN`, `DONE`.
 
 Nothing in the code was changed.
+
+---
+
+## 21. Phase 16 — 23 November: videos added and every document checked against the code
+
+### 21.1 What changed
+
+- **Both videos are recorded:** Open Challenge `https://www.youtube.com/watch?v=4p94mWkXhsk` and Obstacle Challenge `https://www.youtube.com/watch?v=ccAdp2c7_7Y`. They are in `video/video.md`, `video/README.md` and the root README. The earlier Open video `ISvP-OZAk6c` is kept as history.
+- **Rule used for the review:** the sketches are the truth (they are the part that works); every document that disagreed was changed, never the code.
+
+### 21.2 Differences found and corrected
+
+| Where | What the document said | What the code does | Action |
+|---|---|---|---|
+| Root README, rules table | The only reverse move is the undo of a wrong first turn | `obstacle_challenge` turns every corner in reverse gear | Rewritten; compliance with 9.21 / App. A.4 marked as **not confirmed** |
+| Root README §6, schemes | TOF addresses 0x30–0x33 | Driving programs use 0x2A–0x2D (test sketches keep 0x30–0x33) | Both sets named |
+| Root README §6.3, schemes | Gyro calibration with 1000 samples at power-on | 300 samples after 0.7 s of settling, when the run starts | Corrected |
+| Root README, models README | Calibration sketch `servo_calibration` | The sketch in the repository is `servo_test` | Renamed in the text and link |
+| Root README §8.0 | Table compared `open_challenge` with `straight_pillars` | `straight_pillars` is only in the git history; both driving programs use 1.007, 9.27, 85 | Table replaced with `open_challenge` vs `obstacle_challenge` |
+| Root README §8.1–8.7, §10.4 | Old wall-following design described as current | `open_challenge` uses lane mode, `INNER_TARGET_MM 100`, `RUN_PWM 150` | Marked as history, current values added at the top of §10.4 |
+| Camera README | x from −160 to +159 | At 160 × 120 the range is −80 to +79 | Corrected |
+| `camera_test` | Described as the same code as v3.2 | It is the v3.1 vision code (320 × 240, `IGNORE_TOP_ROWS` 115) | Described correctly |
+| Obstacle README | Gyro scale 1.06 vs 1.007 "not reconciled" | Both programs use 1.007; 1.06 belonged to an older sketch | Rewritten |
+
+### 21.3 Still not verified (not stated as done)
+
+- Whether the Nano TX → camera RX divider is installed and the 5 V rail under servo stall (open items of §16).
+- Lap times, direction and stop position of the recorded Obstacle run.
+- Whether the judges accept the reverse turns of `obstacle_challenge` under rules 9.16 / 9.21 / A.4: ask in the WRO Q&A.
+- `obstacle_go_out_of_parking` has not been tested on the track and its `REVERSE_TARGET_TICKS` is a placeholder.
+
+Nothing in the code was changed in this phase.
