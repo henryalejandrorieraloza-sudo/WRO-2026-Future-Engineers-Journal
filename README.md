@@ -87,7 +87,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 │   ├── obstacle-challenge/     ← the Obstacle Challenge: driving program, camera vision (v3.2), parking start
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
-├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + front protrusion), renders, full STEP assembly, CAD v1–v3
+├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + front protrusion), renders, full STEP assembly, CAD history v1–v3 and the final v4 assembly
 ├── t-photos/                ← team photos (official and fun)
 ├── v-photos/                ← the six official views of the vehicle + all parts laid out
 ├── video/                   ← links to the driving videos
