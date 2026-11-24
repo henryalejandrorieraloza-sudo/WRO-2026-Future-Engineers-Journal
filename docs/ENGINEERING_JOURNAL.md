@@ -770,7 +770,7 @@ The tyres are cast in printed moulds with **C25 silicone rubber** (parts A and B
 
 ### 9.4 Power change: TOF sensors on the 5 V buck rail
 
-The four TOF400C sensors are powered from the **+5 V buck rail**, like the camera and the other sensors. The classic Nano works with 5 V logic, so the 5 V sensors connect to it directly. The power budget was recalculated ([schemes §4.2](../schemes/README.md#42-power-budget)): typical ≈ 2.2 W (≈ 1.6 h per charge), peak ≈ 10.5 W. **Open risk:** the servo's current peaks now share the 5 V rail with the sensors. The 3 A buck margin should keep the rail steady, but this must be measured. Next step: measure the 5 V rail with a multimeter while the servo stalls and all four sensors are ranging.
+The four TOF400C sensors are powered from the **+5 V buck rail**, like the camera and the other sensors. The classic Nano works with 5 V logic, so the 5 V sensors connect to it directly. The power budget was recalculated ([schemes §4.2](../schemes/README.md#42-power-budget)): typical ≈ 2.2 W (≈ 1.6 h per charge), peak ≈ 10.5 W. **Open risk:** the servo's current peaks now share the 5 V rail with the sensors. The 3 A buck margin should keep the rail steady, but this must be measured (the servo stall was later calculated at ≈ 1.27 A, not 650 mA; §24.10). Next step: measure the 5 V rail with a multimeter while the servo stalls and all four sensors are ranging.
 
 This reverses the earlier plan to power the sensors from the Nano's 3.3 V pin, whose small regulator would have carried the sensors' current.
 
@@ -1499,7 +1499,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] Replace the damaged Nano ESP32 (classic Arduino Nano, same pinout) — Problem 31.
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
 - [x] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°). Done on 21 Nov for `straight_pillars`: centre 85, limits 170 / 10. `open_challenge` used 90 until 22 Nov, when it was changed to 85 (§19.2).
-- [ ] Measure the 5 V buck rail during a servo stall while the four TOF sensors are ranging (section 9.4).
+- [ ] Measure the 5 V buck rail during a servo stall (calculated at ≈ 1.27 A, §24.10) while the four TOF sensors are ranging (section 9.4).
 - [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
 - [x] Repeat the ROI test with other sizes: done in Phase 10 — 16 × 8 replaces 1 × 6 ✅
@@ -1866,7 +1866,7 @@ Nothing in the code was changed in this phase.
 - Write one row per run in `docs/TESTS.md`: lap times, direction, stop position, pillars passed on the correct side, and the edge-case results.
 - Decide on the final brake (§23.3) after a test on the track against the stop rule.
 - Remove the dead condition in `runTest()`, in a separate change that is tested on the car. (The unverified Nano RESET comment in `obstacle_camera_v3_2` was removed on 23 November.)
-- Measure the N20 stall current and gear ratio, and the 5 V rail with the servo stalled (§16 and §22.5).
+- Measure the N20 stall current and gear ratio, and the 5 V rail with the servo stalled (≈ 1.27 A calculated, §24.10) (§16 and §22.5).
 - Confirm with the organisers the reverse turns in each corner (rule 9.21 / Appendix A.4) and the first-commit rule (§22.5).
 - Check that each video shows at least 30 s of autonomous driving (rule 7). The links are in `video/video.md`; the journal does not record this check.
 
@@ -1931,7 +1931,7 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 
 The power budget had used 0.7 A, taken from the datasheet of another motor of the same family. On 24 November I measured the real motor. With the motor disconnected and the rotor still (so there is no back-EMF), I put the multimeter on the Ω scale, touched the motor terminals at room temperature and waited for the reading to settle: **R = 11.7 Ω**. At stall the back-EMF is zero, so Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**. The commutator has three segments and the probes add some resistance, so the real value depends on the rotor position: the working range is **0.95 to 1.20 A**.
 
-What changed: the budget in `schemes/README.md` §4.2 now uses 1.03 A (peak from the battery ≈ 1.60 A, ≈ 18.3 W, ≈ 11 min of continuous worst case), and the driver and the supply must carry at least 1.2 A per motor. The result is calculated from a resistance, not read as a current in series; that reading is still optional. Method and numbers: [`schemes/datasheets/N20_stall_current_measurement.md`](../schemes/datasheets/N20_stall_current_measurement.md).
+What changed: the budget in `schemes/README.md` §4.2 now uses 1.03 A (peak from the battery ≈ 1.60 A, ≈ 18.3 W, ≈ 11 min of continuous worst case; these peak numbers were raised again by the servo stall of §24.10), and the driver and the supply must carry at least 1.2 A per motor. The result is calculated from a resistance, not read as a current in series; that reading is still optional. Method and numbers: [`schemes/datasheets/N20_stall_current_measurement.md`](../schemes/datasheets/N20_stall_current_measurement.md).
 
 ### 24.8 Fully charged battery: 13.05 V (24 November)
 
@@ -1944,6 +1944,14 @@ New rules: charge only as 3S HV, and measure the pack before the first run of th
 ### 24.9 Motor-to-wheel ratio counted (24 November)
 
 I counted the turns of the motor output shaft against the turns of the wheel: **1 : 1**. It confirms that the differential adds no reduction, so the 1000 rpm of the N20 is the wheel speed and the 119 encoder ticks per wheel turn are also per output-shaft turn. It does not measure the gearbox inside the N20 (≈ 17 : 1, calculated from the encoder count); that still needs the hand-turn count of `schemes/datasheets/N20_12V_1000RPM_specs.md`. Recorded in README §5.2 and the checklist table, the N20 notes and `docs/TESTS.md`.
+
+### 24.10 Servo MG90 stall current measured (24 November)
+
+After the N20, I did the same for the steering servo. I measured the resistance of the internal DC motor of the MG90 with the multimeter on the Ω scale: **R = 3.3 Ω**. Ideal stall current is 5.0 V / 3.3 Ω ≈ 1.52 A. The servo's H-bridge and the wiring lose about 0.8 V (assumed, typical 0.5–1.0 V), so the motor sees about 4.2 V and **I<sub>stall</sub> ≈ 1.27 A** (practical range 1.0–1.3 A; sustained stall 0.8–1.2 A, start peak up to 1.3 A). At stall the motor dissipates about 5.3 W and the bridge about 1.0 W, so a servo held for more than a few seconds can burn the bridge or the winding.
+
+What changed: the budget had used **650 mA**, so the servo was underestimated by about half. In `schemes/README.md` §4.2 the 5 V rail peak goes from 1.05 A to ≈ **1.67 A** (56 % of the 3 A buck), and the battery peak from ≈ 1.60 A / 18.3 W to ≈ **1.92 A / 21.9 W** (≈ 5.1 C, ≈ 9.5 min of continuous worst case). A round of 3 minutes still uses about a third of one charge. Method and numbers: [`schemes/datasheets/MG90_stall_current_measurement.md`](../schemes/datasheets/MG90_stall_current_measurement.md).
+
+Honest limits: the resistance is measured, the current is calculated, and the 0.8 V drop is an assumption. Also, the code limits (5 / 165) put the left command 5 servo units beyond the left stop measured with `servo_test` (10, `docs/TESTS.md`). If 10 is a mechanical stop, the servo stalls at ≈ 1.27 A whenever the code asks for full left, and there is no stall timeout in the servo code. I did not change the code; I recorded it as a risk. Open: measure the 5 V rail under servo stall, and check the left limit with `servo_test`.
 
 ## 25. Archive of earlier Open Challenge designs
 

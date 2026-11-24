@@ -81,7 +81,18 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 
 **Open check.** With the centre at 85, the left stop (10) is 75 servo units away and the right stop (170) is 85 units away, for the same 40°. The midpoint of the two stops is 90, not 85. Either the servo response is not linear, or the centre is not 85. Measure the wheel angle again with the wheels straight before using 85 in a new test, and record the result here.
 
-**What the code uses (PR #39, 24 Nov).** `open_challenge` and `obstacle_challenge` take the average of the two distances: `STEER_CENTER` 85 and `STEER_RANGE` 80, so the limits are **5 (left) and 165 (right)**. The measured stops above (10 and 170) are the record of the protractor test. The code limit on the left (5) is 5 servo units beyond the measured left stop (10) and the right limit (165) is 5 units short of the right stop (170): listen for buzzing at full lock on the left and re-check it with `servo_test`.
+**What the code uses (PR #39, 24 Nov).** `open_challenge` and `obstacle_challenge` take the average of the two distances: `STEER_CENTER` 85 and `STEER_RANGE` 80, so the limits are **5 (left) and 165 (right)**. The measured stops above (10 and 170) are the record of the protractor test. The code limit on the left (5) is 5 servo units beyond the measured left stop (10) and the right limit (165) is 5 units short of the right stop (170): listen for buzzing at full lock on the left and re-check it with `servo_test`. A servo pushed against a stop stalls at about 1.27 A (table above), and the servo code has no stall timeout.
+
+## Steering servo MG90: winding resistance and stall current
+
+Procedure and numbers: `schemes/datasheets/MG90_stall_current_measurement.md` (original PDF in Spanish next to it).
+
+| Test | Method | Value | Notes |
+| --- | --- | --- | --- |
+| Winding resistance (internal DC motor, rotor still) | Multimeter on the Ω scale, 24 Nov | 3.3 Ω | Measured. Probe-lead tare 0.2–0.5 Ω, so the pure winding may be 2.8–3.0 Ω |
+| Stall current | calculated: (5.0 V − 0.8 V) ÷ 3.3 Ω | 1.27 A (range 1.0 to 1.3 A; ideal 1.52 A) | Calculated, not read in series. The 0.8 V drop in the H-bridge and wiring is an assumption (0.5 V → 1.36 A, 1.0 V → 1.21 A). The 650 mA used before is superseded |
+| Sustained stall consumption / start peak | from the same calculation | 0.8–1.2 A / up to 1.3 A | Heat at stall ≈ 5.3 W in the motor + 1.0 W in the bridge: do not hold a stop for more than a few seconds |
+| 5 V rail under servo stall, four ToF ranging | Multimeter on the 5 V rail | — | Not measured yet; the rail peak is calculated at ≈ 1.67 A of 3 A |
 
 ## Car geometry and mass
 

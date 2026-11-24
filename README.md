@@ -317,15 +317,15 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 
 | | Typical | Peak |
 |---|---|---|
-| Current from the battery | ≈ 0.20 A | ≈ 1.60 A |
-| Power | ≈ 2.2 W | ≈ 18.3 W |
-| Run time on one charge (80 % of 4.33 Wh) | ≈ 1.6 h | ≈ 11 min |
+| Current from the battery | ≈ 0.20 A | ≈ 1.92 A |
+| Power | ≈ 2.2 W | ≈ 21.9 W |
+| Run time on one charge (80 % of 4.33 Wh) | ≈ 1.6 h | ≈ 9.5 min |
 
-The peak column is the worst case of every load at once (motor at stall 1.03 A, calculated from the measured winding resistance of 11.7 Ω; servo at stall 650 mA; camera 310 mA). The full table with each load is in [schemes/README.md §4.2](schemes/README.md#42-power-budget). A round lasts 3 minutes, so even the worst case uses about a quarter of one charge.
+The peak column is the worst case of every load at once (motor at stall 1.03 A, calculated from the measured winding resistance of 11.7 Ω; servo at stall 1.27 A, calculated from its measured winding resistance of 3.3 Ω ([schemes/datasheets/MG90_stall_current_measurement.md](schemes/datasheets/MG90_stall_current_measurement.md)); camera 310 mA). The full table with each load is in [schemes/README.md §4.2](schemes/README.md#42-power-budget). A round lasts 3 minutes, so even the worst case uses about a third of one charge.
 
 **A fully charged pack measures 13.05 V** (24 Nov), above the motor's 12 V rating and the Nano's recommended 12 V on VIN. Every part stays inside its limits (the TB6612FNG has only 0.45 V of margin to its 13.5 V operating maximum), the PWM keeps the motor's average voltage low and the stall stop cuts the motor after 0.5 s. The comparison and the rules (charge as 3S HV, measure before the first run) are in [schemes/README.md §4.4](schemes/README.md#44-fully-charged-battery-1305-v-against-the-12-v-ratings).
 
-The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1.05 A peak of the 5 V rail, so a servo stall cannot reset the camera.
+The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ≈ 1.67 A peak of the 5 V rail (servo stall ≈ 1.27 A), so a servo stall should not reset the camera; it is still to be checked with a multimeter.
 
 **The TOF sensors take 5 V from the buck rail**, like the other sensors and the camera. The classic Nano works with 5 V logic, so the 5 V sensors talk to it directly. The cost: the servo's current peaks now share the rail with the sensors. The 3 A buck margin keeps that rail steady, and we check it with a multimeter during a servo stall while the sensors are ranging. Full budget and failure analysis: [schemes/README.md §4](schemes/README.md#4-power-system).
 
@@ -844,9 +844,10 @@ Every design choice in this repository answers one of these limits. The numbers 
 |---|---|
 | Main board (Nano ESP32) lost during an upload with the robot powered and USB connected; the cause is not confirmed (journal Problem 31) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
 | Fully charged battery (13.05 V) above the 12 V ratings of the motor and the Nano's VIN | Measured 24 Nov. PWM keeps the motor's average voltage at ≈ 7.7 V (Open) and ≈ 3.6 V (Obstacle); stall stop after 0.5 s; the TB6612FNG margin to its 13.5 V limit is 0.45 V; charge only as 3S HV; measure the pack before the first run ([schemes §4.4](schemes/README.md#44-fully-charged-battery-1305-v-against-the-12-v-ratings)) |
-| Servo peaks on the shared 5 V rail reach the TOF sensors | Measure the 5 V rail under servo stall with the sensors ranging; 3 A buck margin |
+| Servo peaks on the shared 5 V rail reach the TOF sensors | Servo stall ≈ 1.27 A (calculated from 3.3 Ω), rail peak ≈ 1.67 A of 3 A. Measure the 5 V rail under servo stall with the sensors ranging |
+| Servo held at a mechanical stop burns the bridge or winding (stall ≈ 1.27 A, ≈ 6 W of heat) | Do not hold a stop for more than a moment. The code limit on the left (5) is 5 units beyond the measured stop (10): re-check with `servo_test`; no stall timeout in the servo code yet ([schemes/datasheets/MG90_stall_current_measurement.md](schemes/datasheets/MG90_stall_current_measurement.md)) |
 | Camera 3.3 V TX into the Nano RX | No divider: 3.3 V is read as HIGH by the ATmega328P at 5 V; the link is one-way (the Nano TX is not connected to the camera; `NANO_RX_PIN = -1` in the camera sketch) |
-| Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin |
+| Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin. A blocked servo draws ≈ 1.27 A (calculated, [schemes/datasheets/MG90_stall_current_measurement.md](schemes/datasheets/MG90_stall_current_measurement.md)) |
 | Drive gear skips on a sudden reverse (journal Problem 34) | Open: forward only. Obstacle: reverse ramped with `RAMP_STEP`, stopped by the rear ToF; short brake at the end |
 | Too fast for the sensors (no-load top speed ≈ 2.1 m/s at 12 V, §5.2) | Speeds limited in software: Open `RUN_PWM 150` / `TURN_PWM 90`, Obstacle 70 on every phase; soft start `RAMP_STEP`. The earlier "too slow" risk (12.6 cm/s) was a calculation error, corrected on 24 Nov (§5.2). Stopwatch test over 1 m still to log (`docs/TESTS.md`) |
 | I²C bus freezes and hangs the program (journal Problem 12) | Wire timeout of 25 ms (`Wire.setWireTimeout(25000, true)`, the value in the current sketches; 50 ms in October); check connectors; each sensor tested alone first |
@@ -916,7 +917,7 @@ The journal shows the design as a chain of decisions, each one changing the cons
 | Sensor angle → data → strategy | A side sensor at 30° read about 198 cm for a 30 cm wall, so the decisions built on that data were wrong (journal §12.1–12.3) | Sensors are straight at about 5 cm with ROI 16 × 8. Beyond about 45 cm the black wall gives no valid reading, so the code reacts to jumps against the learned wall distance, not to absolute distance (§8.0) |
 | Mechanics → servo → code | Ackermann friction destroyed three servos (Problems 29 and 33) | Parallel rack and pinion. Every steering constant (centre 85, limits 5 and 165) depends on this mechanism, so a change to the mount means measuring the centre again (§10.3) |
 | Encoder → odometry → map | 19.6 ticks per cm made the pillar map 23 % short (Problem 54). The constant was measured again and changed twice | The code uses 9.27 ticks per cm, measured on 21 Nov with the motor running. The same odometry drives the pillar map, the lane logic of the Obstacle program and the final stop of the Open program, so one calibration error reaches all three |
-| Power → sensors and servo | The TOF sensors and the servo share the 5 V buck rail. The TOF supply was moved back to 5 V on 17 Nov (Problem 67) | A voltage drop under servo load can show up as wrong distances, not as an error. The stall test on the rail is still open (§10.3) |
+| Power → sensors and servo | The TOF sensors and the servo share the 5 V buck rail. The TOF supply was moved back to 5 V on 17 Nov (Problem 67) | A voltage drop under servo load can show up as wrong distances, not as an error. The stall test on the rail is still open (§10.3), and the servo stall is now calculated at ≈ 1.27 A, twice the earlier 650 mA |
 | Failures → schedule → what was tested | A dead N20 motor (Problem 63), a swapped TOF (Problem 64) and a damaged camera board (Problem 65) between 29 Oct and 20 Nov (journal §17) | The Open program was restarted and its three-lap run is recorded on 22 Nov. The Obstacle program was consolidated on 23 Nov; the team reports it works on the car and the video is recorded, but its lap times are not yet logged (journal §20.5) |
 | Sudden reverse → gear → speed | A sudden reverse made a drive gear skip (Problem 34) | Open drives forward only. Obstacle reverses at PWM 70 with ramping, so it is slower by design (§8.0) |
 | Wrong speed estimate → risk list → priorities | A double-counted gear ratio made the car look too slow for the 3-minute round (corrected 24 Nov, §5.2) | Checking a calculation against a run that already happened (the 8 s safety stop never fired in 12 corners) caught it; the real limit is the sensors, so the speeds stay capped in software |
@@ -976,7 +977,7 @@ Only measured values, each with its source. Values that are still calculated are
 | Scenario generator | 600 generated layouts checked automatically | 0 rule violations | Journal §7 |
 | Mass and size | Kitchen scale, ruler | 248 g; 17.5 × 9 × 6 cm | `docs/TESTS.md` |
 
-**Not yet measured (listed so nobody mistakes them for results):** Open and Obstacle round times and the 5-attempt score tables; the stopwatch speed; the 160 × 120 frame rate; the gyro drift at rest; the stall current read in series with the multimeter (it is calculated from the winding resistance, see §5.2). The empty rows are in `docs/TESTS.md`.
+**Not yet measured (listed so nobody mistakes them for results):** Open and Obstacle round times and the 5-attempt score tables; the stopwatch speed; the 160 × 120 frame rate; the gyro drift at rest; the stall currents read in series with the multimeter (N20 and MG90 are calculated from the winding resistances, see §5.2 and [schemes/datasheets/MG90_stall_current_measurement.md](schemes/datasheets/MG90_stall_current_measurement.md)); the 5 V rail under servo stall. The empty rows are in `docs/TESTS.md`.
 
 ---
 
@@ -1063,7 +1064,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. Two versions are tagged on GitHub: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`). The later versions are described in the changelog but have no tag yet: v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25) **v1.9.21** (24 Nov: flow diagrams and text checked against the code), v1.9.22 to v1.9.25 (24 Nov: car width, stall current, 13.05 V battery, 1 : 1 motor-to-wheel ratio) and **v1.9.26** (24 Nov: README, test log and commit counts aligned with the code). All are described in the changelog.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. Two versions are tagged on GitHub: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`). The later versions are described in the changelog but have no tag yet: v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25) **v1.9.21** (24 Nov: flow diagrams and text checked against the code), v1.9.22 to v1.9.25 (24 Nov: car width, stall current, 13.05 V battery, 1 : 1 motor-to-wheel ratio), **v1.9.26** (24 Nov: README, test log and commit counts aligned with the code) and **v1.9.27** (24 Nov: MG90 servo stall current measured, power budget updated). All are described in the changelog.
 
 ### 14.1 Submission checklist
 
