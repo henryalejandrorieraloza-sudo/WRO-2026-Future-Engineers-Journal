@@ -123,11 +123,9 @@ const bool REJECT_AT_EDGE   = true;  // a patch touching the left / right pictur
 // 5) Camera lens correction: the wide-angle lens tints the picture edges (green / magenta)
 const bool LENS_CORRECTION  = true;  // true = turn on the sensor's lens shading correction
 
-// ===== PASTE HERE what "Copy as Arduino code" gives you in viewer.html =====
-// (if you paste again: put back BLUE_HUE_LOW = 110, BLUE_MAX_SAT and the line minimums, the viewer does not have them)
+// ---------- Pillar colours (red and green) ----------
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
-// Measured with the camera locked (yellow cast): red pillar H 15-23, green pillar H 86-95.
-// Probe on 28 Oct: red pillar H 4-22 S 204-255 V 112-136.
+// Measured on 28 Oct with the camera locked (yellow light): red pillar H 15-23 (probe H 4-22, S 204-255, V 112-136), green pillar H 86-95.
 const int RED_HUE_LOW    = 345;    // unchanged: the red band wraps past 0 degrees, so it runs from 345 up to 40
 const int RED_HUE_HIGH   = 40;     // unchanged: the measured red pillar reaches H 33
 const int RED_MIN_SAT    = 115;    // unchanged: the measured red pillar has S 170-255
@@ -144,12 +142,10 @@ const int  GREEN_MIN_PIXELS = 8;   // QUARTERED from 30 -- a green patch needs a
 const int  IGNORE_TOP_ROWS = 58;   // HALVED from 115 -- rows at the top of the picture (far away) that are not searched for pillars
 const int  BOTTOM_TOL      = 14;    // HALVED from 27 (rounded) -- columns whose bottom is within this many rows of the lowest one belong to the front pillar
 const int  NEAR_ROWS       = 0;    // rows at the bottom of the picture left out of the pillar search
-const int  SIDE_ZONE       = 28;   // HALVED from 56 -- side zone size used by the older pillar search (kept from v2)
 
 // Lines, measured 19 Nov 2026 on the viewer screenshots (greenish light, camera locked):
 //   orange line H 64-75 (median 70) S 95-160 V 107-174 | floor H ~111-125 S 70-90 (pale green, not a line)
 //   blue line H 191-208 (median 197) S 110-170 V 47-143 | green pillar H 82-150
-// The old thresholds (orange H 29-52, blue S <= 120) were for the yellow light of October and miss these lines.
 const int ORANGE_HUE_LOW  = 55;    // red pillar is H <= 40; floor starts at H ~110
 const int ORANGE_HUE_HIGH = 90;    // buildCodeMap tests green first, so a green pillar (H 82+) is never orange
 const int ORANGE_MIN_SAT  = 90;    // orange line needs at least this saturation
@@ -168,13 +164,9 @@ const int MAGENTA_MIN_VAL  = 84;   // magenta needs at least this brightness
 
 const int FLOOR_TOP_ROW      = 62;    // HALVED from 124 -- the floor part of the picture starts at this row
 const int ORANGE_MIN_PIXELS  = 13;    // QUARTERED from 50 (rounded) -- at ~16 cm the line has only ~120-165 px
-const int BLUE_MIN_PIXELS    = 15;    // QUARTERED from 60 -- safe now: BLUE_HUE_LOW = 110 keeps the floor out, floor-above check keeps the wall out
+const int BLUE_MIN_PIXELS    = 15;    // QUARTERED from 60 -- BLUE_HUE_LOW = 165 keeps the floor (H ~111-125) out; the floor-above check keeps the wall out
 const int LINE_ROW_MIN       = 3;     // HALVED from 6 (rounded) -- a row needs this many line pixels to count as a row of the line
-const int LINE_TRIGGER_ROW   = 118;   // HALVED from 236 -- row used to trigger the line check (near the bottom of the picture)
-const int MAGENTA_MIN_PIXELS = 63;    // QUARTERED from 250 (rounded) -- a magenta patch needs at least this many pixels
 const int MAGENTA_MAJORITY   = 70;    // % of a red+magenta patch that must be magenta to make it a wall
-const int TURN_CONFIRM_FRAMES = 3;    // frames needed to confirm a turn (kept from the older code)
-// ===== end of the pasted part =====
 
 // ---------- Floor lines (full lap, step 1) ----------
 // A floor line is a long, thin stripe. These numbers decide what counts as a line.
@@ -763,7 +755,7 @@ void sendPacket(const uint8_t *picture, const Pillar &p, const LineInfo &blue, c
   hdr[k++] = 0xAA; hdr[k++] = 0x55; hdr[k++] = 0xC3; hdr[k++] = 0x3C;   // magic bytes: start of packet (the viewer looks for them)
   hdr[k++] = 1;                                    // packet version
   putU16(hdr, k, W); putU16(hdr, k, H);            // picture width and height
-  hdr[k++] = 1;                                    // bit0 = 1: ready (v3.1 has no calibration step)
+  hdr[k++] = 1;                                    // bit0 = 1: ready
   hdr[k++] = p.found ? 1 : 0;                      // pillar found flag
   hdr[k++] = p.color;                              // pillar color
   putU16(hdr, k, (uint16_t)p.left);  putU16(hdr, k, (uint16_t)p.right);   // pillar left and right edges

@@ -112,7 +112,7 @@ The sketch groups its constants in five blocks. The most important ones are belo
 | `STALL_MS` | 500 | Motor on but wheels not turning for this long stops the program |
 | `CAMERA_TIMEOUT_MS` | 500 | No camera message for this long: the car does not drive |
 
-Three constants are declared but not used by the code: `MAX_FINAL_CM`, `STOP_OFFSET_CM` and `FALLBACK_CM`. They are kept from earlier versions and can be removed without changing the behaviour.
+The constants `MAX_FINAL_CM`, `STOP_OFFSET_CM` and `FALLBACK_CM` were removed: they were declared but not used by this program (`open_challenge` still uses them).
 
 ## 4. Program flow
 
