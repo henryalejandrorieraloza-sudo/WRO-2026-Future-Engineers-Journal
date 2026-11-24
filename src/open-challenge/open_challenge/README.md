@@ -24,7 +24,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 `KP_HEAD` (2.0), `KI_HEAD` (4.0), `I_MAX` (25), `K_LAT` (0.03), `KI_LAT` (0.02), `LAT_MAX_DEG` (12), `ARM_WALL_MM` (900), `ARM_READINGS` (5), `MAX_TURN_MS` (4000), `MAX_STRAIGHT_MS` (8000), `STALL_MS` (500).
 
 **3. Car constants** (measured on this car)
-`MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 85`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 9.27`, and the pins.
+`MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 85`, `STEER_RANGE = 80` (so `STEER_LEFT_MAX = 5`, `STEER_RIGHT_MAX = 165`), `TICKS_PER_CM = 9.27`, and the pins.
 
 **Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the values measured on 21 Nov and also used by `obstacle_challenge`. Until 22 Nov this program used 90 and 15.1. Both candidate commits of the 22 Nov three-lap run (`3010306`, `c3441cd`) already have 85 and 9.27, so the run was made with these values (journal §19.2, `docs/TESTS.md`). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
 

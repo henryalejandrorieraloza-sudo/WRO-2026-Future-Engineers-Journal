@@ -21,7 +21,7 @@ It is the **driving half** of the Obstacle Challenge. The vision half is [`obsta
 |---|---|---|
 | Drive motor (TB6612FNG) | PWMA **D6**, AIN1 **D7**, AIN2 **D8** | Reverse is done by swapping the two direction pins |
 | Motor encoder | **D3** (C1, interrupt), **D2** (C2, direction) | 9.27 pulses per cm |
-| Steering servo | **D9** | Centre 85, left limit 10, right limit 170 (servo units) |
+| Steering servo | **D9** | Centre 85, left limit 5, right limit 165 (servo units; 85 ± 80) |
 | Start button | **D10** | Active LOW, input pull-up |
 | Status LED | D13 | Blinks during the gyro calibration, on when ready |
 | Gyroscope (BMI160) | I²C address **0x69** | Yaw is integrated from the Z rate |
@@ -100,7 +100,7 @@ The sketch groups its constants in five blocks. The most important ones are belo
 |---|---|---|
 | `TICKS_PER_CM` | 9.27 | Encoder pulses per cm, measured with the motor running (21 Nov) |
 | `GYRO_SCALE` | 1.007 | Gyro scale factor, same as `open_challenge` (the earlier `straight_pillars` sketch used 1.06; see §9) |
-| `STEER_CENTER` / `STEER_LEFT_MAX` / `STEER_RIGHT_MAX` | 85 / 10 / 170 | Servo angles. A smaller angle steers **left** |
+| `STEER_CENTER` / `STEER_LEFT_MAX` / `STEER_RIGHT_MAX` | 85 / 5 / 165 (`STEER_RANGE` = 80) | Servo angles. A smaller angle steers **left** |
 | `MOTOR_REVERSED` / `ENCODER_REVERSED` | true / true | Wiring polarity, measured on this car |
 
 **Block 5: timeouts**

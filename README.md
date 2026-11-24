@@ -472,7 +472,7 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 |---|---|---|---|
 | Encoder `TICKS_PER_CM` | 9.27 | 9.27 | Measured with the motor running (190 ticks = 20.5 cm, 21 Nov) |
 | `GYRO_SCALE` | 1.007 | 1.007 | From a 3-lap test. It is the only gyro scale used by the current programs. The earlier hand-turn value `1.06` (`gyro_90_test`, 21 Nov) belonged to an older sketch and is not used |
-| Steering centre / limits | 85, left 10, right 170 | 85, left 10, right 170 | A smaller servo angle steers left |
+| Steering centre / limits | 85, left 5, right 165 (85 ± 80) | 85, left 5, right 165 (85 ± 80) | A smaller servo angle steers left |
 | Run / turn speed (PWM) | `RUN_PWM` 150, `TURN_PWM` 90 | `RUN_PWM`, `TURN_PWM`, `REVERSE_PWM` all 70 | The Obstacle car is slower on purpose: the camera needs time |
 | Gyro calibration | 300 samples after 0.7 s settling | same | LED blinks while it runs |
 

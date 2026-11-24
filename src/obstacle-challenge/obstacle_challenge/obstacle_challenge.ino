@@ -103,7 +103,7 @@ const bool  MOTOR_REVERSED   = true;  // flips the motor direction pins
 const bool  ENCODER_REVERSED = true;  // flips the encoder count sign
 const int   YAW_SIGN         = 1;     // +1: turning left increases the yaw angle
 const float GYRO_SCALE       = 1.007; // gyro calibration factor (measured)
-const int   STEER_CENTER = 85, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // left = smaller servo angle
+const int   STEER_CENTER = 85, STEER_RANGE = 80, STEER_LEFT_MAX = STEER_CENTER - STEER_RANGE, STEER_RIGHT_MAX = STEER_CENTER + STEER_RANGE;   // range 80 = average of 75 (left) and 85 (right) measured for 40 deg -> 5 / 165. left = smaller servo angle
 const int   RAMP_STEP = 5;            // PWM change per 20 ms (soft start / soft stop)
 const float TICKS_PER_CM = 9.27;      // encoder ticks per cm of wheel travel (measured)
 const uint8_t BMI = 0x69;             // I2C address of the BMI160 gyroscope
