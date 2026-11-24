@@ -148,24 +148,31 @@ stateDiagram-v2
 
 ### 4.2 What the program does on every loop in STRAIGHT
 
-The loop runs on every pass of `loop()`. It checks the three priorities in this order: **line first, then pillar, then wall centring**. A line always wins, so a corner is never missed because of a pillar.
+The loop runs on every pass of `loop()`. It checks the three priorities in this order: **line first, then pillar, then wall centring**. A line always wins, so a corner is never missed because of a pillar. Two checks come before the priorities: the stop 0.45 s after the last line, and the camera watchdog (if the camera is silent for 500 ms the speed target becomes 0, but the steering keeps running).
 
 ```mermaid
 flowchart TD
-    A([Loop in STRAIGHT]) --> B{Camera message<br>less than 500 ms old?}
-    B -- no --> Z[Target speed 0<br>the car does not drive blind]
-    B -- yes --> C{Floor line seen?}
-    C -- "yes, first line of the run,<br>after 10 cm of driving" --> D["Lock the colour:<br>blue = left, orange = right<br>then PRE_TURN"]
-    C -- "yes, locked colour, new line<br>and not in the 4 s ignore window" --> E["Corner: PRE_TURN"]
-    C -- no --> F{Pillar on the map<br>not yet passed?}
-    F -- yes --> G["PILLAR mode<br>aim at the lateral goal<br>(max 60 degrees)"]
-    F -- no --> H{Pillar passed<br>less than 50 cm ago?}
+    A([Loop in STRAIGHT]) --> A0{"Last line seen<br>0.45 s ago or more?"}
+    A0 -- yes --> Z0([DONE: brake and stop])
+    A0 -- no --> B{"Camera message<br>less than 500 ms old?"}
+    B -- no --> Z["Target speed 0<br>lines and new pillars are skipped,<br>the steering below still runs"]
+    B -- yes --> C{"Floor line seen?"}
+    C -- "yes, no colour locked yet,<br>after 10 cm of driving" --> D["Lock the colour:<br>blue = left, orange = right<br>then PRE_TURN"]
+    C -- "yes, locked colour, new line<br>and not in the 4 s ignore window" --> E{"All 12 corners<br>already turned?"}
+    E -- no --> E1["Corner: PRE_TURN"]
+    E -- "yes: this is the last line" --> E2["Remember the time<br>and keep driving"]
+    C -- no --> F{"Pillar to avoid on the map?<br>the current one, or the next one<br>once level with the current"}
+    Z --> F
+    F -- yes --> G["BLOCK mode<br>aim at the lateral goal<br>(max 60 degrees)"]
+    F -- no --> H{"Pillar passed<br>less than 50 cm ago?"}
     H -- yes --> I["PASS mode<br>keep the heading"]
     H -- no --> J["LANE mode<br>centre between the side walls<br>(left and right ToF)"]
-    G --> K["Gyro PID<br>steering = KP x error - KD x rate + integral"]
+    G --> K["Gyro controller<br>steering = KP x error - KD x rate<br>(+ integral in LANE mode only)"]
     I --> K
     J --> K
-    K --> L([Servo command sent])
+    K --> M{"No corner in 8 s<br>since STRAIGHT began?"}
+    M -- yes --> Z1([DONE: safety stop])
+    M -- no --> L([Servo command sent])
 ```
 
 ### 4.3 One corner, step by step

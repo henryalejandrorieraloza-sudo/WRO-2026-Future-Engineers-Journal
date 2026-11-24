@@ -4,6 +4,16 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.21 — 24 November · Flow diagrams checked against the code
+
+Only documents changed; **no code changed**. All 7 Mermaid diagrams were compared with `open_challenge.ino` and `obstacle_challenge.ino` and render without errors.
+
+- **`obstacle_challenge` README §4.2 (STRAIGHT loop):** the flowchart now shows the two checks that run first (stop 0.45 s after the last line; camera watchdog: speed target 0 but the steering still runs), the last-line branch (after 12 turns the next line is remembered, not a new PRE_TURN), the pillar test as the code does it (current pillar, or the next one once level with it), the integral only in LANE mode, and the 8 s no-corner safety.
+- **README §8.2 (Open state machine):** `DONE → STRAIGHT` is started by the START button or `g` (the diagram said only `g`).
+- **README §9.1 (round flowchart):** the first line of the run locks the colour.
+- **README §7.1:** the camera link sends one short text line per frame (not "a few bytes").
+- Checked and unchanged: Open state diagram (both READMEs) and Obstacle state diagram (both READMEs).
+
 ## v1.9.20 — 24 November · README easier to read
 
 Only documents changed; **no code changed**.
