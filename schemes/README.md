@@ -57,7 +57,7 @@ The schematic is organised in functional blocks. It was drawn for our first main
 | Block | Connections |
 |---|---|
 | **Arduino Nano** | VIN from the battery rail (VCC) · D0 = UART receive from the camera board (camera GPIO43 → D0; the Nano sends nothing to the camera) · D2/D3 = encoder C2/C1 · D6/D7/D8 = PWMA/AIN1/AIN2 · D9 = servo · D10 = start button · A4/A5 = I²C SDA/SCL · A0/A1/A2/A3 = XSHUT of the BACK/FRONT/RIGHT/LEFT TOF sensors |
-| **Power stage** | Battery (VCC, 11.4 V) → power switch → CN3903 buck → +5 V rail |
+| **Power stage** | Battery (VCC, 11.4 V nominal, 13.05 V fully charged) → power switch → CN3903 buck → +5 V rail |
 | **Distance sensors** | 4 × 3-pin connectors (XSHUT, +5 V, GND); SDA/SCL of all TOF sensors share the I²C bus with the BMI160 |
 | **TB6612FNG** | VM = battery, VCC = +5 V, **STBY tied to +5 V** (driver always enabled, no MCU pin needed), channel A only (single motor) |
 | **Camera interface** | +5 V / GND power connector and TX connector (camera GPIO43 → Nano D0; GPIO44 not used) |
@@ -145,7 +145,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 
 - **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.2 ≈ **1.6 h**; even at a continuous worst case (motor at stall) it is ≈ **11 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
 - **Discharge rate:** the ≈ 1.6 A peak (motor at stall) is ≈ 4.2 C, far below the battery's 90C rating. The motor is the largest load, so its voltage sag is the one to check on the car.
-- **Motor stall current (measured 24 Nov):** the winding resistance of the motor on the car is **11.7 Ω** (multimeter, rotor still, motor disconnected). Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**, with a working range of 0.95 to 1.20 A. The budget uses 1.03 A (it was 0.7 A, from the datasheet of another motor of the family). The motor driver and the supply must carry at least **1.2 A per motor**; the TB6612FNG's absolute maximum is 1.2 A per channel (3.2 A for a 10 ms pulse) and its recommended operating current is 1.0 A (see section 4.4), so the stall case fits. Details: [N20_stall_current_measurement.md](datasheets/N20_stall_current_measurement.md).
+- **Motor stall current (calculated from the resistance measured on 24 Nov):** the winding resistance of the motor on the car is **11.7 Ω** (multimeter, rotor still, motor disconnected). Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**, with a working range of 0.95 to 1.20 A. The budget uses 1.03 A (it was 0.7 A, from the datasheet of another motor of the family). The motor driver and the supply must carry at least **1.2 A per motor**; the TB6612FNG's absolute maximum is 1.2 A per channel (3.2 A for a 10 ms pulse) and its recommended operating current is 1.0 A (see section 4.4), so the stall case fits. Details: [N20_stall_current_measurement.md](datasheets/N20_stall_current_measurement.md).
 - **Buck margin:** the 5 V rail peaks at ~1.05 A of the CN3903's 3 A, so the regulator never runs near its limit.
 - **Nano regulator heat:** the Nano's 5 V linear regulator now only feeds the Nano: (11.4 − 5) V × 20 mA ≈ **0.13 W** typical, ≈ 0.2 W at peak. With a fully charged pack (13.05 V) it is (13.05 − 5) V × 20 mA ≈ **0.16 W** typical, ≈ 0.24 W at peak. It stays cool.
 - **Fully charged pack (13.05 V):** the table above uses the nominal 11.4 V. At 13.05 V the typical power is ≈ 2.4 W (the motor and the Nano take the higher voltage; the regulated 5 V rail does not change) and the worst-case peak is ≈ 21 W at ≈ 1.6 A (motor stall ≈ 1.12 A, see section 4.4). Both are still far from the battery's limits.
@@ -171,7 +171,7 @@ The nominal 11.4 V in the budget is the pack's average. A freshly charged GNB 3S
 
 | Part | Rating | At 13.05 V | Verdict |
 |---|---|---|---|
-| N20 drive motor | 12 V rated; the listing says a higher voltage wears the motor | +8.75 % over the rating at full duty; about 7.7 V average at `RUN_PWM` 150 (Open) and about 3.6 V at `RUN_PWM` 70 (Obstacle) | Over the rating only at PWM 255, which the programs do not use |
+| N20 drive motor | 12 V rated; the listing says a higher voltage wears the motor | +8.75 % over the rating at full duty; about 7.7 V average at `RUN_PWM` 150 (Open) and about 3.6 V at `RUN_PWM` 70 (Obstacle) | Over the rating only at PWM 255; the driving programs use 150 and 70 (255 appears only in the short brake, where the motor is not driven) |
 | Arduino Nano, VIN | 7–12 V recommended; 6–20 V limit ([Nano documentation](https://docs.arduino.cc/hardware/nano/)) | 1.05 V above the recommended range, 7 V below the limit | Works; the on-board linear regulator dissipates ≈ 0.16 W typical, ≈ 0.24 W at peak |
 | TB6612FNG, VM | 13.5 V operating maximum, 15 V absolute maximum ([datasheet](datasheets/TB6612FNG.PDF)) | 0.45 V (3.3 %) under the operating limit | Inside the range with a small margin. A 4S pack, or a charger set above 13.05 V, would not be safe |
 | TB6612FNG, output current | 1.0 A operating, 1.2 A absolute maximum per channel | Stall current ≈ 1.03 A at 12 V (calculated, section 4.2), ≈ 1.12 A at 13.05 V (13.05 V ÷ 11.7 Ω) | Above the operating value and below the absolute maximum, for short stalls only |
@@ -181,7 +181,7 @@ The nominal 11.4 V in the budget is the pack's average. A freshly charged GNB 3S
 
 - **The PWM lowers the motor's average voltage.** The programs never drive the motor at full duty: `RUN_PWM` is 150 of 255 in the Open Challenge and 70 of 255 in the Obstacle Challenge, so the motor averages about 7.7 V and 3.6 V even with a fresh pack.
 - **A stall is cut short.** Both driving programs stop the motor when the wheels do not turn for 0.5 s (`STALL_MS`), so the stall current never lasts.
-- **A fresh pack drops quickly.** After the first minutes the voltage falls towards the nominal 11.4 V, so 13.05 V is the start of a charge only.
+- **The voltage falls as the pack discharges.** It goes from 13.05 V towards the nominal 11.4 V, so 13.05 V is the worst case at the start of a charge.
 - **Speed changes with the pack.** The motor turns faster at 13.05 V than at 11.4 V, so a timed delay covers more distance with a fresh pack. This is one more reason the programs measure distance with the encoder, and why a test run should be repeated with a fully charged pack.
 
 **Rules we follow because of this**

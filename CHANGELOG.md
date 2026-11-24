@@ -18,6 +18,7 @@ Only documents changed; **no code changed**.
 - **New `schemes/README.md` §4.4:** each part compared with 13.05 V (N20 motor 12 V, Nano VIN 12 V recommended, TB6612FNG VM 13.5 V operating / 15 V absolute, CN3903 up to 36 V), why the risk is limited (PWM average voltage, stall stop after 0.5 s) and the rules (charge as 3S HV, measure before the first run).
 - **Stall current at 13.05 V:** 13.05 V ÷ 11.7 Ω ≈ 1.12 A, inside the 0.95–1.20 A range (`N20_stall_current_measurement.md`). The TB6612FNG's 1.2 A is its absolute maximum per channel (1.0 A recommended), not a continuous rating; the sentence in §4.2 was corrected.
 - Journal §24.8 added.
+- **Wording:** the §4.2 bullet on the stall current now says it is calculated from the resistance measured on 24 Nov (the PDF method), not measured as a current; the Power stage row of the schematic table also gives 13.05 V.
 
 ## v1.9.23 — 24 November · Motor stall current measured
 
