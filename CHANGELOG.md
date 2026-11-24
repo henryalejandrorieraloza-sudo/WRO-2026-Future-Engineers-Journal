@@ -15,7 +15,7 @@ Versions of the car and of this repository. Dates are in 2026.
 - **Power budget (`schemes/README.md` §4.2):** the motor's peak is the stall current of 0.7 A, not 350 mA. Battery peak ≈ 1.27 A, ≈ 14.5 W; worst-case run time ≈ 14 min.
 - **Risks (README §10.3):** motor data, long stall, steering symmetry and wheel diameter added.
 - **Test log (`docs/TESTS.md`):** blank tables for motor, steering, car geometry and mass, ToF, gyroscope, camera and suggested edge cases. No value was filled in without a measurement.
-- **Mass:** 248 g is marked as a design figure to confirm by weighing.
+- **Mass:** 248 g, weighed on 23 Nov 2026 with the battery (see `docs/TESTS.md`).
 
 ## Unreleased — 23 November · README checked line by line against the three competition sketches
 
