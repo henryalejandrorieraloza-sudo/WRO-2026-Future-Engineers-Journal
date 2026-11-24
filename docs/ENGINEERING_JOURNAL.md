@@ -1953,6 +1953,10 @@ What changed: the budget had used **650 mA**, so the servo was underestimated by
 
 Honest limits: the resistance is measured, the current is calculated, and the 0.8 V drop is an assumption. Also, the code limits (5 / 165) put the left command 5 servo units beyond the left stop measured with `servo_test` (10, `docs/TESTS.md`). If 10 is a mechanical stop, the servo stalls at ≈ 1.27 A whenever the code asks for full left, and there is no stall timeout in the servo code. I did not change the code; I recorded it as a risk. Open: measure the 5 V rail under servo stall, and check the left limit with `servo_test`.
 
+### 24.11 Six Open Challenge runs (24 November)
+
+The team ran the Open Challenge six times on 24 November, three counter-clockwise and three clockwise, starting each time from a different section (central, farthest from the inner wall, closest to the inner wall). All six were reported as successful with a good final stop. Times: ccw 24.21, 24.36, 24.41 s; cw 24.79, 24.97, 25.19 s. The first complete record of the Open Challenge with both directions and different starts, which was open since §19.2. They are in `docs/TESTS.md`. What is missing: the commit and the battery voltage of the runs, whether the outer wall was touched, and whether the time is per lap or per round. I did not fill those in.
+
 ## 25. Archive of earlier Open Challenge designs
 
 Moved here from the README on 24 November 2026, unchanged except for the headings, so the README describes only the code that runs on the car. These designs are not in the current code; the program that runs today is `open_challenge` (README §8.0). Where a number here differs from README §8.0 or from the code, the code wins.

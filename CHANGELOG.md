@@ -4,6 +4,14 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.28 — 24 November · Six Open Challenge runs logged
+
+Only documents changed; **no code changed**.
+
+- **`docs/TESTS.md`:** the empty Open Challenge table now has six rows from the team's runs of 24 Nov: three ccw (24.21, 24.36, 24.41 s) and three cw (24.79, 24.97, 25.19 s), each from a different starting section; all reported as success with a good final stop.
+- **Left empty on purpose:** commit, battery voltage, outer wall, repair and the points of 1.1–1.3 were not reported. It also has to be confirmed whether the times are per lap or per three-lap round.
+- README "Not yet measured" and Open Challenge status updated; journal §24.11.
+
 ## v1.9.27 — 24 November · Servo MG90 stall current measured
 
 Only documents changed; **no code changed**.
