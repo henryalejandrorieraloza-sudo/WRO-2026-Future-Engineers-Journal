@@ -14,7 +14,7 @@ Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at th
 | Colour ranges (HSV) | 19 Nov values | unchanged |
 | WiFi live view | on by default | **not in this sketch** (same vision code, no WiFi) |
 | Message to the Nano | 14 fields | 14 fields, same format |
-| Farthest pillar used (`MAX_AHEAD_CM`) | 130 cm | **40 cm** |
+| Farthest pillar used (`MAX_AHEAD_CM`) | 130 cm (value in `camera_test.ino`) | **40 cm** |
 
 Each constant in the sketch has a comment with its old value, for example `HALVED from 115`, `QUARTERED from 250`, or `UNCHANGED (colour, not resolution)`.
 

@@ -49,7 +49,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 
 ### Straight: heading hold and lane
 - The heading is the integral of the gyro rate (`updateGyro()`), with the zero offset measured at each start.
-- The steering is a PI controller on the heading error: `servo = 90 − (KP × error + integral)`. The integral learns the real straight angle of this car, which is not exactly 90°.
+- The steering is a PI controller on the heading error: `servo = STEER_CENTER − (KP × error + integral)`, with `STEER_CENTER = 85`. The integral learns the real straight angle of this car, which starts at 85 and is not exactly 90°.
 - In **mode 1** the car keeps `INNER_TARGET_MM` from the inner wall. In **mode 0** it keeps the middle of the corridor (shifted by `CENTER_SHIFT_MM`). The lateral error becomes a small heading change (`K_LAT`, limited to `LAT_MAX_DEG`).
 - If a side reading is under `SAFE_WALL_MM` (70 mm), the car steers away at full correction.
 
@@ -94,7 +94,7 @@ Use the final error to tune the gyro scale (`GYRO_SCALE`). A large error after a
 1. Battery **on first**, then USB. Otherwise the sensors may not start.
 2. Put the car in the **middle** of the first straight, centered and parallel to the walls.
 3. Keep the hands away while the LED blinks (gyro calibration).
-4. Start with `LAPS = 1` and `RUN_PWM = 110`. When it works, raise `LAPS` and the speed.
+4. Start with `LAPS = 1` and `RUN_PWM = 150` (the value in the code). When it works, raise `LAPS` and the speed.
 5. If the car zig-zags, lower `KP_HEAD`. If it drifts to one side, check `GYRO_SCALE` and the servo center.
 6. If it misses a corner, lower `JUMP_DELTA_MM` (more sensitive). If it turns too early, lower `TURN_PREDICT_S`; if it overshoots, raise it.
 
