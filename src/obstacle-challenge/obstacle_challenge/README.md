@@ -240,7 +240,7 @@ The car starts moving sideways about 55 cm before the pillar, so it is already o
 
 ### 6.1 Start-up
 
-`setup()` starts the serial port, the TB6612FNG, the encoder interrupt and the servo. It starts the four ToF sensors (retrying up to 5 times until the two side sensors answer), the BMI160, and prints a status line for each one. Then it calibrates the gyro offset (about 1.5 s with the car still) and prints `Ready`.
+`setup()` starts the serial port, the TB6612FNG, the encoder interrupt and the servo. It starts the four ToF sensors (retrying up to 5 times until the two side sensors answer), the BMI160, and prints a status line for each one. Then it calibrates the gyro offset (about 2 s with the car still: 0.7 s settling + 300 samples) and prints `Ready`.
 
 `startRun()` calibrates the gyro again, resets the encoder, the map, the counters and the line lock, and starts STRAIGHT.
 

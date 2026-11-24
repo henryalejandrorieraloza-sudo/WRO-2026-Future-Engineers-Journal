@@ -16,7 +16,7 @@ The car runs two programmable boards that communicate over a wired UART link. **
 | Function | Pin |
 |---|---|
 | Steering servo | D9 |
-| Drive motor driver (TB6612FNG) | PWMA D6 · AIN1 D7 · AIN2 D8 · STBY tied to +5 V on the PCB (always enabled; `rear_motor_loop_test` also drives D5 high, harmless) |
+| Drive motor driver (TB6612FNG) | PWMA D6 · AIN1 D7 · AIN2 D8 · STBY tied to +5 V on the PCB (always enabled; `turn_measure_moving` also drives D5 high, harmless) |
 | Motor encoder | D2 · D3 |
 | Start button | D10 |
 | I²C bus (BMI160 and the four TOF sensors) | SDA A4 · SCL A5 |
