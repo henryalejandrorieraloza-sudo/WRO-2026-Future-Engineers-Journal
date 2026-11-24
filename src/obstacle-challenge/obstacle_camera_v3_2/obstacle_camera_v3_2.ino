@@ -43,7 +43,7 @@
 // Tools: ESP32S3 Dev Module | USB CDC On Boot: Enabled | Flash Size: 8MB
 //        Partition: 8M with spiffs (3MB APP/1.5MB SPIFFS) | PSRAM: OPI PSRAM
 // Wiring (team PCB): camera GPIO43 (TX) -> Nano D0 (RX). The camera does not listen to the Nano.
-// Upload: BOOT + RESET on the camera, and hold the Nano's RESET while uploading (both boards share D0).
+// Upload: BOOT + RESET on the camera.
 // Power on the camera looking at the empty floor: the colors are frozen 5 s after power on.
 // =====================================================================
 

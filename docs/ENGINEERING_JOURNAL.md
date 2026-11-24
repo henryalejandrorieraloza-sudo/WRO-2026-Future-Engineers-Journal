@@ -1855,13 +1855,13 @@ Nothing in the code was changed in this phase.
 
 - **Brake at the stop:** `finish()` applies the active brake. The motor is released one second later, when `runTest()` prints the final report (`motorOut(0)`). The rule about movement after the stop is to be checked on the track before the brake is kept or changed.
 - **Dead condition in `runTest()`:** the line `if (!finalLeg && …)` sits inside `if (finalLeg && …)`, so it never runs. The 8 s "no corner" check on the next line always runs, so the dead line has no effect on behaviour. It is logic, so it was not changed here.
-- **Camera sketch comment (`obstacle_camera_v3_2`):** the comment about holding the Nano's RESET while uploading (both boards share D0) has not been checked against the hardware. It is not verified.
+- **Camera sketch comment (`obstacle_camera_v3_2`):** the comment about holding the Nano's RESET while uploading (both boards share D0) had not been checked against the hardware, so it was removed. The camera's own BOOT + RESET line stays.
 
 ### 23.4 Open items for the Obstacle driving program (not stated as done)
 
 - Write one row per run in `docs/TESTS.md`: lap times, direction, stop position, pillars passed on the correct side, and the edge-case results.
 - Decide on the final brake (§23.3) after a test on the track against the stop rule.
-- Remove the dead condition in `runTest()` and verify or remove the RESET comment, in a separate change that is tested on the car.
+- Remove the dead condition in `runTest()`, in a separate change that is tested on the car. (The unverified Nano RESET comment in `obstacle_camera_v3_2` was removed on 23 November.)
 - Measure the N20 stall current and gear ratio, and the 5 V rail with the servo stalled (§16 and §22.5).
 - Confirm with the organisers the reverse turns in each corner (rule 9.21 / Appendix A.4) and the first-commit rule (§22.5).
 - Check that each video shows at least 30 s of autonomous driving (rule 7). The links are in `video/video.md`; the journal does not record this check.
