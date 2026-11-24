@@ -61,7 +61,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Encoder ticks per cm, motor running | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | `TICKS_PER_CM` in `open_challenge.ino`, `obstacle_challenge.ino`, `straight_pillars.ino`. Hand-pushed values (12.67, 16.1) are superseded |
 | Encoder pulses per wheel turn (10 turns) | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks; ratio 17.1:1 | Ratio = 119.4 ÷ 7 (one edge: the firmware counts only the rising edge of C1). Hand-turn count still to do |
 | Stall current (peak, < 0.5 s) | datasheet, same family (not measured) | 0.7 A | Do not hold the wheel longer. Multimeter reading still to do |
-| Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 12.6 cm/s × 150/255 | 13.5 s | Not measured. Stopwatch test still to do |
+| Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 12.6 cm/s × 150/255 | 13.5 s | Not measured. Stopwatch test still to do. **Priority:** the three-lap round needs about 13 cm/s on average (README §9.9), so this value must be measured |
 | Speed over 1 m at `RUN_PWM 255` | calculated upper bound, no load: 12.6 cm/s | 7.9 s | Not measured. Stopwatch test still to do |
 | Torque check (ramp or spring scale) | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | Ramp or spring scale still to do |
 | Reverse ticks to leave the parking space (five wheel turns) | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |

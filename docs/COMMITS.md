@@ -35,7 +35,7 @@ The rule text asks that "the first commit" contain at least 1/5 of the final cod
 |---|---|---|
 | First commit with ≥ 1/5 of code | 8 Oct 2026 | `814ddcf` (4 Oct 2026, 31.2 %, same day as the first commit). Note: `f3a9770` is the first commit in the history and contains no code. |
 | Second commit | 8 Nov 2026 | `06f5685` (5 Nov) |
-| Third commit | 24 Nov 2026 | `e8cc71d` (23 Nov) and later commits |
+| Third commit | 24 Nov 2026 | `e8cc71d` (23 Nov, last commit with code changes) and the documentation commits after it, merged up to `9281ab0` (PR #33). The rules may not score changes made after this commit |
 
 The rules note that changes after the third commit may not be scored, so documentation must be complete in the repository by that commit.
 

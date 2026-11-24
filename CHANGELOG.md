@@ -4,7 +4,11 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day) and is the tag of the scoring commit._
 
-## Unreleased — 23 November (late) · Reproducibility of the test log
+## Unreleased — 23 November (late) · Reproducibility and consistency of the documents
+
+- **Speed:** the 1 : 1 figure of 2.1 m/s is no longer presented as the expected speed. The encoder count implies about 17 : 1, which gives about 12.6 cm/s with no load. A three-lap round needs about 13 cm/s, so this is listed as an open risk (README §5.2, §10.3; stopwatch test in `docs/TESTS.md`).
+- **Steering:** the open check (midpoint of the stops is 90, not 85) is also listed in README §13.
+- **Submission checklist:** the third-commit row (README §14.1) and `docs/COMMITS.md` now state what is committed and what is still missing.
 
 - **Turn sketch added:** `src/hardware-tests/turn_measure_moving/` holds the sketch behind the six 90° in-motion gyro runs in `docs/TESTS.md`. Its README states its constants (`YAW_SCALE` 1.00, `TICKS_PER_CM` 15.1, steering centre 120) and that they differ from the current code.
 - **Test log:** the 22 Nov three-lap run is narrowed to `3010306` or `c3441cd`; both have `STEER_CENTER` 85 and `TICKS_PER_CM` 9.27, and their parent `30f5ca9` has 90 and 15.1.
