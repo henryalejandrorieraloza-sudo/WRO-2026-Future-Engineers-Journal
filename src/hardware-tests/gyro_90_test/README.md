@@ -25,7 +25,9 @@ The gyroscope measures angular **rate** (degrees per second), not angle. `straig
 
 ## Result on this chassis (21 November 2026)
 
-Y = 85° for an intended 90° turn, and the sign was positive (so `YAW_REVERSED` stays `false`). `YAW_SCALE = 90 / 85 = 1.06`. Both values are already applied in `straight_pillars.ino`.
+Y = 85° for an intended 90° turn, and the sign was positive (so `YAW_REVERSED` stays `false`). `YAW_SCALE = 90 / 85 = 1.06` was applied in `straight_pillars.ino` (now in the git history).
+
+**Current programs:** `open_challenge` and `obstacle_challenge` do not use this value. They use `GYRO_SCALE = 1.007` (from a 3-lap test) and `YAW_SIGN = 1`. The difference between a one-turn hand measurement (1.06) and a 12-corner driving measurement (1.007) is why the competition value comes from driving: over 12 corners a 6 % scale error would be about 65°. To use this test for the current programs, put the result in `GYRO_SCALE` instead.
 
 ## Wiring
 

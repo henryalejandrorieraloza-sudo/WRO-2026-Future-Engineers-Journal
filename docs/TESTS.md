@@ -58,11 +58,11 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 
 | Test | Method | Value | Notes |
 | --- | --- | --- | --- |
-| Encoder ticks per cm, motor running | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | `TICKS_PER_CM` in `open_challenge.ino`, `obstacle_challenge.ino`, `straight_pillars.ino`. Hand-pushed values (12.67, 16.1) are superseded |
-| Encoder pulses per wheel turn (10 turns) | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks; ratio 17.1:1 | Ratio = 119.4 ÷ 7 (one edge: the firmware counts only the rising edge of C1). Hand-turn count still to do |
+| Encoder ticks per cm, motor running | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | `TICKS_PER_CM` in `open_challenge.ino` and `obstacle_challenge.ino` (also in the earlier `straight_pillars.ino`, git history). Earlier values (15.1 and 12.67 pushed by hand, 16.1 with the previous motor) are superseded |
+| Encoder pulses per wheel turn (10 turns) | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks; internal gearbox ≈ 17.1 : 1 | Ratio = 119.4 ÷ 7 (one edge: the firmware counts only the rising edge of C1). This ratio is inside the N20; the 1000 rpm rating is already the output speed after it. Hand-turn count still to do |
 | Stall current (peak, < 0.5 s) | datasheet, same family (not measured) | 0.7 A | Do not hold the wheel longer. Multimeter reading still to do |
-| Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 12.6 cm/s × 150/255 | 13.5 s | Not measured. Stopwatch test still to do. **Priority:** the three-lap round needs about 13 cm/s on average (README §9.9), so this value must be measured |
-| Speed over 1 m at `RUN_PWM 255` | calculated upper bound, no load: 12.6 cm/s | 7.9 s | Not measured. Stopwatch test still to do |
+| Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 1000 rpm × 12.9 cm × 150/255 ≈ 1.26 m/s | ≥ 0.8 s | Not measured. Stopwatch test still to do. **Correction (24 Nov):** the earlier 12.6 cm/s (13.5 s) divided by the gearbox ratio twice (README §5.2). The 22 Nov 3-lap run, with the 8 s no-corner stop active, already shows the car is much faster than 12.6 cm/s |
+| Speed over 1 m at `RUN_PWM 255` | calculated upper bound, no load: 1000 rpm × 12.9 cm ≈ 2.15 m/s | ≥ 0.47 s | Not measured. Stopwatch test still to do (corrected 24 Nov, see the row above) |
 | Torque check (ramp or spring scale) | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | Ramp or spring scale still to do |
 | Reverse ticks to leave the parking space (five wheel turns) | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |
 
@@ -84,16 +84,16 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Measure | Method | Value | Notes |
 | --- | --- | --- | --- |
 | Wheel diameter, four wheels, mounted | calliper | — | Design value 41 mm |
-| Wheelbase (front to rear axle) | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
-| Car width | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` (4.5 + 10 + 2.5 = 17 cm) |
-| Full length, with front protrusion | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
-| Rear (encoder) axle to camera lens | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
+| Wheelbase (front to rear axle) | ruler | 9 cm | Confirmed on 23 Nov 2026 (first measured 19 Nov for the earlier `straight_pillars.ino`) |
+| Car width | ruler | 9 cm | Confirmed on 23 Nov 2026. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` and `TARGET_CM` (4.5 + 10 + 2.5 = 17 cm) |
+| Full length, with front protrusion | ruler | 17.5 cm | Protrusion about 4 cm |
+| Rear (encoder) axle to camera lens | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` |
 | Track width (between wheels) | ruler | 9 cm | Measured by the team on 23 Nov 2026 |
 | Mass, ready to run, with battery | kitchen scale, ±1 g | 248 g | Weighed with the battery. Note what is mounted |
 | Turning sweep at full lock, left (from the lens) | tape measure, 6 runs | 12 cm forward, 40 cm sideways | Includes about 2.4 cm of braking. Source: notes of 28 Oct |
 | Turning sweep at full lock, right (from the lens) | tape measure, 6 runs | 15 cm forward, 39 cm sideways | Includes about 2.2 cm of braking. Less repeatable than the left turn in the tape readings. Source: notes of 28 Oct |
 | Odometry against tape (lens path, straight part) | tape measure | Y within ±1–2 cm; X 2–3.5 cm more than the odometry | Possible small slip in the curve. Source: notes of 28 Oct |
-| Turning sweep at full lock, calculated (from the lens) | calculated | 22.4 cm sideways, −1.0 cm forward | Turn centre 10.7 cm from the rear axle (wheelbase 9 cm ÷ tan 40°); lens 11.7 cm forward of the axle; 90° turn | Geometry only, no braking. Compare with the tape rows above |
+| Turning sweep at full lock, calculated (from the lens) | calculated | 22.4 cm sideways, −1.0 cm forward | Turn centre 10.7 cm from the rear axle (wheelbase 9 cm ÷ tan 40°); lens 11.7 cm forward of the axle; 90° turn. Geometry only, no braking. Compare with the tape rows above |
 
 ## Gyroscope: drift and turn accuracy
 
@@ -112,7 +112,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Pillar detected at 20, 40, 60 cm | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
 | Pillar width in pixels at 20, 40, 60 cm | 160 × 120 | — | 12.5 px / 6.25 px / 4.2 px | Calculated, not measured: 50 px focal length × 5 cm pillar ÷ distance. `MAX_AHEAD_CM` = 40 in `obstacle_camera_v3_2` |
 | Floor line detected at 9, 16 cm | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
-| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | camera_viewer.html | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
+| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
 
 ## Obstacle Challenge: edge cases to add
 

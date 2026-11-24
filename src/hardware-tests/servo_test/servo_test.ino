@@ -14,7 +14,7 @@ Servo steeringServo;                  // the servo object used to move the steer
 // Configurable sweep parameters
 const int MIN_ANGLE = 10;             // Left limit in degrees (adjust if the linkage collides)
 const int MAX_ANGLE = 170;            // Right limit in degrees (adjust if the linkage collides)
-const int CENTER    = 85;             // Reference midpoint: wheels straight ahead (measured 21 Nov, same as straight_pillars)
+const int CENTER    = 85;             // Reference midpoint: wheels straight ahead (measured 21 Nov, same as STEER_CENTER in open_challenge / obstacle_challenge)
 const int STEP      = 2;              // Degrees moved per step
 const int DELAY_MS  = 30;             // Sweep speed: milliseconds between steps
 
@@ -30,7 +30,7 @@ void setup() {                        // runs once when the Nano starts
   steeringServo.write(CENTER);        // move the wheels to the center before the test
 
   Serial.println("\n=== SERVO SWEEP TEST (PIN D9) ===");   // title of the test
-  Serial.println("Servo centered at 90°. Press button on D10 to start sweep..."); // instruction
+  Serial.print("Servo centered at "); Serial.print(CENTER); Serial.println(". Press button on D10 to start sweep..."); // instruction
 
   // Wait until the button on D10 is pressed (LOW)
   while (digitalRead(PIN_BUTTON) == HIGH) {   // while the button is still released

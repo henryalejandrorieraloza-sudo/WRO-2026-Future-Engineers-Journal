@@ -17,7 +17,7 @@ The WRO 2026 rules require at least three commits: the first no later than two m
 | `b2abe4a` | 2026-10-04 | 31,299 | 51,413 | 23.3 % | Last commit of 4 Oct. Code removed in d10690d and reorganised in 3c4ca50. |
 | `a6ada36` | 2026-10-07 | 37,165 | 114,170 | 42.6 % | Last commit before 8 Oct (2 months before 8 Dec 2026). |
 | `06f5685` | 2026-11-05 | 197,998 | 114,170 | 87.8 % | Last commit before 8 Nov (1 month before 8 Dec 2026). |
-| `e8cc71d` | 2026-11-23 | 279,446 | 76,080 | 100.0 % | Current state at the time of this document (before the protrusion fixes). |
+| `e8cc71d` | 2026-11-23 | 279,446 | 76,080 | 100.0 % | Reference for the count (before the protrusion fixes). Later small code commits: unused constants removed (`8589d11`), `REVERSE_TARGET_TICKS` set to 597 (`23d6055`), the `turn_measure_moving` test added (`1a055bd`), comments edited. |
 
 ## Result for the first commit
 
@@ -35,7 +35,10 @@ The rule text asks that "the first commit" contain at least 1/5 of the final cod
 |---|---|---|
 | First commit with ≥ 1/5 of code | 8 Oct 2026 | `814ddcf` (4 Oct 2026, 31.2 %, same day as the first commit). Note: `f3a9770` is the first commit in the history and contains no code. |
 | Second commit | 8 Nov 2026 | `06f5685` (5 Nov) |
-| Third commit | 24 Nov 2026 | `e8cc71d` (23 Nov, last commit with code changes) and the documentation commits after it, merged up to `9281ab0` (PR #33). The rules may not score changes made after this commit |
+| Third commit | 24 Nov 2026 | `e8cc71d` (23 Nov) and the commits after it (the small code commits listed above and the documentation commits), up to the v1.9.19 review of 24 Nov (documents and comments only, no code logic). The rules may not score changes made after 24 Nov |
 
 The rules note that changes after the third commit may not be scored, so documentation must be complete in the repository by that commit.
 
+## Size of the history
+
+180 commits on `main` on 23 Nov 2026 (`git rev-list --count main`), 96 of them by the Claude account (see README §15). Merge commits from pull requests are included in the count.

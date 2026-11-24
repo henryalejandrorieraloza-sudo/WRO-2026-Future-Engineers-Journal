@@ -11,7 +11,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 | Constant | Default | Meaning |
 |---|---|---|
 | `LAPS` | 3 | 1 = one lap (4 turns), 3 = the full challenge (12 turns) |
-| `RUN_PWM` | 150 | Speed on the straights (0–255). Tested with 110; raise in steps of about 20 |
+| `RUN_PWM` | 150 | Speed on the straights (0–255). 150 is the value in the code; raise in steps of about 20 |
 | `TURN_PWM` | 90 | Speed in the corners. Lower values were too weak to turn the car, so 90 is the value in use |
 | `STOP_OFFSET_CM` | 0 | Final stop: + stops later, − stops earlier. Only affects the exact `LAPS ≥ 2` method (`LSTART − D1 + STOP_OFFSET_CM`); the `LAPS = 1` WALL estimate and the `FALLBACK_CM` stop ignore it |
 | `LANE_MODE` | 1 | 0 = center of the corridor, 1 = fixed distance to the inner wall |
@@ -26,7 +26,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 **3. Car constants** (measured on this car)
 `MOTOR_REVERSED = true`, `ENCODER_REVERSED = true`, `GYRO_SCALE = 1.007` (measured in a 3-lap test), `STEER_CENTER = 85`, `STEER_LEFT_MAX = 10`, `STEER_RIGHT_MAX = 170`, `TICKS_PER_CM = 9.27`, and the pins.
 
-**Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the values measured on 21 Nov and also used by `obstacle_challenge`. Until 22 Nov this program used 90 and 15.1. Those values were changed on 22 Nov without a new track test, so the first run after the change should be watched closely, especially the stop position (it is computed from the encoder). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
+**Car constants:** `STEER_CENTER` (85) and `TICKS_PER_CM` (9.27) are the values measured on 21 Nov and also used by `obstacle_challenge`. Until 22 Nov this program used 90 and 15.1. Both candidate commits of the 22 Nov three-lap run (`3010306`, `c3441cd`) already have 85 and 9.27, so the run was made with these values (journal §19.2, `docs/TESTS.md`). The full table is in [README §8.0](../../../README.md#80-the-open-challenge-program-open_challenge-20-november).
 
 ## Wiring
 | Part | Nano pin |
@@ -41,6 +41,22 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 | Right ToF | XSHUT A2, I²C address 0x2B |
 | Front / rear ToF | XSHUT A1 / A0, held LOW (off) |
 
+## State machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> WAIT: power on, gyro calibrated
+    WAIT --> STRAIGHT: START button or g
+    STRAIGHT --> TURN: inner-side jump (corner 1: the side that opens)
+    TURN --> STRAIGHT: predicted yaw reached old heading +/- 90
+    STRAIGHT --> DONE: final leg, start position reached (LSTART - D1)
+    STRAIGHT --> DONE: safety (no corner in 8 s, stall, corner in final leg)
+    TURN --> DONE: safety (turn longer than 4 s, stall)
+    DONE --> STRAIGHT: g or START (new run)
+```
+
+The full table of states and transitions is in [README §8.2](../../../README.md#82-state-machine).
+
 ## How it runs
 ### Start
 1. Press **START** (D10) or send `g` and Enter in the Serial Monitor.
@@ -49,7 +65,7 @@ The sketch has three blocks of settings. Change only what is listed here unless 
 
 ### Straight: heading hold and lane
 - The heading is the integral of the gyro rate (`updateGyro()`), with the zero offset measured at each start.
-- The steering is a PI controller on the heading error: `servo = STEER_CENTER − (KP × error + integral)`, with `STEER_CENTER = 85`. The integral learns the real straight angle of this car, which starts at 85 and is not exactly 90°.
+- The steering is a PI controller on the heading error: `servo = STEER_CENTER − (KP × error + integral)`, with `STEER_CENTER = 85`. The integral (`KI_HEAD`, limited to ±25 servo units, only learned at full speed) finds the servo angle that really drives straight, so a small error in the measured centre does not make the car drift.
 - In **mode 1** the car keeps `INNER_TARGET_MM` from the inner wall. In **mode 0** it keeps the middle of the corridor (shifted by `CENTER_SHIFT_MM`). The lateral error becomes a small heading change (`K_LAT`, limited to `LAT_MAX_DEG`).
 - If a side reading is under `SAFE_WALL_MM` (70 mm), the car steers away at full correction.
 
@@ -94,12 +110,12 @@ Use the final error to tune the gyro scale (`GYRO_SCALE`). A large error after a
 1. Battery **on first**, then USB. Otherwise the sensors may not start.
 2. Put the car in the **middle** of the first straight, centered and parallel to the walls.
 3. Keep the hands away while the LED blinks (gyro calibration).
-4. Start with `LAPS = 1` and `RUN_PWM = 150` (the value in the code). When it works, raise `LAPS` and the speed.
+4. For a new layout or after a mechanical change, start with `LAPS = 1` and `RUN_PWM = 150` (the value in the code). When it works, use `LAPS = 3`.
 5. If the car zig-zags, lower `KP_HEAD`. If it drifts to one side, check `GYRO_SCALE` and the servo center.
 6. If it misses a corner, lower `JUMP_DELTA_MM` (more sensitive). If it turns too early, lower `TURN_PREDICT_S`; if it overshoots, raise it.
 
 ## Notes
-- The three-lap results are not recorded yet (see `CHANGELOG.md`, v1.9). Use `LAPS = 1` for the first runs.
+- **Result:** three laps (12 corners) on the first attempt on 22 Nov, stopped by the program in the starting section near the start wall, narrow corridors (journal §19.2). Lap times and direction were not written down; log the next runs in `docs/TESTS.md`.
 - The start-position method with `LAPS ≥ 2` is the exact one; `LAPS = 1` uses the less exact WALL estimate.
 - It needs the libraries **VL53L1X** (Pololu) and **Servo**.
 - The Nano uses `Wire.setWireTimeout(25000, true)`, so Arduino AVR Boards 1.8.3 or newer is required.

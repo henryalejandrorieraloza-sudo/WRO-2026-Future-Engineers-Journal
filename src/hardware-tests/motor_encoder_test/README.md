@@ -16,7 +16,7 @@ Hardware test for the **drive motor** (N20 12 V with encoder, driven by a **TB66
 
 3. Every 200 ms prints the total pulses, the number of wheel turns, and the speed in RPM.
 
-The encoder is read by an interrupt on **D2** (channel A). Channel **B** on **D3** tells the direction: if B is high on a rising edge of A, the count goes up, otherwise down.
+The encoder is read by an interrupt on **D2** (channel A). Channel **B** on **D3** tells the direction (the driving programs do it the other way round: interrupt on **D3** = C1, direction on **D2** = C2; both pins are interrupt pins on the Nano, so either works): if B is high on a rising edge of A, the count goes up, otherwise down.
 
 ## Wiring
 | Signal | Nano pin |
@@ -34,7 +34,7 @@ STBY on the driver is tied to +5 V on the PCB, so the driver is always enabled.
 | Constant | Default | Meaning |
 |---|---|---|
 | `MOTOR_REVERSED` | `false` | Set to `true` if "forward" drives the car backward |
-| `PULSES_PER_REV` | 374.0 | Pulses for one full wheel turn. **Measure it for the real motor**: turn the wheel by hand exactly one turn and read the count. 374 is only an example value |
+| `PULSES_PER_REV` | 374.0 | Pulses for one full wheel turn. **Measure it for the real motor**: turn the wheel by hand exactly one turn and read the count. 374 is only an example value; with the current motor the driving programs count about 119 per wheel turn (9.27 ticks/cm × 12.9 cm) |
 
 ## How to use
 1. Put the car on a stand, wheels in the air, the first time.

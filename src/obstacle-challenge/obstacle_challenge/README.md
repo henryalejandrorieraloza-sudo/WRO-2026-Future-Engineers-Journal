@@ -13,7 +13,7 @@ It is the **driving half** of the Obstacle Challenge. The vision half is [`obsta
 | Board | Arduino Nano (classic, ATmega328P) |
 | Libraries | *VL53L1X* by Pololu, `Servo.h` (built in) |
 | Companion sketch | `obstacle_camera_v3_2` on the ESP32-S3-CAM, connected TX (GPIO43) → Nano D0 |
-| Status | Code committed 23 Nov 2026, the version the team reports as working. Track results (lap times, stops, pillar passes) are to be recorded in the [engineering journal](../../../docs/ENGINEERING_JOURNAL.md) |
+| Status | Code committed 23 Nov 2026, the version the team reports as working on the car, including its edge cases; the Obstacle video is in [`video/video.md`](../../../video/video.md). Lap times, stops and pillar passes are to be logged in [`docs/TESTS.md`](../../../docs/TESTS.md) |
 
 ## 1. Hardware it uses
 
@@ -133,7 +133,7 @@ stateDiagram-v2
     TURN --> DONE: turn takes more than 4 s
     REVERSE --> DONE: reverse takes more than 3 s
     STRAIGHT --> DONE: no corner in 8 s, or wheels stalled for 0.5 s
-    STRAIGHT --> DONE: s + Enter (emergency stop)
+    STRAIGHT --> DONE: s + Enter (emergency stop, also from PRE_TURN, TURN, REVERSE)
     DONE --> STRAIGHT: g or START (new run)
 ```
 
@@ -175,7 +175,7 @@ flowchart TD
 3. The car brakes, and the motor is switched to reverse. The steering turns to the **opposite** side from the turn direction, so the rear of the car swings toward the corner.
 4. The car reverses while it watches its yaw. When the predicted yaw (current yaw plus 0.12 s of yaw rate) is 90° from the old heading, the program adds ±90° to the target heading and increases the corner counter.
 5. The car brakes, centres the steering and reverses straight until the **rear ToF** reads 20 cm (or 30 cm by encoder if there is no rear sensor).
-6. The odometry map is reset (the new straight starts at x = 0, y = 0). Lines are ignored for 4 s. Then the car drives forward again on the new heading.
+6. The odometry map is reset (the new straight starts at x = 0, y = 0) and the car drives forward again on the new heading. The 4 s line-ignore window started when the line was seen (step 1), so the second line of the same corner is not counted.
 
 Because the target heading is always a multiple of 90° (0, 90, 180, 270…), the error of one turn is corrected on the next straight instead of adding up. The wall centring also keeps the car away from the inner wall on every straight.
 
@@ -211,11 +211,11 @@ When the same colour is seen again within `SAME_PILLAR_CM` (15 cm) of a stored p
 The program chooses on which side to pass, and how far from the pillar, so that it never moves **toward** the pillar:
 
 ```
-red   (pass on the right):  goalY = min(carY, pillarY − 17)
-green (pass on the left):   goalY = max(carY, pillarY + 17)
+red   (pass on the right):  goalY = min(camY, pillarY − 17)
+green (pass on the left):   goalY = max(camY, pillarY + 17)
 ```
 
-Once the camera is level with the pillar or past its centre, the program aims at the next pillar only, and it never turns back toward the pillar it is passing.
+`camY` is the sideways position of the camera lens on the map (the lens is `CAM_FWD_CM` = 11.7 cm ahead of the rear axle, where the encoder distance is measured). Once the camera is level with the pillar or past its centre, the program aims at the next pillar only, and it never turns back toward the pillar it is passing.
 
 ### 5.4 Heading toward the goal
 
@@ -313,6 +313,6 @@ A message without a pillar sends `color = 0` and `distCm = -1`. A pillar already
 |---|---|
 | [`obstacle_camera_v3_2`](../obstacle_camera_v3_2/README.md) | Vision sketch for the camera board that sends the messages read here |
 | [`obstacle_go_out_of_parking`](../obstacle_go_out_of_parking/README.md) | Leaves the parking space at the start of the round (not yet tested on the track) |
-| `open_challenge` (git history, `src/open-challenge/`) | The Open Challenge program. It shares the car constants (encoder, steering centre, gyro scale) with this sketch, but follows the walls instead of the floor lines |
+| [`open_challenge`](../../open-challenge/open_challenge/README.md) | The Open Challenge program. It shares the car constants (encoder, steering centre, gyro scale) and the gyro / ToF drivers with this sketch, but follows the inner wall instead of the floor lines |
 | [Root README §9](../../../README.md#9-obstacle-challenge-strategy) | Strategy, status and roadmap of the Obstacle Challenge |
 | [Engineering journal](../../../docs/ENGINEERING_JOURNAL.md) | Measurements, tests and decisions, in date order |

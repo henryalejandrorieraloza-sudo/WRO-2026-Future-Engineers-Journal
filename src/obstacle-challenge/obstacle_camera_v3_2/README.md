@@ -2,7 +2,7 @@
 
 Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at the track and tells the Arduino Nano where the **pillars** and the **floor lines** are. It is the vision half of the Obstacle Challenge. The driving half, [`obstacle_challenge`](../obstacle_challenge/README.md), reads its messages (the first 12 of the 14 fields).
 
-**Status: used by `obstacle_challenge` since 23 Nov 2026, not yet validated on the track with these constants.** Every pixel-count, row and column constant was scaled from the 320 x 240 calibration as a starting guess. Re-check them with `camera_viewer.html` before a long run. The previous 320 x 240 version (v3.1, folder `obstacle_camera`) is no longer in `src/`; it is in the git history.
+**Status: runs on the car with `obstacle_challenge` since 23 Nov 2026 (team report; Obstacle video in `video/video.md`).** Every pixel-count, row and column constant was scaled from the 320 x 240 calibration (each one is commented with its old value), and `FOCAL_PX = 50` was confirmed by the team on 23 Nov. The 160 × 120 frame rate and the edge-case results are still to be logged in `docs/TESTS.md`. The previous 320 x 240 version (v3.1, folder `obstacle_camera`) is no longer in `src/`; it is in the git history, and its vision code lives on in `src/hardware-tests/camera_test`.
 
 ## What changed from v3.1 (`obstacle_camera`, in the git history)
 
@@ -10,7 +10,7 @@ Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at th
 |---|---|---|
 | Resolution | QVGA 320 x 240 | **QQVGA 160 x 120** (about 4 times fewer pixels per picture) |
 | Reason | colour and shape checks run on every pixel | higher frame rate (fps is the main limit of the car) |
-| Pixel constants | calibrated at 320 x 240 | halved or quartered as a **starting guess** (each one is commented in the sketch) |
+| Pixel constants | calibrated at 320 x 240 | halved or quartered from the 320 x 240 values (each one is commented in the sketch) |
 | Colour ranges (HSV) | 19 Nov values | unchanged |
 | WiFi live view | on by default | **not in this sketch** (same vision code, no WiFi) |
 | Message to the Nano | 14 fields | 14 fields, same format |
@@ -24,7 +24,7 @@ Each constant in the sketch has a comment with its old value, for example `HALVE
 |---|---|
 | Camera | ESP32-S3-CAM, **QQVGA 160 x 120**, RGB565, PSRAM frame buffers (2 buffers, newest frame only) |
 | Link to the Nano | **GPIO43 (TX)** to the Nano **D0 (RX)**, 115200 baud |
-| USB | Serial Monitor and `camera_viewer.html` (only with `STREAM_TO_PC = true`) |
+| USB | Serial Monitor status lines (`STREAM_TO_PC = false`, the competition setting) |
 
 The camera never listens to the Nano, so `NANO_RX_PIN` is `-1`.
 
@@ -98,9 +98,9 @@ The sketch also prints the reason when a line is rejected (`few pixels`, `too sh
 
 ### 6. Distance and side
 
-The pillar position is computed with a **pinhole model**: `distance = FOCAL_PX × seenCm / width`, where `seenCm` is the pillar width seen from the angle (two faces). The side distance comes from similar triangles. `FOCAL_PX` = 50 is **not measured again** for QQVGA: it was halved from 100 and must be checked on the track.
+The pillar position is computed with a **pinhole model**: `distance = FOCAL_PX × seenCm / width`, where `seenCm` is the pillar width seen from the angle (two faces). The side distance comes from similar triangles. `FOCAL_PX` = 50 is half of the 100 px measured at 320 × 240 (journal §13.2); the team confirmed it for 160 × 120 on 23 Nov.
 
-## Settings to check first on the track
+## Settings to check first after a camera change
 
 | Constant | Why check it |
 |---|---|
@@ -131,12 +131,12 @@ status: camera 12.4 fps (locked) | pillar RED 42 cm ahead, 17 cm side
 
 1. Upload `obstacle_camera_v3_2` with the board settings above.
 2. Power the camera while it looks at the empty floor, and wait 5 s for the lock.
-3. Optional: set `STREAM_TO_PC = true`, close the Serial Monitor, and open `camera_viewer.html` in Chrome or Edge to check the masks and the line rows.
+3. Read the status lines on the Serial Monitor (115200 baud, `STREAM_TO_PC = false`): fps, each line's accept / reject reason and the probe colours. `camera_viewer.html` is drawn for 320 × 240 pictures, so it is used with `camera_test`, not with this sketch.
 4. Power the Nano and the camera together. When `obstacle_challenge` runs, its status line shows the pillar (`pillar R` or `G`) and the line counts (`line B/O`) as soon as messages from this sketch arrive.
 
 ## Limits
 
-- **Not validated on the track.** The 320 x 240 tuning does not carry over exactly to 160 x 120.
+- The pixel constants were scaled from 320 x 240; if the camera is moved or replaced, re-check them with the probe output (the table above lists which ones first).
 - The camera fps increases, but each pixel covers more real distance. At 20 cm a 5 cm pillar is about 12 pixels wide here, against about 25 at 320 x 240, so distance estimates are coarser.
-- No WiFi stream in this version. Use the USB viewer. The WiFi live view of v3.1 is in the git history (`obstacle_camera`), and it is off in the competition build (rule 11.6: no radio during rounds).
+- No WiFi stream in this version. The WiFi live view of v3.1 is in the git history (`obstacle_camera`), and it is off in the competition build (rule 11.6: no radio during rounds).
 - The sketch keeps its own memory in PSRAM. If the camera does not start, check `Tools → PSRAM: OPI PSRAM` and press RESET.
