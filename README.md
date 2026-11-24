@@ -78,7 +78,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** the camera detects red and green pillars; the Nano drives around them. The parking start is in the code and still being tested (§7, §9).
-- **Repository:** 134 commits on `main`. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Repository:** 136 commits on `main`. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -971,9 +971,11 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 
 ## 15. Use of AI tools
 
-Claude, an AI model made by Anthropic, was used during this project. On the `main` branch the commit history has 134 commits; 63 of them are authored by the Claude account. The commits are not rewritten, so each change can be traced to its author.
+Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-- **What the AI did:** wrote and revised part of the code (sketches, the pillar viewer and tests), drafted parts of the documentation, and proposed some tools (for example the scenario generator).
+Of the 136 commits on `main`, 64 are authored by the Claude account: 30 change code files, 30 change only documentation, and 4 change other files. The commits are not rewritten, so each change can be traced to its author.
+
+- **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.
 
 ---
