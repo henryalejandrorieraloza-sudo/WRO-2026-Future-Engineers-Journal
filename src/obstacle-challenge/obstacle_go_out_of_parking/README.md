@@ -2,7 +2,7 @@
 
 Arduino Nano sketch for the **start from inside the parking lot** of the Obstacle Challenge (+7 points, rules §10). The car starts parked nose-to-wall between two walls and has to leave the space without touching either wall. It is the only program in `src/` that is not yet tested on the track, so treat it as a draft until the steps in *Before the first run* are done.
 
-**Status (22 Nov 2026):** written 20 Nov, not yet tested on the track. `REVERSE_TARGET_TICKS` is a placeholder, not a measured value (see below).
+**Status (24 Nov 2026):** written 20 Nov, not yet tested on the track. `REVERSE_TARGET_TICKS = 597` is calculated, not measured (see below).
 
 ## How it works
 
@@ -35,7 +35,7 @@ The motor is driven only through the TB6612FNG, on the rear wheels. The reverse 
 | Constant | Value | Meaning |
 |---|---|---|
 | `CALIBRATE_ENCODER` | `false` | `true` = only count encoder ticks, the motor stays off |
-| `REVERSE_TARGET_TICKS` | `1024` (placeholder) | Encoder ticks for five wheel turns. **Must be measured** |
+| `REVERSE_TARGET_TICKS` | `597` (calculated) | Encoder ticks for five wheel turns: 5 × π × 4.1 cm × 9.27 ticks/cm. **To be measured** with `CALIBRATE_ENCODER` |
 | `LEFT_LOCK` / `CENTER` / `RIGHT_LOCK` | 10 / 85 / 170 | Servo angles. `CENTER = 85` is the same value as `obstacle_challenge` (measured 21 Nov) |
 | `DRIVE_PWM` / `REVERSE_PWM` / `REVERSE_SLOW_PWM` | 90 / 90 / 75 | Motor speeds (0–255) |
 | `FIRST_ANGLE_DEG` / `RETURN_ANGLE_DEG` | 45 / 10 | Size of the first turn and of the countersteer |
@@ -45,7 +45,7 @@ The motor is driven only through the TB6612FNG, on the rear wheels. The reverse 
 ## Before the first run
 
 1. **Measure the encoder for reverse.** Set `CALIBRATE_ENCODER = true`, upload, open the Serial Monitor at 115200 baud, send `z`, turn the wheel by hand exactly five revolutions, then send `p`. Put the printed count in `REVERSE_TARGET_TICKS` and set `CALIBRATE_ENCODER = false`.
-2. **Check the steering.** Confirm with the servo test that 10 is the left lock and 170 the right lock on this chassis, and re-measure the centre (use the servo test in the git history, `src/hardware-tests/servo_test`).
+2. **Check the steering.** The values 10 / 85 / 170 were measured on this chassis on 21 Nov with [`servo_test`](../../hardware-tests/servo_test); re-run it after any change to the steering.
 3. **Test the wheels off the floor first**, then on the floor with the car parked against a wall.
 
 ## Stop messages
@@ -61,10 +61,10 @@ Every stop prints its reason to the Serial Monitor:
 | `No forward encoder tick. Check D3.` | The encoder is not counting. Check the wire on D3 |
 | `Reverse stopped: no encoder pulses for 1.5 seconds.` | The wheel is blocked or the encoder stopped |
 | `Five-turn encoder target reached. Motor stopped.` | Normal end of the reverse |
-| `Enter the measured five-turn count in REVERSE_TARGET_TICKS.` | The count is 0: the reverse was never measured. The maneuver is not run |
+| `Enter the measured five-turn count in REVERSE_TARGET_TICKS.` | Printed only if the count is set to 0. The maneuver is not run |
 
 ## Known gaps
 
 - **No start button.** The sketch starts when it is powered. The rules require a start button before a round, so the button on D10 (as in `open_challenge`) must be added before a competition run.
 - **`REVERSE_TARGET_TICKS` is not measured yet** (see step 1 above).
-- **Steering centre and speeds are not calibrated** for this chassis yet.
+- **Speeds** (`DRIVE_PWM`, `REVERSE_PWM`) are not tuned on the track yet. The steering values are the measured ones of the driving programs.

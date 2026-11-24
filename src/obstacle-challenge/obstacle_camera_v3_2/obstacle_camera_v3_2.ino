@@ -1,8 +1,9 @@
 // =====================================================================
 // OBSTACLE CAMERA (ESP32S3-CAM) - v3.2 (pillars + both floor lines, HALF RESOLUTION for fps)
 // Resolution QQVGA (160x120): about 4x fewer pixels than QVGA (320x240), for a higher fps.
-// Every pixel-count/row/column constant below was scaled from the 320x240 calibration as a STARTING GUESS -- re-check all of them on the real
-// track with camera_viewer.html before trusting this version. HSV colour ranges are untouched.
+// Every pixel-count/row/column constant below was scaled from the 320x240 calibration (each one keeps its old value in its comment).
+// This version runs on the car with obstacle_challenge since 23 Nov 2026. After a camera change, re-check the constants with the
+// status lines and the colour probe (camera_viewer.html is drawn for 320x240 and is used with camera_test). HSV colour ranges are untouched.
 // No WiFi stream in this version (same vision code as v3.1, just at QQVGA).
 // Finds, in every picture:
 //   - the closest red / green pillar (same algorithm as Pillar Vision Lab)
