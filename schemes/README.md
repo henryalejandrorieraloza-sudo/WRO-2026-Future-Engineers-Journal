@@ -148,7 +148,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 | Battery voltage on a 3.3 V pin | Permanent damage to the main controller (it happened: journal Problem 31) | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
 | Servo stall pulls the 5 V rail down | Camera or sensors reset during a run | 3 A buck with large margin (see budget) |
 | Motor held at stall for a long time | Gear damage; the motor heats quickly at 0.7 A stall | The code stops the motor after `STALL_MS`; stall tests use a short hold (< 0.5 s) |
-| Loose sensor wires | A TOF stops answering, I²C bus freezes | Locking JST connectors on the PCB; `Wire.setTimeOut()` in code so a frozen bus does not hang the program (journal Problems 12 and 30) |
+| Loose sensor wires | A TOF stops answering, I²C bus freezes | Locking JST connectors on the PCB; `Wire.setWireTimeout(25000, true)` in the driving programs, so a frozen bus is reset after 25 ms instead of hanging the program, and a ToF that is silent for 0.5 s makes the program restart the sensors (journal Problems 12 and 30) |
 | All TOF sensors start with the same I²C address | Address conflict, no readings | XSHUT lines: sensors are switched on one at a time at start-up and each gets its own address (journal Problem 15) |
 | Short circuit while handling | Burnt traces or battery damage | Power switch on the main line; XT30 connector on the battery so it can be unplugged quickly |
 
@@ -158,9 +158,9 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 
 | Sensor | Placement | Reasoning (field geometry) |
 |---|---|---|
-| TOF FRONT | Front centre, facing forward | Safety brake when a wall is too close, and FRONT vs BACK check after the first turn; parking later. Corners are detected by the side sensors (Open) or the floor lines (Obstacle), not by the front sensor |
-| TOF LEFT / RIGHT | Sides, **straight (0°), facing the wall**, centre ~5 cm from the floor | Measure the distance to the wall being followed; when it ends, the readings become invalid → corner. On the black wall an angled (30°) beam returns almost no light: 30 cm read as ~198 cm; straight it reads 32.0 cm (journal Phase 10). 5 cm is half of the 10 cm wall, so the ROI 16 × 8 cone stays on the wall and off the floor |
-| TOF BACK | Rear centre | FRONT vs BACK check after the first turn (after a correct turn the back is near the corner's outer wall and the front faces the long straight) |
+| TOF FRONT (0x2D) | Front centre, facing forward | Obstacle: after a corner line the car drives on until the front wall is 40 cm away, then starts the reverse turn (a line is seen only within ~16–23 cm, which is not a distance to the wall). Open: held in reset (XSHUT LOW) |
+| TOF LEFT / RIGHT (0x2A / 0x2B) | Sides, **straight (0°), facing the wall**, centre ~5 cm from the floor | Open: keep 100 mm from the inner wall; a corner is a reading 250 mm above the wall's learned distance or above 1200 mm. Obstacle: centring between the walls. On the black wall an angled (30°) beam returns almost no light: 30 cm read as ~198 cm; straight it reads 32.0 cm (journal Phase 10). 5 cm is half of the 10 cm wall, so the ROI 16 × 8 cone stays on the wall and off the floor |
+| TOF BACK (0x2C) | Rear centre, facing back | Obstacle: ends the back-up after each reverse turn at 20 cm from the rear wall, so every straight starts from the same place. Open: held in reset (XSHUT LOW) |
 | BMI160 | Flat on the PCB, near the car's centre | Only yaw is used; mounting it flat makes the Z axis the turning axis |
 | Camera | Front, facing forward and slightly down | Sees the pillars of the next section; only a horizontal band of the image is searched so objects outside the field are ignored (journal §6) |
 
@@ -170,6 +170,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 
 - **Gyroscope:** 300 samples (≈ 1.5 s, after 0.7 s of settling) at rest when the run is started, with the LED blinking; the average is subtracted as offset (like taring a scale). The scale is `GYRO_SCALE = 1.007` (3-lap test).
 - **TOF sensors:** ROI 16 × 8 and mounting angle chosen with tape-measure experiments on the black wall (`tof_roi_budget_test`, journal Phase 10); distance readings (0 or ≥ 4000 mm = no wall; the range status is not checked). The 8-reading window is October history (README §8.3).
+- **Encoder:** 9.27 ticks per cm, measured with the motor running (190 ticks over a taped 20.5 cm, 21 Nov).
 - **Steering:** centre and limits measured on the real chassis with the `servo_test` sketch, with a 2–3° margin before each mechanical stop.
 - **Camera colours:** HSV thresholds tuned live with the camera viewer under the real lighting.
 
