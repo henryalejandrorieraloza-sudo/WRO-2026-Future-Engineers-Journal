@@ -10,7 +10,7 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day) a
 - **Half width:** `SAFE_LAT_CM = 17` is 4.5 + 10 + 2.5 cm. The comments in `obstacle_camera_v3_2`, `camera_test` and `obstacle_challenge` said 4.25 cm; they now say 4.5 cm. No value changed.
 - **Focal length:** `FOCAL_PX = 50` is confirmed by the team as the correct value for 160 × 120; the "not measured" notes are removed from the README, the camera README, the test log and the journal.
 - **Motor datasheet:** `schemes/datasheets/N20_motors.pdf` (6 V, 33 rpm, a different motor) is removed; the `schemes/README.md` source table points to `N20_12V_1000RPM_specs.md`.
-- **Rule 9.21 (README §3.1):** the reading of the reverse corner turns against rule 9.21, App. A.4 cases 1–6 and the published Q&A is written down (still not confirmed by the judges).
+- **Rule 9.21 (README §3.1):** the reading of the reverse corner turns against rule 9.21, App. A.4 cases 1–6 and the published Q&A is written down: it stays inside the same corner section, so the team states that it complies.
 - **Test log:** the width row is now confirmed; the "to measure" and conflict notes are removed.
 - **Checklist (README §14.1):** the deadline sentence now says that the dates are counted back from 8 December (rule 7: 2 months, 1 month, 3 weeks, 2 weeks). No date changed.
 
