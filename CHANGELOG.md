@@ -2,15 +2,19 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
-## Unreleased — 23 November (night) · Car width 9 cm everywhere, docs aligned with the code
+_v1.9.18 groups the documentation work of 23 November (night, evening and day) and is the tag of the scoring commit._
+
+## v1.9.18 — 23 November (night) · Car width 9 cm everywhere, docs aligned with the code
 
 - **Width:** the car is **9 cm wide** (measured and confirmed on 23 Nov). The 9.5 cm in the README, the journal, the models, the photos and the test log is corrected to 9 cm.
 - **Half width:** `SAFE_LAT_CM = 17` is 4.5 + 10 + 2.5 cm. The comments in `obstacle_camera_v3_2`, `camera_test` and `obstacle_challenge` said 4.25 cm; they now say 4.5 cm. No value changed.
 - **Focal length:** `FOCAL_PX = 50` is confirmed by the team as the correct value for 160 × 120; the "not measured" notes are removed from the README, the camera README, the test log and the journal.
+- **Motor datasheet:** `schemes/datasheets/N20_motors.pdf` (6 V, 33 rpm, a different motor) is removed; the `schemes/README.md` source table points to `N20_12V_1000RPM_specs.md`.
+- **Rule 9.21 (README §3.1):** the reading of the reverse corner turns against rule 9.21, App. A.4 cases 1–6 and the published Q&A is written down (still not confirmed by the judges).
 - **Test log:** the width row is now confirmed; the "to measure" and conflict notes are removed.
 - **Checklist (README §14.1):** the deadline sentence now says that the dates are counted back from 8 December (rule 7: 2 months, 1 month, 3 weeks, 2 weeks). No date changed.
 
-## Unreleased — 23 November (evening) · Motor data, power budget and measurement plan
+## v1.9.18 — 23 November (evening) · Motor data, power budget and measurement plan
 
 - **Motor:** the datasheet of the same family (BJ-N20-12-1000, 7 PPR) is recorded, with the reasons why the 1:30 ratio is not yet proven. The 2.4 kg·cm stall torque is no longer a design value.
 - **Torque (README §5.2):** the required 8 mN·m at the wheel is compared with the rated (≈ 16 mN·m) and stall (≈ 42 mN·m) torques of that datasheet.
@@ -19,7 +23,7 @@ Versions of the car and of this repository. Dates are in 2026.
 - **Test log (`docs/TESTS.md`):** blank tables for motor, steering, car geometry and mass, ToF, gyroscope, camera and suggested edge cases. No value was filled in without a measurement.
 - **Mass:** 248 g, weighed on 23 Nov 2026 with the battery (see `docs/TESTS.md`).
 
-## Unreleased — 23 November · README checked line by line against the three competition sketches
+## v1.9.18 — 23 November · README checked line by line against the three competition sketches
 
 - **Videos:** thumbnails of the Obstacle and Open Challenge videos added in `video/thumbnails/` and linked to the YouTube videos in `video/video.md`.
 - **Parts:** `models/README.md` states that one car uses **38 printed pieces** (26 distinct parts), without the 8 tyre-mould copies.

@@ -8,7 +8,7 @@ Drive motor used on the vehicle.
 - **Product URL:** https://www.amazon.com/dp/B0DB28BC6S
 - **Purchase:** last order 20 Aug 2026, 2 pieces
 
-This file replaces the earlier `N20_motors.pdf`, which describes a different motor (6 V, 33 RPM).
+This file replaces the earlier `N20_motors.pdf`, which described a different motor (6 V, 33 RPM). That PDF was removed from the repository on 23 Nov 2026; it stays in the git history.
 
 **Status (23 Nov 2026):** the gear ratio and the stall values of the motor on the car are **not yet confirmed for this ASIN**. The values below come from a datasheet of the same family, which is probably but not certainly the same motor. The team has to measure the ratio on the car (see "Measurements to take").
 
@@ -93,5 +93,5 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which does not mat
 
 1. Measure the gear ratio on the car (see "Measurements to take") and record it here.
 2. Measure the stall current, or confirm the 0.7 A value against the label or a second source.
-3. Replace `schemes/datasheets/N20_motors.pdf` (6 V, 33 RPM, a different motor) with the datasheet of the motor on the car, or a saved copy of the listing.
+3. ~~Replace `N20_motors.pdf` (6 V, 33 RPM, a different motor)~~ Done 23 Nov: the 6 V PDF was removed. Optional: save a copy of the product listing next to this file.
 4. Update `schemes/README.md` §4.2 and the encoder constants that depend on counts per output revolution, once the ratio is measured.
