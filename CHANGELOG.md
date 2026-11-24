@@ -6,7 +6,7 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day) a
 
 ## Unreleased — 23 November (late) · Reproducibility and consistency of the documents
 
-- **Speed:** the 1 : 1 figure of 2.1 m/s is no longer presented as the expected speed. The encoder count implies about 17 : 1, which gives about 12.6 cm/s with no load. A three-lap round needs about 13 cm/s, so this is listed as an open risk (README §5.2, §10.3; stopwatch test in `docs/TESTS.md`).
+- **Speed:** the team reports one lap of about 25 s with all corners narrow (about 0.3 m/s). The earlier 2.1 m/s (1 : 1) figure is not the expected speed, and the calculated 12.6 cm/s does not match this report. It is no longer presented as an open risk; the stopwatch test over 1 m stays in `docs/TESTS.md` (README §5.2, §10.3).
 - **Steering:** the open check (midpoint of the stops is 90, not 85) is also listed in README §13.
 - **Submission checklist:** the third-commit row (README §14.1) and `docs/COMMITS.md` now state what is committed and what is still missing.
 
