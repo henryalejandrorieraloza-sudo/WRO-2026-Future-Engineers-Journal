@@ -4,6 +4,12 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.30 — 24 November · Gear teeth of the 1 : 1 drive recorded
+
+**No code logic changed.** The team confirmed that the motor gear and the differential gear have **30 teeth each**, and that one turn of one gear gives exactly one turn of the other (counted by hand). This is the external 1 : 1 stage only; the internal gearbox of the N20 (≈ 17 : 1 from the encoder count, 1 : 30 in the datasheet of the same family) is still to be confirmed with the hand-turn count of encoder pulses.
+
+- **`README.md` §5.2, `models/README.md` (main table and parts table), `docs/TESTS.md` (motor table):** tooth count added next to the 22 mm outside diameter.
+
 ## v1.9.29 — 24 November · Total car length 17.5 cm checked in the whole repository
 
 **No code logic changed.** The team confirmed that the **total length of the car is 17.5 cm**. Every file of the repository was read and searched for the car's length; the README, `models/README.md`, `v-photos/README.md`, `docs/TESTS.md`, the journal (§9.2) and the compliance rows (175 × 90 × 60 mm) already said 17.5 cm. What was still different:

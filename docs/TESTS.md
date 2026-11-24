@@ -62,7 +62,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Test | Method | Value | Notes |
 | --- | --- | --- | --- |
 | Encoder ticks per cm, motor running | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | `TICKS_PER_CM` in `open_challenge.ino` and `obstacle_challenge.ino` (also in the earlier `straight_pillars.ino`, git history). Earlier values (15.1 and 12.67 pushed by hand, 16.1 with the previous motor) are superseded |
-| Motor output-shaft turns against wheel turns | counted by hand, 24 Nov 2026 | 1 : 1 | The differential adds no reduction. Does not measure the gearbox inside the N20 |
+| Motor output-shaft turns against wheel turns | counted by hand, 24 Nov 2026 | 1 : 1 | Motor gear and differential gear have 30 teeth each; one turn of one gives one turn of the other. The differential adds no reduction. Does not measure the gearbox inside the N20 |
 | Encoder pulses per wheel turn (10 turns) | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks; internal gearbox ≈ 17.1 : 1 | Ratio = 119.4 ÷ 7 (one edge: the firmware counts only the rising edge of C1). This ratio is inside the N20; the 1000 rpm rating is already the output speed after it. Hand-turn count still to do |
 | Winding resistance (rotor still, motor disconnected) | Multimeter on the Ω scale, probes on the motor terminals, room temperature, 24 Nov | 11.7 Ω | Measured. Full procedure: `schemes/datasheets/N20_stall_current_measurement.md` |
 | Stall current (peak) | calculated: 12 V ÷ 11.7 Ω | 1.03 A (range 0.95 to 1.20 A) | Calculated from the measured resistance, not read in series. The 0.7 A of the datasheet of the same family is no longer used. A reading in series (wheel held < 0.5 s) is still optional |
