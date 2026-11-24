@@ -12,8 +12,8 @@ Rule 7 of the WRO 2026 Future Engineers General Rules asks for **one YouTube vid
 
 <table>
 <tr>
-<td align="center"><a href="https://www.youtube.com/watch?v=ccAdp2c7_7Y"><img src="thumbnails/obstacle_challenge_thumbnail.jpg" width="420" alt="Obstacle Challenge video thumbnail"></a><br><em>Obstacle Challenge (2:04)</em></td>
-<td align="center"><a href="https://www.youtube.com/watch?v=4p94mWkXhsk"><img src="thumbnails/open_challenge_thumbnail.jpg" width="420" alt="Open Challenge video thumbnail"></a><br><em>Open Challenge (25 s)</em></td>
+<td align="center"><a href="https://www.youtube.com/watch?v=ccAdp2c7_7Y"><img src="thumbnails/obstacle_challenge_thumbnail.jpg" width="420" alt="Obstacle Challenge video thumbnail"></a><br><em>Obstacle Challenge (2:14)</em></td>
+<td align="center"><a href="https://www.youtube.com/watch?v=4p94mWkXhsk"><img src="thumbnails/open_challenge_thumbnail.jpg" width="420" alt="Open Challenge video thumbnail"></a><br><em>Open Challenge (34 s)</em></td>
 </tr>
 </table>
 
