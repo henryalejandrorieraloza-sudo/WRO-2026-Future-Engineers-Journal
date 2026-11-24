@@ -93,19 +93,6 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Odometry against tape (lens path, straight part) | tape measure | Y within ±1–2 cm; X 2–3.5 cm more than the odometry | Possible small slip in the curve. Source: notes of 28 Oct |
 | Turning sweep at full lock, calculated (from the lens) | calculated | 22.4 cm sideways, −1.0 cm forward | Turn centre 10.7 cm from the rear axle (wheelbase 9 cm ÷ tan 40°); lens 11.7 cm forward of the axle; 90° turn | Geometry only, no braking. Compare with the tape rows above |
 
-## ToF sensors (distance, on the black and the white wall)
-
-Procedure: place the car at 5, 20, 40 and 60 cm from the wall, read 30 samples per distance with `src/hardware-tests/tof_and_gyro_test`, and compare with a tape measure.
-
-| Side | Wall | Distance (cm, tape) | Valid readings / 30 | Mean (cm) | Spread p90 − p10 (cm) | Notes |
-|---|---|---:|---:|---:|---:|---|
-| LEFT | white | — | — | — | — | |
-| LEFT | black | — | — | — | — | Check the black-wall case (Problem 46) |
-| RIGHT | white | — | — | — | — | |
-| RIGHT | black | — | — | — | — | |
-| FRONT | white | — | — | — | — | |
-| BACK | white | — | — | — | — | |
-
 ## Gyroscope: drift and turn accuracy
 
 | Test | Method | Value | Notes |
