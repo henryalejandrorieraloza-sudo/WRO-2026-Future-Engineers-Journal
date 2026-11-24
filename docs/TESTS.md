@@ -16,6 +16,27 @@ Target (team plan, not a rubric requirement): at least 20 runs with the final co
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | 22 Nov 2026 | `3010306` or `c3441cd` (both on 22 Nov, 21:35 and 21:39; which one ran is not recorded) | not recorded | 3 (12 corners) | yes | not recorded | not recorded | Starting section, close to the start wall (not the exact spot) | First attempt, no hand intervention. Corridors narrow. Source: journal §19.2 |
 
+## Official score per run: Open Challenge (rule 10.2, maximum 30 points)
+
+One row per attempt, with the points the judges give for each criterion of the scoring table (rule 10.2, items 1.1 to 1.3). Fill it in right after each run, together with the three-lap table above. The run of 22 Nov is described in the three-lap table; its points were not written down and are not guessed here.
+
+How the points are counted:
+
+- **1.1** 1 point for each section driven in the round direction (8 sections per lap, maximum 24 in three laps). Not counted for the finish section or the section after it.
+- **1.2** 1 point for each full lap (maximum 3).
+- **1.3** 3 points if, after three laps, the car stops by itself with its whole projection inside the finish section (it must not move again for at least 15 s).
+- **Touching the outer wall** is not allowed in the Open Challenge (rule 9.18). Record it.
+- **Repair** (taking the car off the track): the round points are divided by 2 (item 2).
+- **Time** is the tie-breaker between equal scores (rules 10.3 and 10.5).
+
+| Attempt | Date | Commit | 1.1 Sections driven (max 24) | 1.2 Full laps (max 3) | 1.3 Stopped in finish section (3 / 0) | Outer wall touched (yes / no) | Repair taken (yes / no) | Round score (max 30) | Round time (s) | Notes |
+|---|---|---|---:|---:|---:|---|---|---:|---:|---|
+| 1 |  |  |  |  |  |  |  |  |  |  |
+| 2 |  |  |  |  |  |  |  |  |  |  |
+| 3 |  |  |  |  |  |  |  |  |  |  |
+| 4 |  |  |  |  |  |  |  |  |  |  |
+| 5 |  |  |  |  |  |  |  |  |  |  |
+
 ## Summary
 
 Only one run is recorded so far. The 20-run series is still to be done; the fields marked "not recorded" were not written down at the time.
@@ -39,6 +60,29 @@ Edge cases the team checked (23 Nov, team report) are not listed in the reposito
 | Edge case | Commit | Result | Notes |
 |---|---|---|---|
 | Not listed yet | — | not recorded | — |
+
+## Official score per run: Obstacle Challenge (rule 10.2, maximum 62 points)
+
+One row per attempt, with the points of each criterion of rule 10.2. The car does not park yet, so the parking columns stay at 0 until `obstacle_go_out_of_parking` and the parking routine are tested on the track.
+
+How the points are counted:
+
+- **1.1 / 1.2 / 1.3** as in the Open Challenge (24 + 3 + 3).
+- **Traffic signs, three laps not finished:** 1.5 = 4 points if no sign was moved, 1.4 = 2 points if one or more were moved (at least one full lap needed).
+- **Traffic signs, three laps finished:** 1.7 = 10 points if no sign was moved, 1.6 = 8 points if one or more were moved. Use these when the car completes the three laps.
+- **1.8.1** 7 points for starting inside the parking lot and completing at least one full lap.
+- **1.8.2 / 1.8.3** 15 points for parking completely inside the lot and parallel (wheels on one side within 2 cm of each other from the wall), 7 points for parking partly or not parallel. The lot limits must not be touched.
+- **A red pillar passed on the left or a green pillar passed on the right** (wrong side) stops the round when the car completely crosses the pillar's radius line (rule 9.24.5).
+- **Repair:** the round points are divided by 2.
+- **Time** decides between equal scores (rule 10.7).
+
+| Attempt | Date | Commit | Scenario (Scenario Roulette) | Direction | 1.1 Sections (max 24) | 1.2 Laps (max 3) | 1.3 Stop in finish section (3 / 0) | Pillars on the correct side (yes / no) | Pillars moved (none / one or more) | Signs points (1.4 / 1.5 / 1.6 / 1.7) | 1.8.1 Started in lot (7 / 0) | 1.8.2 / 1.8.3 Parking (15 / 7 / 0) | Repair taken (yes / no) | Round score (max 62) | Round time (s) | Notes |
+|---|---|---|---|---|---:|---:|---:|---|---|---:|---:|---:|---|---:|---:|---|
+| 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 ## Motor: gear ratio, speed and stall (drive)
 
