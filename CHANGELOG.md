@@ -4,6 +4,15 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.23 — 24 November · Motor stall current measured
+
+Only documents changed; **no code changed**.
+
+- **Measurement:** winding resistance of the N20 on the car = **11.7 Ω** (multimeter, rotor still, motor disconnected). Stall current = 12 V ÷ 11.7 Ω ≈ **1.03 A**, range 0.95 to 1.20 A. New file `schemes/datasheets/N20_stall_current_measurement.md` (with the original PDF `N20_stall_current_measurement_es.pdf`).
+- **Power budget (`schemes/README.md` §4.2, README §6.1):** the motor peak is 1.03 A (was 0.7 A from a datasheet of the same family). Battery peak ≈ 1.60 A, ≈ 18.3 W (was 1.27 A, 14.5 W); worst-case run time ≈ 11 min (was 14); discharge ≈ 4.2 C (was 3.3 C). The driver and the supply must carry ≥ 1.2 A per motor.
+- **Updated:** `schemes/datasheets/N20_12V_1000RPM_specs.md`, `docs/TESTS.md` (two rows), README §5.2 and §10.3, "Not yet measured" and checklist rows, journal §24.7.
+- **Honest limit:** the 1.03 A is calculated from a resistance reading, not read in series with the battery.
+
 ## v1.9.22 — 24 November · Width with and without wheels
 
 Only documents changed; **no code changed**.

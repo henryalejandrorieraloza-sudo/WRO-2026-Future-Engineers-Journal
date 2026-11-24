@@ -10,6 +10,8 @@ Drive motor used on the vehicle.
 
 This file replaces the earlier `N20_motors.pdf`, which described a different motor (6 V, 33 RPM). That PDF was removed from the repository on 23 Nov 2026; it stays in the git history.
 
+**Update (24 Nov 2026):** the winding resistance of the motor on the car was measured (**11.7 Ω**) and the stall current was calculated from it: **≈ 1.03 A** (range 0.95 to 1.20 A). See [N20_stall_current_measurement.md](N20_stall_current_measurement.md). The gear ratio is still not measured.
+
 **Status (23 Nov 2026):** the gear ratio and the stall values of the motor on the car are **not yet confirmed for this ASIN**. The values below come from a datasheet of the same family, which is probably but not certainly the same motor. The team has to measure the ratio on the car (see "Measurements to take").
 
 ## Values from the Amazon listing (confirmed for this ASIN)
@@ -59,7 +61,7 @@ These come from other sellers of the class. They are kept only for comparison.
 | Stall current (peak) | 600 mA | Naylamp (encoder version) |
 | No-load current | 190 mA (Vistronica) or 60 mA (Naylamp) | conflicting sources |
 
-One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which does not match the others.
+One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which did not match the others; it does agree with our calculated 1.03 A (24 Nov).
 
 **Note:** the 2.4 kg·cm stall torque in this table is about 5 times the 0.43 kg·cm of the datasheet above. The team no longer uses it as a design value. It is kept only to show the disagreement between sources.
 
@@ -67,14 +69,14 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which does not mat
 
 | Value | Used in the repo | Basis |
 |---|---|---|
-| Stall current per motor (power budget) | **0.7 A** (datasheet) | `schemes/README.md` §4.2 uses this for the stall case. The 1.0 A value of the earlier notes is a conservative margin |
+| Stall current per motor (power budget) | **1.03 A** (calculated from the measured 11.7 Ω, 24 Nov) | `schemes/README.md` §4.2 uses this for the stall case. Range 0.95 to 1.20 A; the driver and the supply are sized for ≥ 1.2 A. The 0.7 A of the datasheet of the same family is no longer used (our motor differs from it) |
 | Rated torque at the wheel | 0.16 kg·cm ≈ 16 mN·m | Datasheet of the same family; needed: ≈ 8 mN·m at the wheel (margin ≈ 2×) |
 | Stall torque | 0.43 kg·cm ≈ 42 mN·m | Datasheet of the same family (margin ≈ 5× over the need) |
 
 ## Measurements to take
 
 1. **Gear ratio:** mark the rear wheel, turn it exactly 10 full turns by hand with the motor off, and count the encoder pulses from one channel (one edge) and, if the firmware counts both edges, from all of them. Divide the pulses per wheel turn by 7 for one edge, by 14 for two edges or by 28 for four edges, to get the ratio.
-2. **Stall current:** with a multimeter in series with the battery, hold the wheel for less than 0.5 s and read the peak. Do not hold it longer: the gears can break (the code stops the motor after `STALL_MS`).
+2. **Stall current:** done indirectly on 24 Nov (winding resistance 11.7 Ω → 1.03 A, see [N20_stall_current_measurement.md](N20_stall_current_measurement.md)). Optional direct check: with a multimeter in series with the battery, hold the wheel for less than 0.5 s and read the peak. Do not hold it longer: the gears can break (the code stops the motor after `STALL_MS`).
 3. **No-load speed:** cronometer the time for 1 m with `RUN_PWM 150` and then with `RUN_PWM 255`.
 4. **Torque check:** push the car up a ramp of known slope with the motor at a known PWM, or measure the force with a spring scale on the wheel rim.
 5. Record every value with the date, the battery voltage and the commit of the code used.
@@ -92,6 +94,6 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which does not mat
 ## To do
 
 1. Measure the gear ratio on the car (see "Measurements to take") and record it here.
-2. Measure the stall current, or confirm the 0.7 A value against the label or a second source.
+2. ~~Measure the stall current~~ Done 24 Nov (indirect, from the winding resistance: 1.03 A). Optional: confirm with a reading in series.
 3. ~~Replace `N20_motors.pdf` (6 V, 33 RPM, a different motor)~~ Done 23 Nov: the 6 V PDF was removed. Optional: save a copy of the product listing next to this file.
 4. Update `schemes/README.md` §4.2 and the encoder constants that depend on counts per output revolution, once the ratio is measured.
