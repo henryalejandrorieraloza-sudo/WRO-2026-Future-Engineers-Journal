@@ -39,8 +39,18 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
 ## 2. Schematic
 
 <div align="center">
-  <img src="schematic.png" alt="PCB schematic" width="800">
+  <img src="schematic.png" alt="PCB schematic (two outdated labels: see note below)" width="800">
+  <br><em>Schematic drawn on 8 July 2026, before the final components were chosen. <strong>Two labels in the image are outdated:</strong> it says "ARDUINO NANO ESP32" (the car uses the classic <strong>Arduino Nano</strong>, ATmega328P) and "SG90" (the car uses the <strong>MG90</strong> metal-gear servo).</em>
 </div>
+
+> **Note — outdated schematic image.** We drew `schematic.png` before changing these two parts and did not redraw it, because the PCB itself did not change. Only the labels are outdated:
+>
+> | In the image | On the real car | Why it is the same board |
+> |---|---|---|
+> | Arduino Nano ESP32 | Arduino Nano (classic, ATmega328P) | Same pin positions and footprint; it replaced the first controller after that board was damaged (journal Problem 31) |
+> | SG90 servo | MG90 servo (metal gears) | Pin-compatible; the SG90 moved inside its mount (journal Problem 8) |
+>
+> Everything else in the schematic (power stage, TB6612FNG, TOF sensors, BMI160, camera connector) matches the car. The bill of materials in section 1 lists the parts actually installed. The wiring diagram (section 3) and the PCB block images (section 6.4) for the camera and TOF connectors are the updated versions.
 
 The schematic is organised in functional blocks. It was drawn for our first main controller board; the classic Arduino Nano now used has the same pin positions, so the board is unchanged.
 
