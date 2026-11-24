@@ -301,7 +301,7 @@ A message without a pillar sends `color = 0` and `distCm = -1`. A pillar already
 
 ## 9. Known differences and things to measure
 
-- **Gyro scale.** Both driving programs use `GYRO_SCALE = 1.007`. A hand-turn measurement of 21 Nov (`gyro_90_test`) gave `1.06` for an earlier sketch; the next run on the track shows which value suits the turns of this sketch. Check the yaw of a 90° turn in the final report (`yaw` should be about 90 per corner).
+- **Gyro scale.** Both driving programs use `GYRO_SCALE = 1.007`. A hand-turn measurement of 21 Nov (`gyro_90_test`) gave `1.06` for an earlier sketch and is not used. Check the yaw of a 90° turn in the final report (`yaw` should be about 90 per corner).
 - **Pillar distances.** The pillar distances come from the camera v3.2, which uses a focal length of 50 px (halved for half resolution, not measured again). Check the distances with the camera viewer before a long run.
 - **Turn point.** The turn starts at 40 cm from the front wall. Changing `FRONT_TURN_CM` changes where every corner starts, so measure it on the real field after changing the camera or the chassis.
 - **Lines.** The lines are used only as events (they are not converted into distances). The camera sees the floor lines only up to about 22 cm, so a line must be in view when the car reaches the corner. The corner is a rising edge, so a line that stays in view for a long time counts once.

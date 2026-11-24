@@ -422,7 +422,7 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 | Constant | `open_challenge` (Open) | `obstacle_challenge` (Obstacle) | Note |
 |---|---|---|---|
 | Encoder `TICKS_PER_CM` | 9.27 | 9.27 | Measured with the motor running (190 ticks = 20.5 cm, 21 Nov) |
-| `GYRO_SCALE` | 1.007 | 1.007 | From a 3-lap test. The earlier hand-turn value `1.06` (`gyro_90_test`, 21 Nov) is not used by any current program |
+| `GYRO_SCALE` | 1.007 | 1.007 | From a 3-lap test. It is the only gyro scale used by the current programs. The earlier hand-turn value `1.06` (`gyro_90_test`, 21 Nov) belonged to an older sketch and is not used |
 | Steering centre / limits | 85, left 10, right 170 | 85, left 10, right 170 | A smaller servo angle steers left |
 | Run / turn speed (PWM) | `RUN_PWM` 150, `TURN_PWM` 90 | `RUN_PWM`, `TURN_PWM`, `REVERSE_PWM` all 70 | The Obstacle car is slower on purpose: the camera needs time |
 | Gyro calibration | 300 samples after 0.7 s settling | same | LED blinks while it runs |
@@ -715,7 +715,7 @@ If one side is closer than 70 mm, the car steers fully away from that wall. A si
 - **Turn:** the car drives on until the front ToF reads 40 cm, brakes, and reverses with the steering turned to the opposite side. When its predicted yaw has changed by 90°, the target heading changes by 90° (so the heading is always a multiple of 90°), and the car reverses straight until the rear ToF reads 20 cm.
 - **Laps:** `LAPS = 3`, so 12 turns. After the 12th turn the next line is the **last line**: the car drives 0.45 s more and stops inside the starting section.
 
-The gyroscope scale is `1.007`, the same as `open_challenge`. A hand-turn measurement on 21 Nov gave `1.06` with an older sketch; the yaw printed at the end of a run should be close to 90° per corner and is the check to do on the track.
+The gyroscope scale is `1.007` in both programs. The hand-turn value `1.06` from 21 Nov belonged to an older sketch and is not used. The yaw printed at the end of a run should be close to 90° per corner; that is the check to do on the track.
 
 **Field geometry** (official mat): both lines of a corner start at the corner of the inner wall and reach the outer wall 42 cm from the corner. For a car in the middle of the corridor, the first line crosses its path about 71 cm before the wall ahead, and the second about 14 cm before it. The line is therefore a good marker of how far the corner is, and it is the only sure event on the track.
 
@@ -973,7 +973,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | Three laps completed on the first attempt, stopping in the starting section near the same wall (journal §19.2). Program in the repository since 20 Nov (§8.0) |
 | Encoder: delays in distance instead of time (§8.7) | Planned — the ticks per cm (9.27, 21 Nov) are now used in `open_challenge` too; the distance-based delays are not in the code yet |
 | Videos: one per challenge (≥ 30 s autonomous) | Done — Open and Obstacle videos recorded (`video/video.md`, rule 7) |
-| Gyroscope (Obstacle Challenge) | Both programs use `GYRO_SCALE = 1.007`; the 21 Nov hand turn (`1.06`) belonged to an older sketch. Check the yaw per corner on the track |
+| Gyroscope (Obstacle Challenge) | Both programs use `GYRO_SCALE = 1.007`; the 21 Nov hand turn (`1.06`) belonged to an older sketch and is not used. Check the yaw per corner on the track |
 | Camera → Nano UART link | Done — Working (14-field message, the first 12 read by `obstacle_challenge`) |
 | Obstacle: pillars on a map (steering law) | Validated 27 Oct and 21 Nov on one straight (earlier sketch, now in the git history); the same law is in `obstacle_challenge` since 23 Nov |
 | Obstacle: stop after the last line | Written 23 Nov in `obstacle_challenge`: drives `FINAL_EXTRA_S` (0.45 s) after the last line, then stops. The team reports it works on the car; not yet recorded in numbers |

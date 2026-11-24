@@ -71,7 +71,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 |---|---|---|---|---|
 | Wheel diameter, four wheels, mounted | — | calliper | — | Design value 41 mm |
 | Wheelbase (front to rear axle) | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
-| Car width | 19 Nov 2026 | ruler | 9 cm | Also in `straight_pillars.ino`, measured 19 Nov. Conflict: the README and the journal give 9.5 cm, and the comment in `src/hardware-tests/camera_test/camera_test.ino` uses a half width of 4.25 cm (8.5 cm). Measure again and use one value everywhere |
+| Car width | 19 Nov 2026 | ruler | 9 cm | **To measure on 24 Nov.** Also in `straight_pillars.ino`, measured 19 Nov. Conflict: the README and the journal give 9.5 cm, and the comment in `src/hardware-tests/camera_test/camera_test.ino` uses a half width of 4.25 cm (8.5 cm). Measure again and use one value everywhere |
 | Full length, with front protrusion | 19 Nov 2026 | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
 | Rear (encoder) axle to camera lens | 20 Nov 2026 | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
 | Track width (between wheels) | — | ruler | — | |
@@ -100,7 +100,7 @@ Procedure: place the car at 5, 20, 40 and 60 cm from the wall, read 30 samples p
 | Drift at rest, 60 s | — | — | `src/hardware-tests/tof_and_gyro_test` | — (°/min) | Car still on the floor |
 | Heading error after one 90° turn, in motion | 28 Oct 2026 | not recorded | Turn with the PD gyro while driving (`turn_measure_moving`), 6 runs | 89.3 to 90.3 ° | Source: notes of 28 Oct. The commit of that sketch was not recorded. The 10 hand turns each way with `gyro_90_test` are still to be done |
 | Heading error after 12 turns | — | — | run `open_challenge` and measure the final heading | — (°) | Also record the run in the three-lap table |
-| Yaw of a hand-turned 90° (`gyro_90_test`) | 21 Nov 2026 | not recorded | Turn the car exactly 90° by hand | 85° printed, giving `YAW_SCALE` 1.06 | Used by `straight_pillars.ino`. `open_challenge` and `obstacle_challenge` still use `GYRO_SCALE` 1.007 (3-lap test). Decide which value to keep |
+| Yaw of a hand-turned 90° (`gyro_90_test`) | 21 Nov 2026 | not recorded | Turn the car exactly 90° by hand | 85° printed, giving `YAW_SCALE` 1.06 | Old value, used only by the earlier `straight_pillars.ino`. Decision (23 Nov): `GYRO_SCALE` 1.007 is the value of `open_challenge` and `obstacle_challenge` |
 
 ## Camera: frame rate and colour detection
 
