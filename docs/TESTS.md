@@ -30,9 +30,9 @@ How the points are counted:
 
 **Runs of 24 Nov 2026 (team report).** Six Open Challenge runs, three counter-clockwise (ccw) and three clockwise (cw), each from a different starting section (central, farthest from and closest to the inner wall). All six: success yes, final stop good. Round times: ccw 24.21, 24.36, 24.41 s; cw 24.79, 24.97, 25.19 s (range 24.21–25.19 s; the times rise from run to run, and the cw runs are on average about 0.65 s slower than the ccw runs). **Confirmed by the team afterwards:** no repair and no outer-wall touch in any run, three laps completed in all six, and the final stop inside the required section each time, so each round is entered as 24 + 3 + 3 = **30 points**. The runs used `STOP_OFFSET_CM = 10`, the value now in `open_challenge.ino`. **Battery:** the first run started with a fully charged pack, and the team did not measure the voltage before each run; a fully charged pack measured 13.05 V on 24 Nov (schemes §4.4), but the voltage of these runs is **not measured**. The slow rise in time from run 1 to run 6 (24.21 to 25.19 s) could go with the pack discharging, but it cannot be confirmed without measurements. **Not recorded:** the commit. The team confirmed that each time is the **full round of three laps**, so it is entered in the "Round time (s)" column.
 
-## Obstacle Challenge: 5 attempts (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, without parking)
+## Obstacle Challenge: 5 attempts (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, with the parking exit as its first stage)
 
-Procedure: place the car at the start of the Obstacle track with the pillars set (Scenario Roulette), press START, and record each run. One row per attempt, with the points of each criterion of rule 10.2. The `>>> FINAL` line of the Serial Monitor gives the stop position; copy it to Notes. The car does not park yet, so the parking columns stay at 0 until `obstacle_go_out_of_parking` and the parking routine are tested on the track.
+Procedure: place the car at the start of the Obstacle track with the pillars set (Scenario Roulette), press START, and record each run. One row per attempt, with the points of each criterion of rule 10.2. The `>>> FINAL` line of the Serial Monitor gives the stop position; copy it to Notes. The driver leaves the parking space itself (parking exit is its first stage). The stop inside the parking lot (1.8.2 / 1.8.3) is not implemented yet, so those columns stay at 0.
 
 How the points are counted:
 
@@ -69,7 +69,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 1000 rpm × 12.9 cm × 150/255 ≈ 1.26 m/s | ≥ 0.8 s | Not measured. Stopwatch test still to do. **Correction (24 Nov):** the earlier 12.6 cm/s (13.5 s) divided by the gearbox ratio twice (README §5.2). The 22 Nov 3-lap run, with the 8 s no-corner stop active, already shows the car is much faster than 12.6 cm/s |
 | Speed over 1 m at `RUN_PWM 255` | calculated upper bound, no load: 1000 rpm × 12.9 cm ≈ 2.15 m/s | ≥ 0.47 s | Not measured. Stopwatch test still to do (corrected 24 Nov, see the row above) |
 | Torque check (ramp or spring scale) | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | Ramp or spring scale still to do |
-| Reverse ticks to leave the parking space (five wheel turns) | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |
+| Reverse ticks to leave the parking space (five wheel turns) | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | `PARK_REVERSE_TICKS` in `obstacle_challenge.ino` is set to 1200, not 597. Measure on the car and set the constant from the measurement |
 
 ## Steering: centre, limits and symmetry
 
