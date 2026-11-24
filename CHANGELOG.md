@@ -4,6 +4,16 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.26 — 24 November · README aligned with the code
+
+Only documents changed; **no code changed**. The code is the reference: every difference was fixed in the document.
+
+- **Steering limits:** the README said 10 / 170 in §5.3, §5.5, §10.4, §10.5 and §13; the code (`STEER_CENTER` 85, `STEER_RANGE` 80, PR #39) uses **5 / 165**. All five places now say so, with the measured 75 / 85 servo units for ±40°. `docs/TESTS.md` records the code limits and the 5-unit differences from the measured stops. §8.0 also notes that `obstacle_go_out_of_parking` (10 / 85 / 170) and `servo_test` (sweep 10–170) keep their own values.
+- **Car size:** rule table 9.17 / 11.1 said 175 × 95 × 60 mm; the car is 175 × 90 × 60 mm (as everywhere else).
+- **Commit counts:** 200 commits on `main` at `3f30eca` (24 Nov), 110 by the Claude account and 5 marked "via Claude" (README summary, rubric table, §15 and `docs/COMMITS.md`); the README said 180 and 96.
+- **Code details:** `onCorner()` exists only in `obstacle_challenge`; the TOF restart covers the two side sensors in `open_challenge` and all four in `obstacle_challenge`; a pillar leaves the map when the **camera lens** is 25 cm past it (`RETURN_AFTER_CM`); `MAX_SIDE_CM` (60 cm) added to the limits table.
+- **Versions:** only v1.9.16 and v1.9.17 are tagged; §14 now says so and lists v1.9.18–v1.9.26.
+
 ## v1.9.25 — 24 November · Motor-to-wheel ratio counted
 
 Only documents changed; **no code changed**.

@@ -41,4 +41,4 @@ The rules note that changes after the third commit may not be scored, so documen
 
 ## Size of the history
 
-180 commits on `main` on 23 Nov 2026 (`git rev-list --count main`), 96 of them by the Claude account (see README §15). Merge commits from pull requests are included in the count.
+200 commits on `main` at commit `3f30eca` (24 Nov 2026, `git rev-list --count main`), 110 of them by the Claude account and 5 more marked "Henry Riera (via Claude)" (see README §15). Merge commits from pull requests are included in the count.
