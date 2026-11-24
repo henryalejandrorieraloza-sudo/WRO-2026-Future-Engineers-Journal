@@ -1,5 +1,5 @@
 // =====================================================================
-// OBSTACLE CHALLENGE - Arduino Nano, v1
+// OBSTACLE CHALLENGE - Arduino Nano
 // Combines three behaviours in one sketch:
 //   - LAPS: drives around the track by following the FIRST floor line the
 //     camera sees (blue = turn left, orange = turn right). Each corner is a
@@ -97,7 +97,7 @@ const unsigned long STALL_MS = 500;           // motor on but wheels not turning
 const unsigned long CAMERA_TIMEOUT_MS = 500;  // no camera message for this long -> do not drive forward
 
 // #####################################################################
-// ##  4. CAR CONSTANTS (same as open_challenge)                        ##
+// ##  4. CAR CONSTANTS                                                 ##
 // #####################################################################
 const bool  MOTOR_REVERSED   = true;  // flips the motor direction pins
 const bool  ENCODER_REVERSED = true;  // flips the encoder count sign
@@ -181,11 +181,10 @@ MapPillar nextOne = {false, 0, 0, 0, 0};   // the next pillar, if one has been s
 // Encoder interrupt. Runs on every rising edge of C1 (pin D3).
 // The level of C2 (pin D2) gives the direction: +1 tick forward, -1 tick back.
 void encoderISR() { if (digitalRead(ENC_C2_PIN)) encRaw++; else encRaw--; }
-// Distance driven by the rear wheels since the last reset, in cm (sign set by ENCODER_REVERSED).
-// Odometry in cm since the last reset (startRun). Reads the tick counter
-// with interrupts briefly disabled so the value is not changed mid-read.
+// Odometry: distance driven by the rear wheels since the last reset (startRun), in cm.
+// Reads the tick counter with interrupts briefly disabled so the value is not changed mid-read.
+// The sign follows ENCODER_REVERSED.
 float odoCm() { noInterrupts(); long c = encRaw; interrupts(); return (ENCODER_REVERSED ? -c : c) / TICKS_PER_CM; }
-// Set the motor PWM and direction. In reverse gear (driveBack) the two direction pins are swapped.
 // Sets the TB6612FNG motor. pwm is 0-255. The direction pins are chosen by
 // MOTOR_REVERSED and by driveBack (true = reverse gear, used for the turn and the back-up).
 void motorOut(int pwm) {
@@ -196,19 +195,15 @@ void motorOut(int pwm) {
   digitalWrite(AIN1_PIN, a ? HIGH : LOW); digitalWrite(AIN2_PIN, b ? HIGH : LOW);
   analogWrite(PWMA_PIN, pwm); pwmNow = pwm;
 }
-// Active brake: both direction pins high and full PWM.
-// Active brake: both direction inputs HIGH with full PWM shorts the motor and stops it fast.
-// Also clears the target speed.
+// Active brake: both direction inputs HIGH with full PWM. Also clears the target speed.
 void brake() { digitalWrite(AIN1_PIN, HIGH); digitalWrite(AIN2_PIN, HIGH); analogWrite(PWMA_PIN, 255); pwmNow = 0; pwmTarget = 0; }
-// Move the steering servo, only writing when the angle really changes.
 // Moves the steering servo to angle a (servo units). The angle is clamped to the
 // physical limits (STEER_LEFT_MAX .. STEER_RIGHT_MAX) and written only when it changes.
 void servoTo(int a) { a = constrain(a, STEER_LEFT_MAX, STEER_RIGHT_MAX); if (a != servoNow) { steering.write(a); servoNow = a; } }
 
 // ---------------- BMI160 (gyro) ----------------
-// True (and clears the flag) if the I2C bus timed out since the last check.
 // I2C helpers for the BMI160. Wire has a timeout (set in setup) so a stuck bus
-// cannot freeze the loop. The flag is checked and cleared after every transfer.
+// cannot freeze the loop. i2cTimedOut() returns true (and clears the flag) if the bus timed out since the last check.
 bool i2cTimedOut() { if (Wire.getWireTimeoutFlag()) { Wire.clearWireTimeoutFlag(); return true; } return false; }
 // Write one register of the BMI160. Returns false on an I2C error or timeout.
 bool bmiWrite(uint8_t reg, uint8_t val) { Wire.beginTransmission(BMI); Wire.write(reg); Wire.write(val); return Wire.endTransmission() == 0 && !i2cTimedOut(); }
@@ -220,10 +215,8 @@ bool bmiRead(uint8_t reg, uint8_t *buf, uint8_t n) {
   for (uint8_t i = 0; i < n; i++) buf[i] = Wire.read();
   return !i2cTimedOut();
 }
-// Read the gyro Z axis (registers 0x10-0x11, little endian).
-// Reads the raw 16-bit Z-axis rate register (0x10 / 0x11) of the BMI160.
+// Reads the raw 16-bit Z-axis rate (registers 0x10 / 0x11, little endian) of the BMI160.
 bool readGyroZ(int16_t &raw) { uint8_t b[2]; if (!bmiRead(0x10, b, 2)) return false; raw = (int16_t)((b[1] << 8) | b[0]); return true; }
-// Reset the BMI160, switch on the gyro and check the chip ID (0xD1) and power mode. Up to 5 tries.
 // Starts the BMI160: soft reset, power on the gyroscope, then checks the chip ID (0xD1)
 // and the power status. Retries up to 5 times and returns false if it never answers.
 bool bmiStart() {
@@ -236,7 +229,6 @@ bool bmiStart() {
   }
   return false;
 }
-// Measure the gyro zero offset (bias) while the car is still. The LED blinks during the measurement.
 // Measures the gyro zero offset (bias) with the car still. The first 700 ms are discarded,
 // then 300 samples are averaged. The LED blinks while it measures. Needs at least 250 good samples.
 void calibrate() {
@@ -254,7 +246,6 @@ void calibrate() {
   Serial.print(F("Gyro bias ")); Serial.print(biasDps, 3); Serial.print(F(" (")); Serial.print(n); Serial.println(F("/300)"));
   digitalWrite(LED_PIN, HIGH);
 }
-// Read the gyro and integrate the yaw angle (degrees) from the turn rate.
 // Called every loop. Reads the gyro, converts the raw value to deg/s (minus the bias,
 // times GYRO_SCALE, times YAW_SIGN) and integrates it into yawDeg using the real elapsed time.
 void updateGyro() {
@@ -264,7 +255,6 @@ void updateGyro() {
 }
 
 // ---------------- side, rear and front ToF sensors ----------------
-// Give one ToF its own I2C address (the sensor is first on the default address 0x29, then moved).
 // Starts one VL53L1X. It is first reached on the default address 0x29 (its XSHUT pin is released),
 // given its own address, set to Long mode with a 50 ms timing budget and a 16 x 8 ROI,
 // then started in continuous ranging.
@@ -280,14 +270,12 @@ bool startOne(Side &t) {
   t.lastData = millis();
   return true;
 }
-// Keep the rear and front ToF sensors in shutdown (used while the side ones are configured).
 // Holds the rear and front ToF sensors in reset (XSHUT LOW), so the left and right sensors
 // can be given their addresses without a conflict on 0x29.
 void tofExtraOff() {
   pinMode(XSHUT_FRONT, OUTPUT); digitalWrite(XSHUT_FRONT, LOW);
   pinMode(XSHUT_REAR,  OUTPUT); digitalWrite(XSHUT_REAR,  LOW);
 }
-// Start all four ToF sensors one by one, so each one gets its own address. Returns true if both side sensors work.
 // Starts the four ToF sensors in a fixed order: left and right first, then rear, then front.
 // Returns true only when the left and right sensors are working (the rear and front are optional).
 bool tofStart() {
@@ -301,7 +289,6 @@ bool tofStart() {
   if (!frontOk) { i2cTimedOut(); }
   return a && b;
 }
-// Read every ToF that has new data. A sensor that has not answered for 500 ms triggers a full restart.
 // Called every loop. Reads each sensor that has new data and stores its distance in mm
 // (0 or 4000 or more means no valid reading, stored as 4000). If a side sensor has no data for
 // 500 ms, all four sensors are restarted (`!!! TOF RESTART` is printed).
@@ -343,10 +330,8 @@ void updateTof() {
 }
 
 // ---------------- camera ----------------
-// Parse one camera line: "$col,x,bottom,ok,bf,br,seq,w,d,lat,of,orow" (12 fields).
-// Only the fields used here are stored: bf/of (line seen), col/d/lat (pillar).
-// Parses one camera message (the text after a '$'). Only lines with all 12 fields are used:
-// the floor-line flags (blue, orange) and the pillar fields (colour, distance, side).
+// Parses one camera message (the text after a '$'): "col,x,bottom,ok,bf,br,seq,w,d,lat,of,orow" (12 fields).
+// Only lines with all 12 fields are used: the floor-line flags (blue, orange) and the pillar fields (colour, distance, side).
 // The other two fields the camera sends are not read.
 void handleCameraLine() {
   camBuf[camLen] = '\0';
@@ -361,7 +346,6 @@ void handleCameraLine() {
     newCamData = true;
   }
 }
-// Read the serial port: camera lines start with '$'; a single key + Enter is a command.
 // Reads the USB serial port and the camera UART. Serial commands: 'g' starts a run,
 // 's' stops it. Camera lines start with '$' and are collected until the newline.
 void readSerialInput() {
@@ -380,14 +364,12 @@ void readSerialInput() {
     } else cmd = c;
   }
 }
-// True if the line colour we locked onto is visible now.
 // True when the line colour locked at the first line is visible in the current camera message.
 bool sameColorVisible() {
   if (lineLock == LOCK_BLUE)   return camBlue != 0;
   if (lineLock == LOCK_ORANGE) return camOrange != 0;
   return false;
 }
-// True if a line should be counted now (locked colour only, or any colour if ONLY_LOCKED_COLOR is false).
 // True when a line can count as a corner: only the locked colour when ONLY_LOCKED_COLOR is true,
 // otherwise either colour.
 bool lineVisibleForCount() {
@@ -401,7 +383,6 @@ float yawL() { return yawDeg - heading; }     // deviation from the straight's h
 float camPosX() { return carX + CAM_FWD_CM * cos(radians(yawL())); }
 float camPosY() { return carY + CAM_FWD_CM * sin(radians(yawL())); }
 
-// Move the car on the map using the distance driven since the last call.
 // Updates the odometry map of the current straight. The distance driven since the last loop
 // is added to carX / carY along the current heading (yaw minus the straight's heading).
 void updateMap() {
@@ -413,7 +394,6 @@ void updateMap() {
   segCm += ds;
 }
 
-// Convert a map point into the car's frame: fwd = ahead of the camera, left = left of the camera.
 // Converts a map point (px, py) into the camera frame:
 // fwd = cm ahead of the camera, left = cm to the left of the camera.
 void relativeToCar(float px, float py, float &fwd, float &left) {
@@ -423,7 +403,6 @@ void relativeToCar(float px, float py, float &fwd, float &left) {
   left = -dx * sin(h) + dy * cos(h);
 }
 
-// Place the pillar from the last camera message on the map (or update the one already stored).
 // Puts the pillar of the latest camera message on the map.
 // A pillar of the same colour within SAME_PILLAR_CM of a stored one is the same pillar: its position
 // moves BLEND (30 %) toward the new reading. A new pillar becomes the current one, or the next one
@@ -458,7 +437,6 @@ void onCameraPillar() {
   }
 }
 
-// Side to pass a pillar on: red on its RIGHT (the pillar ends up on the car's left), green on its LEFT.
 // Lateral goal for one pillar. Red is passed on its right (goal at least TARGET_CM to its right),
 // green on its left. The goal is never moved toward the pillar: it uses min / max with the car's own position.
 float goalFor(int color, float pillarY) {
@@ -467,7 +445,6 @@ float goalFor(int color, float pillarY) {
   return max(cy, pillarY + TARGET_CM);                    // green: car passes on the pillar's LEFT (target y above the pillar)
 }
 
-// Returns true and the local steering target (goalOut, degrees) if a pillar has to be avoided now.
 // Chooses the steering target for pillar avoidance.
 // 1) Removes the current pillar 25 cm after its centre (the next pillar becomes the current one).
 // 2) Returns the heading toward the lateral goal, limited to MAX_AIM_DEG.
@@ -501,7 +478,6 @@ bool pillarGoal(float &goalOut) {
   return true;
 }
 
-// Wall centring: returns the heading correction (+ = left) that keeps the car between the two walls.
 // Wall centring. Returns the heading correction (positive = left) that keeps the car midway
 // between the left and right walls, from (left - right) / 2 plus an integral term.
 // A side closer than SAFE_WALL_MM forces a full correction away from that wall.
@@ -521,7 +497,6 @@ float laneGoal(float dt) {
 }
 
 // ---------------- corner = line ----------------
-// Called when a floor line is seen. Starts the corner sequence (or finishes the run after the last line).
 // Called when a floor line is accepted as a corner.
 // Starts the 4 s line-ignore window, records the first line's distance (D1), and enters PRE_TURN.
 // On the last line of the run it only sets finalLineSeen; runTest() then stops after FINAL_EXTRA_S.
@@ -545,7 +520,6 @@ void onCorner(float odo) {
 }
 
 // ---------------- stop ----------------
-// Brake, centre the steering and enter DONE. The final report is printed about 1 s later.
 // Ends the run: brake, centre the steering, enter DONE and record the time.
 // The final report is printed one second later by runTest().
 void finish(const __FlashStringHelper *why) {
@@ -555,7 +529,6 @@ void finish(const __FlashStringHelper *why) {
   Serial.print(F(" | odo ")); Serial.print(odoCm(), 1); Serial.println(F(" cm"));
 }
 
-// Start a run: calibrate the gyro (car must be still), reset all counters and drive off.
 // Starts a new run: calibrates the gyro with the car still, resets the encoder, the map,
 // the corner counters and the line lock, then enters STRAIGHT.
 void startRun() {
@@ -580,7 +553,6 @@ void startRun() {
 }
 
 // ---------------- main logic (state machine) ----------------
-// Called every loop. Runs the current state: STRAIGHT, PRE_TURN, TURN, REVERSE or DONE.
 // Main logic, called on every loop. Runs the state machine:
 //   STRAIGHT  line check, then pillar / PASS / LANE steering, then safety checks
 //   PRE_TURN  drive on until the front wall is FRONT_TURN_CM away
@@ -747,7 +719,6 @@ void runTest() {
 }
 
 // ---------------- setup / loop ----------------
-// Runs once at power-on: configure pins, start the sensors and the gyro, calibrate the gyro.
 // Arduino setup(): configures the motor, encoder interrupt, servo and START button, starts the
 // four ToF sensors and the BMI160, then calibrates the gyro and prints 'Ready'.
 void setup() {
@@ -774,7 +745,6 @@ void setup() {
   Serial.println(F("Ready. Press START or g + Enter. s + Enter = stop."));
 }
 
-// Main loop: read inputs (serial, start button, gyro, ToF), run the state machine, ramp the motor, print status.
 // Arduino loop(), repeated forever. Each pass: read serial and the START button, update the gyro
 // and the ToF sensors, run the state machine (runTest), ramp the motor PWM toward its target
 // every 20 ms, and print the status line every 100 ms while a run is active.

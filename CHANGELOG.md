@@ -10,6 +10,9 @@ Versions of the car and of this repository. Dates are in 2026.
 - **Added:** a table of the limits and fallbacks of `obstacle_challenge` (README §9.10).
 - **Counts updated:** 144 commits, 69 by the Claude account, 28 STL files (26 printed and 2 tyre moulds).
 - **Status:** the organisers' link was sent and its receipt confirmed on 23 November.
+- **Test status:** the team compiled the three competition sketches in Arduino IDE 2.x on 23 November (no errors). `open_challenge` was tested (run of 22 November). The team reports that `obstacle_challenge` works on the car, including its edge cases; no numbers are recorded yet. The parking sketch is not tested.
+- **Systems thinking:** README §10.5 added: five chains of decisions from the engineering journal (sensor angle, steering, encoder, power, failures, reverse gear) and their effect on the current code. The I²C timeout (25 ms) and the parking note in §10.3 corrected.
+- **Comments only:** stale and duplicated comments in `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` rewritten (old values such as "was 320" or "HALVED from" removed, duplicated function headers merged). No code line changed (checked with `git diff`).
 
 ## v1.9.17 — 23 November · Unused constants and obsolete comments removed
 - **Constants removed where they were not used:** `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM` in `obstacle_challenge`; `SIDE_ZONE`, `LINE_TRIGGER_ROW`, `MAGENTA_MIN_PIXELS` and `TURN_CONFIRM_FRAMES` in `obstacle_camera_v3_2`. The three first names are still used by `open_challenge`, so they stay there.

@@ -1,8 +1,7 @@
 // =====================================================================
 // OBSTACLE CAMERA (ESP32S3-CAM) - v3.2 (pillars + both floor lines, HALF RESOLUTION for fps)
-// 22 Nov: resolution halved from QVGA (320x240) to QQVGA (160x120) for a big fps increase (about
-// 4x fewer pixels to classify/flood-fill per picture). Every pixel-count/row/column constant below
-// was scaled from the 320x240 calibration as a STARTING GUESS -- re-check all of them on the real
+// Resolution QQVGA (160x120): about 4x fewer pixels than QVGA (320x240), for a higher fps.
+// Every pixel-count/row/column constant below was scaled from the 320x240 calibration as a STARTING GUESS -- re-check all of them on the real
 // track with camera_viewer.html before trusting this version. HSV colour ranges are untouched.
 // No WiFi stream in this version (same vision code as v3.1, just at QQVGA).
 // Finds, in every picture:
@@ -23,7 +22,7 @@
 //     latCm:  sideways distance of the pillar center, cm (+ = right of the car, - = left)
 //     blueRow / orangeRow: lowest row of the line (-1 = no line)
 //     blueCenterRow / orangeCenterRow: row of the line straight ahead (-1 = not in the center strip)
-//   The first 10 fields are the same as v2, so the old Nano sketches still work.
+//   The Nano sketches read the first 12 fields; the last 2 (center rows) are not read by them.
 //
 // v2 vision improvements (each one has its own switch):
 //   1) LOCK_CAMERA      white balance, exposure and gain frozen a few seconds after power on.
@@ -78,16 +77,16 @@ const bool STREAM_TO_PC = false;    // true = also send pictures to viewer.html 
 const unsigned long STREAM_EVERY_MS = 1;   // minimum time between two pictures sent to the viewer (1 ms = as often as possible)
 
 // ---------- Image ----------
-const int W = 160;                   // picture width in pixels (QQVGA) -- was 320 (QVGA) before 22 Nov
-const int H = 120;                   // picture height in pixels -- was 240
+const int W = 160;                   // picture width in pixels (QQVGA)
+const int H = 120;                   // picture height in pixels (QQVGA)
 const bool MIRROR_HORIZONTAL = false;   // checked on the 19 Nov camera: with true, a pillar on the car's RIGHT gave side < 0 (wrong); false is correct on this board
 const bool FLIP_VERTICAL     = false;   // both are applied by the sensor (set_hmirror / set_vflip), not in software
 
 // ---------- Real-world sizes (from the measurements) ----------
-const float FOCAL_PX    = 50.0;   // focal length in pixels, HALVED from 100.0 for QQVGA -- NOT independently re-measured, re-check with camera_viewer.html
+const float FOCAL_PX    = 50.0;   // focal length in pixels at QQVGA (160x120). NOT independently re-measured: re-check with camera_viewer.html
 const float PILLAR_CM   = 5.0;    // real pillar width in cm (rules: 50 x 50 x 100 mm)
 const float SAFE_LAT_CM = 17.0;   // safe sideways distance: car half width 4.25 + 10 cm gap + pillar half width 2.5
-const int   X_CENTER_OFFSET = 6;  // HALVED from 12 for QQVGA -- a pillar straight ahead shows up this many px off center (camera turned ~6 deg)
+const int   X_CENTER_OFFSET = 6;  // a pillar straight ahead shows up this many px off center (camera turned ~6 deg)
 
 // ---------- Vision improvements (switch each one off to compare) ----------
 // 1) Frozen camera. IMPORTANT: colors change when the camera is frozen, so calibrate the colors
@@ -97,12 +96,12 @@ const unsigned long LOCK_AFTER_MS  = 5000;   // time (ms) the camera has to adju
 
 // 2) Blocks
 const bool USE_BLOCKS       = true;  // true = find pillars on the block grid, false = pixel by pixel
-const int  BLOCK            = 2;     // HALVED from 4 -- block size in pixels (BLOCK x BLOCK pixels)
-const int  BLOCK_MIN_PIXELS = 3;     // QUARTERED from 12 (area scales x0.25) -- a block is red / green if at least this many of its 4 pixels are
+const int  BLOCK            = 2;     // block size in pixels (BLOCK x BLOCK pixels)
+const int  BLOCK_MIN_PIXELS = 3;     // a block is red / green if at least this many of its 4 pixels are
 const int  MIN_BLOCKS       = 4;     // UNCHANGED -- a pillar patch needs at least this many blocks (ratio of patch size to block size is preserved)
-const int  EDGE_PAD         = 2;     // HALVED from 3 (rounded) -- px around the patch searched to refine its edges
-const int  COL_MIN_PIXELS   = 1;     // QUARTERED from 2 (rounded up) -- a column needs this many pixels to count for the width
-const int  GAP_FILL         = 1;     // HALVED from 2 -- empty stripes up to this wide inside a pillar are bridged
+const int  EDGE_PAD         = 2;     // px around the patch searched to refine its edges
+const int  COL_MIN_PIXELS   = 1;     // a column needs this many pixels to count for the width
+const int  GAP_FILL         = 1;     // empty stripes up to this wide inside a pillar are bridged
 
 // 3) Time filter
 const bool USE_TIME_FILTER  = true;  // true = a pillar must appear in several pictures before it counts
@@ -126,21 +125,21 @@ const bool LENS_CORRECTION  = true;  // true = turn on the sensor's lens shading
 // ---------- Pillar colours (red and green) ----------
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
 // Measured on 28 Oct with the camera locked (yellow light): red pillar H 15-23 (probe H 4-22, S 204-255, V 112-136), green pillar H 86-95.
-const int RED_HUE_LOW    = 345;    // unchanged: the red band wraps past 0 degrees, so it runs from 345 up to 40
-const int RED_HUE_HIGH   = 40;     // unchanged: the measured red pillar reaches H 33
-const int RED_MIN_SAT    = 115;    // unchanged: the measured red pillar has S 170-255
-const int RED_MIN_VAL    = 65;     // was 95: the red pillar in shadow measured V 72-88
-const int RED_MAX_VAL    = 225;    // was 165: the red pillar in light measured V up to 192
+const int RED_HUE_LOW    = 345;    // the red band wraps past 0 degrees, so it runs from 345 up to 40
+const int RED_HUE_HIGH   = 40;     // the measured red pillar reaches H 33
+const int RED_MIN_SAT    = 115;    // the measured red pillar has S 170-255
+const int RED_MIN_VAL    = 65;     // the red pillar in shadow measured V 72-88
+const int RED_MAX_VAL    = 225;    // the red pillar in light measured V up to 192
 
-const int GREEN_HUE_LOW  = 82;     // unchanged: the measured green pillar is at H 96-108
-const int GREEN_HUE_HIGH =  150;    // unchanged
-const int GREEN_MIN_SAT  = 150;    // was 120: the green pillar has S 185-255, the white floor 116-142
-const int GREEN_MIN_VAL  = 60;     // was 130: the green pillar in one capture has V 128-172 and in dim light drops to 24-76
+const int GREEN_HUE_LOW  = 82;     // the measured green pillar is at H 96-108
+const int GREEN_HUE_HIGH =  150;
+const int GREEN_MIN_SAT  = 150;    // the green pillar has S 185-255, the white floor 116-142
+const int GREEN_MIN_VAL  = 60;     // the green pillar in one capture has V 128-172 and in dim light drops to 24-76
 
-const int  RED_MIN_PIXELS   = 8;   // QUARTERED from 30 -- a red patch needs at least this many pixels
-const int  GREEN_MIN_PIXELS = 8;   // QUARTERED from 30 -- a green patch needs at least this many pixels
-const int  IGNORE_TOP_ROWS = 58;   // HALVED from 115 -- rows at the top of the picture (far away) that are not searched for pillars
-const int  BOTTOM_TOL      = 14;    // HALVED from 27 (rounded) -- columns whose bottom is within this many rows of the lowest one belong to the front pillar
+const int  RED_MIN_PIXELS   = 8;   // a red patch needs at least this many pixels
+const int  GREEN_MIN_PIXELS = 8;   // a green patch needs at least this many pixels
+const int  IGNORE_TOP_ROWS = 58;   // rows at the top of the picture (far away) that are not searched for pillars
+const int  BOTTOM_TOL      = 14;    // columns whose bottom is within this many rows of the lowest one belong to the front pillar
 const int  NEAR_ROWS       = 0;    // rows at the bottom of the picture left out of the pillar search
 
 // Lines, measured 19 Nov 2026 on the viewer screenshots (greenish light, camera locked):
@@ -162,32 +161,32 @@ const int MAGENTA_HUE_HIGH = 353;  // magenta hue range, high end
 const int MAGENTA_MIN_SAT  = 84;   // magenta needs at least this saturation
 const int MAGENTA_MIN_VAL  = 84;   // magenta needs at least this brightness
 
-const int FLOOR_TOP_ROW      = 62;    // HALVED from 124 -- the floor part of the picture starts at this row
-const int ORANGE_MIN_PIXELS  = 13;    // QUARTERED from 50 (rounded) -- at ~16 cm the line has only ~120-165 px
-const int BLUE_MIN_PIXELS    = 15;    // QUARTERED from 60 -- BLUE_HUE_LOW = 165 keeps the floor (H ~111-125) out; the floor-above check keeps the wall out
-const int LINE_ROW_MIN       = 3;     // HALVED from 6 (rounded) -- a row needs this many line pixels to count as a row of the line
+const int FLOOR_TOP_ROW      = 62;    // the floor part of the picture starts at this row
+const int ORANGE_MIN_PIXELS  = 13;    // at ~16 cm the line has only ~120-165 px
+const int BLUE_MIN_PIXELS    = 15;    // BLUE_HUE_LOW = 165 keeps the floor (H ~111-125) out; the floor-above check keeps the wall out
+const int LINE_ROW_MIN       = 3;     // a row needs this many line pixels to count as a row of the line
 const int MAGENTA_MAJORITY   = 70;    // % of a red+magenta patch that must be magenta to make it a wall
 
 // ---------- Floor lines (full lap, step 1) ----------
 // A floor line is a long, thin stripe. These numbers decide what counts as a line.
-const int LINE_TOP_ROW     = 70;   // HALVED from 140 -- lines are searched only from this row down (the closest ~23 cm).
+const int LINE_TOP_ROW     = 70;   // lines are searched only from this row down (the closest ~23 cm).
                                    // The far line is a thin streak mixed with the wall. Must be >= FLOOR_TOP_ROW.
-const int LINE_MIN_LENGTH  = 20;   // HALVED from 40 -- px: a line patch must be at least this long (diagonal of its box)
-const int LINE_MAX_THICK   = 20;   // HALVED from 40 -- px: average thickness (pixels / length). A pillar or a blob is fatter
-const int LINE_CENTER_HALF = 5;    // HALVED from 10 -- px: half width of the straight-ahead strip (center + X_CENTER_OFFSET)
-const int LINE_COL_MIN     = 1;    // HALVED from 2 (rounded) -- px: a column of that strip needs this many line pixels to count
+const int LINE_MIN_LENGTH  = 20;   // px: a line patch must be at least this long (diagonal of its box)
+const int LINE_MAX_THICK   = 20;   // px: average thickness (pixels / length). A pillar or a blob is fatter
+const int LINE_CENTER_HALF = 5;    // px: half width of the straight-ahead strip (center + X_CENTER_OFFSET)
+const int LINE_COL_MIN     = 1;    // px: a column of that strip needs this many line pixels to count
 // Floor above the line: a floor line has bright (white) floor above it; the bottom edge of the black wall does not
-const int ABOVE_FROM        = 2;    // HALVED from 3 (rounded) -- rows above the line's top edge where the check starts
-const int ABOVE_TO          = 3;    // HALVED from 6 -- ... and where it ends
+const int ABOVE_FROM        = 2;    // rows above the line's top edge where the check starts
+const int ABOVE_TO          = 3;    // ... and where it ends
 const int FLOOR_MIN_VAL     = 130;  // brightness (V) the floor above must have (floor V 128-220, black wall much lower) -- UNCHANGED (colour, not resolution)
 const int ABOVE_MIN_PERCENT = 60;   // % of the line's columns that must have floor above -- UNCHANGED (a percentage)
-const int ABOVE_MIN_COLS    = 5;    // HALVED from 10 -- at least this many columns must be checkable
+const int ABOVE_MIN_COLS    = 5;    // at least this many columns must be checkable
 // Color probe: prints the H, S, V range (min-max) of two small boxes, to calibrate colors with exact camera numbers
 const int PROBE_X       = W / 2 + X_CENTER_OFFSET;  // straight-ahead column (center of the picture, shifted by the camera turn)
-const int PROBE_NEAR_Y  = 85;   // HALVED from 170 -- row ~5 cm ahead of the camera: put each line / pillar here
-const int PROBE_LOW_Y   = 114;  // HALVED from 228 -- row at the bottom of the picture (where the false blue appeared)
-const int PROBE_HALF_W  = 3;    // HALVED from 6 -- box half width, px
-const int PROBE_HALF_H  = 1;    // HALVED from 2 -- box half height, px
+const int PROBE_NEAR_Y  = 85;   // row ~5 cm ahead of the camera: put each line / pillar here
+const int PROBE_LOW_Y   = 114;  // row at the bottom of the picture (where the false blue appeared)
+const int PROBE_HALF_W  = 3;    // box half width, px
+const int PROBE_HALF_H  = 1;    // box half height, px
 const unsigned long STATUS_EVERY_MS = 500;   // status text to the Serial Monitor (only with STREAM_TO_PC = false), every 500 ms
 
 // ---------- Working area ----------
@@ -682,14 +681,14 @@ void sendToNano(const Pillar &p, const LineInfo &blue, const LineInfo &orange) {
     // red is passed on its right -> the pillar must end up on the car's LEFT (latCm negative)
     correct = (p.color == C_RED) ? (latCm <= -SAFE_LAT_CM) : (latCm >= SAFE_LAT_CM);   // 1 if the car is far enough on the right side
   }
-  // The first 10 fields are the same as before, so the old Nano sketches still work.
+  // The Nano reads the first 12 fields; the last two (center rows) are not read by the Nano sketches.
   Serial1.printf("$%d,%d,%d,%d,%d,%d,%lu,%d,%d,%d,%d,%d,%d,%d\n", color, x, bottom, correct,   // send the message (print format, then the first 4 values)
                  blue.found ? 1 : 0, blue.found ? blue.lowest : -1, seq, width, distCm, latCm,   // blue line fields (found flag, lowest row), then counter, width, distance, side
                  orange.found ? 1 : 0, orange.found ? orange.lowest : -1,                        // orange line fields
                  blue.found ? blue.centerRow : -1, orange.found ? orange.centerRow : -1);        // center rows of both lines
 }
 
-// ---------- Picture to viewer.html (same packet as pillar_viewer) ----------
+// ---------- Picture to the viewer page (USB packet) ----------
 // Serial.write() may accept FEWER bytes than asked when the USB buffer is full.
 // writeAll() keeps offering the rest until everything is accepted; if the computer stops
 // reading for more than maxWaitMs it gives up on this picture (the next one starts clean).
@@ -810,7 +809,7 @@ bool startCamera() {  // configure the sensor and start the camera; returns fals
   config.pin_reset = RESET_GPIO_NUM;               // reset pin (not used)
   config.xclk_freq_hz = XCLK_FREQ_HZ;              // clock frequency (10 MHz)
   config.pixel_format = PIXFORMAT_RGB565;          // 16 bits per pixel, the format the code reads
-  config.frame_size   = FRAMESIZE_QQVGA;           // 160x120 (was FRAMESIZE_QVGA / 320x240 before 22 Nov)
+  config.frame_size   = FRAMESIZE_QQVGA;           // 160x120
   config.grab_mode    = CAMERA_GRAB_LATEST;        // always take the newest frame (drop old ones)
   config.fb_location  = CAMERA_FB_IN_PSRAM;        // store the frames in PSRAM (external memory)
   config.fb_count     = 2;                         // two frame buffers (one being read while the other is filled)

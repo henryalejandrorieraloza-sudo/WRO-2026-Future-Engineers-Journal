@@ -1803,14 +1803,14 @@ Nothing in the code was changed in this phase.
 ### 22.1 What changed
 
 - **Organisers' link:** sent and receipt confirmed on 23 November.
-- **Final programs in `src`:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` (ESP32-S3-CAM) are the competition code. The team reports that the Obstacle programs work on the car. The parking sketch is still a placeholder (§22.3).
+- **Final programs in `src`:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` (ESP32-S3-CAM) are the competition code. On 23 November the team tested `open_challenge` (run of 22 November, §19.2) and reports that `obstacle_challenge` works on the car, including the edge cases it checked. No lap, time or stop data was written down for the Obstacle run. The parking sketch is still a placeholder and was not tested (§22.3).
 - **Documents:** the checklist in §16 is updated to the state of 23 November. The AI section (README §15) and the team paragraph were confirmed by the team and kept as written.
 
 ### 22.2 How the final code was checked
 
-- **Open Challenge and Obstacle driving sketches:** each one was compiled as C++ against stub headers for `Arduino.h`, `Wire.h`, `Servo.h` and `VL53L1X.h`. There were no syntax errors. The Obstacle sketch calls `finish()` and `startRun()` before their definitions, which is valid because the Arduino IDE generates the prototypes. This is a syntax check only; it is not the Arduino compiler and it says nothing about how the car drives.
-- **Camera sketch (`obstacle_camera_v3_2`):** not compiled here. It needs the ESP32 core (`esp_camera.h`).
-- **Parking sketch:** not compiled here. It uses VL53L1X calls that the stub does not provide, and it is a placeholder.
+- **Open Challenge and Obstacle driving sketches:** compiled by the team in Arduino IDE 2.x on 23 November, with no errors (team report). Before that, each one had been checked as C++ against stub headers for `Arduino.h`, `Wire.h`, `Servo.h` and `VL53L1X.h`, with no syntax errors. The compile does not say how the car drives.
+- **Camera sketch (`obstacle_camera_v3_2`):** compiled by the team in Arduino IDE 2.x on 23 November (team report). The stub check could not cover it, because it needs the ESP32 core (`esp_camera.h`).
+- **Parking sketch:** not part of the competition compile check. It is a placeholder and has not been tested on the track.
 - **Open Challenge constants** are the ones listed in §19.2 (`INNER_TARGET_MM 100`, `STEER_CENTER 85`, `TICKS_PER_CM 9.27`). The journal does not record whether `STEER_CENTER` changed before or after the 22 November run, so the run confirms the code only as far as those constants are the same.
 
 ### 22.3 Status of each program
@@ -1818,7 +1818,7 @@ Nothing in the code was changed in this phase.
 | Program | Status on 23 November | Still open |
 |---|---|---|
 | `open_challenge` | Three laps (12 turns) completed on 22 November and the car stopped in the starting section (§19.2) | Lap times and direction of that run; the 20-run series; a row in `docs/TESTS.md` |
-| `obstacle_challenge` | Code in `src`; the team reports that it works | Lap times, stop position and pillar passes are not recorded (§20.5) |
+| `obstacle_challenge` | Compiled by the team (23 Nov). The team reports that it works on the car, including its edge cases | Lap times, stop position, pillar passes and the edge-case results are not written down (§20.5) |
 | `obstacle_camera_v3_2` | Code in `src` | Magenta parking walls are not sent to the Nano (§20.4) |
 | `obstacle_go_out_of_parking` | Placeholder | No START button yet; `REVERSE_TARGET_TICKS = 1024` is not measured; not tested on the track |
 

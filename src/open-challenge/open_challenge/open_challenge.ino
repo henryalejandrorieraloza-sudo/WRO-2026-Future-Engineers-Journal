@@ -44,7 +44,7 @@
 // #####################################################################################
 // --- Race ---
 const int   LAPS     = 3;             // 1 = one lap (4 turns), 3 = the full Open Challenge (12 turns)
-const int   RUN_PWM  = 150;           // speed on the straights (0-255). Tested: 110. Raise in steps of ~20
+const int   RUN_PWM  = 150;           // speed on the straights (0-255). Raise in steps of ~20 if the run is too slow
 const int   TURN_PWM = 90;            // speed in the corners. Lower values were too weak to turn the car; 90 is the value in use
 const float STOP_OFFSET_CM = 0;       // final stop: + = stop later (further), - = stop earlier
 
@@ -68,7 +68,7 @@ const float IGNORE_AFTER_TURN_CM = 60; // no corner detection right after a turn
 // ##  2. TUNING - change only if the car zig-zags, drifts or misses corners          ##
 // #####################################################################################
 const float KP_HEAD = 2.0;            // straight: servo degrees per degree of heading error (zig-zag -> lower)
-const float KI_HEAD = 4.0;            // learns the real straight servo angle (the car pulled left at 120)
+const float KI_HEAD = 4.0;            // learns the servo angle that keeps the car straight (no fixed trim)
 const float I_MAX   = 25;             // limit of that integral (servo degrees)
 const float K_LAT       = 0.03;       // lane: heading degrees per mm of lateral error (100 mm -> 3 deg)
 const float KI_LAT      = 0.02;       // lane integral: removes the slow gyro error
