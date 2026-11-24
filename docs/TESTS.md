@@ -64,7 +64,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Speed over 1 m at `RUN_PWM 150` | — | — | — | stopwatch | — | 3 | |
 | Speed over 1 m at `RUN_PWM 255` | — | — | — | stopwatch | — | 3 | |
 | Torque check (ramp or spring scale) | — | — | — | — | — | — | |
-| Reverse ticks to leave the parking space (five wheel turns) | — | — | — | calibration mode of `obstacle_go_out_of_parking` | — | 5 | `REVERSE_TARGET_TICKS` = 1024 is a placeholder in the code, not measured |
+| Reverse ticks to leave the parking space (five wheel turns) | — | — | — | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | — | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |
 
 ## Steering: centre, limits and symmetry
 
@@ -75,7 +75,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Centre (wheels straight) | 21 Nov 2026 | not recorded | 85 | — | — | Confirmed | Value confirmed as driving straight. `STEER_CENTER` in the code |
 | Left stop | 21 Nov 2026 | not recorded | 10 | 40 | — | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing. Smaller servo value steers left |
 | Right stop | 21 Nov 2026 | not recorded | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
-| Turning radius at full lock | — | — | — | — | — | — | Need wheelbase and wheel angle |
+| Turning radius at full lock | — | calculated | — | wheelbase ÷ tan(40°) | 10.7 cm | — | Wheelbase 9 cm, wheel angle 40° |
 
 ## Car geometry and mass
 

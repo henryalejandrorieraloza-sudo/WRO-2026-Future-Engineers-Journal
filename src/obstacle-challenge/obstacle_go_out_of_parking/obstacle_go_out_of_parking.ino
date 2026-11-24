@@ -19,7 +19,7 @@
 
 // ---------- Set these after measuring your encoder ----------
 const bool CALIBRATE_ENCODER = false;             // true = only count encoder ticks (motor stays off)
-const unsigned long REVERSE_TARGET_TICKS = 1024;  // encoder ticks for FIVE wheel turns. PLACEHOLDER: not measured yet, measure it with CALIBRATE_ENCODER
+const unsigned long REVERSE_TARGET_TICKS = 597;   // encoder ticks for FIVE wheel turns: 5 x pi x 41 mm x 9.27 ticks/cm (calculated)
 
 // ---------- Steering and motor ----------
 const byte SERVO_PIN = 9;         // Nano pin that sends the signal to the steering servo
