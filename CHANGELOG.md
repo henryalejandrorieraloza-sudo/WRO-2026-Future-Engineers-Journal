@@ -13,6 +13,7 @@ Only documents changed; **no code changed**. All 7 Mermaid diagrams were compare
 - **README §9.1 (round flowchart):** the first line of the run locks the colour.
 - **README §7.1:** the camera link sends one short text line per frame (not "a few bytes").
 - **Text checked against the code:** the Wi-Fi sketch `camera_webserver_emakefun` is no longer described as present (README §3.1); `src/README.md` names the sketch that really drives D5 (`turn_measure_moving`); `video/video.md` no longer says the Obstacle video includes parking; gyro calibration time in the Obstacle README (§6.1).
+- **Full read of the README (§4–§15), `schemes/README.md`, `docs/COMMITS.md`:** every constant quoted in §9.10 and §10.4 (`STALL_MS`, `MAX_STEER`, `LAT_MAX_DEG`, `ARRIVE_BEFORE_CM`, `TARGET_CM` and 25 more) matches the sketches. Fixed: the risk row "Gyro error accumulates over 12 turns" still named the October wall re-alignment (§10.3); the version list in §14 now includes v1.9.21.
 - Checked and unchanged: Open state diagram (both READMEs) and Obstacle state diagram (both READMEs).
 
 ## v1.9.20 — 24 November · README easier to read

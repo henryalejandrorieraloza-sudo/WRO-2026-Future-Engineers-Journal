@@ -849,7 +849,7 @@ Every design choice in this repository answers one of these limits. The numbers 
 | Steering not centred after a mechanical change | Re-run `servo_test` after any change to the steering |
 | Side TOF cannot see the black wall (journal Problem 46) | Sensors straight at ~5 cm, ROI 16 × 8; re-test with a tape measure after any change to the sensor mounts. The code checks distance only (no range status): check the readings on the track |
 | Wrong turn side at the first corner | Decision on the first jump of the first side (Open); no undo or front/back check in the current code (§3.1, §8.5) |
-| Gyro error accumulates over 12 turns | Wall re-alignment every straight |
+| Gyro error accumulates over 12 turns | `GYRO_SCALE` 1.007 plus the wall term on every straight (`K_LAT`, `KI_LAT`, up to ±12°); the October wall re-alignment is not in the current code. Yaw per corner still to check (§9.9, step 7) |
 | The camera sees the floor lines only within ~16–23 cm (low camera) | The line is used only as a corner event (rising edge of the locked colour); the turn point comes from the front ToF at 40 cm; all lines ignored for 4 s after a corner; without a front ToF the turn starts 0.75 s after the line |
 | Motor stall current not confirmed (power budget) | The budget uses the 0.7 A of the datasheet family; measure the peak with a multimeter, holding the wheel < 0.5 s (`schemes/datasheets/N20_12V_1000RPM_specs.md`). Odometry does not depend on it: ticks per cm are measured directly |
 | Motor held at stall for a long time (gear damage, heating) | The code stops the motor after `STALL_MS` (0.5 s) when the wheels do not turn; do not hold the wheel by hand |
@@ -1056,7 +1056,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) and **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25). All are described in the changelog.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25) and **v1.9.21** (24 Nov: flow diagrams and text checked against the code). All are described in the changelog.
 
 ### 14.1 Submission checklist
 
