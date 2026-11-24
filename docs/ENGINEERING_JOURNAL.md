@@ -1451,7 +1451,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 | 29 | Servo did not complete its movement | Ackermann replaced by rack and pinion (chassis v3) | ✅ |
 | 30 | Right TOF wire came unsoldered | Solder again and fix the wires against vibration | 🔄 |
 | 31 | Nano ESP32 overheated after an upload | Board replaced by a classic Nano (same pinout); upload only with the battery off; cause not confirmed | 🔄 |
-| 32 | First driving test not run | Run `drive_until_left_open` after fixing 29 and 31 | 🔄 |
+| 32 | First driving test not run | Done: the Open Challenge was driven on 22 Nov, three laps (§19.2). The first test sketch (`drive_until_left_open`) was superseded | ✅ |
 | 33 | Ackermann steering destroyed three servos | Parallel rack and pinion, 12-tooth module 1 pinion (chassis v3) | ✅ |
 | 34 | Drive gear skipped on a sudden reverse | Motor only forward during a run; stop with short brake | ✅ |
 | 35 | Zigzag while following the wall | Lower KP, filters, servo speed limit | ✅ |
@@ -1835,3 +1835,33 @@ Nothing in the code was changed in this phase.
 - Confirm the list of STL parts that belong to chassis v4 and the team paragraph in README §15.
 - Measure the motor gear ratio and stall current and replace the wrong motor datasheet in `schemes/datasheets` (§10 and `schemes/README.md`).
 - Repeat the three-lap run on the final code and record each run in `docs/TESTS.md`.
+
+---
+
+## 23. Phase 18 — 23 November (night): code state after the comment cleanup
+
+### 23.1 What changed
+
+- **Commits `8589d11`, `698cf5d` and `00b0796`:** unused constants and obsolete comments removed from the competition sketches, release notes for v1.9.17, and the comments cleaned. The commit `00b0796` says the code lines did not change; only comments were edited.
+- **`docs/TESTS.md`:** the 22 Nov row now names the two candidate commits (`3010306`, `c3441cd`). The journal does not say which one ran, so the row keeps "not recorded". A section for the Obstacle runs was added with empty rows.
+- **§15, row 32:** the first driving test is marked done. The Open Challenge ran three laps on 22 Nov (§19.2).
+
+### 23.2 Status reported by the team (23 Nov)
+
+- **Open Challenge:** works well on the track. This is the team's report; the run data is in §19.2 and `docs/TESTS.md`.
+- **Obstacle Challenge (driving program, without parking):** works on the car, including the edge cases the team checked. The run data and the edge-case results are not written down yet (§20.5).
+
+### 23.3 Checked against the code (Obstacle driving program only)
+
+- **Brake at the stop:** `finish()` applies the active brake. The motor is released one second later, when `runTest()` prints the final report (`motorOut(0)`). The rule about movement after the stop is to be checked on the track before the brake is kept or changed.
+- **Dead condition in `runTest()`:** the line `if (!finalLeg && …)` sits inside `if (finalLeg && …)`, so it never runs. The 8 s "no corner" check on the next line always runs, so the dead line has no effect on behaviour. It is logic, so it was not changed here.
+- **Camera sketch comment (`obstacle_camera_v3_2`):** the comment about holding the Nano's RESET while uploading (both boards share D0) has not been checked against the hardware. It is not verified.
+
+### 23.4 Open items for the Obstacle driving program (not stated as done)
+
+- Write one row per run in `docs/TESTS.md`: lap times, direction, stop position, pillars passed on the correct side, and the edge-case results.
+- Decide on the final brake (§23.3) after a test on the track against the stop rule.
+- Remove the dead condition in `runTest()` and verify or remove the RESET comment, in a separate change that is tested on the car.
+- Measure the N20 stall current and gear ratio, and the 5 V rail with the servo stalled (§16 and §22.5).
+- Confirm with the organisers the reverse turns in each corner (rule 9.21 / Appendix A.4) and the first-commit rule (§22.5).
+- Check that each video shows at least 30 s of autonomous driving (rule 7). The links are in `video/video.md`; the journal does not record this check.
