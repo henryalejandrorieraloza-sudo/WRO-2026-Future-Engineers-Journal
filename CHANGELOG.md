@@ -4,6 +4,16 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.27 — 24 November · Servo MG90 stall current measured
+
+Only documents changed; **no code changed**.
+
+- **Measurement:** winding resistance of the MG90 servo's internal motor = **3.3 Ω** (multimeter, rotor still). Stall current ≈ (5.0 − 0.8 V) ÷ 3.3 Ω ≈ **1.27 A**, practical range 1.0–1.3 A (ideal 1.52 A). New file `schemes/datasheets/MG90_stall_current_measurement.md` with the original PDF `MG90_stall_current_measurement_es.pdf`.
+- **Power budget (`schemes/README.md` §4.1–§4.3, README §6.1):** servo stall 1.27 A (was 650 mA). 5 V rail peak ≈ 1.67 A (was 1.05 A); battery peak ≈ 1.92 A, ≈ 21.9 W (was 1.60 A, 18.3 W); worst-case run time ≈ 9.5 min (was 11); discharge ≈ 5.1 C (was 4.2 C); 13.05 V peak ≈ 25 W at ≈ 1.9 A.
+- **New risk (README §10.3, schemes §4.3):** a servo held at a mechanical stop can burn the bridge or the winding. The code left limit (5) is 5 servo units beyond the measured stop (10); the servo code has no stall timeout. Documented only.
+- **Updated:** `docs/TESTS.md` (new servo table), README §10.3 (two risk rows),  §10.5, "Not yet measured", §14, journal §24.10 and the open items of §9.4 and §16.
+- **Honest limit:** the 1.27 A is calculated from a resistance reading; the 0.8 V drop is an assumption; the current was not read in series.
+
 ## v1.9.26 — 24 November · README aligned with the code
 
 Only documents changed; **no code changed**. The code is the reference: every difference was fixed in the document.
