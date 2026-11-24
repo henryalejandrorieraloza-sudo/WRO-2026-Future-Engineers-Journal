@@ -46,7 +46,7 @@
 const int   LAPS     = 3;             // 1 = one lap (4 turns), 3 = the full Open Challenge (12 turns)
 const int   RUN_PWM  = 150;           // speed on the straights (0-255). Raise in steps of ~20 if the run is too slow
 const int   TURN_PWM = 90;            // speed in the corners. Lower values were too weak to turn the car; 90 is the value in use
-const float STOP_OFFSET_CM = 0;       // final stop: + = stop later (further), - = stop earlier
+const float STOP_OFFSET_CM = 10;      // final stop: + = stop later (further), - = stop earlier. 10 is the value the team uses (24 Nov)
 
 // --- Where the car drives in the corridor (lane) ---
 const int   LANE_MODE = 1;            // 0 = CENTER of the corridor (uses both walls)
