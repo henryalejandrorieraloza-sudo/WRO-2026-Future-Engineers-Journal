@@ -1,7 +1,7 @@
 # Engineering Journal — Software and Electronics
 
 > **Author:** Henry Riera Loza — software and electronics, WRO Future Engineers 2026
-> **Period covered:** 15 September – 20 November 2026 (September–October in sections 2–13, November in section 17)
+> **Period covered:** 15 September – 24 November 2026 (September–October in sections 2–13, November in sections 17–24)
 > **Note:** this journal covers my part of the project (programming, sensors and electronics). The PCB, wiring and power system designed by my teammate are documented in [schemes/README.md](../schemes/README.md), and the whole car is summarised in the [main README](../README.md).
 
 This journal records, in chronological order, everything I worked on: what I built, what I tested, the problems I found, how I solved them (or plan to solve them), and why I chose each solution.
@@ -48,7 +48,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 | Distance sensors | 4 × TOF400C (VL53L1X chip) — replaced 4 × Sharp GP2Y0A21YK0F | I²C SDA = A4, SCL = A5 · XSHUT: FRONT = A1, BACK = A0, RIGHT = A2, LEFT = A3 |
 | Gyroscope | BMI160 | I²C SDA = A4, SCL = A5 (same bus as the TOF sensors) |
 | Start button | Push button | D10 |
-| Battery | 380 mAh | — |
+| Battery | 3S HV LiPo 380 mAh (11.4 V nominal, 13.05 V fully charged) | — |
 | Camera (Obstacle Challenge) | emakefun ESP32S3-CAM: ESP32-S3R8, 8 MB PSRAM, 8 MB flash, native USB-C, OV2640 camera | Separate board |
 
 All code is written in English (variable names, functions and comments) so that it can be read by the judges and by other teams.
@@ -1932,6 +1932,14 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 The power budget had used 0.7 A, taken from the datasheet of another motor of the same family. On 24 November I measured the real motor. With the motor disconnected and the rotor still (so there is no back-EMF), I put the multimeter on the Ω scale, touched the motor terminals at room temperature and waited for the reading to settle: **R = 11.7 Ω**. At stall the back-EMF is zero, so Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**. The commutator has three segments and the probes add some resistance, so the real value depends on the rotor position: the working range is **0.95 to 1.20 A**.
 
 What changed: the budget in `schemes/README.md` §4.2 now uses 1.03 A (peak from the battery ≈ 1.60 A, ≈ 18.3 W, ≈ 11 min of continuous worst case), and the driver and the supply must carry at least 1.2 A per motor. The result is calculated from a resistance, not read as a current in series; that reading is still optional. Method and numbers: [`schemes/datasheets/N20_stall_current_measurement.md`](../schemes/datasheets/N20_stall_current_measurement.md).
+
+### 24.8 Fully charged battery: 13.05 V (24 November)
+
+The documents only gave the nominal 11.4 V. A freshly charged GNB 3S HV pack measures **13.05 V** (4.35 V per cell). That is above the motor's 12 V rating and the 12 V recommended for the Nano's VIN, and only 0.45 V under the 13.5 V operating maximum of the TB6612FNG (absolute maximum 15 V). I compared each part with 13.05 V using the datasheets in `schemes/datasheets` (table in [`schemes/README.md` §4.4](../schemes/README.md#44-fully-charged-battery-1305-v-against-the-12-v-ratings)). Result: every part stays inside its absolute maximum. The risk is limited because the PWM lowers the motor's average voltage (≈ 7.7 V at `RUN_PWM` 150 in the Open Challenge, ≈ 3.6 V at 70 in the Obstacle Challenge) and both driving programs stop the motor after 0.5 s without wheel movement.
+
+The same datasheet gave a second finding: the TB6612FNG's recommended output current is 1.0 A per channel (absolute maximum 1.2 A), and the calculated stall current (1.03 A at 12 V, ≈ 1.12 A at 13.05 V) is above the recommended value, so it is acceptable only for short stalls. I also corrected the sentence in §4.2 that called 1.2 A the continuous rating.
+
+New rules: charge only as 3S HV, and measure the pack before the first run of the day and write it in `docs/TESTS.md`. Open: one test run with a fully charged pack and one with a half-used pack, with the same PWM, to compare the distance travelled.
 
 ## 25. Archive of earlier Open Challenge designs
 

@@ -4,6 +4,15 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.24 — 24 November · Fully charged battery voltage (13.05 V) documented
+
+Only documents changed; **no code changed**.
+
+- **13.05 V fully charged** (measured; 4.35 V × 3 cells) added to the bill of materials, the power diagrams, the failure-point tables and the README. The documents only gave the 11.4 V nominal value.
+- **New `schemes/README.md` §4.4:** each part compared with 13.05 V (N20 motor 12 V, Nano VIN 12 V recommended, TB6612FNG VM 13.5 V operating / 15 V absolute, CN3903 up to 36 V), why the risk is limited (PWM average voltage, stall stop after 0.5 s) and the rules (charge as 3S HV, measure before the first run).
+- **Stall current at 13.05 V:** 13.05 V ÷ 11.7 Ω ≈ 1.12 A, inside the 0.95–1.20 A range (`N20_stall_current_measurement.md`). The TB6612FNG's 1.2 A is its absolute maximum per channel (1.0 A recommended), not a continuous rating; the sentence in §4.2 was corrected.
+- Journal §24.8 added.
+
 ## v1.9.23 — 24 November · Motor stall current measured
 
 Only documents changed; **no code changed**.

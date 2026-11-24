@@ -29,7 +29,7 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
 | **CN3903** buck converter | <img src="../other/components/buck_converter.jpg" width="140"> | 1 | 11.4 V → 5 V, up to 3 A | Switching regulator: far less heat than a linear regulator when dropping ~6 V |
 | **Steering servo** (MG90, metal gear) | <img src="../other/components/servo.jpg" width="140"> | 1 | Rack-and-pinion steering | The PCB was designed for an SG90; it was replaced by the pin-compatible MG90 (metal gears) because the SG90 moved inside its mount (journal Problem 8) |
 | **N20 DC motor with Hall encoder**, 1000 rpm | <img src="../other/components/n20_motor_encoder.jpg" width="140"> | 1 | Rear-wheel drive through a differential | Very small and light, 12 V, built-in encoder for distance/speed feedback |
-| **GNB 3S 380 mAh HV LiPo** (11.4 V, 4.33 Wh, 90C) | <img src="../other/components/battery.jpg" width="140"> | 1 | Power source | Lightest pack that powers the 12 V motor directly with enough capacity for many rounds (see power budget) |
+| **GNB 3S 380 mAh HV LiPo** (11.4 V nominal, **13.05 V fully charged**, 4.33 Wh, 90C) | <img src="../other/components/battery.jpg" width="140"> | 1 | Power source | Lightest pack that powers the 12 V motor directly with enough capacity for many rounds (see power budget) |
 | **Start button** | <img src="../other/components/start_button.jpg" width="140"> | 1 | Starts the run (rules require a single start button) | — |
 | **Power switch** | <img src="../other/components/switch.jpg" width="140"> | 1 | Main power on/off (required by the rules) | Between the battery and the PCB |
 | **Custom tyres** | <img src="../other/components/custom_tire.jpeg" width="140"> | 4 | Grip | 41 mm diameter, C25 silicone rubber cast in printed moulds ([how we make them](../models/README.md#4-custom-silicone-tyres)) |
@@ -99,7 +99,7 @@ Only the Nano's VIN pin receives the battery voltage. The classic Nano works wit
 ### 4.1 Architecture
 
 ```
- 3S HV LiPo 11.4 V (380 mAh, 4.33 Wh)
+ 3S HV LiPo 11.4 V nominal · 13.05 V fully charged (380 mAh, 4.33 Wh)
         │
    [power switch]
         │
@@ -116,7 +116,7 @@ Only the Nano's VIN pin receives the battery voltage. The classic Nano works wit
 
 **Design reasoning**
 
-- **The motor takes the battery voltage directly.** The N20 is rated for 12 V, so a second regulator would only add losses and weight.
+- **The motor takes the battery voltage directly.** The N20 is rated for 12 V, so a second regulator would only add losses and weight. **Caution:** a fully charged pack is **13.05 V** (measured 24 Nov), above the motor's 12 V rating and the Nano's recommended 12 V on VIN; section 4.4 shows what limits the risk.
 - **The servo has the largest current peaks on the 5 V rail** (up to ~650 mA at stall). A 3 A buck leaves a wide margin, so a servo stall does not pull the rail down and reset the camera board or the sensors.
 - **A switching (buck) regulator instead of a linear one:** dropping 11.4 V to 5 V at 0.5 A in a linear regulator would waste ~3.2 W as heat, more than all the electronics use.
 - **The TOF sensors take 5 V from the buck rail.** The classic Nano works with 5 V logic, so 5 V sensors and their I²C lines match it directly, and their current no longer passes through the Nano's small on-board regulator. The cost is that they share the rail with the servo, so the 3 A buck margin has to keep that rail steady during servo stalls (see the budget and the failure points below).
@@ -145,9 +145,10 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 
 - **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.2 ≈ **1.6 h**; even at a continuous worst case (motor at stall) it is ≈ **11 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
 - **Discharge rate:** the ≈ 1.6 A peak (motor at stall) is ≈ 4.2 C, far below the battery's 90C rating. The motor is the largest load, so its voltage sag is the one to check on the car.
-- **Motor stall current (measured 24 Nov):** the winding resistance of the motor on the car is **11.7 Ω** (multimeter, rotor still, motor disconnected). Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**, with a working range of 0.95 to 1.20 A. The budget uses 1.03 A (it was 0.7 A, from the datasheet of another motor of the family). The motor driver and the supply must carry at least **1.2 A per motor**; the TB6612FNG is rated 1.2 A continuous per channel (3.2 A peak), so the stall case fits. Details: [N20_stall_current_measurement.md](datasheets/N20_stall_current_measurement.md).
+- **Motor stall current (measured 24 Nov):** the winding resistance of the motor on the car is **11.7 Ω** (multimeter, rotor still, motor disconnected). Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**, with a working range of 0.95 to 1.20 A. The budget uses 1.03 A (it was 0.7 A, from the datasheet of another motor of the family). The motor driver and the supply must carry at least **1.2 A per motor**; the TB6612FNG's absolute maximum is 1.2 A per channel (3.2 A for a 10 ms pulse) and its recommended operating current is 1.0 A (see section 4.4), so the stall case fits. Details: [N20_stall_current_measurement.md](datasheets/N20_stall_current_measurement.md).
 - **Buck margin:** the 5 V rail peaks at ~1.05 A of the CN3903's 3 A, so the regulator never runs near its limit.
-- **Nano regulator heat:** the Nano's 5 V linear regulator now only feeds the Nano: (11.4 − 5) V × 20 mA ≈ **0.13 W** typical, ≈ 0.2 W at peak. It stays cool.
+- **Nano regulator heat:** the Nano's 5 V linear regulator now only feeds the Nano: (11.4 − 5) V × 20 mA ≈ **0.13 W** typical, ≈ 0.2 W at peak. With a fully charged pack (13.05 V) it is (13.05 − 5) V × 20 mA ≈ **0.16 W** typical, ≈ 0.24 W at peak. It stays cool.
+- **Fully charged pack (13.05 V):** the table above uses the nominal 11.4 V. At 13.05 V the typical power is ≈ 2.4 W (the motor and the Nano take the higher voltage; the regulated 5 V rail does not change) and the worst-case peak is ≈ 21 W at ≈ 1.6 A (motor stall ≈ 1.12 A, see section 4.4). Both are still far from the battery's limits.
 - **Charging:** ≈ 45–50 min with a balance charger (IMAX B6AC) at 0.4 A (≈ 1C).
 
 ### 4.3 Failure points we considered
@@ -156,12 +157,40 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 |---|---|---|
 | Servo peaks on the shared 5 V rail reach the TOF sensors | A servo stall could glitch a distance reading or make a sensor reset | 3 A buck with large margin (see budget). Measure the 5 V rail with a multimeter while the servo stalls and the four sensors are ranging |
 | Camera 3.3 V TX into the Nano RX | The ESP32-S3 drives 3.3 V; the ATmega328P reads 3.3 V as HIGH at 5 V (input-high threshold about 3.0 V) | No resistor divider. The link is one-way: the camera never listens to the Nano (`NANO_RX_PIN = -1`), so the Nano TX pin carries nothing to the camera |
+| **Fully charged battery (13.05 V) above the 12 V ratings** | The N20 (12 V) and the Nano's VIN (12 V recommended) see more than their rating at the start of a charge; the TB6612FNG is only 0.45 V below its 13.5 V operating limit | Measured limits and mitigation in section 4.4: PWM keeps the motor's average voltage low (≈ 7.7 V in the Open Challenge, ≈ 3.6 V in the Obstacle Challenge), the stall stop cuts the motor after 0.5 s, and every part stays below its absolute maximum |
 | Battery voltage on a 3.3 V pin | Permanent damage to the main controller (it happened: journal Problem 31) | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
 | Servo stall pulls the 5 V rail down | Camera or sensors reset during a run | 3 A buck with large margin (see budget) |
 | Motor held at stall for a long time | Gear damage; the motor heats quickly at ≈ 1.03 A stall | The code stops the motor after `STALL_MS`; stall tests use a short hold (< 0.5 s) |
 | Loose sensor wires | A TOF stops answering, I²C bus freezes | Locking JST connectors on the PCB; `Wire.setWireTimeout(25000, true)` in the driving programs, so a frozen bus is reset after 25 ms instead of hanging the program, and a ToF that is silent for 0.5 s makes the program restart the sensors (journal Problems 12 and 30) |
 | All TOF sensors start with the same I²C address | Address conflict, no readings | XSHUT lines: sensors are switched on one at a time at start-up and each gets its own address (journal Problem 15) |
 | Short circuit while handling | Burnt traces or battery damage | Power switch on the main line; XT30 connector on the battery so it can be unplugged quickly |
+
+### 4.4 Fully charged battery: 13.05 V against the 12 V ratings
+
+The nominal 11.4 V in the budget is the pack's average. A freshly charged GNB 3S **HV** pack is higher: **13.05 V**, measured with a multimeter on 24 November 2026 (an HV cell charges to 4.35 V, and 3 × 4.35 V = 13.05 V). The start of a round is the worst moment. Each part against that voltage:
+
+| Part | Rating | At 13.05 V | Verdict |
+|---|---|---|---|
+| N20 drive motor | 12 V rated; the listing says a higher voltage wears the motor | +8.75 % over the rating at full duty; about 7.7 V average at `RUN_PWM` 150 (Open) and about 3.6 V at `RUN_PWM` 70 (Obstacle) | Over the rating only at PWM 255, which the programs do not use |
+| Arduino Nano, VIN | 7–12 V recommended; 6–20 V limit ([Nano documentation](https://docs.arduino.cc/hardware/nano/)) | 1.05 V above the recommended range, 7 V below the limit | Works; the on-board linear regulator dissipates ≈ 0.16 W typical, ≈ 0.24 W at peak |
+| TB6612FNG, VM | 13.5 V operating maximum, 15 V absolute maximum ([datasheet](datasheets/TB6612FNG.PDF)) | 0.45 V (3.3 %) under the operating limit | Inside the range with a small margin. A 4S pack, or a charger set above 13.05 V, would not be safe |
+| TB6612FNG, output current | 1.0 A operating, 1.2 A absolute maximum per channel | Stall current ≈ 1.03 A at 12 V (calculated, section 4.2), ≈ 1.12 A at 13.05 V (13.05 V ÷ 11.7 Ω) | Above the operating value and below the absolute maximum, for short stalls only |
+| CN3903 buck, VIN | 4.5–36 V ([datasheet](datasheets/CN3903.PDF)) | Far inside the range | No problem; the 5 V rail does not change |
+
+**Why we accept it, and what limits the risk**
+
+- **The PWM lowers the motor's average voltage.** The programs never drive the motor at full duty: `RUN_PWM` is 150 of 255 in the Open Challenge and 70 of 255 in the Obstacle Challenge, so the motor averages about 7.7 V and 3.6 V even with a fresh pack.
+- **A stall is cut short.** Both driving programs stop the motor when the wheels do not turn for 0.5 s (`STALL_MS`), so the stall current never lasts.
+- **A fresh pack drops quickly.** After the first minutes the voltage falls towards the nominal 11.4 V, so 13.05 V is the start of a charge only.
+- **Speed changes with the pack.** The motor turns faster at 13.05 V than at 11.4 V, so a timed delay covers more distance with a fresh pack. This is one more reason the programs measure distance with the encoder, and why a test run should be repeated with a fully charged pack.
+
+**Rules we follow because of this**
+
+1. Charge with the balance charger set to **3S HV** (4.35 V per cell, 13.05 V). Never charge as 4S or above.
+2. Measure the pack with a multimeter before the first run of the day and write the voltage in the Battery (V) column of `docs/TESTS.md`.
+3. If the motor or the driver supply is ever changed, check VM again: the TB6612FNG has only 0.45 V of margin.
+
+**Not measured yet:** the stall current at 13.05 V is calculated from the 11.7 Ω winding resistance, not read in series with the battery (the same limit as in section 4.2).
 
 ---
 

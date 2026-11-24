@@ -43,6 +43,7 @@ I_stall = V_nominal / R_internal = 12 V / 11.7 Ω ≈ 1.03 A
 ## Limits of this measurement
 
 - It is a **calculation from a resistance reading**, not a current read in series with the battery. The resistance depends on the rotor position and on temperature.
+- With a fully charged pack (13.05 V, measured 24 Nov) the same calculation gives about **1.12 A**, inside the 0.95–1.20 A range; see [schemes/README.md §4.4](../README.md#44-fully-charged-battery-1305-v-against-the-12-v-ratings).
 - At the battery's 11.4 V the same calculation gives about 0.97 A; the repository budget keeps 1.03 A (the 12 V value) as the conservative case.
 - The value is higher than the 0.7 A of the datasheet of the same family used before, which is one more sign that our motor is not exactly that one (see the gear-ratio check in [N20_12V_1000RPM_specs.md](N20_12V_1000RPM_specs.md)).
 

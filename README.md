@@ -35,7 +35,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 | **Drive / steering** | One N20 12 V 1000 rpm motor with encoder → 1 : 1 rear differential · parallel **rack-and-pinion** steering (module 1 mm) with an MG90 servo |
 | **Chassis** | 3D-printed PLA base (v4, all joints screwed) carrying a custom PCB (EasyEDA → JLCPCB) · cast silicone tyres · wheelbase 9 cm, ±40° steering, 10.7 cm turning radius |
 | **Programs** | `open_challenge` (Open), `obstacle_challenge` + `obstacle_camera_v3_2` (Obstacle), `obstacle_go_out_of_parking` (parking start, not yet track-tested) |
-| **Power** | 3S HV LiPo 11.4 V 380 mAh · CN3903 5 V / 3 A buck converter |
+| **Power** | 3S HV LiPo 380 mAh (11.4 V nominal, **13.05 V fully charged**) · CN3903 5 V / 3 A buck converter |
 
 ---
 
@@ -310,7 +310,7 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 ### 6.1 Power
 
 ```
- 3S HV LiPo 11.4 V ──[switch]──┬──► TB6612FNG ──► N20 drive motor
+ 3S HV LiPo 11.4 V (13.05 V full) ──[switch]──┬──► TB6612FNG ──► N20 drive motor
                                ├──► Arduino Nano (VIN)
                                └──► CN3903 buck 5 V / 3 A ──► camera board, BMI160, servo, encoder, 4 × TOF400C
 ```
@@ -322,6 +322,8 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 | Run time on one charge (80 % of 4.33 Wh) | ≈ 1.6 h | ≈ 11 min |
 
 The peak column is the worst case of every load at once (motor at stall 1.03 A, calculated from the measured winding resistance of 11.7 Ω; servo at stall 650 mA; camera 310 mA). The full table with each load is in [schemes/README.md §4.2](schemes/README.md#42-power-budget). A round lasts 3 minutes, so even the worst case uses about a quarter of one charge.
+
+**A fully charged pack measures 13.05 V** (24 Nov), above the motor's 12 V rating and the Nano's recommended 12 V on VIN. Every part stays inside its limits (the TB6612FNG has only 0.45 V of margin to its 13.5 V operating maximum), the PWM keeps the motor's average voltage low and the stall stop cuts the motor after 0.5 s. The comparison and the rules (charge as 3S HV, measure before the first run) are in [schemes/README.md §4.4](schemes/README.md#44-fully-charged-battery-1305-v-against-the-12-v-ratings).
 
 The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1.05 A peak of the 5 V rail, so a servo stall cannot reset the camera.
 
@@ -837,6 +839,7 @@ Every design choice in this repository answers one of these limits. The numbers 
 | Risk | Mitigation |
 |---|---|
 | Main board (Nano ESP32) lost during an upload with the robot powered and USB connected; the cause is not confirmed (journal Problem 31) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
+| Fully charged battery (13.05 V) above the 12 V ratings of the motor and the Nano's VIN | Measured 24 Nov. PWM keeps the motor's average voltage at ≈ 7.7 V (Open) and ≈ 3.6 V (Obstacle); stall stop after 0.5 s; the TB6612FNG margin to its 13.5 V limit is 0.45 V; charge only as 3S HV; measure the pack before the first run ([schemes §4.4](schemes/README.md#44-fully-charged-battery-1305-v-against-the-12-v-ratings)) |
 | Servo peaks on the shared 5 V rail reach the TOF sensors | Measure the 5 V rail under servo stall with the sensors ranging; 3 A buck margin |
 | Camera 3.3 V TX into the Nano RX | No divider: 3.3 V is read as HIGH by the ATmega328P at 5 V; the link is one-way (the Nano TX is not connected to the camera; `NANO_RX_PIN = -1` in the camera sketch) |
 | Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin |
