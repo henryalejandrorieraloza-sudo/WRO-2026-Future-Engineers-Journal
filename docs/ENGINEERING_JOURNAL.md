@@ -1943,7 +1943,7 @@ New rules: charge only as 3S HV, and measure the pack before the first run of th
 
 ### 24.9 Motor-to-wheel ratio counted (24 November)
 
-I counted the turns of the motor output shaft against the turns of the wheel: **1 : 1**. It confirms that the differential adds no reduction, so the 1000 rpm of the N20 is the wheel speed and the 119 encoder ticks per wheel turn are also per output-shaft turn. It does not measure the gearbox inside the N20 (≈ 17 : 1, calculated from the encoder count); that still needs the hand-turn count of `schemes/datasheets/N20_12V_1000RPM_specs.md`. Recorded in README §5.2 and the checklist table, the N20 notes and `docs/TESTS.md`.
+I counted the turns of the motor output shaft against the turns of the wheel: **1 : 1**. The motor gear and the differential gear have **30 teeth each**, and one turn of one gear gives exactly one turn of the other. It confirms that the differential adds no reduction, so the 1000 rpm of the N20 is the wheel speed and the 119 encoder ticks per wheel turn are also per output-shaft turn. It does not measure the gearbox inside the N20 (≈ 17 : 1, calculated from the encoder count); that still needs the hand-turn count of `schemes/datasheets/N20_12V_1000RPM_specs.md`. Recorded in README §5.2 and the checklist table, the N20 notes and `docs/TESTS.md`.
 
 ### 24.10 Servo MG90 stall current measured (24 November)
 

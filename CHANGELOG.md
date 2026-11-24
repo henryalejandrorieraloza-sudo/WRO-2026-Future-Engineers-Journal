@@ -9,6 +9,7 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day). 
 **No code logic changed.** The team confirmed that the motor gear and the differential gear have **30 teeth each**, and that one turn of one gear gives exactly one turn of the other (counted by hand). This is the external 1 : 1 stage only; the internal gearbox of the N20 (≈ 17 : 1 from the encoder count, 1 : 30 in the datasheet of the same family) is still to be confirmed with the hand-turn count of encoder pulses.
 
 - **`README.md` §5.2, `models/README.md` (main table and parts table), `docs/TESTS.md` (motor table):** tooth count added next to the 22 mm outside diameter.
+- **`docs/ENGINEERING_JOURNAL.md` §24.9, `schemes/README.md` (datasheet table), `schemes/datasheets/N20_12V_1000RPM_specs.md`, `README.md` §14 (version list):** same tooth count and the v1.9.29 / v1.9.30 entries.
 
 ## v1.9.29 — 24 November · Total car length 17.5 cm checked in the whole repository
 
