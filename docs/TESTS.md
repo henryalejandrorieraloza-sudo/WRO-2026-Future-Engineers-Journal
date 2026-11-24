@@ -109,7 +109,7 @@ Procedure: place the car at 5, 20, 40 and 60 cm from the wall, read 30 samples p
 | Frames per second, colour detection | — | — | 160 × 120 | room / venue | — (fps) | The README asks for this value; it was measured only at 320 × 240 |
 | Pillar detected at 20, 40, 60 cm | 27 Oct 2026 | not recorded | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
 | Floor line detected at 9, 16 cm | 28 Oct 2026 | not recorded | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
-| Focal length at 160 × 120, `FOCAL_PX` | — | — | 160 × 120 | camera_viewer.html | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Not measured again at this resolution |
+| Focal length at 160 × 120, `FOCAL_PX` | — | — | 160 × 120 | camera_viewer.html | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
 
 ## Obstacle Challenge: edge cases to add
 

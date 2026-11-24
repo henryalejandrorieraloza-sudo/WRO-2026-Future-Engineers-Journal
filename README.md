@@ -661,7 +661,7 @@ ahead  = f · seen / width                 cm ahead of the camera (f = FOCAL_PX 
 side   = ahead · xc / f                   cm to the side (+ right, − left)
 ```
 
-`cos a + sin a` accounts for the two faces of the square pillar that are visible when it is seen from an angle. `f = 50` is half of the value measured for the 320 × 240 camera (100), and it has not been measured again for 160 × 120, so check it with the camera viewer (see the camera README in [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2/README.md), section *Settings to check first*).
+`cos a + sin a` accounts for the two faces of the square pillar that are visible when it is seen from an angle. `f = 50` is half of the value measured for the 320 × 240 camera (100), and the team confirmed on 23 Nov 2026 that 50 is the correct value for 160 × 120 (camera README: [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2/README.md)).
 
 ### 9.4 Odometry map and pillar dodging
 

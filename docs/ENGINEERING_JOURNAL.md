@@ -1739,7 +1739,7 @@ The sketches in `src` were compared with the two sketches the team sent, with th
 |---|---|---|---|
 | Gyro scale | `obstacle_challenge` / `open_challenge` | `GYRO_SCALE = 1.007` | The 21 Nov hand turn gave `YAW_SCALE = 1.06` for `straight_pillars`. Check the yaw per corner in the final report |
 | Farthest pillar | camera v3.1 / v3.2 | 130 cm / 40 cm | v3.2 reads pillars up to 40 cm. Check that the pillars are not seen too late at the start of a straight |
-| Focal length | camera v3.2 | `FOCAL_PX = 50` | Halved from the 320 × 240 value and not measured again |
+| Focal length | camera v3.2 | `FOCAL_PX = 50` | Half of the 320 × 240 value (100); confirmed by the team on 23 Nov 2026 |
 | Unused constants | `obstacle_challenge` | `MAX_FINAL_CM`, `STOP_OFFSET_CM`, `FALLBACK_CM` | Declared, never used. Can be removed |
 | Magenta walls | camera v3.2 | not in the message | The camera removes them from the pillars but does not send them, so parking at the end is not possible yet |
 | Parking start | `obstacle_go_out_of_parking` | no START button, `REVERSE_TARGET_TICKS = 1024` | Placeholder; the button and the encoder count are still to be added and measured |
