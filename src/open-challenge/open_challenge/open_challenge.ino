@@ -92,7 +92,7 @@ const bool  MOTOR_REVERSED   = true;  // motor wires not swapped yet (forward in
 const bool  ENCODER_REVERSED = true;  // encoder counts backward: flip the sign of the odometry
 const int   YAW_SIGN         = 1;     // +1: turning LEFT makes yaw go UP
 const float GYRO_SCALE       = 1.007; // gyro read ~0.7 % less than the real rotation (3-lap test)
-const int   STEER_CENTER = 85, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // wheels straight = 85 (measured 21 Nov on this chassis). LEFT = smaller angle
+const int   STEER_CENTER = 85, STEER_RANGE = 80, STEER_LEFT_MAX = STEER_CENTER - STEER_RANGE, STEER_RIGHT_MAX = STEER_CENTER + STEER_RANGE;   // wheels straight = 85 (measured 21 Nov). Range 80 = average of 75 (left) and 85 (right) measured for 40 deg -> 5 / 165. LEFT = smaller angle
 const int   RAMP_STEP = 5;            // PWM per 20 ms (soft start)
 const float TICKS_PER_CM = 9.27;      // encoder ticks per cm, measured 21 Nov WITH THE MOTOR RUNNING (190 ticks = 20.5 cm)
 const uint8_t BMI = 0x69;             // I2C address of the BMI160 gyro
