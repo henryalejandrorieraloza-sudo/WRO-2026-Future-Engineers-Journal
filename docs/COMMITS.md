@@ -25,6 +25,10 @@ The WRO 2026 rules require at least three commits: the first no later than two m
 - The colour-detection method (HSV thresholds and BFS blob grouping) is described in the engineering journal in that first commit. The code for it first appears in `5baf921`, minutes later on the same day.
 - The first commit with at least 1/5 of the final code is `814ddcf` (31.2 % by the total count, 21.3 % by .ino alone), the same day as the first commit.
 
+## Interpretation to confirm with the organisers
+
+The rule text asks that "the first commit" contain at least 1/5 of the final code. Reading it as "the repository reached 1/5 by the first deadline" (which `814ddcf` does, on 4 Oct) is plausible, but it is not the literal wording. This should be confirmed with the organisers when the repository link is sent.
+
 ## Deadlines
 
 | Requirement | Deadline | Commit that meets it |
