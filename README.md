@@ -71,6 +71,15 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 ---
 
+
+## Summary
+
+- **Vehicle:** 17.5 × 9.5 × 6 cm, 248 g. Rear drive motor with encoder, rack-and-pinion steering, a custom PCB, laser distance sensors and a gyroscope.
+- **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
+- **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
+- **Obstacle Challenge:** the camera detects red and green pillars; the Nano drives around them. The parking start is in the code and still being tested (§7, §9).
+- **Repository:** 134 commits on `main`. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+
 ## 1. Repository structure
 
 ```
@@ -164,7 +173,7 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 | 9.22 / 9.24.2 / 9.24.3 / App. A.2–A.3 | After 3 laps stop completely inside the starting section (no movement after 15 s; judged after 30 s still); passing into the next corner ends the round without the stop points | After the **12th** turn: short tuned straight, then **active brake held forever** (both TB6612FNG inputs HIGH) |
 | 9.23 | One repair per round; no program upload, no data entry | Nothing to configure: after a repair the car is switched on and started with the same button |
 | 8 (Obstacle) / 1.8.1 | Parking-lot start points only if a full lap is completed | Start position decided by the team before the round; parking still being designed |
-| 3.3 / 3.7 | Code and construction only by the team, own solution | All code written by the team; history visible in the commits and the journal |
+| 3.3 / 3.7 | Own work by the team | The team designed the solution, tested it on the car and can explain the code. Part of the code and documents was written with AI assistance; see [§15](#15-use-of-ai-tools). The commit history shows the origin of each change |
 | 7 | Public GitHub repository in English; README ≥ 5000 characters (modules, link to electromechanical components, build / compile / upload); commented code; photos of every side, top and bottom; team photo; one YouTube video per challenge with ≥ 30 s of autonomous driving; ≥ 3 commits on time; repository public for 12 months after the event; hard copy at the International Final | See [§14.1 Submission checklist](#141-submission-checklist) |
 
 ---
@@ -198,7 +207,7 @@ All printed parts (25 STL files), the full STEP assembly, the CAD of every itera
 ### 5.1 Chassis
 
 - **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
-- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see �5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
+- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see §5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
@@ -497,7 +506,6 @@ Our priority is to **complete the three laps and stop correctly** — a crash lo
 | Right after a turn, the sensor sees the tip of the inner wall diagonally | Close / far is decided only 1 s after the turn (`SW_MIN_MS = 1000`, journal Problem 44) |
 | A single bad reading | Window of 8 readings with a NOT SURE band |
 | Gyro drift over 3 laps | Calibration at rest before every run + wall re-alignment every straight |
-| Wrong first turn | FRONT/BACK check and undo |
 | Narrow corridor (600 mm) | The inner wall is close, its readings are valid from the start; the car follows it directly |
 | Never touch the outer wall (rule 9.18) | The car always follows the **inner** wall at a short distance, and the FRONT safety brakes before any wall |
 | Wrong first turn | Undo is a short reverse inside the corner section, which the rules allow (Appendix A.4) |
@@ -832,7 +840,7 @@ The table describes the settings of the earlier Open Challenge design (§8.1–8
 | Final stop | **active brake, held** | Stops in a repeatable distance and keeps the car still (rule 9.24.2: no movement after 15 s; App. A.2: judged after 30 s) | Rules, journal Problem 34 |
 | Motor direction | forward only (except the first-turn undo) | A sudden reverse made a drive gear skip | Journal Problem 34 |
 
-**Wired but not used yet: the motor encoder.** It is connected to D2 / D3 (the Nano's two interrupt pins) but the validated programs drive by time, gyroscope and walls, because the encoder code was not needed to pass the first corner. It is planned for the two places where time is a weak substitute for distance: the straight before each turn and the final straight that must end inside the starting section, since a time-based distance changes as the battery discharges.
+**The motor encoder is wired and used by `open_challenge`.** It is connected to D2 / D3 (the Nano's two interrupt pins). The program converts the counts to distance with `TICKS_PER_CM = 9.27` (measured 21 Nov with the motor running) and uses that distance for odometry. Distance-based delays for the straights before each turn (§8.7) are not in the code yet; the current program still uses time for those.
 
 ---
 
@@ -944,17 +952,29 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 
 | Requirement (rule 7) | Deadline | Status |
 |---|---|---|
-| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Done — 4 Oct (first code and journal) |
-| Second commit | ≤ 8 Nov 2026 | Done — many commits in October |
-| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | To confirm with the organisers |
-| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | In progress — final Open and Obstacle programs, final README and journal still to commit; rubric review done on 20 Nov |
+| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Met by `814ddcf` (4 Oct, 31.2 % of the final code). The first commit in the history, `f3a9770`, contains no code. Details in [docs/COMMITS.md](docs/COMMITS.md). The organisers should confirm this reading of the rule |
+| Second commit | ≤ 8 Nov 2026 | Met by `06f5685` (5 Nov) |
+| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | Pending — send on 23 Nov and confirm receipt with the organisers |
+| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | In progress — documentation fixes are in this commit (AI disclosure §15, commit history, checklist, test log template); the final Open and Obstacle programs and the final journal are still to commit |
+| Motor data (gear ratio, stall current) for the power budget | — | Open — see [schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md); the 6 V datasheet `N20_motors.pdf` is still in the repository |
+| Test log with runs, successes, times and stop positions | — | Template created in [docs/TESTS.md](docs/TESTS.md); rows are added after each run |
+| AI tools disclosure | — | Done — [§15](#15-use-of-ai-tools) |
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
 | Code for **every** programmed component, with comments | — | In progress — Obstacle: `obstacle_challenge`, `obstacle_camera_v3_2` and `obstacle_go_out_of_parking`, each with its README (23 Nov); hardware tests in `src/`; the Open Challenge program is `open_challenge` and its earlier versions are in the git history; the three-lap run is recorded in the journal (§19.2) |
-| Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
+| Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/`. Printed photo of chassis v4 still pending |
 | YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`) |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
 | Repository public until at least December 2027 | — | Done — public; do not delete or make private |
 | Hard copy of the documentation at the International Final | 8 Dec 2026 | Planned — print README + journal |
+
+---
+
+## 15. Use of AI tools
+
+Claude, an AI model made by Anthropic, was used during this project. On the `main` branch the commit history has 134 commits; 63 of them are authored by the Claude account. The commits are not rewritten, so each change can be traced to its author.
+
+- **What the AI did:** wrote and revised part of the code (sketches, the pillar viewer and tests), drafted parts of the documentation, and proposed some tools (for example the scenario generator).
+- **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.
 
 ---
 
