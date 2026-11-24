@@ -59,7 +59,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Test | Date | Commit | Battery (V) | Method | Value | Repetitions | Notes |
 |---|---|---|---|---|---|---:|---|
 | Encoder ticks per cm, motor running | 21 Nov 2026 | not recorded | not recorded | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | 1 | `TICKS_PER_CM` in `open_challenge.ino`, `obstacle_challenge.ino`, `straight_pillars.ino`. Hand-pushed values (12.67, 16.1) are superseded |
-| Encoder pulses per wheel turn (10 turns) | — | — | — | hand turn, motor off | — | 10 | Ratio = pulses per turn ÷ (7 × edges counted) |
+| Encoder pulses per wheel turn (10 turns) | — | calculated | — | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks | — | Ratio = pulses per turn ÷ (7 × edges counted) |
 | Stall current (peak, < 0.5 s) | — | — | — | multimeter in series | — | — | Do not hold the wheel longer |
 | Speed over 1 m at `RUN_PWM 150` | — | — | — | stopwatch | — | 3 | |
 | Speed over 1 m at `RUN_PWM 255` | — | — | — | stopwatch | — | 3 | |
