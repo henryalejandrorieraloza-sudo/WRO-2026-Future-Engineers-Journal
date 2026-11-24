@@ -730,7 +730,7 @@ The turn always ends when the gyroscope says the car has rotated **exactly 90°*
 - **Last case (10 Oct):** the new MG90 buzzed loudly and did not move after the wall-following PID tests, which used limits of 75° / 145°. That day the 3S battery was also unbalanced (the charger was only charging 2 of the 3 cells) and the rear motor did not move either, so a low voltage may have made it worse.
 - **Decision:** change the mechanism, not the servo again. Chassis v3 uses **parallel steering with a rack and pinion**: a **12-tooth pinion, module 1 mm**, on the servo moves a **module 1 mm rack** connected to both knuckles.
 - **Why:** fewer joints and almost no friction, so the servo is never blocked; the mechanism is much simpler and more reliable to print. Each degree of servo rotation moves the rack π × 12 mm / 360 ≈ 0.105 mm, always the same amount.
-- **Trade-off:** parallel steering loses the Ackermann geometry, so the inner front wheel slips a little in turns. At our mass (270 g) and speed this is small compared with a servo that breaks.
+- **Trade-off:** parallel steering loses the Ackermann geometry, so the inner front wheel slips a little in turns. At our mass (248 g) and speed this is small compared with a servo that breaks.
 - **Effect on the software:** new provisional values (15 Oct): centre 120°, **left limit 180°, right limit 50°** (left is now the larger angle), and on the new chassis `INVERT_STEER = true` and `MOTOR_REVERSED = true`. Tested with `servo_only_test` and `wall_keep_both_pid`.
 
 ### 9.2 Other changes from v2 to v3
@@ -743,7 +743,7 @@ The turn always ends when the gyroscope says the car has rotated **exactly 90°*
 | **No tape**, every joint screwed | Tape showed that the design was not finished and let the geometry move |
 | Side TOF sensors **1.5 cm** higher | Confirmed measurement of the change of Problem 16 |
 
-Final car: **13 cm long, 9.5 cm wide, 6 cm high, 270 g**. N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
+Final car: **17.5 cm long, 9.5 cm wide, 6 cm high, 248 g**. N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
 
 #### Problem 34 — A drive gear skipped when the motor reversed suddenly ✅
 - **What I observed (10 Oct):** when the motor jumped suddenly to reverse, one gear of the drive train skipped.

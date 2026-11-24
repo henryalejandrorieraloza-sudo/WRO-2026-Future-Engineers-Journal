@@ -10,7 +10,7 @@ Procedure: place the car at the start of the Open Challenge track, start the rou
 
 Pass criterion: three laps, then a stop inside the starting section.
 
-Target: at least 20 runs with the final code (the rubric's example for level 6 uses 20 runs and shows a success rate that rises between sessions).
+Target (team plan, not a rubric requirement): at least 20 runs with the final code, so the success rate can be compared between sessions. The rubric asks for testing and iteration evidence with metrics, not a specific number of runs.
 
 | Run | Date | Commit | Battery (V) | Laps completed | Success (yes / no) | Time per lap (s) | Direction | Stop position | Notes |
 |---|---|---|---|---|---|---|---|---|---|
