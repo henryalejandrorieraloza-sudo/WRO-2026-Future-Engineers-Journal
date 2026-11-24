@@ -34,7 +34,7 @@ Dimensions in the table above were measured on the STL files and on the real car
 
 ## 2. Part list
 
-All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed for one car.
+All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed for one car. The 26 distinct parts add up to **38 printed pieces per car** (sum of the Qty column). The 8 tyre-mould copies (4 inner + 4 outer) are not part of the car.
 
 ### Chassis and supports
 
@@ -81,7 +81,7 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 
 | Part | Render | Qty | Size (mm) | Function |
 |---|---|---|---|---|
-| [`front_protrusion.stl`](stl/front_protrusion.stl) | <img src="images/front_protrusion.png" height="110"> | 1 | 31 × 65 × 1 | Front protrusion of chassis v4: a separate plate screwed to the front of the base. It adds length to the car and is **part of the car** |
+| [`front_protrusion.stl`](stl/front_protrusion.stl) | <img src="images/front_protrusion.png" height="110"> | 1 | 31 × 65 × 1 | Front protrusion of chassis v4: a separate plate screwed to the front of the base with the same screws that fasten the ESP32 to the base, so no holes or new base are needed. It adds length to the car and is **part of the car** |
 
 > The plate's top face touches the bottom face of the base (Z = 0 mm). The plate extends 1 mm below the base (Z = -1 mm in the STL).
 

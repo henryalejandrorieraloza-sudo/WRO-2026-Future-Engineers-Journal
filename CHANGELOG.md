@@ -4,6 +4,8 @@ Versions of the car and of this repository. Dates are in 2026.
 
 ## Unreleased — 23 November · README checked line by line against the three competition sketches
 
+- **Videos:** thumbnails of the Obstacle and Open Challenge videos added in `video/thumbnails/` and linked to the YouTube videos in `video/video.md`.
+- **Parts:** `models/README.md` states that one car uses **38 printed pieces** (26 distinct parts), without the 8 tyre-mould copies.
 - **Checked against the code:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` are the reference. Constants and behaviour in the README now match them.
 - **Corrected:** reverse gear (Obstacle turns in reverse, Open forward only); steering limits (left 10, right 170); the camera link is one-way (camera TX → Nano RX, no resistor divider needed); the gyro output rate is not set in the code; the turn, the stop and the side-sensor rules described as current now match the code; the 13 cm/s speed arithmetic.
 - **History marked:** the 8-reading window, the undo, the 1 s and 500 ms delays and the PD turn are documented as October design, not as the current code.
