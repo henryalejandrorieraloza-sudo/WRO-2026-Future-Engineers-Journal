@@ -1927,6 +1927,12 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 
 ---
 
+### 24.7 Motor stall current measured (24 November)
+
+The power budget had used 0.7 A, taken from the datasheet of another motor of the same family. On 24 November I measured the real motor. With the motor disconnected and the rotor still (so there is no back-EMF), I put the multimeter on the Ω scale, touched the motor terminals at room temperature and waited for the reading to settle: **R = 11.7 Ω**. At stall the back-EMF is zero, so Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**. The commutator has three segments and the probes add some resistance, so the real value depends on the rotor position: the working range is **0.95 to 1.20 A**.
+
+What changed: the budget in `schemes/README.md` §4.2 now uses 1.03 A (peak from the battery ≈ 1.60 A, ≈ 18.3 W, ≈ 11 min of continuous worst case), and the driver and the supply must carry at least 1.2 A per motor. The result is calculated from a resistance, not read as a current in series; that reading is still optional. Method and numbers: [`schemes/datasheets/N20_stall_current_measurement.md`](../schemes/datasheets/N20_stall_current_measurement.md).
+
 ## 25. Archive of earlier Open Challenge designs
 
 Moved here from the README on 24 November 2026, unchanged except for the headings, so the README describes only the code that runs on the car. These designs are not in the current code; the program that runs today is `open_challenge` (README §8.0). Where a number here differs from README §8.0 or from the code, the code wins.
