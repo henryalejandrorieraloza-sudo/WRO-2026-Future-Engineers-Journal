@@ -31,7 +31,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 15. [Summary of problems and solutions](#15-summary-of-problems-and-solutions)
 16. [Next steps](#16-next-steps)
 17. [Phase 12 — November: failures, a new camera and a restart of the Open Challenge (29 Oct – 20 Nov)](#17-phase-12--november-failures-a-new-camera-and-a-restart-of-the-open-challenge-29-oct--20-nov-2026)
-18. [Phases 13–16 — 21–23 November (sections 18–21)](#21-phase-16--23-november-videos-added-and-every-document-checked-against-the-code)
+18. [Phases 13–17 — 21–23 November (sections 18–22)](#22-phase-17--23-november-evening-final-code-link-and-status)
 
 ---
 
@@ -1512,9 +1512,10 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] New Open Challenge version: ROI 16 × 8, only "range valid", WALL / NO WALL / NOT SURE window of 8 readings, target distance inside the reliable range (< 45 cm), all safety rules of §12.7.
 - [ ] Measure encoder ticks per millimetre and the full-lock turning radius, then code the decision tree of §12.10 (delays in encoder turns instead of time).
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
-- [ ] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(22 Nov: `open_challenge` and the camera sketch are in the repository; the final Obstacle run — corners, laps, stop, parking — is not written yet.)*
+- [x] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(23 Nov: `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` are in `src`; `obstacle_go_out_of_parking` is there as a placeholder, see §22.3.)*
 - [x] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(23 Nov: both videos are done — Open `4p94mWkXhsk`, Obstacle `ccAdp2c7_7Y`.)*
-- [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring) and send the link before the organisers' deadline (≈ 17 Nov).
+- [x] Send the repository link to the organisers. *(23 Nov: sent and receipt confirmed by the team.)*
+- [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring). *(23 Nov: code, README, journal and videos are in `main`; the last step is the scoring commit.)*
 - [ ] Print the README and this journal as the **hard copy** for the International Final (8–10 Dec 2026, San Juan).
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
 - [x] Camera Block 1: pillar detection tested and calibrated (section 6).
@@ -1532,7 +1533,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Detect the parking lot (magenta pieces).
 - [ ] Calibrate the colours again on the competition field, under its lighting, with the camera viewer.
 - [ ] Add Serial Monitor screenshots and the manual-simulation video as evidence.
-- [ ] Test `open_challenge` for three laps on Scenario Roulette layouts (both directions, 600 mm and 1000 mm corridors), record the results here, and commit the final version before the scoring commit of 24 Nov.
+- [ ] Test `open_challenge` for three laps on Scenario Roulette layouts (both directions, 600 mm and 1000 mm corridors), record the results here, and commit the final version before the scoring commit of 24 Nov. *(23 Nov: one three-lap run is recorded in §19.2; the final code is in the repository; the 20-run series is not done.)*
 - [ ] Re-check both side TOF sensors after the supply change of 17 Nov and re-measure the left sensor's 18 % error (§17.4).
 - [ ] Validate the 19 Nov colour thresholds of `obstacle_camera` on the track (pillars, orange and blue lines).
 - [x] Calibrate the gyroscope with a real 90° hand-turn test (`gyro_90_test`): `YAW_SCALE = 1.06`, `YAW_REVERSED = false` (Phase 13) ✅
@@ -1794,3 +1795,43 @@ Nothing in the code was changed.
 - `obstacle_go_out_of_parking` has not been tested on the track and its `REVERSE_TARGET_TICKS` is a placeholder.
 
 Nothing in the code was changed in this phase.
+
+---
+
+## 22. Phase 17 — 23 November (evening): final code, link and status
+
+### 22.1 What changed
+
+- **Organisers' link:** sent and receipt confirmed on 23 November.
+- **Final programs in `src`:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` (ESP32-S3-CAM) are the competition code. The team reports that the Obstacle programs work on the car. The parking sketch is still a placeholder (§22.3).
+- **Documents:** the checklist in §16 is updated to the state of 23 November. The AI section (README §15) and the team paragraph were confirmed by the team and kept as written.
+
+### 22.2 How the final code was checked
+
+- **Open Challenge and Obstacle driving sketches:** each one was compiled as C++ against stub headers for `Arduino.h`, `Wire.h`, `Servo.h` and `VL53L1X.h`. There were no syntax errors. The Obstacle sketch calls `finish()` and `startRun()` before their definitions, which is valid because the Arduino IDE generates the prototypes. This is a syntax check only; it is not the Arduino compiler and it says nothing about how the car drives.
+- **Camera sketch (`obstacle_camera_v3_2`):** not compiled here. It needs the ESP32 core (`esp_camera.h`).
+- **Parking sketch:** not compiled here. It uses VL53L1X calls that the stub does not provide, and it is a placeholder.
+- **Open Challenge constants** are the ones listed in §19.2 (`INNER_TARGET_MM 100`, `STEER_CENTER 85`, `TICKS_PER_CM 9.27`). The journal does not record whether `STEER_CENTER` changed before or after the 22 November run, so the run confirms the code only as far as those constants are the same.
+
+### 22.3 Status of each program
+
+| Program | Status on 23 November | Still open |
+|---|---|---|
+| `open_challenge` | Three laps (12 turns) completed on 22 November and the car stopped in the starting section (§19.2) | Lap times and direction of that run; the 20-run series; a row in `docs/TESTS.md` |
+| `obstacle_challenge` | Code in `src`; the team reports that it works | Lap times, stop position and pillar passes are not recorded (§20.5) |
+| `obstacle_camera_v3_2` | Code in `src` | Magenta parking walls are not sent to the Nano (§20.4) |
+| `obstacle_go_out_of_parking` | Placeholder | No START button yet; `REVERSE_TARGET_TICKS = 1024` is not measured; not tested on the track |
+
+### 22.4 What the rubric needs before the scoring commit (24 November)
+
+- The final programs and the videos are in `main`.
+- The link to the organisers is confirmed.
+- The test log (`docs/TESTS.md`) stays empty until the team logs the runs with dates, commit and results.
+
+### 22.5 Open items (not stated as done)
+
+- Confirm with the organisers how the first-commit rule is read (`docs/COMMITS.md`: 1/5 reached by `814ddcf` on 4 October).
+- Confirm that reverse turns in each corner are allowed (rule 9.21 / Appendix A.4).
+- Confirm the list of STL parts that belong to chassis v4 and the team paragraph in README §15.
+- Measure the motor gear ratio and stall current and replace the wrong motor datasheet in `schemes/datasheets` (§10 and `schemes/README.md`).
+- Repeat the three-lap run on the final code and record each run in `docs/TESTS.md`.
