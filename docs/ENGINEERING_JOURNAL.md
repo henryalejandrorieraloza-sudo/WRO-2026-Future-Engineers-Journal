@@ -31,7 +31,9 @@ This journal records, in chronological order, everything I worked on: what I bui
 15. [Summary of problems and solutions](#15-summary-of-problems-and-solutions)
 16. [Next steps](#16-next-steps)
 17. [Phase 12 — November: failures, a new camera and a restart of the Open Challenge (29 Oct – 20 Nov)](#17-phase-12--november-failures-a-new-camera-and-a-restart-of-the-open-challenge-29-oct--20-nov-2026)
-18. [Phases 13–17 — 21–23 November (sections 18–22)](#22-phase-17--23-november-evening-final-code-link-and-status)
+18. [Phase 13 — 21 November: gyro calibration, the dodge-crash fix, and stopping on the floor line](#18-phase-13--21-november-gyro-calibration-the-dodge-crash-fix-and-stopping-on-the-floor-line)
+19. [Phases 14–18 — 22–23 November (sections 19–23)](#22-phase-17--23-november-evening-final-code-link-and-status)
+20. [Phase 19 — 24 November: documentation checked against the code and the rubric](#24-phase-19--24-november-documentation-checked-against-the-code-and-the-rubric)
 
 ---
 
@@ -1048,7 +1050,7 @@ After reviewing the rules and the sensor data, I compared several ways to drive 
 
 **Why not reinforcement learning?** RL needs thousands of attempts; on the real track each attempt means placing the car, waiting and charging the battery, and a simulator would not model what actually goes wrong for us (black walls that the TOF cannot see, the USB vs battery difference, the steering centre at 120°). The task can be written as clear rules, so a state machine with PID is more reliable, easier to debug and easier to explain. We considered PID, feedforward, geometric path tracking (Pure Pursuit), LQR, MPC, imitation learning and RL; we keep **state machine + cascade PID**, and the encoder improves it.
 
-**What changes.** Every wait that was measured in **time** becomes a distance measured with the **encoder** (already wired, not used yet). A timed delay covers more distance with a full battery than with a low one, and the car behaved differently on USB than on battery. The full decision tree is in [README §8.7](../README.md#87-next-version-decision-tree-with-encoder-delays-planned-25-october):
+**What changes.** Every wait that was measured in **time** becomes a distance measured with the **encoder** (already wired, not used yet). A timed delay covers more distance with a full battery than with a low one, and the car behaved differently on USB than on battery. The full decision tree is in [README §8.7](../README.md#87-decision-tree-with-encoder-delays-planned-25-october-history):
 
 1. **First straight:** follow the nearest wall; when one side opens, store it as the direction of the round, wait N encoder turns, turn 90°.
 2. **After the first turn:** follow the outer wall until the inner wall appears, then start searching for openings.
@@ -1100,7 +1102,7 @@ After the Open Challenge decision tree I moved to the Obstacle Challenge. In two
 
 ### 13.3 The math, step by step
 
-Everything the car does in the Obstacle Challenge comes from a few ideas of trigonometry. This section explains each one from the beginning, with the reason it is used and a worked example with real numbers from our car. (The same formulas, shorter, are in [README §9.3–9.6](../README.md#93-from-pixels-to-centimetres-where-is-the-pillar).)
+Everything the car does in the Obstacle Challenge comes from a few ideas of trigonometry. This section explains each one from the beginning, with the reason it is used and a worked example with real numbers from our car. (The same formulas, shorter, are in [README §9.3–9.6](../README.md#93-from-pixels-to-centimetres).)
 
 #### 13.3.1 Tangent and arctangent (`tan`, `atan`)
 
@@ -1503,14 +1505,14 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] First driving test (`drive_until_left_open`, now in the git history): superseded by the validated wall-following and corner sketches.
 - [x] Raise the TOF sensors (1.5 cm higher): they detect the walls much better ✅
 - [x] Confirm the STBY pin of the motor driver (tied to +5 V on the PCB).
-- [ ] Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.
+- [x] ~~Update `open_challenge_v2` to the Pololu VL53L1X library and the address method of Problem 15.~~ Superseded: `open_challenge` (20 Nov) uses the Pololu library and the XSHUT address method.
 - [x] Drive straight and smooth along the nearest wall (`wall_follow_nearest_gyro`, Phase 8) ✅
 - [x] Stop with the short brake when a side wall ends, then add the 90° gyro turn (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version) ✅
 - [x] Find why the car sometimes chose the wrong side: the side TOF could not see the black wall at 30° (Phase 10) ✅
-- [ ] Remount the side TOF sensors **straight (0°)**, centre at ~5 cm from the floor, level (teammate, hardware).
+- [x] Remount the side TOF sensors **straight (0°)**, centre at ~5 cm from the floor, level (teammate, hardware). Done on chassis v4 (`models/README.md`, §3).
 - [ ] Repeat `tof_roi_budget_test` at 30, 45 and 60 cm with ROI 16 × 8 at 50, 100 and 140 ms and fix the final values.
-- [ ] New Open Challenge version: ROI 16 × 8, only "range valid", WALL / NO WALL / NOT SURE window of 8 readings, target distance inside the reliable range (< 45 cm), all safety rules of §12.7.
-- [ ] Measure encoder ticks per millimetre and the full-lock turning radius, then code the decision tree of §12.10 (delays in encoder turns instead of time).
+- [x] New Open Challenge version: done as `open_challenge` (20 Nov) with ROI 16 × 8 and the target distance inside the reliable range (100 mm from the inner wall). It uses a learned-distance jump instead of the 8-reading window (README §8.3).
+- [x] Measure encoder ticks per millimetre and the full-lock turning radius: 9.27 ticks per cm with the motor running (§18.1) and 10.7 cm (±40°, `docs/TESTS.md`). The decision tree of §12.10 was replaced by `open_challenge`, which also measures its distances with the encoder.
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
 - [x] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(23 Nov: `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` are in `src`; `obstacle_go_out_of_parking` is there as a placeholder, see §22.3.)*
 - [x] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(23 Nov: both videos are done — Open `4p94mWkXhsk`, Obstacle `ccAdp2c7_7Y`.)*
@@ -1866,3 +1868,59 @@ Nothing in the code was changed in this phase.
 - Measure the N20 stall current and gear ratio, and the 5 V rail with the servo stalled (§16 and §22.5).
 - Confirm with the organisers the reverse turns in each corner (rule 9.21 / Appendix A.4) and the first-commit rule (§22.5).
 - Check that each video shows at least 30 s of autonomous driving (rule 7). The links are in `video/video.md`; the journal does not record this check.
+
+---
+
+## 24. Phase 19 — 24 November: documentation checked against the code and the rubric
+
+### 24.1 Why
+
+The three programs that run on the car (`open_challenge`, `obstacle_challenge`, `obstacle_camera_v3_2`) are the truth: the team reports that they work. Before the scoring commit, every document was read against them and against the five criteria of the documentation rubric. **No code logic changed.** Only comments were edited in `obstacle_camera_v3_2.ino` (the header no longer calls the constants a starting guess) and in `servo_test.ino` (comment and start message now show the real centre, 85).
+
+### 24.2 The biggest correction: the speed reasoning
+
+Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and called that a risk for the 3-minute round. The calculation was wrong:
+
+1. The N20 is a gear motor. Its **1000 rpm is the output shaft**, after its own gearbox.
+2. The encoder is on the motor shaft, before the gearbox: 7 pulses per motor turn. Our 9.27 ticks per cm is about 119 ticks per wheel turn, so the gearbox inside the N20 is about 119 / 7 ≈ 17 : 1.
+3. The old text divided the 2.1 m/s (1000 rpm × 12.9 cm per turn) by 17 **again**. That is a double count. The correct no-load top speed with the 1 : 1 differential is about 2.1 m/s at 12 V.
+
+**How we know the corrected version is right without a stopwatch:** `open_challenge` stops the car if no corner arrives within 8 s (`MAX_STRAIGHT_MS`). At 12.6 cm/s a 1 m straight takes 7.9 s, and the inner wall sides are 1000–1800 mm long (rules, Appendix B). The 22 Nov run completed 12 corners in narrow corridors (1800 mm inner sides), so the car was clearly faster. Lesson: check every calculation against a result we already have.
+
+### 24.3 Other differences found and fixed in the documents
+
+| Where | What the document said | What the code does | Action |
+|---|---|---|---|
+| README §5.1 | Maximum steering angle 30° | 40° each way, measured with a protractor (`docs/TESTS.md`) | Corrected; turning radius 10.7 cm added (§5.3) |
+| README §6.1 | Peak 0.92 A, 10.5 W | `schemes/README.md` §4.2 adds up to 1.27 A, 14.5 W | Aligned with the schemes budget |
+| README §6.3, `schemes/README.md` §5 | Front ToF = safety brake and FRONT/BACK check | Open: front and rear held in reset. Obstacle: front starts the reverse turn at 40 cm, rear ends the back-up at 20 cm | Rewritten per program |
+| README §8.6 | Start: "gyro wall following on the nearest wall" | Heading hold + centring until corner 1, then 100 mm from the inner wall | Rewritten |
+| README §10.2 | "Following the outer wall", "floor line stored on the map" | Inner wall at 100 mm; the line is a corner event, the turn point comes from the front ToF | Rows replaced, with the data behind each choice |
+| README §10.4 | "Distance-based delays are not in the code; the program still uses time" | No program uses a timed delay before a turn; distances come from the encoder | Corrected |
+| README §13 | "Side ToF: remounting in progress", "encoder delays planned" | Sensors straight on chassis v4; `open_challenge` uses encoder distances | Status table rewritten; October milestones in a collapsed list |
+| README §1, §15 | 144 commits, 69 by Claude | 180 commits on `main` on 23 Nov, 96 by the Claude account | Corrected |
+| `obstacle_challenge/README.md` | Lateral goal written with `carY`; link to `open_challenge` "in the git history" | The code uses the camera position `camPosY()`; `open_challenge` is in `main` | Corrected |
+| `obstacle_go_out_of_parking/README.md` | `REVERSE_TARGET_TICKS = 1024` placeholder; centre "not calibrated" | 597 (calculated, five wheel turns); centre 85 measured 21 Nov | Corrected |
+| `camera_test/README.md` | Points to `obstacle_camera/README.md` (removed) | The pipeline README is `obstacle_camera_v3_2/README.md` | Link fixed; differences table (resolution, `MAX_AHEAD_CM`, mirror) |
+| `servo_test/README.md` | `CENTER` 90 | `CENTER` 85 | Corrected |
+| `src/README.md`, camera README | The viewer works with `obstacle_camera_v3_2` | `camera_viewer.html` is drawn for 320 × 240 (`camera_test`) | Stated; v3.2 is checked with its status lines |
+| Journal links | Two links to README anchors that no longer exist (§8.7, §9.3) | — | Fixed |
+
+### 24.4 What was added for the rubric
+
+- **Mechanics:** the speed and torque reasoning above, the measured steering geometry against the 600 mm corridor (README §5.2–5.3), and the v3 → v4 changes in the iteration table (§5.5).
+- **Power and sensors:** what each sensor does in each program, with the field geometry behind its placement (README §6.3).
+- **Software:** the Obstacle state diagram with the reason for each state (README §9.1), the function layers of both programs and the loop timing (README §7.3), and a state diagram in the `open_challenge` README.
+- **Systems thinking:** a constraints table with numbers and sources (README §10.0), and the reasoning for each pillar-dodging setting (README §10.4).
+- **Testing:** the one-change-at-a-time tuning loop and a table of only measured validation results, with the source of each (README §11.1–11.2).
+
+### 24.5 Recorded from the team's notes of 21 November
+
+`ARRIVE_BEFORE_CM` was raised on the track in steps (28 → 40 → 55 cm). At 28 cm the car turned almost on top of the pillar, because with a 10.7 cm turning radius the sideways move needs more room before the pillar. 55 cm is the value in `obstacle_challenge`.
+
+### 24.6 Still open (not stated as done)
+
+- The 5-attempt tables of `docs/TESTS.md` for both challenges (times, direction, stop position), and a logged Open run with 1000 mm corridors.
+- The stopwatch speed at `RUN_PWM` 150 and 255, the 160 × 120 frame rate, the gyro drift at rest, the stall current.
+- The parking start: START button, measured reverse count, first track test.
+

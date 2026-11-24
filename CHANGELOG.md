@@ -2,9 +2,26 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
-_v1.9.18 groups the documentation work of 23 November (night, evening and day) and is the tag of the scoring commit._
+_v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline._
+
+## v1.9.19 — 24 November · Every document checked against the competition code and the rubric
+
+Rule used: the three programs that run on the car (`open_challenge`, `obstacle_challenge`, `obstacle_camera_v3_2`) are the truth; every document that disagreed was changed. **No code logic changed** (comments only in `obstacle_camera_v3_2.ino`; comment and start message in `servo_test.ino`). Details in journal §24.
+
+- **Speed reasoning corrected (README §5.2, `docs/TESTS.md`):** the 12.6 cm/s of the entry below divided by the N20 gearbox ratio twice. The 1000 rpm rating is already the output speed, so the no-load top speed is ≈ 2.1 m/s at 12 V. The 22 Nov 3-lap run (8 s no-corner stop active, 1000–1800 mm inner walls) confirms the car is far faster than 12.6 cm/s. The "too slow" risk is replaced by "too fast for the sensors" (speeds capped in software). Torque margin recomputed for a ≈ 17 : 1 gearbox.
+- **Steering geometry:** ±40° (measured) and the 10.7 cm turning radius replace the old 30°; checked against the 600 mm corridor (README §5.1, §5.3); v3 → v4 rows added to the iteration table (§5.5).
+- **Power:** README §6.1 peak aligned with `schemes/README.md` §4.2 (1.27 A, 14.5 W).
+- **Sensors:** README §6.3 and `schemes/README.md` §5 now say what each sensor does in each program (front ToF: Obstacle turn at 40 cm; rear ToF: back-up to 20 cm; both off in Open); encoder calibration method added.
+- **Software:** Obstacle state diagram with the reason for each state (README §9.1); function layers and loop timing of both programs (README §7.3); state diagram in the `open_challenge` README; current corner rule of `open_challenge` stated before the October history (§8.3); October designs (§8.3, §8.7) folded into collapsible history blocks; §8.6 edge cases rewritten from the code.
+- **Systems thinking:** new constraints table (README §10.0); stale "we chose X instead of Y" rows replaced (inner wall at 100 mm, line as an event + front ToF, 160 × 120 camera, locked line colour, reverse turn); risk table cleaned (3-column rows fixed); §10.4 rewritten with the pillar-dodging settings and their reasons.
+- **Testing:** tuning loop (README §11.1) and a table of measured validation results with sources (§11.2).
+- **Status and checklist:** README §13 rewritten (validated vs team report), §14.1 updated for 24 Nov, commit counts corrected (180 on 23 Nov, 96 by the Claude account).
+- **Sub-READMEs:** `obstacle_challenge` (`camY`, ignore window, link to `open_challenge`), `obstacle_go_out_of_parking` (597 ticks, centre 85, `servo_test` link), `obstacle_camera_v3_2` (status, viewer resolution), `camera_test` (broken link, differences table), `servo_test` (centre 85), `motor_encoder_test` (encoder pins vs driving programs), `gyro_90_test` (1.06 vs 1.007).
+- **Links and encoding:** two broken journal → README anchors fixed; `models/README.md` re-encoded as UTF-8 (a stray Latin-1 `§`); journal §16 next steps updated.
 
 ## Unreleased — 23 November (late) · Reproducibility and consistency of the documents
+
+> Superseded on 24 Nov (v1.9.19): the speed item below was a calculation error.
 
 - **Speed:** the 1 : 1 figure of 2.1 m/s is no longer presented as the expected speed. The encoder count implies about 17 : 1, which gives about 12.6 cm/s with no load. A three-lap round needs about 13 cm/s, so this is listed as an open risk (README §5.2, §10.3; stopwatch test in `docs/TESTS.md`).
 - **Steering:** the open check (midpoint of the stops is 90, not 85) is also listed in README §13.
