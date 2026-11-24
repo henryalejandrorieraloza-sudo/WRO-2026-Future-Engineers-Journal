@@ -47,8 +47,8 @@ How the points are counted:
 
 | Attempt | Date | Commit | Direction | 1.1 Sections (max 24) | 1.2 Laps (max 3) | 1.3 Stop in finish section (3 / 0) | Pillars on the correct side (yes / no) | Pillars moved (none / one or more) | Signs points (1.4 / 1.5 / 1.6 / 1.7) | 1.8.1 Started in lot (7 / 0) | 1.8.2 / 1.8.3 Parking (15 / 7 / 0) | Repair taken (yes / no) | Round score (max 62) | Round time (s) | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 24 Nov | 32d873d | right | 24 | 3 | 3 | yes | not recorded | not recorded | 7 | 0 | no | not recorded | 1:40 | Stopped in the correct section, not in the parking lot. Started in the parking lot. |
-| 2 | 24 Nov | 32d873d | right | 24 | 3 | 3 | yes | not recorded | not recorded | 7 | 0 | no | not recorded | 1:41 | Stopped in the correct section, not in the parking lot. Started in the parking lot. |
+| 1 | 24 Nov | 32d873d | right | 24 | 3 | 3 | yes | none | 10 | 7 | 0 | no | 47 | 1:40 | Stopped in the correct section, not in the parking lot. Started in the parking lot. |
+| 2 | 24 Nov | 32d873d | right | 24 | 3 | 3 | yes | none | 10 | 7 | 0 | no | 47 | 1:41 | Stopped in the correct section, not in the parking lot. Started in the parking lot. |
 | 3 | 23 Nov | 32d873d | left | 24 | 3 | 3 | yes | none | 10 | 7 | 0 | no | 47 | 2:00 | Stopped in the correct section, not in the parking lot. No pillars touched. |
 
 Scenarios: random, picked by the Scenario Roulette page for each run.
