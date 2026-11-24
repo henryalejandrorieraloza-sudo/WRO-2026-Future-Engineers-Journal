@@ -399,7 +399,7 @@ flowchart LR
         H --> I[Steering servo D9]
         H --> J[Motor via TB6612FNG]
     end
-    D -- "UART: a few bytes per frame" --> H
+    D -- "UART: one short text line per frame" --> H
 ```
 
 - **Camera board:** all image processing. It sends one short text line per picture (colour of the closest pillar, its distance ahead and to the side in cm, and where the orange and blue floor lines are), so the link stays fast.
@@ -488,7 +488,7 @@ The sketch has four states, named `WAIT`, `STRAIGHT`, `TURN` and `DONE` (the nam
 stateDiagram-v2
     [*] --> WAIT: power on, gyro calibrated
     WAIT --> STRAIGHT: START button or g
-    DONE --> STRAIGHT: g (new run)
+    DONE --> STRAIGHT: START button or g (new run)
     STRAIGHT --> TURN: corner detected, not in the final leg
     TURN --> STRAIGHT: 90 deg turned, corners below 4 x LAPS
     TURN --> STRAIGHT: 4 x LAPS corners done, final leg starts
@@ -586,7 +586,7 @@ Flow of one round:
 ```mermaid
 flowchart LR
     S([START]) --> A["Straight<br>dodge pillars<br>centre between walls"]
-    A --> L{Line of the<br>locked colour?}
+    A --> L{Line of the locked colour?<br>the first line of the run locks it}
     L -- no --> A
     L -- "yes, corners 1 to 12" --> T["Drive to 40 cm from the front wall<br>reverse 90 degrees<br>back up to 20 cm from the rear wall"]
     T --> A
