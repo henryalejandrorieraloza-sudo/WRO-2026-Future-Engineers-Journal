@@ -39,6 +39,22 @@ Here you will find the full engineering process (what we tried, what failed, the
 
 ---
 
+## Start here
+
+Short on time? These five links show the car working, what we measured, how to rebuild it and why it is built this way.
+
+| | Link | What you will find |
+|---|---|---|
+| 1 | [Open Challenge video](https://www.youtube.com/watch?v=4p94mWkXhsk) | 3 laps with `open_challenge`, stop in the starting section (34 s) |
+| 2 | [Obstacle Challenge video](https://www.youtube.com/watch?v=ccAdp2c7_7Y) | 3 laps obeying red and green pillars with `obstacle_challenge` (2:14) |
+| 3 | [§11.2 Validation results](#112-validation-results-measured) | Only measured values, each with its source |
+| 4 | [§12 How to build, compile and upload](#12-how-to-build-compile-and-upload) | Parts, printing, wiring, board settings and upload steps |
+| 5 | [§10 Constraints, trade-offs and risks](#10-systems-thinking-constraints-trade-offs-and-risks) | Why we chose X instead of Y, with the data behind each choice |
+
+Older designs that are no longer in the code are kept in the [engineering journal](docs/ENGINEERING_JOURNAL.md), not in this README. The sections below describe the car and the code as they are now; the few short notes about earlier versions are marked as history.
+
+---
+
 ## Contents
 
 0. [How this repository answers the documentation rubric](#how-this-repository-answers-the-documentation-rubric)
@@ -430,7 +446,7 @@ Both Nano programs have the same layers, so a fix in one layer (for example the 
 
 ### 8.0 The Open Challenge program: `open_challenge` (20 November)
 
-[`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it (§8.1–8.7 describe that design work) were removed from `main`; they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`).
+[`open_challenge`](src/open-challenge/open_challenge/open_challenge.ino) drives `LAPS` laps (3 = the full Open Challenge, 12 turns) and **stops at the position where it started**. The seven earlier sketches that led to it were removed from `main` (their design is in [journal §25](docs/ENGINEERING_JOURNAL.md#25-archive-of-earlier-open-challenge-designs)); they stay in the git history (`git checkout f5aa0e6 -- src/open-challenge`).
 
 **Hardware it uses:** left and right TOF (Long mode, ROI 16 × 8, 50 ms; addresses 0x2A / 0x2B), BMI160 gyroscope, encoder (9.27 ticks per cm, measured with the motor running; see the table below), TB6612FNG motor, steering servo, start button D10. The front and rear TOF stay soldered but are **held in reset (XSHUT LOW)**, so they never answer at 0x29 and cannot clash with the two sensors in use.
 
@@ -460,13 +476,9 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 | Run / turn speed (PWM) | `RUN_PWM` 150, `TURN_PWM` 90 | `RUN_PWM`, `TURN_PWM`, `REVERSE_PWM` all 70 | The Obstacle car is slower on purpose: the camera needs time |
 | Gyro calibration | 300 samples after 0.7 s settling | same | LED blinks while it runs |
 
-### 8.1 Idea (history: design of the earlier versions, superseded by §8.0)
+### 8.1 Earlier designs (moved to the journal)
 
-> **History.** §8.1–§8.7 describe the wall-following design of October (decision window, timed waits, 12 turns by sudden jump). The program that runs today is `open_challenge` (§8.0): lane mode with `INNER_TARGET_MM = 100`, `RUN_PWM 150`, turns by gyro (odometry by encoder), stops at the start position with `LAPS = 3`. When a number in §8.1–§8.7 differs from §8.0 or from the code, the code wins.
-
-**Finish the three laps safely first, then go faster.** The car drives along a side wall with a two-loop controller (wall distance → small target heading → gyroscope → steering). At the first corner it finds which side opens and fixes the direction of the round. At every corner it turns exactly 90° with the gyroscope, and at every straight the wall itself corrects the heading, so small errors cannot add up over 12 corners. After the last corner it drives a short straight and brakes actively.
-
-How we got here: a sudden-jump detector (Sharp sensors, journal §2.4) → keeping both start distances (§4.2) → smooth gyro wall following (Phase 8) → one complete corner and the loop (Phase 9) → **simpler decisions once the sensor data became trustworthy** (Phase 10).
+The October wall-following design (two-loop wall controller, WALL / NO WALL / NOT SURE window, the 25 October decision tree with encoder delays) led to `open_challenge` but is not in the current code. It was moved to [journal §25](docs/ENGINEERING_JOURNAL.md#25-archive-of-earlier-open-challenge-designs) on 24 Nov so this README describes only the program that runs on the car. §8.2–§8.6 below describe `open_challenge`.
 
 ### 8.2 State machine
 
@@ -502,23 +514,7 @@ stateDiagram-v2
 
 **Current code (`open_challenge`):** each side learns its *normal* distance once it has seen the wall closer than `ARM_WALL_MM` (900 mm) for `ARM_READINGS` (5) readings in a row; the normal distance is then a running average (80 % old, 20 % new) while the wall is seen. A corner is a reading more than `JUMP_DELTA_MM` (250 mm) above that normal, or above `JUMP_ABS_MM` (1200 mm). Readings of 0 mm or ≥ 4000 mm are stored as 4000 mm ("nothing in range"). Comparing each side with **its own** learned distance, instead of comparing left with right or using a fixed threshold, lets the same rule apply in 600 mm and 1000 mm corridors (the 3-lap run of 22 Nov had narrow corridors; a logged run with 1000 mm corridors is still to do).
 
-> **History (October design, not in the current code).** The window below was the design before `open_challenge`.
-
-<details>
-<summary>October design: WALL / NO WALL / NOT SURE window</summary>
-
-The side TOF sensors face the wall squarely and use ROI 16 × 8 (journal Phase 10). On the black wall each reading is either accurate or invalid, so the car does not try to measure distances it cannot see:
-
-| Reading | Meaning |
-|---|---|
-| "Range valid" and ≤ 550 mm | **WALL**, distance reliable (±1–2 cm) |
-| Anything else | **NO WALL** — the number is never used |
-
-Decisions use the last **8** readings: **6 or more** WALL → WALL (distance = median); **2 or fewer** → NO WALL; **3–5** → NOT SURE (no decision yet). The thresholds are provisional and will be confirmed after remounting the sensors (30, 45, 60 cm test).
-
-This made the algorithm **simpler**: no 2400–2600 mm "opening" threshold, no comparison of two noisy averages at ~2 m, no 165–185 cm close / far threshold, no jump threshold. The opening is the side without a wall; the corner is the moment the followed wall disappears.
-
-</details>
+The October 8-reading WALL / NO WALL / NOT SURE window that came before this is in [journal §25.2](docs/ENGINEERING_JOURNAL.md#25-archive-of-earlier-open-challenge-designs).
 
 ### 8.4 Turning, and why errors do not add up
 
@@ -550,7 +546,7 @@ Our priority is to **complete the three laps and stop correctly** — a crash lo
 | Round direction (clockwise or counter-clockwise) | Not assumed: corner 1 sets it from the side whose reading jumps while the other does not |
 | Inner wall far away (1000 mm corridor) | A 4000 mm reading (no wall) is not used for lane control; the car keeps its heading and its learned bias until the inner wall is closer than `SIDE_MAX_MM` (1200 mm) |
 | Right after a turn, the sensor sees the tip of the inner wall diagonally | No corner is counted for 60 cm after a turn (`IGNORE_AFTER_TURN_CM`), and the inner wall must be seen again (`ARM_WALL_MM`, `ARM_READINGS`) before the next corner counts |
-| A single bad reading | Open: `JUMP_CONFIRM = 1`, one reading is enough; there is no 8-reading window in the current code (history, §8.3) |
+| A single bad reading | Open: `JUMP_CONFIRM = 1`, one reading is enough; there is no 8-reading window in the current code (history: journal §25.2) |
 | Gyro drift over 3 laps | Calibration at rest (300 samples) every time a run starts; the target heading is always an exact multiple of 90°, and the lane term (up to ±12°, with an integral) corrects the small heading error on every straight |
 | Narrow corridor (600 mm) | The inner wall is close, its readings are valid from the start; the car keeps 100 mm from it. This is the layout of the 22 Nov 3-lap run |
 | Car stuck against a wall | Motor on but encoder not moving for 0.5 s → active brake and stop (`STALL_MS`) |
@@ -559,82 +555,9 @@ Our priority is to **complete the three laps and stop correctly** — a crash lo
 | Wrong first turn | Not handled in the current code: there is no undo. A reverse inside the corner section is allowed (rule 9.21 / App. A.4, §3.1) |
 | Stopping inside the starting section | After exactly **12** turns (3 laps × 4 corners) the car stops at the start position (Open, by encoder) or 0.45 s after the last line (Obstacle), then brakes for 1 s and switches the motor off (§10.4). A 13th turn would carry the car out of the starting section and lose the 3 stop points (rule 9.24.3) |
 
-### 8.7 Decision tree with encoder delays (planned 25 October; history)
+### 8.7 Earlier decision tree (moved to the journal)
 
-> **History.** This plan of 25 October was replaced by `open_challenge` (§8.0), which keeps its two main ideas: decisions measured in **encoder distance** instead of time (`IGNORE_AFTER_TURN_CM`, `D1`, `LSTART`), and the inner wall as the reference after the first corner. The rest (fixed delays before the turn, Phase 2 on the outer wall, the 8-reading window) is not in the code.
-
-<details>
-<summary>The 25 October decision tree</summary>
-
-This was the algorithm planned next at that time. It kept everything validated then (cascade controller, 90° gyro turn, active brake, WALL / NO WALL / NOT SURE window) and replaced the **timed** waits with **encoder distance**, because time-based waits changed with battery voltage (the car behaved differently on USB than on battery).
-
-```
-START
-│  calibrate gyroscope → wait for start button
-▼
-══════════ PHASE 1: FIRST STRAIGHT (direction unknown) ══════════
-│
-├─ Follow the NEAREST wall (PID + gyroscope)
-│
-└─ Opening detected on one side?
-   ├─ NO  → keep driving
-   └─ YES → store that side as the TURN DIRECTION (fixed for the round)
-             │
-             ▼
-          Delay: N encoder turns
-             │
-             ▼
-          TURN toward that side until 90° (gyroscope)
-          counter = 1
-             │
-             ▼
-══════════ PHASE 2: FIND THE INNER WALL ══════════
-│
-├─ Follow the OUTER wall (PID + gyroscope)
-│
-└─ Inner wall detected?
-   ├─ NO  → keep following the outer wall
-   └─ YES → enable the opening search
-             │
-             ▼
-══════════ PHASE 3: LOOP (always the same from here) ══════════
-│
-├─ Follow the INNER wall (PID + gyroscope)
-│
-└─ Opening detected on the inner side?
-   ├─ NO  → keep following the inner wall
-   └─ YES
-       │
-       ▼
-    Delay: N encoder turns
-       │
-       ▼
-    TURN toward the stored direction until 90°
-    counter++
-       │
-       ▼
-    counter == 12?
-    ├─ YES → FINISH
-    │         drive X encoder turns → active brake → stay still
-    │
-    └─ NO  → drive M encoder turns, NOT searching for openings
-              │
-              ▼
-           back to "Follow the INNER wall"
-```
-
-| Element | Why |
-|---|---|
-| Delays measured in **encoder turns**, not milliseconds | Distance does not depend on battery voltage; a timed delay did |
-| During both delays the car holds the **gyro heading** only | No wall is available there; with 1° of gyro error the car moves only ~3.5 mm sideways over 200 mm |
-| **M** turns after every turn without searching for openings | Right after the turn the inner side sees the corner, which looks like an opening (journal Problem 44); M must be long enough to leave the corner section |
-| Outer wall followed **only** in Phase 2 | After the first corner the car is always close to the inner wall, so it never needs the outer wall again |
-| Exactly **12** turns, then X encoder turns and brake | Stops inside the starting section (rule 9.24.2); a 13th turn would leave it (rule 9.24.3) |
-| Opening = the WALL / NO WALL / NOT SURE window of 8 valid readings (§8.3) | Single readings on the black wall caused wrong decisions (journal Problem 46) |
-
-**To measure before coding:** encoder ticks per millimetre (push the car exactly 1 m), the steering turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor. With the side sensors reliable only up to ~45 cm (journal §12.4), Phase 2 must also be checked in a 1000 mm corridor, where the outer wall may be out of range right after the first turn — in that case the car holds the gyro heading until a wall is valid.
-
-</details>
+The decision tree of 25 October is in [journal §25.3](docs/ENGINEERING_JOURNAL.md#25-archive-of-earlier-open-challenge-designs). `open_challenge` kept its two main ideas: waits measured in encoder distance instead of time, and the inner wall as the reference after corner 1.
 
 ---
 
@@ -1112,7 +1035,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Parking start (`obstacle_go_out_of_parking`) | Written 20 Nov, not tested on the track; needs a START button and a measured `REVERSE_TARGET_TICKS` |
 | Parking at the end of the round | In design; the camera already separates the magenta walls but does not send them yet (§9.7) |
 | Camera viewer page | Done — used to set up the new camera board on 19 Nov (journal §17.5) |
-| Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19, journal §24) |
+| Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19 and v1.9.20, journal §24–§25) |
 
 **Next steps, in order of points at risk:** (1) log the 5-attempt tables for both challenges; (2) time 1 m at `RUN_PWM 150` and 255; (3) parking start: START button, measure the reverse count, test; (4) send the magenta walls to the Nano and design the final parking.
 
@@ -1133,7 +1056,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (23 Nov) and **v1.9.19** (24 Nov, this documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code). Both are described in the changelog.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) and **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25). All are described in the changelog.
 
 ### 14.1 Submission checklist
 
@@ -1144,7 +1067,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 | First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Met by `814ddcf` (4 Oct, 31.2 % of the final code). The first commit in the history, `f3a9770`, contains no code. Details in [docs/COMMITS.md](docs/COMMITS.md). The organisers should confirm this reading of the rule |
 | Second commit | ≤ 8 Nov 2026 | Met by `06f5685` (5 Nov) |
 | Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | Sent on 23 Nov 2026; receipt confirmed by the organisers (journal §22.1) |
-| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Final programs, AI disclosure (§15), commit history, checklist, test log and journal committed on 23 Nov; the documentation review v1.9.19 (no code logic changed) is committed on 24 Nov, inside the deadline once it is merged into `main` that day. Measured values added later may not be scored |
+| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Final programs, AI disclosure (§15), commit history, checklist, test log and journal committed on 23 Nov; the documentation review v1.9.19 and the readability pass v1.9.20 (no code logic changed) are committed on 24 Nov, inside the deadline once it is merged into `main` that day. Measured values added later may not be scored |
 | Motor data (gear ratio, stall current) for the power budget | — | Partly — the budget uses the stall current of a datasheet of the same family (0.7 A); the gear ratio (≈ 17 : 1 from the encoder count, §5.2) and the stall current of this motor are to be measured ([schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md)). The 6 V datasheet `N20_motors.pdf` (a different motor) was removed on 23 Nov |
 | Test log with runs, successes, times and stop positions | — | Template created in [docs/TESTS.md](docs/TESTS.md); rows are added after each run |
 | AI tools disclosure | — | Done — [§15](#15-use-of-ai-tools) |

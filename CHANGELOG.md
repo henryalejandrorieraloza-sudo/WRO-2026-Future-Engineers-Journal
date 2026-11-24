@@ -2,7 +2,15 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
-_v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline._
+_v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
+
+## v1.9.20 — 24 November · README easier to read
+
+Only documents changed; **no code changed**.
+
+- **Start here (README, top):** five links for an evaluator with little time: the two driving videos, the measured validation results (§11.2), how to build and upload (§12) and the constraints and trade-offs (§10).
+- **History moved out of the README:** the October Open Challenge design (old §8.1), the WALL / NO WALL / NOT SURE window (old part of §8.3) and the 25 October decision tree (old §8.7) moved unchanged to the new [journal §25](docs/ENGINEERING_JOURNAL.md#25-archive-of-earlier-open-challenge-designs). §8.1 and §8.7 keep their numbers as one-paragraph pointers, so §8.2–§8.6 and every existing link stay the same. The old note that called all of §8.1–§8.7 "history" was wrong for §8.2–§8.6, which describe `open_challenge`; it is gone.
+- **Checks:** every relative link and heading anchor in all `.md` files resolves (0 broken). The key numbers match across the README, `docs/TESTS.md`, `schemes/README.md` and the program READMEs: 248 g, 17.5 × 9 cm, 9.27 ticks per cm, ±40° steering, ROI 16 × 8, 28 STL files.
 
 ## v1.9.19 — 24 November · Every document checked against the competition code and the rubric
 

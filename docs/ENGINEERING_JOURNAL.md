@@ -34,6 +34,7 @@ This journal records, in chronological order, everything I worked on: what I bui
 18. [Phase 13 — 21 November: gyro calibration, the dodge-crash fix, and stopping on the floor line](#18-phase-13--21-november-gyro-calibration-the-dodge-crash-fix-and-stopping-on-the-floor-line)
 19. [Phases 14–18 — 22–23 November (sections 19–23)](#22-phase-17--23-november-evening-final-code-link-and-status)
 20. [Phase 19 — 24 November: documentation checked against the code and the rubric](#24-phase-19--24-november-documentation-checked-against-the-code-and-the-rubric)
+21. [Archive of earlier Open Challenge designs (moved from the README)](#25-archive-of-earlier-open-challenge-designs)
 
 ---
 
@@ -1050,7 +1051,7 @@ After reviewing the rules and the sensor data, I compared several ways to drive 
 
 **Why not reinforcement learning?** RL needs thousands of attempts; on the real track each attempt means placing the car, waiting and charging the battery, and a simulator would not model what actually goes wrong for us (black walls that the TOF cannot see, the USB vs battery difference, the steering centre at 120°). The task can be written as clear rules, so a state machine with PID is more reliable, easier to debug and easier to explain. We considered PID, feedforward, geometric path tracking (Pure Pursuit), LQR, MPC, imitation learning and RL; we keep **state machine + cascade PID**, and the encoder improves it.
 
-**What changes.** Every wait that was measured in **time** becomes a distance measured with the **encoder** (already wired, not used yet). A timed delay covers more distance with a full battery than with a low one, and the car behaved differently on USB than on battery. The full decision tree is in [README §8.7](../README.md#87-decision-tree-with-encoder-delays-planned-25-october-history):
+**What changes.** Every wait that was measured in **time** becomes a distance measured with the **encoder** (already wired, not used yet). A timed delay covers more distance with a full battery than with a low one, and the car behaved differently on USB than on battery. The full decision tree is in [§25.3](#253-decision-tree-with-encoder-delays-planned-25-october-was-readme-87):
 
 1. **First straight:** follow the nearest wall; when one side opens, store it as the direction of the round, wait N encoder turns, turn 90°.
 2. **After the first turn:** follow the outer wall until the inner wall appears, then start searching for openings.
@@ -1924,3 +1925,113 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 - The stopwatch speed at `RUN_PWM` 150 and 255, the 160 × 120 frame rate, the gyro drift at rest, the stall current.
 - The parking start: START button, measured reverse count, first track test.
 
+---
+
+## 25. Archive of earlier Open Challenge designs
+
+Moved here from the README on 24 November 2026, unchanged except for the headings, so the README describes only the code that runs on the car. These designs are not in the current code; the program that runs today is `open_challenge` (README §8.0). Where a number here differs from README §8.0 or from the code, the code wins.
+
+### 25.1 Idea of the October design (was README §8.1)
+
+> **History.** This section and §25.2–§25.3 describe the wall-following design of October (decision window, timed waits, 12 turns by sudden jump). The program that runs today is `open_challenge` (§8.0): lane mode with `INNER_TARGET_MM = 100`, `RUN_PWM 150`, turns by gyro (odometry by encoder), stops at the start position with `LAPS = 3`. When a number here differs from §8.0 or from the code, the code wins.
+
+**Finish the three laps safely first, then go faster.** The car drives along a side wall with a two-loop controller (wall distance → small target heading → gyroscope → steering). At the first corner it finds which side opens and fixes the direction of the round. At every corner it turns exactly 90° with the gyroscope, and at every straight the wall itself corrects the heading, so small errors cannot add up over 12 corners. After the last corner it drives a short straight and brakes actively.
+
+How we got here: a sudden-jump detector (Sharp sensors, journal §2.4) → keeping both start distances (§4.2) → smooth gyro wall following (Phase 8) → one complete corner and the loop (Phase 9) → **simpler decisions once the sensor data became trustworthy** (Phase 10).
+
+### 25.2 WALL / NO WALL / NOT SURE window (was part of README §8.3)
+
+> **History (October design, not in the current code).** The window below was the design before `open_challenge`.
+
+<details>
+<summary>October design: WALL / NO WALL / NOT SURE window</summary>
+
+The side TOF sensors face the wall squarely and use ROI 16 × 8 (journal Phase 10). On the black wall each reading is either accurate or invalid, so the car does not try to measure distances it cannot see:
+
+| Reading | Meaning |
+|---|---|
+| "Range valid" and ≤ 550 mm | **WALL**, distance reliable (±1–2 cm) |
+| Anything else | **NO WALL** — the number is never used |
+
+Decisions use the last **8** readings: **6 or more** WALL → WALL (distance = median); **2 or fewer** → NO WALL; **3–5** → NOT SURE (no decision yet). The thresholds are provisional and will be confirmed after remounting the sensors (30, 45, 60 cm test).
+
+This made the algorithm **simpler**: no 2400–2600 mm "opening" threshold, no comparison of two noisy averages at ~2 m, no 165–185 cm close / far threshold, no jump threshold. The opening is the side without a wall; the corner is the moment the followed wall disappears.
+
+</details>
+
+### 25.3 Decision tree with encoder delays, planned 25 October (was README §8.7)
+
+> **History.** This plan of 25 October was replaced by `open_challenge` (§8.0), which keeps its two main ideas: decisions measured in **encoder distance** instead of time (`IGNORE_AFTER_TURN_CM`, `D1`, `LSTART`), and the inner wall as the reference after the first corner. The rest (fixed delays before the turn, Phase 2 on the outer wall, the 8-reading window) is not in the code.
+
+<details>
+<summary>The 25 October decision tree</summary>
+
+This was the algorithm planned next at that time. It kept everything validated then (cascade controller, 90° gyro turn, active brake, WALL / NO WALL / NOT SURE window) and replaced the **timed** waits with **encoder distance**, because time-based waits changed with battery voltage (the car behaved differently on USB than on battery).
+
+```
+START
+│  calibrate gyroscope → wait for start button
+▼
+══════════ PHASE 1: FIRST STRAIGHT (direction unknown) ══════════
+│
+├─ Follow the NEAREST wall (PID + gyroscope)
+│
+└─ Opening detected on one side?
+   ├─ NO  → keep driving
+   └─ YES → store that side as the TURN DIRECTION (fixed for the round)
+             │
+             ▼
+          Delay: N encoder turns
+             │
+             ▼
+          TURN toward that side until 90° (gyroscope)
+          counter = 1
+             │
+             ▼
+══════════ PHASE 2: FIND THE INNER WALL ══════════
+│
+├─ Follow the OUTER wall (PID + gyroscope)
+│
+└─ Inner wall detected?
+   ├─ NO  → keep following the outer wall
+   └─ YES → enable the opening search
+             │
+             ▼
+══════════ PHASE 3: LOOP (always the same from here) ══════════
+│
+├─ Follow the INNER wall (PID + gyroscope)
+│
+└─ Opening detected on the inner side?
+   ├─ NO  → keep following the inner wall
+   └─ YES
+       │
+       ▼
+    Delay: N encoder turns
+       │
+       ▼
+    TURN toward the stored direction until 90°
+    counter++
+       │
+       ▼
+    counter == 12?
+    ├─ YES → FINISH
+    │         drive X encoder turns → active brake → stay still
+    │
+    └─ NO  → drive M encoder turns, NOT searching for openings
+              │
+              ▼
+           back to "Follow the INNER wall"
+```
+
+| Element | Why |
+|---|---|
+| Delays measured in **encoder turns**, not milliseconds | Distance does not depend on battery voltage; a timed delay did |
+| During both delays the car holds the **gyro heading** only | No wall is available there; with 1° of gyro error the car moves only ~3.5 mm sideways over 200 mm |
+| **M** turns after every turn without searching for openings | Right after the turn the inner side sees the corner, which looks like an opening (journal Problem 44); M must be long enough to leave the corner section |
+| Outer wall followed **only** in Phase 2 | After the first corner the car is always close to the inner wall, so it never needs the outer wall again |
+| Exactly **12** turns, then X encoder turns and brake | Stops inside the starting section (rule 9.24.2); a 13th turn would leave it (rule 9.24.3) |
+| Opening = the WALL / NO WALL / NOT SURE window of 8 valid readings (§25.2) | Single readings on the black wall caused wrong decisions (journal Problem 46) |
+
+**To measure before coding:** encoder ticks per millimetre (push the car exactly 1 m), the steering turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor. With the side sensors reliable only up to ~45 cm (journal §12.4), Phase 2 must also be checked in a 1000 mm corridor, where the outer wall may be out of range right after the first turn — in that case the car holds the gyro heading until a wall is valid.
+
+</details>
