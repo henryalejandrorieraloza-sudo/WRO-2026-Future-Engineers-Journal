@@ -74,7 +74,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Car width | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` (4.5 + 10 + 2.5 = 17 cm) |
 | Full length, with front protrusion | 19 Nov 2026 | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
 | Rear (encoder) axle to camera lens | 20 Nov 2026 | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
-| Track width (between wheels) | — | ruler | — | |
+| Track width (between wheels) | 23 Nov 2026 | ruler | 9 cm | Measured by the team on 23 Nov 2026 |
 | Mass, ready to run, with battery | 23 Nov 2026 | kitchen scale, ±1 g | 248 g | Weighed with the battery. Note what is mounted |
 | Turning sweep at full lock, left (from the lens) | 28 Oct 2026 | tape measure, 6 runs | 12 cm forward, 40 cm sideways | Includes about 2.4 cm of braking. Source: notes of 28 Oct |
 | Turning sweep at full lock, right (from the lens) | 28 Oct 2026 | tape measure, 6 runs | 15 cm forward, 39 cm sideways | Includes about 2.2 cm of braking. Less repeatable than the left turn in the tape readings. Source: notes of 28 Oct |
