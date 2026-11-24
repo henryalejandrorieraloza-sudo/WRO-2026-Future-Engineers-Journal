@@ -81,6 +81,8 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 
 **Open check.** With the centre at 85, the left stop (10) is 75 servo units away and the right stop (170) is 85 units away, for the same 40°. The midpoint of the two stops is 90, not 85. Either the servo response is not linear, or the centre is not 85. Measure the wheel angle again with the wheels straight before using 85 in a new test, and record the result here.
 
+**What the code uses (PR #39, 24 Nov).** `open_challenge` and `obstacle_challenge` take the average of the two distances: `STEER_CENTER` 85 and `STEER_RANGE` 80, so the limits are **5 (left) and 165 (right)**. The measured stops above (10 and 170) are the record of the protractor test. The code limit on the left (5) is 5 servo units beyond the measured left stop (10) and the right limit (165) is 5 units short of the right stop (170): listen for buzzing at full lock on the left and re-check it with `servo_test`.
+
 ## Car geometry and mass
 
 | Measure | Method | Value | Notes |

@@ -86,7 +86,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture): power tree and budget (§6.1), pin map (§6.2), each sensor's job in each program and its placement from the field geometry (§6.3) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (Open state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (Obstacle state machine and flowchart, vision, map, steering law, limits) · [§11](#11-testing-workflow-and-metrics) (tuning loop and the measured validation results) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks): explicit constraints with numbers (§10.0), dependencies (§10.1), "we chose X instead of Y because…" with the data (§10.2), risks (§10.3), every setting justified (§10.4), decision chains (§10.5) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
-| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 180 commits on `main` on 23 Nov 2026, with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
+| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 200 commits on `main` at commit `3f30eca` (24 Nov 2026), with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
 
 ---
 
@@ -97,7 +97,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** `obstacle_challenge` locks the round direction from the first floor line, turns every corner in reverse with the gyroscope and the front / rear distance sensors, dodges red and green pillars on an odometry map, and stops after the last line (§9). The camera board (`obstacle_camera_v3_2`) finds the pillars and lines. The parking start is written but not yet tested on the track (§9.7).
-- **Repository:** 180 commits on `main` on 23 Nov 2026. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Repository:** 200 commits on `main` at commit `3f30eca` (24 Nov 2026). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -180,7 +180,7 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 
 | Rule | Requirement | How we comply |
 |---|---|---|
-| 9.17 / 11.1 | Max 300 × 200 × 300 mm | 175 × 95 × 60 mm |
+| 9.17 / 11.1 | Max 300 × 200 × 300 mm | 175 × 90 × 60 mm |
 | 11.2 | Max 1.5 kg | 248 g |
 | 11.3 / 11.4 | 4 wheels, one driving axle, one steering actuator; no omni or ball wheels; no differential-drive robot | 4 wheels, rear-wheel drive, one MG90 servo on a rack and pinion |
 | 11.5 / 11.13 | Max 2 driving motors, connected to the axle (no motor per side) | One N20 motor → 1 : 1 mechanical differential on the rear axle |
@@ -264,7 +264,7 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 - **Geometry:** the pitch diameter of the pinion is m × z = 1 × 12 = **12 mm**, so each degree of servo rotation moves the rack π × 12 / 360 ≈ **0.105 mm**. The relation between servo angle and rack position is linear and has no dead zone, so the angle we command is the angle we get.
 - **Why we left Ackermann:** in theory Ackermann is better, because the inner wheel turns more than the outer one and neither tyre slips. In practice our Ackermann linkages (v1 and v2) had too many printed joints and too much friction: the servo could not complete its travel (journal Problem 29) and **three servos were damaged** pushing against the linkage (journal Problems 17 and 33).
 - **Trade-off we accepted:** with parallel steering both front wheels turn the same angle, so in a turn the inner wheel slips a little. On a 248 g car at 0.3–0.6 m/s that slip is small, and the 1 : 1 differential at the rear already removes the larger scrubbing of the driven wheels. We traded a small geometric error for a mechanism that is **reliable, easy to print and does not break servos**.
-- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_test` after any mechanical change (chassis v4, measured on 21 Nov: centre 85, left limit 10, right limit 170, in servo units; a smaller angle steers left, as in the code).
+- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_test` after any mechanical change (chassis v4, measured on 21 Nov: wheels straight at servo 85; ±40° of wheel angle took 75 servo units to the left and 85 to the right; the code uses the average, 85 ± 80, so the limits are **5 (left) and 165 (right)**; a smaller angle steers left, as in the code).
 - **Measured steering geometry (chassis v4):** the wheels turn **40° each way** at the servo limits (protractor, `docs/TESTS.md`). With a 9 cm wheelbase the turning radius of the rear axle is 9 / tan 40° ≈ **10.7 cm**.
 - **Does it fit the field?** A 90° turn at full lock moves the camera about 22 cm sideways by geometry alone (`docs/TESTS.md`), and 39–40 cm with braking in the tape-measured runs of 28 Oct (previous steering setup). The narrowest corridor is 600 mm and the car is 9 cm wide, so a full-lock corner leaves room on both sides. That is why the Open program can turn at the inner wall without slowing down to a stop, and why the Obstacle program can turn in reverse inside the corner section (§9.6).
 
@@ -292,7 +292,7 @@ Recipe: **30 g of part A + 23 drops of part B**, from the formula **B = ¾ · A*
 | Printed → cast | Silicone tyres | More grip on the mat; repeatable recipe |
 | v3 → v4 | Side TOF brackets straight (0°) instead of 30° | On the black wall the angled beam read ~198 cm for a 30 cm wall; straight it reads 32.0 cm (journal Phase 10) |
 | v3 → v4 | Front protrusion screwed to the base (car 17.5 cm long) | Parking lot = 1.5 × car length, so the lot grows from ≈ 20 cm to ≈ 26 cm with no change to wheelbase or steering (§5.1) |
-| v3 → v4 | Steering re-measured: centre 85, limits 10 / 170, ±40° | The new chassis moved the servo; every driving program uses the new values since 22 Nov (journal §19.2) |
+| v3 → v4 | Steering re-measured: centre 85, ±40° (75 units left, 85 right); limits in the code 5 / 165 (85 ± 80) | The new chassis moved the servo; every driving program uses the new values since 22 Nov (journal §19.2) |
 
 <div align="center">
   <img src="other/mechanical-iterations/printed_v1.jpg" height="200">
@@ -434,7 +434,7 @@ Both Nano programs have the same layers, so a fix in one layer (for example the 
 | ToF driver | `tofStart()`, `updateTof()` (restart after 0.5 s of silence), `tofExtraOff()` | left + right | left + right + front + rear |
 | Camera link | `readSerialInput()`, `handleCameraLine()` (12 fields of the `$…` line) | — | ✓ |
 | Map and goals | `updateMap()`, `onCameraPillar()`, `pillarGoal()`, `laneGoal()` | — | ✓ |
-| Strategy | `runTest()` = the state machine, `onCorner()`, `startRun()`, `finish()` | ✓ (§8.2) | ✓ (§9.6) |
+| Strategy | `runTest()` = the state machine, `startRun()`, `finish()`, and `onCorner()` (Obstacle only: Open detects its corners inside `runTest()`) | ✓ (§8.2) | ✓ (§9.6) |
 
 **Loop timing (both programs):** every pass of `loop()` reads the serial input and the START button, updates the gyro, updates the ToF sensors and runs the state machine. The motor PWM is ramped every 20 ms (5 PWM per step, so 0 → 150 takes 0.6 s) and a status line is printed every 100 ms. The ToF sensors give a new reading every 50 ms and the camera about 10 messages per second, so the gyro is the fastest input and the steering always works on the newest heading.
 
@@ -477,6 +477,9 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 | Steering centre / limits | 85, left 5, right 165 (85 ± 80) | 85, left 5, right 165 (85 ± 80) | A smaller servo angle steers left |
 | Run / turn speed (PWM) | `RUN_PWM` 150, `TURN_PWM` 90 | `RUN_PWM`, `TURN_PWM`, `REVERSE_PWM` all 70 | The Obstacle car is slower on purpose: the camera needs time |
 | Gyro calibration | 300 samples after 0.7 s settling | same | LED blinks while it runs |
+| TOF restart | Left and right only | All four | After 0.5 s without data from a side sensor |
+
+Two other sketches still carry their own older steering values: `obstacle_go_out_of_parking` uses `LEFT_LOCK` 10, `CENTER` 85 and `RIGHT_LOCK` 170 (not yet track-tested, §9.7), and `servo_test` sweeps 10–170 on purpose to find the mechanical stops. The competition programs above use 5 / 165.
 
 ### 8.1 Earlier designs (moved to the journal)
 
@@ -678,7 +681,7 @@ carY   += ds · sin(yaw − heading)
 
 Each pillar is placed on the map at its **centre** (distance ahead + 2.5 cm, side as measured). A pillar of the same colour seen again within 15 cm is the same pillar, and its stored position moves 30 % toward the new reading, which averages out the noise of single pictures. The map keeps two pillars: the **current** one and the **next** one.
 
-The camera loses a pillar when it is close, but the pillar stays on the map, so the car knows where it is. A pillar is removed only when the car is 25 cm past its centre. This is why the map is used at all: a pillar that has left the picture is still known, and the car can plan **how much** to move, not only **which way** (the reasoning is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026)).
+The camera loses a pillar when it is close, but the pillar stays on the map, so the car knows where it is. A pillar is removed only when the camera lens is 25 cm past its centre (`RETURN_AFTER_CM`, measured from the camera, which is 11.7 cm ahead of the rear axle). This is why the map is used at all: a pillar that has left the picture is still known, and the car can plan **how much** to move, not only **which way** (the reasoning is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026)).
 
 **Lateral goal.** The pillar centre must stay at least 17 cm from the car centre (half the car, 10 cm of gap, half the pillar). The goal never moves the car **toward** the pillar:
 
@@ -754,6 +757,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | Limit | Value | What happens |
 |---|---|---|
 | `CAMERA_TIMEOUT_MS` | 500 ms | No camera message for 500 ms: the car does not drive forward |
+| `MAX_SIDE_CM` | 60 cm | A pillar reported more than 60 cm to the side is ignored as noise (the camera already drops those beyond 70 cm) |
 | `MIN_DRIVE_CM` | 10 cm | No line is counted in the first 10 cm after START |
 | `IGNORE_LINE_S` | 4 s | After a line, all lines are ignored for 4 s |
 | `MAX_PRE_TURN_MS` | 4 s | The front ToF never reaches 40 cm: stop |
@@ -765,7 +769,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | `STALL_MS` | 0.5 s | Motor on, wheels not turning: stop |
 | `MAX_STEER` | 70° | Limit of the steering command |
 
-A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in both driving programs.
+A side sensor silent for 0.5 s restarts the sensors in use (`!!! TOF RESTART`): the two side sensors in `open_challenge` (front and rear stay off), all four in `obstacle_challenge`.
 
 ---
 
@@ -874,7 +878,7 @@ Every number below is the value in the competition code (`open_challenge`, `obst
 | Timing budget | **50 ms**, continuous (20 readings per second), Long mode | 33 ms gave invalid readings with narrow ROIs; more time = more light but fewer readings per second. At 0.6 m/s the car moves 3 cm between two readings | Journal §12.2–12.4, code |
 | Readings used | any distance: 0 or ≥ 4000 mm = no wall; the range-status flag is not checked (code) | "Signal fail" gave believable but wrong numbers in the October tests (63 cm at 30 cm, 65.5 cm at 80 cm) | Journal §12.3–12.4 |
 | Target distance to the inner wall | **100 mm** (`INNER_TARGET_MM`, the value of the 22 Nov 3-lap run) | The October value of 250 mm (provisional) is history. The car drives close to the inner wall, so the outer wall stays far away even in a 600 mm corridor (rule 9.18: never touch the outer wall). `SAFE_WALL_MM` (70 mm) forces a full correction from any wall | Rules 8 and 9.18, journal §12.4, code |
-| Steering command limit | `MAX_STEER` **70** servo units in `obstacle_challenge`; the servo itself is clamped to 10–170 in both programs | Keeps the command inside the measured mechanical stops (centre 85 ± 75 / 85) | Code, `docs/TESTS.md` |
+| Steering command limit | `MAX_STEER` **70** servo units in `obstacle_challenge`; the servo itself is clamped to 5–165 (`STEER_CENTER` 85 ± `STEER_RANGE` 80) in both programs | Keeps the command inside the measured mechanical stops (centre 85; 40° of wheel angle measured at 75 units to the left and 85 to the right; the code uses the average, ±80) | Code, `docs/TESTS.md` |
 | Heading correction limit | **±12°** per straight (`LAT_MAX_DEG`), integral limited to ±8° (`LAT_I_MAX`) | Largest correction the wall controller can command; a bigger gyro error is not corrected by the wall alone | Journal Problem 43, code |
 | Gyro range / rate | **±500 °/s** (register 0x43 = 0x02). The output data rate is not set in the code: the program reads the sensor every loop and uses the measured time step `dt` | A 90° turn takes about 1 s (≈ 90–150 °/s peak), so ±500 °/s never saturates and gives 4× the resolution of ±2000 °/s (65.6 vs 16.4 LSB per °/s) | `open_challenge`, `obstacle_challenge` |
 | Gyro calibration | **300 samples after 0.7 s of settling** (current code; an earlier plan was 1000) | Averaging more samples makes the offset more exact. It runs automatically when the run is started with the car still, and needs no input from the team (rule 9.9) | Rules 9.9, 9.11 |
@@ -910,7 +914,7 @@ The journal shows the design as a chain of decisions, each one changing the cons
 | Chain | What the journal shows | Effect on the current design |
 |---|---|---|
 | Sensor angle → data → strategy | A side sensor at 30° read about 198 cm for a 30 cm wall, so the decisions built on that data were wrong (journal §12.1–12.3) | Sensors are straight at about 5 cm with ROI 16 × 8. Beyond about 45 cm the black wall gives no valid reading, so the code reacts to jumps against the learned wall distance, not to absolute distance (§8.0) |
-| Mechanics → servo → code | Ackermann friction destroyed three servos (Problems 29 and 33) | Parallel rack and pinion. Every steering constant (centre 85, limits 10 and 170) depends on this mechanism, so a change to the mount means measuring the centre again (§10.3) |
+| Mechanics → servo → code | Ackermann friction destroyed three servos (Problems 29 and 33) | Parallel rack and pinion. Every steering constant (centre 85, limits 5 and 165) depends on this mechanism, so a change to the mount means measuring the centre again (§10.3) |
 | Encoder → odometry → map | 19.6 ticks per cm made the pillar map 23 % short (Problem 54). The constant was measured again and changed twice | The code uses 9.27 ticks per cm, measured on 21 Nov with the motor running. The same odometry drives the pillar map, the lane logic of the Obstacle program and the final stop of the Open program, so one calibration error reaches all three |
 | Power → sensors and servo | The TOF sensors and the servo share the 5 V buck rail. The TOF supply was moved back to 5 V on 17 Nov (Problem 67) | A voltage drop under servo load can show up as wrong distances, not as an error. The stall test on the rail is still open (§10.3) |
 | Failures → schedule → what was tested | A dead N20 motor (Problem 63), a swapped TOF (Problem 64) and a damaged camera board (Problem 65) between 29 Oct and 20 Nov (journal §17) | The Open program was restarted and its three-lap run is recorded on 22 Nov. The Obstacle program was consolidated on 23 Nov; the team reports it works on the car and the video is recorded, but its lap times are not yet logged (journal §20.5) |
@@ -1032,7 +1036,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Custom PCB, wiring, power | Done — manufactured and working; budget in `schemes/README.md` §4.2 |
 | Chassis v4: printed base, rack-and-pinion steering (±40°), silicone tyres, front protrusion | Done — built; 28 STL files and the full STEP assembly in `models/` |
 | Sensors: 4 × ToF (unique addresses), BMI160 (own driver), encoder | Done — hardware tests in `src/hardware-tests`; side ToF straight at ~5 cm with ROI 16 × 8 (§6.3) |
-| Steering calibration | Done 21 Nov — centre 85, limits 10 / 170. **Open check:** the midpoint of the two stops is 90; the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
+| Steering calibration | Done 21 Nov — centre 85; ±40° took 75 units to the left and 85 to the right, so the code uses 85 ± 80 = limits 5 / 165 (PR #39, 24 Nov). **Open check:** the two sides are not symmetric (75 against 85); the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
 | **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. To do: log 5 attempts with times in `docs/TESTS.md`, including 1000 mm corridors and both directions |
 | **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Team report** — works on the car including its edge cases (23 Nov); video recorded. The pillar map and steering law were validated on 27 Oct and 21 Nov; the lines on 28 Oct. To do: log 5 attempts in `docs/TESTS.md` and the 160 × 120 frame rate |
 | Parking start (`obstacle_go_out_of_parking`) | Written 20 Nov, not tested on the track; needs a START button and a measured `REVERSE_TARGET_TICKS` |
@@ -1059,7 +1063,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25) and **v1.9.21** (24 Nov: flow diagrams and text checked against the code). All are described in the changelog.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. Two versions are tagged on GitHub: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`). The later versions are described in the changelog but have no tag yet: v1.9.18 (23 Nov), **v1.9.19** (24 Nov, documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code) **v1.9.20** (24 Nov: Start here links; October designs moved to journal §25) **v1.9.21** (24 Nov: flow diagrams and text checked against the code), v1.9.22 to v1.9.25 (24 Nov: car width, stall current, 13.05 V battery, 1 : 1 motor-to-wheel ratio) and **v1.9.26** (24 Nov: README, test log and commit counts aligned with the code). All are described in the changelog.
 
 ### 14.1 Submission checklist
 
@@ -1088,7 +1092,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 
 Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-Of the 180 commits on `main` on 23 Nov 2026, 96 are authored by the Claude account (`noreply@anthropic.com`); the review of 24 Nov adds a few more by the same account. The commits are not rewritten, so each change can be traced to its author.
+Of the 200 commits on `main` at commit `3f30eca` (24 Nov 2026), 110 are authored by the Claude account (`noreply@anthropic.com`) and 5 more are marked "Henry Riera (via Claude)"; commits made after that point add a few more by the same account. The commits are not rewritten, so each change can be traced to its author.
 
 - **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.
