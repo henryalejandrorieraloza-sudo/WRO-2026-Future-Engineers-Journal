@@ -207,7 +207,7 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 ### 5.1 Chassis
 
 - **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
-- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see §5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
+- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (to confirm by weighing, see `docs/TESTS.md`; chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see §5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
@@ -221,8 +221,9 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 ### 5.2 Drive
 
 - **One N20 12 V, 1000 rpm motor with a Hall encoder** drives both rear wheels through a **differential with a 1 : 1 gear ratio** (motor gear and differential gear both 22 mm). A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
-- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so 1000 rpm at 1 : 1 gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. That is far more than we need: our control loop is designed for ≈ 0.3–0.4 m/s, where the side TOF sensors (one reading every 50 ms) see a new value every 1.5–2 cm and one 8-reading decision takes less than one car length (§10.4). We drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
-- **Torque reasoning:** to accelerate the 248 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.248 × (1 + 0.05 × 9.81) ≈ **0.37 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed.
+- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm, so 1000 rpm at 1 : 1 gives a theoretical top speed of ≈ 129 mm × 1000 / 60 ≈ **2.1 m/s**. This assumes that the 1000 rpm of the listing is reached at the output shaft, which is not confirmed yet (see the motor data status below), and the measured speed is still to be recorded. That is far more than we need: our control loop is designed for ≈ 0.3–0.4 m/s, where the side TOF sensors (one reading every 50 ms) see a new value every 1.5–2 cm and one 8-reading decision takes less than one car length (§10.4). We drive the motor with a PWM duty cycle well below 100 %, which also leaves torque available for acceleration.
+- **Torque reasoning:** to accelerate the 248 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.248 × (1 + 0.05 × 9.81) ≈ **0.37 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed. Against the datasheet of the same motor family, the rated torque of 0.16 kg·cm (≈ 16 mN·m) gives a margin of about 2× and the stall torque of 0.43 kg·cm (≈ 42 mN·m) about 5×. The 2.4 kg·cm stall torque in earlier notes came from other sellers and is no longer used.
+- **Motor data status (23 Nov):** the Amazon listing gives no gear ratio and no stall values. The datasheet of the same family gives 1:30, but that ratio is not proven: 1000 rpm at 1:30 would mean about 30 000 rpm at the motor, and the measured 9.27 ticks per cm (about 119 ticks per wheel turn) matches neither 1:30 with 7 PPR (210, 420 or 840 ticks) nor a simple count. The ratio and the stall current are to be measured (`schemes/datasheets/N20_12V_1000RPM_specs.md`).
 - **Why 1 : 1:** a reduction would give more torque that we do not need and less top speed; a step-up would make low speeds harder to control. 1 : 1 also means both gears are the same printed part size, which is simple to print and to replace.
 - **Braking:** the TB6612FNG short-brake mode (both inputs HIGH) stops the motor actively, much faster and more repeatably than coasting. In the Open Challenge the motor only drives forward. In the Obstacle Challenge each corner is taken in reverse gear (PWM 70, ramped with `RAMP_STEP`), and the rear ToF stops the back-up at 20 cm (§9.6). A sudden reverse made one gear of the drive train skip (journal Problem 34), which is why the reverse is ramped.
 
@@ -290,7 +291,7 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 |---|---|---|
 | Current from the battery | ≈ 0.20 A | ≈ 0.92 A |
 | Power | ≈ 2.2 W | ≈ 10.5 W |
-| Run time on one charge | ≈ 1.6 h | ≈ 20 min |
+| Run time on one charge | ≈ 1.6 h | ≈ 14 min |
 
 The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1.05 A peak of the 5 V rail, so a servo stall cannot reset the camera.
 
@@ -827,6 +828,10 @@ A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in b
 | Wrong turn side at the first corner | Decision on the first jump of the first side (Open); no undo or front/back check in the current code (§3.1, §8.5) |
 | Gyro error accumulates over 12 turns | Wall re-alignment every straight |
 | The camera sees the floor lines only up to ~22 cm (low camera) | Lines put on the map and confirmed with 2 messages; if not enough, raise / tilt the camera and recalibrate |
+| Motor gear ratio and stall current not confirmed | Wrong speed, odometry or power estimates | Measure the ratio with 10 wheel turns and the stall current with a multimeter (`schemes/datasheets/N20_12V_1000RPM_specs.md`); until then the budget uses the stall value of the datasheet family |
+| Motor held at stall for a long time | Gear damage and motor heating | The code stops the motor after `STALL_MS` (0.5 s) when the wheels do not turn; do not hold the wheel by hand |
+| Steering travel not symmetric from the centre (75 servo units to the left, 85 to the right) | The car may turn better one way | Measure the wheel angle at both stops with a protractor (`docs/TESTS.md`, "Steering") and correct the centre if needed |
+| Wheel diameter is a design value (41 mm) | Speed and encoder constants drift | Measure the four mounted wheels with a calliper |
 | Parallel parking needs reverse, and the drive gear skipped on a sudden reverse | Gentle reverse only, tested alone before the parking manoeuvre. Parking is not in the competition code (§9.7) |
 
 The complete list of the **68 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
@@ -899,6 +904,7 @@ Every component is tested alone before it is joined to the rest:
 | Turn accuracy | Heading error after each 90° turn |
 | Open Challenge score | Laps completed and official points, logged per attempt in Scenario Roulette |
 | Scenario generator correctness | 600 generated scenarios checked automatically, 0 rule violations (journal §7) |
+| Motor, steering, ToF, gyroscope, camera and car geometry | Planned measurements with a column for each value, the commit tested and the battery voltage: [docs/TESTS.md](docs/TESTS.md). Values not yet measured are left empty, not estimated |
 
 ---
 
@@ -972,7 +978,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Obstacle: pillars on a map (steering law) | Validated 27 Oct and 21 Nov on one straight (earlier sketch, now in the git history); the same law is in `obstacle_challenge` since 23 Nov |
 | Obstacle: stop after the last line | Written 23 Nov in `obstacle_challenge`: drives `FINAL_EXTRA_S` (0.45 s) after the last line, then stops. The team reports it works on the car; not yet recorded in numbers |
 | Obstacle: orange and blue lines in cm | Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
-| Obstacle: corners, 3 laps, stop | Written 23 Nov in `obstacle_challenge`: first line sets the direction, reverse 90° turns, 12 corners. The team reports it works; lap results to be recorded in the journal |
+| Obstacle: corners, 3 laps, stop | Written 23 Nov in `obstacle_challenge`: first line sets the direction, reverse 90° turns, 12 corners. The team reports it works; lap results to be recorded in `docs/TESTS.md` |
 | Parking | Start from inside the lot written 20 Nov (`obstacle_go_out_of_parking`), not yet tested on the track. Parking at the end of the round: in design |
 | Camera viewer page (`src/tools/camera_viewer`) | Done — Used to test the new camera board (picture, masks, floor-line status, pixel HSV) |
 | Documentation review against the rubric | Done — 20 Nov: links repaired, rubric map, Obstacle flowchart, status tables updated (CHANGELOG v1.9) |
@@ -993,7 +999,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 | Second commit | ≤ 8 Nov 2026 | Met by `06f5685` (5 Nov) |
 | Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | Sent on 23 Nov 2026; receipt confirmed by the organisers (journal §22.1) |
 | Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | In progress — documentation fixes are in this commit (AI disclosure §15, commit history, checklist, test log template); the final Open and Obstacle programs and the final journal are still to commit |
-| Motor data (gear ratio, stall current) for the power budget | — | Open — see [schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md); the 6 V datasheet `N20_motors.pdf` is still in the repository |
+| Motor data (gear ratio, stall current) for the power budget | — | Partly — the budget uses the stall current of a datasheet of the same family (0.7 A); the gear ratio and the stall current of this motor are to be measured ([schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md)). The 6 V datasheet `N20_motors.pdf` is still in the repository |
 | Test log with runs, successes, times and stop positions | — | Template created in [docs/TESTS.md](docs/TESTS.md); rows are added after each run |
 | AI tools disclosure | — | Done — [§15](#15-use-of-ai-tools) |
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |

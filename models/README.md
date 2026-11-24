@@ -22,7 +22,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 | | Value |
 |---|---|
 | Car length × width × height | **17.5 cm × 9.5 cm × 6 cm** (rule limit: 30 × 20 × 30 cm) |
-| Mass (ready to run, with battery) | **248 g** (rule limit: 1.5 kg) |
+| Mass (ready to run, with battery) | **248 g**, design figure to confirm by weighing (rule limit: 1.5 kg) |
 | Printed base plate | 120 mm × 70 mm |
 | Wheels | 36 mm printed hub + cast silicone tyre ≈ 41 mm outside diameter |
 | Steering | 12-tooth pinion, module 1 mm, on a 68 mm rack |

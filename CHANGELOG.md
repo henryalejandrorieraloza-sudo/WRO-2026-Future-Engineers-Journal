@@ -2,6 +2,15 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## Unreleased — 23 November (evening) · Motor data, power budget and measurement plan
+
+- **Motor:** the datasheet of the same family (BJ-N20-12-1000, 7 PPR) is recorded, with the reasons why the 1:30 ratio is not yet proven. The 2.4 kg·cm stall torque is no longer a design value.
+- **Torque (README §5.2):** the required 8 mN·m at the wheel is compared with the rated (≈ 16 mN·m) and stall (≈ 42 mN·m) torques of that datasheet.
+- **Power budget (`schemes/README.md` §4.2):** the motor's peak is the stall current of 0.7 A, not 350 mA. Battery peak ≈ 1.27 A, ≈ 14.5 W; worst-case run time ≈ 14 min.
+- **Risks (README §10.3):** motor data, long stall, steering symmetry and wheel diameter added.
+- **Test log (`docs/TESTS.md`):** blank tables for motor, steering, car geometry and mass, ToF, gyroscope, camera and suggested edge cases. No value was filled in without a measurement.
+- **Mass:** 248 g is marked as a design figure to confirm by weighing.
+
 ## Unreleased — 23 November · README checked line by line against the three competition sketches
 
 - **Videos:** thumbnails of the Obstacle and Open Challenge videos added in `video/thumbnails/` and linked to the YouTube videos in `video/video.md`.

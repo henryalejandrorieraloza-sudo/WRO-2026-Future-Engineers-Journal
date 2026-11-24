@@ -118,7 +118,7 @@ Values from the datasheets (typical = normal driving; peak = worst case, all at 
 
 | Load | Rail | Typical | Peak | Typical power | Peak power |
 |---|---|---|---|---|---|
-| N20 drive motor | 11.4 V | 50 mA | 350 mA | 0.57 W | 3.99 W |
+| N20 drive motor | 11.4 V | 50 mA (estimate, to measure) | 700 mA (stall, datasheet of the same family) | 0.57 W | 7.98 W |
 | Arduino Nano (ATmega328P) | 11.4 V (VIN, linear regulator) | ~20 mA | ~30 mA | 0.23 W | 0.34 W |
 | 4 × TOF400C | 5 V buck rail | 40 mA | 80 mA | 0.20 W | 0.40 W |
 | ESP32-S3-CAM + OV2640 | 5 V | 100 mA | 310 mA | 0.50 W | 1.55 W |
@@ -127,14 +127,14 @@ Values from the datasheets (typical = normal driving; peak = worst case, all at 
 | Steering servo | 5 V | 100 mA | 650 mA (stall) | 0.50 W | 3.25 W |
 | **5 V buck rail total** | 5 V | **243 mA** | **1.05 A** | 1.22 W | 5.26 W |
 | Buck losses (≈ 85 % efficiency) | — | — | — | 0.22 W | 0.93 W |
-| **Total from battery** | 11.4 V | **≈ 0.20 A** | **≈ 0.92 A** | **≈ 2.2 W** | **≈ 10.5 W** |
+| **Total from battery** | 11.4 V | **≈ 0.20 A** | **≈ 1.27 A** | **≈ 2.2 W** | **≈ 14.5 W** |
 
 The TOF row is on the 5 V buck rail, so its cost reaches the battery through the buck converter: 40 mA × 5 V ≈ 0.20 W at typical load, about 0.4 W at peak. Compared with the previous design, where the sensors ran from the Nano's 3.3 V pin, the total is about 0.3 W lower at typical load, because the Nano's regulator no longer carries the sensors' current.
 
 **What the numbers tell us**
 
-- **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.2 ≈ **1.6 h**; even at a continuous worst case it is ≈ **20 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
-- **Discharge rate:** the ≈ 0.9 A peak is ≈ 2.4 C, far below the battery's 90C rating, so voltage sag at the motor is small.
+- **Run time:** usable energy ≈ 80 % × 4.33 Wh ≈ 3.5 Wh. At typical load that is ≈ 3.5 / 2.2 ≈ **1.6 h**; even at a continuous worst case (motor at stall) it is ≈ **14 min**. A round lasts at most 3 minutes, so one charge covers a full competition day of rounds and testing.
+- **Discharge rate:** the ≈ 1.3 A peak (motor at stall) is ≈ 3.3 C, far below the battery's 90C rating. The motor is the largest load, so its voltage sag is the one to check on the car.
 - **Buck margin:** the 5 V rail peaks at ~1.05 A of the CN3903's 3 A, so the regulator never runs near its limit.
 - **Nano regulator heat:** the Nano's 5 V linear regulator now only feeds the Nano: (11.4 − 5) V × 20 mA ≈ **0.13 W** typical, ≈ 0.2 W at peak. It stays cool.
 - **Charging:** ≈ 45–50 min with a balance charger (IMAX B6AC) at 0.4 A (≈ 1C).
@@ -147,6 +147,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 | Camera 3.3 V TX into the Nano RX | The ESP32-S3 drives 3.3 V; the ATmega328P reads 3.3 V as HIGH at 5 V (input-high threshold about 3.0 V) | No resistor divider. The link is one-way: the camera never listens to the Nano (`NANO_RX_PIN = -1`), so the Nano TX pin carries nothing to the camera |
 | Battery voltage on a 3.3 V pin | Permanent damage to the main controller (it happened: journal Problem 31) | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
 | Servo stall pulls the 5 V rail down | Camera or sensors reset during a run | 3 A buck with large margin (see budget) |
+| Motor held at stall for a long time | Gear damage; the motor heats quickly at 0.7 A stall | The code stops the motor after `STALL_MS`; stall tests use a short hold (< 0.5 s) |
 | Loose sensor wires | A TOF stops answering, I²C bus freezes | Locking JST connectors on the PCB; `Wire.setTimeOut()` in code so a frozen bus does not hang the program (journal Problems 12 and 30) |
 | All TOF sensors start with the same I²C address | Address conflict, no readings | XSHUT lines: sensors are switched on one at a time at start-up and each gets its own address (journal Problem 15) |
 | Short circuit while handling | Burnt traces or battery damage | Power switch on the main line; XT30 connector on the battery so it can be unplugged quickly |
