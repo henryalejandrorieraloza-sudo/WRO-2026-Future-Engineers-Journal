@@ -128,16 +128,16 @@ const bool LENS_CORRECTION  = true;  // true = turn on the sensor's lens shading
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
 // Measured with the camera locked (yellow cast): red pillar H 15-23, green pillar H 86-95.
 // Probe on 28 Oct: red pillar H 4-22 S 204-255 V 112-136.
-const int RED_HUE_LOW    = 345;    // sin cambio (envuelve por 0 hasta 40)
-const int RED_HUE_HIGH   = 40;     // sin cambio: el pilar medido llega a H 33
-const int RED_MIN_SAT    = 115;    // sin cambio: el pilar medido tiene S 170-255
-const int RED_MIN_VAL    = 65;     // antes 95: el pilar en sombra medido tiene V 72-88
-const int RED_MAX_VAL    = 225;    // antes 165: el pilar con luz medido tiene V hasta 192
+const int RED_HUE_LOW    = 345;    // unchanged (wraps through 0 up to 40)
+const int RED_HUE_HIGH   = 40;     // unchanged: the measured pillar reaches H 33
+const int RED_MIN_SAT    = 115;    // unchanged: the measured pillar has S 170-255
+const int RED_MIN_VAL    = 65;     // was 95: the pillar in shadow measured V 72-88
+const int RED_MAX_VAL    = 225;    // was 165: the pillar in light measured V up to 192
 
-const int GREEN_HUE_LOW  = 82;     // sin cambio: el pilar medido está en H 96-108
-const int GREEN_HUE_HIGH =  150;    // sin cambio
-const int GREEN_MIN_SAT  = 150;    // antes 120: el pilar tiene S 185-255, el piso blanco 116-142
-const int GREEN_MIN_VAL  = 60;     // antes 130: el pilar en 8416-8417 tiene V 128-172 y en penumbra baja a 24-76
+const int GREEN_HUE_LOW  = 82;     // unchanged: the measured pillar is at H 96-108
+const int GREEN_HUE_HIGH =  150;    // unchanged
+const int GREEN_MIN_SAT  = 150;    // was 120: the pillar has S 185-255, the white floor 116-142
+const int GREEN_MIN_VAL  = 60;     // was 130: the pillar in frames 8416-8417 has V 128-172 and drops to 24-76 in shade
 
 const int  RED_MIN_PIXELS   = 8;   // QUARTERED from 30 -- a red patch needs at least this many pixels
 const int  GREEN_MIN_PIXELS = 8;   // QUARTERED from 30 -- a green patch needs at least this many pixels

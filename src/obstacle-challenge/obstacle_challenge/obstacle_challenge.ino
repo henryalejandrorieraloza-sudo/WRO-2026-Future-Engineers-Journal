@@ -1,105 +1,119 @@
 // =====================================================================
-// OPEN CHALLENGE + ESQUIVAR PILARES + CENTRADO ENTRE PAREDES (v1)
-// Combina:
-//   - open_challenge_linea.ino: vueltas por la PRIMERA LINEA de la camara
-//     (azul = izquierda, naranja = derecha), giro de 90 con gyro, centrado
-//     con los dos ToF. Tras cada linea avanza hasta que el ToF frontal marque
-//     FRONT_TURN_CM y luego gira EN REVERSA. Despues del giro retrocede hasta
-//     que el ToF trasero marque REAR_STOP_CM.
-//     Tras una linea ignora otras IGNORE_LINE_S.
-//     Tras la ultima linea avanza FINAL_EXTRA_S y para.
-//   - straight_pillars (mapa de pilares): si la camara ve un bloque rojo o
-//     verde en la recta, lo esquiva (rojo por la derecha, verde por la izquierda).
-//     Cuando lo ha pasado (PASS_CM), vuelve a centrarse entre las paredes.
+// OBSTACLE CHALLENGE - Nano driver (v1)
+// Parking exit + Open challenge + pillar avoidance + wall centering.
 //
-// Prioridad en cada tramo recto:
-//   1) BLOQUE: hay un pilar en el mapa -> rumbo para esquivarlo.
-//   2) PASO: acaba de pasar el pilar -> mantiene el rumbo PASS_CM cm.
-//   3) CENTRADO: sin pilares -> ambos ToF a la misma distancia.
-// Las lineas de la camara siguen siendo las esquinas en todo momento.
-//
-// Velocidad: RUN_PWM = 70 en las rectas, TURN_PWM = 70 en los giros (en reversa),
-// REVERSE_PWM = 70 al retroceder. Si con 70 no gira bien, sube TURN_PWM.
-//
-// Mapa de pilares: se reinicia tras cada retroceso (cada tramo recto tiene su
-// propio sistema de coordenadas, con x hacia delante y y hacia la izquierda).
-//
-// Camara: TX -> RX (D0) del Nano, 115200 baud. Mensajes con '$'.
-// Monitor serie: g + Enter = empezar, s + Enter = parada de emergencia.
-// Placa: Arduino Nano | TB6612: PWMA D6, AIN1 D7, AIN2 D8 | Encoder C1 D3, C2 D2
-// Servo D9 | START D10 | LED D13 | BMI160 0x69 | ToF izq A3 -> 0x2A | ToF der A2 -> 0x2B
-// ToF trasero A0 -> 0x2C | ToF frontal A1 -> 0x2D
-// Librerias: VL53L1X (Pololu), Servo
+// Power on: calibrates everything (4 ToF sensors, gyro bias, encoder set to 0).
+// The car does NOT move at power on.
+// Press START (D10):
+//   1) PARKING EXIT: turns 45 degrees with the gyro, then a PD counter-steer brings
+//      the heading back to 0 degrees (parallel to the start), pauses, and reverses
+//      PARK_REVERSE_TICKS while holding heading 0.
+//   2) OPEN CHALLENGE: drives laps and uses the FIRST floor line the camera sees
+//      (blue = turn left, orange = turn right). Each corner is a 90-degree turn
+//      measured with the gyro. Between corners the car centers itself between
+//      the two side ToF sensors. After a line it drives until the front ToF reads
+//      FRONT_TURN_CM, brakes for BRAKE_S, then turns IN REVERSE. After the turn it
+//      reverses until the rear ToF reads REAR_STOP_CM.
+//      Lines seen within IGNORE_LINE_S after a corner are ignored.
+//      After the last corner it drives FINAL_EXTRA_S past the last line and stops.
+//   Pillars (camera): red pillars are passed on the right, green pillars on the left.
+//   Priority on every straight section:
+//     1) BLOCK: a pillar is on the map -> steer to avoid it.
+//     2) PASS: a pillar was just passed -> hold the heading for PASS_CM cm.
+//     3) CENTER: no pillar -> both side ToF sensors at the same distance.
+//   The run has no USB/serial command input: the only way to start is the START button.
+//   Camera: camera TX -> Nano RX (D0), 115200 baud. Camera messages start with '$'.
+//   Board: Arduino Nano | TB6612: PWMA D6, AIN1 D7, AIN2 D8 | encoder C1 D3, C2 D2
+//   Servo D9 | START D10 | LED D13 | BMI160 0x69 | left ToF A3 -> 0x2A | right ToF A2 -> 0x2B
+//   rear ToF A0 -> 0x2C | front ToF A1 -> 0x2D
+//   Libraries: VL53L1X (Pololu), Servo
 // =====================================================================
 
+#include <Arduino.h>
 #include <Wire.h>
 #include <VL53L1X.h>
 #include <Servo.h>
+#include <math.h>
 
 // #####################################################################
-// ##  1. AJUSTES DE CARRERA                                            ##
+// ##  1. RUN SETTINGS                                            ##
 // #####################################################################
-const int   LAPS      = 3;            // 1 = una vuelta (4 esquinas), 3 = Open completo (12)
-const int   RUN_PWM   = 75;           // velocidad en las rectas (0-255)
-const int   TURN_PWM  = 85;           // velocidad al girar (el giro se hace en reversa)
-const int   REVERSE_PWM = 75;         // velocidad al retroceder tras cada giro
-const float FRONT_TURN_CM = 50.0;     // tras la linea avanza hasta que el ToF frontal marque esto (cm) o menos
-const unsigned long MAX_PRE_TURN_MS = 4000;  // seguridad: si el frontal nunca llega a FRONT_TURN_CM, parar
-const float REAR_STOP_CM = 40.0;      // retrocede hasta que el ToF trasero marque esto (cm) o menos
-const float REVERSE_CM  = 30.0;       // respaldo: si el ToF trasero no responde, retrocede esta distancia (cm)
-const unsigned long MAX_REVERSE_MS = 3000;   // seguridad: si no termina de retroceder en este tiempo, parar
-const float STOP_OFFSET_CM = 0;       // (ya no se usa para parar; se conserva)
-const bool  ONLY_LOCKED_COLOR = true; // true: solo cuenta lineas del color de la primera
-const float LINE_WAIT_S = 0.75;       // respaldo: si NO hay ToF frontal, avanza este tiempo antes de girar
-const float FINAL_EXTRA_S = 0.45;     // tras la ULTIMA linea: avanza este tiempo y para
+const int   LAPS      = 3;            // 1 = one lap (4 corners), 3 = full Open challenge (12 corners)
+const int   RUN_PWM   = 70;           // speed on straight sections (0-255)
+const int   TURN_PWM  = 70;           // speed while turning (the turn is made in reverse)
+const int   REVERSE_PWM = 70;         // speed when reversing after each turn
+const float FRONT_TURN_CM = 40.0;     // after a line, drive until the front ToF reads this (cm) or less
+const unsigned long MAX_PRE_TURN_MS = 4000;  // safety: if the front ToF never reaches FRONT_TURN_CM, stop
+const float BRAKE_S = 0.5;            // brake this long with the wheels straight before turning in reverse (s)
+const float REAR_STOP_CM = 20.0;      // reverse until the rear ToF reads this (cm) or less
+const float REVERSE_CM  = 30.0;       // fallback: if the rear ToF does not respond, reverse this distance (cm)
+const unsigned long MAX_REVERSE_MS = 3000;   // safety: if the reverse is not finished in this time, stop
+const float STOP_OFFSET_CM = 0;       // (no longer used to stop; kept)
+const bool  ONLY_LOCKED_COLOR = true; // true: only count lines of the color seen first
+const float LINE_WAIT_S = 0.75;       // fallback: without a front ToF, drive this long before turning
+const float FINAL_EXTRA_S = 0.45;     // after the LAST line: drive this long, then stop
 
 // #####################################################################
-// ##  2. PILARES                                                       ##
+// ##  1b. PARKING (leaving the parking spot)                                  ##
 // #####################################################################
-const float TARGET_CM        = 17.0;  // distancia centro pilar <-> centro coche al pasarlo
-const float MAX_AIM_DEG      = 60.0;  // angulo maximo para esquivar
-const float LOOK_MIN_CM      = 12.0;  // distancia de mira minima
-const float ARRIVE_BEFORE_CM = 55.0;  // estar ya en el lado seguro esta distancia antes del pilar
-const float RETURN_AFTER_CM  = 10.0;  // pilar "pasado" cuando el coche lo supera en esta distancia
-const float PASS_CM          = 25.0;  // tras perder el pilar, mantener el rumbo esta distancia (> RETURN_AFTER)
-const float SAME_PILLAR_CM   = 30.0;  // deteccion a menos de esto de un pilar guardado = mismo pilar
-const float BLEND            = 0.3;   // cuanto corrige cada mensaje la posicion guardada
-const float MAX_SIDE_CM      = 60.0;  // pilares mas laterales que esto = ruido
-const float PILLAR_CM        = 5.0;   // ancho del pilar
-const float CAM_FWD_CM       = 11.7;  // eje trasero (encoder) -> lente de la camara
+const float PARK_FIRST_ANGLE_DEG  = 45.0;   // first turn toward the open side (degrees)
+const float PARK_RETURN_TOL_DEG   = 1.0;    // counter-steer until within this many degrees of 0 (parallel to the start)
+const long  PARK_STRAIGHT_TICKS   = 1;      // straight ticks before the counter-steer
+const unsigned long PARK_PAUSE_MS = 500;    // stopped this long before reversing (= BRAKE_S)
+const unsigned long PARK_TURN_TIMEOUT_MS = 5000;
+const unsigned long PARK_STALL_MS = 1500;   // no encoder pulses = error
+const int   PARK_DRIVE_PWM        = 90;     // speed of the first turn
+const int   PARK_REVERSE_PWM      = 90;     // speed when reversing out of the parking spot
+const int   PARK_REVERSE_SLOW_PWM = 75;     // last 20 % of the reverse move
+const long  PARK_REVERSE_TICKS    = 1200;   // 5 vueltas de rueda: 5 x pi x 41 mm x 9.27 ticks/cm
 
 // #####################################################################
-// ##  3. AJUSTES FINOS                                                 ##
+// ##  2. PILLARS                                                       ##
 // #####################################################################
-const float KP_HEAD = 2.0;            // grados de servo por grado de error de rumbo
-const float KD_HEAD = 0.03;           // amortiguacion con la velocidad de giro
-const float KI_HEAD = 4.0;            // aprende el angulo recto real del servo (solo en el centrado)
+const float TARGET_CM        = 17.0;  // distance from pillar center to car center when passing it
+const float MAX_AIM_DEG      = 60.0;  // maximum steering angle to avoid a pillar
+const float LOOK_MIN_CM      = 12.0;  // minimum look-ahead distance
+const float ARRIVE_BEFORE_CM = 55.0;  // be already on the safe side this distance before the pillar
+const float RETURN_AFTER_CM  = 25.0;  // pillar counts as "passed" once the car is this far beyond it
+const float PASS_CM          = 30.0;  // after losing the pillar, hold the heading this distance (> RETURN_AFTER)
+const float SAME_PILLAR_CM   = 15.0;  // a detection this close to a stored pillar = the same pillar
+const float BLEND            = 0.3;   // how much each message corrects the stored position
+const float MAX_SIDE_CM      = 60.0;  // pillars farther to the side than this = noise
+const float PILLAR_CM        = 5.0;   // pillar width
+const float CAM_FWD_CM       = 11.7;  // rear axle (encoder) -> camera lens
+
+// #####################################################################
+// ##  3. FINE TUNING                                                 ##
+// #####################################################################
+const float KP_HEAD = 2.5;            // servo degrees per degree of heading error
+const float KD_HEAD = 0.03;           // damping from the turn rate
+const float KI_HEAD = 4.0;            // learns the real straight-ahead angle of the servo (only while centering)
 const float I_MAX   = 25;
-const float MAX_STEER = 70.0;         // comando maximo de direccion (grados de servo)
-const float K_LAT       = 0.03;       // grados de rumbo por mm de descentrado
+const float MAX_STEER = 70.0;         // maximum steering command (servo degrees)
+const float K_LAT       = 0.03;       // heading degrees per mm of off-center error
 const float KI_LAT      = 0.02;
 const float LAT_I_MAX   = 8;
 const float LAT_MAX_DEG = 12;
-const int   SIDE_MAX_MM = 1200;       // lectura lateral mayor = no hay pared usable
-const int   SAFE_WALL_MM = 70;        // mas cerca que esto de una pared: alejarse a tope
-const float TURN_PREDICT_S = 0.12;    // termina el giro antes. Si pasa de 90, subelo
-const float IGNORE_LINE_S = 4.0;      // tras detectar una linea, ignora TODAS las lineas durante este tiempo (s)
-const float MIN_DRIVE_CM = 10;        // no detecta lineas en los primeros cm tras START
-const float FALLBACK_CM = 50;         // (ya no se usa; se conserva)
-const float MAX_FINAL_CM = 250;       // seguridad: si no aparece la ultima linea tras el ultimo giro, parar
+const int   SIDE_MAX_MM = 1200;       // a side reading larger than this = no usable wall
+const int   SAFE_WALL_MM = 70;        // closer than this to a wall: steer fully away from it
+const float TURN_PREDICT_S = 0.12;    // ends the turn early. If the car turns past 90 degrees, increase it
+const float IGNORE_LINE_S = 6.0;      // after a line is detected, ignore ALL lines for this long (s)
+const float MIN_DRIVE_CM = 10;        // ignore lines during the first cm of each segment
+const float FALLBACK_CM = 50;         // (no longer used; kept)
+const float MAX_FINAL_CM = 250;       // safety: if the last line does not appear after the last turn, stop
 const unsigned long MAX_TURN_MS = 4000;
-const unsigned long MAX_STRAIGHT_MS = 8000;   // sin esquina en 8 s -> parar
+const unsigned long MAX_STRAIGHT_MS = 8000;   // no corner within 8 s -> stop
 const unsigned long STALL_MS = 500;
-const unsigned long CAMERA_TIMEOUT_MS = 500;  // sin camara -> no avanzar
+const unsigned long CAMERA_TIMEOUT_MS = 500;  // no camera data -> do not drive
 
 // #####################################################################
-// ##  4. CONSTANTES DEL COCHE (igual que open_challenge)              ##
+// ##  4. CAR CONSTANTS                                          ##
 // #####################################################################
 const bool  MOTOR_REVERSED   = true;
 const bool  ENCODER_REVERSED = true;
-const int   YAW_SIGN         = 1;     // +1: girar a la izquierda sube el yaw
+const int   YAW_SIGN         = 1;     // +1: turning left increases the yaw
 const float GYRO_SCALE       = 1.007;
-const int   STEER_CENTER = 85, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // izquierda = angulo menor
+const int   STEER_CENTER = 85, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // left = smaller angle
 const int   RAMP_STEP = 5;
 const float TICKS_PER_CM = 9.27;
 const uint8_t BMI = 0x69;
@@ -120,17 +134,24 @@ struct Side {
   VL53L1X dev; int xshut; uint8_t addr; const char *name;
   int mm = -1; bool fresh = false; unsigned long lastData = 0;
 };
-struct MapPillar { bool used; float x, y; int color; int hits; };   // color 1 rojo, 2 verde
-enum State { WAIT, STRAIGHT, PRE_TURN, TURN, REVERSE, DONE };
-const char *STATE_NAME[] = { "WAIT", "STRAIGHT", "PRE_TURN", "TURN", "REVERSE", "DONE" };
+struct MapPillar { bool used; float x, y; int color; int hits; };   // color 1 = red, 2 = green
+enum State { WAIT, STRAIGHT, PRE_TURN, BRAKE, TURN, REVERSE, DONE };
+const char *STATE_NAME[] = { "WAIT", "STRAIGHT", "PRE_TURN", "BRAKE", "TURN", "REVERSE", "DONE" };
 enum LineLock { LOCK_NONE, LOCK_BLUE, LOCK_ORANGE };
 enum Mode { MODE_LANE, MODE_BLOCK, MODE_PASS };
 const char *MODE_NAME[] = { "CENTRADO", "PILAR", "PASO" };
 
-Side tofs[2];                         // [0] = IZQUIERDO, [1] = DERECHO
-Side rearTof;                         // ToF trasero (para el retroceso)
+// main phases: calibrate (IDLE) -> parking (PARK) -> run (OBSTACLE)
+enum Phase { PHASE_IDLE, PHASE_PARK, PHASE_OBSTACLE };
+enum ParkStage { PK_WAIT_SIDES, PK_FIRST_TURN, PK_DRIVE_STRAIGHT, PK_RETURN_TURN, PK_PAUSE, PK_REVERSING };
+const char *PARK_NAME[] = { "ESPERA", "GIRO1", "RECTO", "CONTRA", "PAUSA", "RETRO" };
+Phase phase = PHASE_IDLE;
+ParkStage parkStage = PK_WAIT_SIDES;
+
+Side tofs[2];                         // [0] = LEFT, [1] = RIGHT
+Side rearTof;                         // rear ToF (for reversing)
 bool rearOk = false;
-Side frontTof;                        // ToF frontal (para decidir cuando girar tras la linea)
+Side frontTof;                        // front ToF (decides when to turn after a line)
 bool frontOk = false;
 Servo steering;
 State state = WAIT;
@@ -138,48 +159,57 @@ Mode  mode = MODE_LANE;
 volatile long encRaw = 0;
 int  pwmNow = 0, pwmTarget = 0, servoNow = STEER_CENTER;
 bool tofOk = false, finalPrinted = true;
-bool driveBack = false;               // true = motor en sentido de retroceso
+bool driveBack = false;               // true = motor running in reverse
 float biasDps = 0, yawDeg = 0, rateDps = 0;
-float heading = 0;                    // rumbo objetivo del tramo (multiplo de 90)
-float turnEndCm = 0;                  // odometria al terminar el ultimo retroceso
-float revStartOdo = 0;                // odometria al empezar a retroceder
+float heading = 0;                    // target heading of this segment (multiple of 90)
+float turnEndCm = 0;                  // odometry when the last reverse move ended
+float revStartOdo = 0;                // odometry when reversing started
 float d1Cm = -1, lStartCm = -1, stopAtCm = -1;
 float iTerm = 0, stallOdo = 0;
-float latDeg = 0, latI = 0;           // correccion de centrado (+ = izquierda)
-float goalLocal = 0;                  // rumbo deseado relativo al tramo (+ = izquierda)
-float passLeftCm = 0;                 // cm que faltan para terminar de pasar el pilar
-int   dir = 0;                        // +1 = izquierda (azul), -1 = derecha (naranja)
+float latDeg = 0, latI = 0;           // centering correction (+ = left)
+float goalLocal = 0;                  // desired heading relative to the segment (+ = left)
+float passLeftCm = 0;                 // cm still needed to finish passing the pillar
+int   dir = 0;                        // +1 = left (blue line), -1 = right (orange line)
 int   corners = 0;
 bool  finalLeg = false;
-bool  finalLineSeen = false;          // ya se vio la ultima linea: avanzar FINAL_EXTRA_S y parar
-unsigned long finalLineMs = 0;        // momento en que se vio la ultima linea
-unsigned long lineIgnoreUntil = 0;    // hasta este momento (millis) se ignoran las lineas
+bool  finalLineSeen = false;          // last line already seen: drive FINAL_EXTRA_S, then stop
+unsigned long finalLineMs = 0;        // time the last line was seen
+unsigned long lineIgnoreUntil = 0;    // lines are ignored until this time (millis)
 LineLock lineLock = LOCK_NONE;
 bool  sameLinePrev = false;
-int   camBlue = 0, camOrange = 0;     // lineas: lo que ve la camara ahora
-int   camColor = 0, camDistCm = -1, camLatCm = 0;   // pilar en el ultimo mensaje
+int   camBlue = 0, camOrange = 0;     // lines: what the camera sees now
+int   camColor = 0, camDistCm = -1, camLatCm = 0;   // pillar in the last camera message
 bool  newCamData = false;
 unsigned long lastCamMs = 0;
 char  camBuf[64]; uint8_t camLen = 0; bool inCam = false;
 unsigned long lastMicros = 0, lastRamp = 0, lastPrint = 0, phaseStart = 0, doneAt = 0;
 unsigned long lastCtrl = 0, stallSince = 0, runStart = 0;
-char  cmd = 0;
 
-// mapa del tramo actual
-float carX = 0, carY = 0;             // eje trasero en el tramo (cm)
-float lastMapOdo = 0;                 // odometria la ultima vez que se actualizo el mapa
-float segCm = 0, lastSegCm = 0;       // distancia recorrida en este tramo
+// parking variables
+float parkOutboundSign = 1.0f;        // +1 / -1: side the car left the parking spot on
+int   parkReturnSteer = STEER_CENTER; // initial counter-steer angle
+long  parkStraightStart = 0;          // encoder value when the short straight started
+long  parkRevStart = 0;               // encoder value when reversing started
+long  parkLastCount = 0;              // last distance seen while reversing
+unsigned long parkStageMs = 0;        // start time of the current parking stage
+unsigned long parkLastPulseMs = 0;    // last encoder pulse while reversing
+
+// map of the current segment
+float carX = 0, carY = 0;             // rear axle position in the segment (cm)
+float lastMapOdo = 0;                 // odometry when the map was last updated
+float segCm = 0, lastSegCm = 0;       // distance driven in this segment
 MapPillar current = {false, 0, 0, 0, 0};
 MapPillar nextOne = {false, 0, 0, 0, 0};
 
 // ---------------- motor / encoder / servo ----------------
 void encoderISR() { if (digitalRead(ENC_C2_PIN)) encRaw++; else encRaw--; }
-float odoCm() { noInterrupts(); long c = encRaw; interrupts(); return (ENCODER_REVERSED ? -c : c) / TICKS_PER_CM; }
+long readEncRaw() { noInterrupts(); long c = encRaw; interrupts(); return c; }
+float odoCm() { long c = readEncRaw(); return (ENCODER_REVERSED ? -c : c) / TICKS_PER_CM; }
 void motorOut(int pwm) {
   pwm = constrain(pwm, 0, 255);
   bool a = pwm > 0, b = false;
   if (MOTOR_REVERSED) { b = a; a = false; }
-  if (driveBack) { bool t = a; a = b; b = t; }     // invertir sentido para retroceder
+  if (driveBack) { bool t = a; a = b; b = t; }     // reverse the direction for reversing
   digitalWrite(AIN1_PIN, a ? HIGH : LOW); digitalWrite(AIN2_PIN, b ? HIGH : LOW);
   analogWrite(PWMA_PIN, pwm); pwmNow = pwm;
 }
@@ -228,7 +258,7 @@ void updateGyro() {
   if (readGyroZ(raw)) { rateDps = YAW_SIGN * GYRO_SCALE * (raw / GYRO_LSB_PER_DPS - biasDps); yawDeg += rateDps * dt; }
 }
 
-// ---------------- ToF laterales, trasero y frontal ----------------
+// ---------------- side, rear and front ToF ----------------
 bool startOne(Side &t) {
   pinMode(t.xshut, INPUT); delay(10);
   t.dev.setAddress(0x29); t.dev.setTimeout(200);
@@ -246,12 +276,12 @@ void tofExtraOff() {
   pinMode(XSHUT_REAR,  OUTPUT); digitalWrite(XSHUT_REAR,  LOW);
 }
 bool tofStart() {
-  tofExtraOff();                      // trasero y frontal apagados mientras se configuran izq y der
+  tofExtraOff();                      // rear and front sensors off while left and right are configured
   for (int i = 0; i < 2; i++) { pinMode(tofs[i].xshut, OUTPUT); digitalWrite(tofs[i].xshut, LOW); }
   delay(10);
   bool a = startOne(tofs[0]); bool b = startOne(tofs[1]);
-  rearOk  = startOne(rearTof);        // se enciende despues de izq y der
-  frontOk = startOne(frontTof);       // despues del trasero
+  rearOk  = startOne(rearTof);        // powered on after left and right
+  frontOk = startOne(frontTof);       // after the rear sensor
   if (!rearOk)  { i2cTimedOut(); }
   if (!frontOk) { i2cTimedOut(); }
   return a && b;
@@ -293,7 +323,7 @@ void updateTof() {
   }
 }
 
-// ---------------- camara ----------------
+// ---------------- camera ----------------
 void handleCameraLine() {
   camBuf[camLen] = '\0';
   int col, x, b, ok, bf, br, w, d, lat, of, orow;
@@ -301,26 +331,25 @@ void handleCameraLine() {
   int n = sscanf(camBuf, "%d,%d,%d,%d,%d,%d,%lu,%d,%d,%d,%d,%d", &col, &x, &b, &ok, &bf, &br, &seq,
                  &w, &d, &lat, &of, &orow);
   if (n == 12) {
-    camBlue = bf; camOrange = of;          // lineas (esquinas)
-    camColor = col; camDistCm = d; camLatCm = lat;   // pilar
+    camBlue = bf; camOrange = of;          // lines (corners)
+    camColor = col; camDistCm = d; camLatCm = lat;   // pillar
     lastCamMs = millis();
     newCamData = true;
   }
 }
+bool canStartRun() {                       // START can be pressed: no run is active
+  return phase == PHASE_IDLE || (phase == PHASE_OBSTACLE && state == DONE);
+}
 void readSerialInput() {
+  // Reads the camera messages that arrive on the serial port (Nano D0).
+  // There is no command input: the run can only be started with the START button.
   while (Serial.available()) {
     char c = Serial.read();
-    if (c == '$') { inCam = true; camLen = 0; continue; }
+    if (c == '$') { inCam = true; camLen = 0; continue; }     // '$' starts a camera message
     if (inCam) {
-      if (c == '\n') { handleCameraLine(); inCam = false; camLen = 0; }
-      else if (c != '\r' && camLen < sizeof(camBuf) - 1) camBuf[camLen++] = c;
-      continue;
+      if (c == '\n') { handleCameraLine(); inCam = false; camLen = 0; }   // end of message: parse it
+      else if (c != '\r' && camLen < sizeof(camBuf) - 1) camBuf[camLen++] = c;   // collect the characters
     }
-    if (c == '\n' || c == '\r') {
-      if ((cmd == 's' || cmd == 'S') && (state == STRAIGHT || state == PRE_TURN || state == TURN || state == REVERSE)) finish(F("STOPPED (s)"));
-      else if ((cmd == 'g' || cmd == 'G') && (state == WAIT || state == DONE)) startRun();
-      cmd = 0;
-    } else cmd = c;
   }
 }
 bool sameColorVisible() {
@@ -333,8 +362,8 @@ bool lineVisibleForCount() {
   return camBlue != 0 || camOrange != 0;
 }
 
-// ---------------- rumbo local y mapa del tramo ----------------
-float yawL() { return yawDeg - heading; }     // desviacion respecto al rumbo del tramo (+ = izquierda)
+// ---------------- local heading and segment map ----------------
+float yawL() { return yawDeg - heading; }     // deviation from the segment heading (+ = left)
 float camPosX() { return carX + CAM_FWD_CM * cos(radians(yawL())); }
 float camPosY() { return carY + CAM_FWD_CM * sin(radians(yawL())); }
 
@@ -354,13 +383,13 @@ void relativeToCar(float px, float py, float &fwd, float &left) {
   left = -dx * sin(h) + dy * cos(h);
 }
 
-// Coloca el pilar del ultimo mensaje en el mapa del tramo
+// Places the pillar from the last camera message on the segment map
 void onCameraPillar() {
   if (camColor == 0 || camDistCm <= 0) return;
   if (fabs((float)camLatCm) > MAX_SIDE_CM) return;
 
-  float fwd  = camDistCm + PILLAR_CM / 2;        // hasta el centro del pilar
-  float left = -camLatCm;                        // camara: + = derecha; mapa: + = izquierda
+  float fwd  = camDistCm + PILLAR_CM / 2;        // to the pillar center
+  float left = -camLatCm;                        // camera: + = right; map: + = left
   float h = radians(yawL());
   float cx = camPosX(), cy = camPosY();
   float px = cx + fwd * cos(h) - left * sin(h);
@@ -385,14 +414,14 @@ void onCameraPillar() {
   }
 }
 
-// Lado por el que hay que pasar el pilar: rojo por la derecha, verde por la izquierda
+// Side to pass the pillar on: red on the right, green on the left
 float goalFor(int color, float pillarY) {
   float cy = camPosY();
   if (color == 1) return min(cy, pillarY - TARGET_CM);
   return max(cy, pillarY + TARGET_CM);
 }
 
-// Devuelve true y el rumbo local si hay que esquivar un pilar ahora
+// Returns true and the local heading if a pillar must be avoided now
 bool pillarGoal(float &goalOut) {
   float fwd = 0, left = 0;
   if (current.used) {
@@ -406,7 +435,7 @@ bool pillarGoal(float &goalOut) {
   }
   if (!current.used) return false;
 
-  bool beside = fwd < 0;                          // ya estoy a la altura del pilar
+  bool beside = fwd < 0;                          // already level with the pillar
   const MapPillar *target = beside ? (nextOne.used ? &nextOne : NULL) : &current;
   if (target == NULL) return false;
 
@@ -414,7 +443,7 @@ bool pillarGoal(float &goalOut) {
   float toFace = (target->x - PILLAR_CM / 2) - camPosX() - ARRIVE_BEFORE_CM;
   float look = max(LOOK_MIN_CM, toFace);
 
-  if (beside) {                                   // a la altura del pilar: nunca volver hacia el
+  if (beside) {                                   // level with the pillar: never turn back toward it
     if (current.color == 1) goalY = min(goalY, camPosY());
     else                    goalY = max(goalY, camPosY());
   }
@@ -422,12 +451,12 @@ bool pillarGoal(float &goalOut) {
   return true;
 }
 
-// Centrado entre paredes: devuelve la correccion de rumbo (+ = izquierda)
+// Centering between walls: returns the heading correction (+ = left)
 float laneGoal(float dt) {
   bool okL = tofs[0].mm > 0 && tofs[0].mm < SIDE_MAX_MM;
   bool okR = tofs[1].mm > 0 && tofs[1].mm < SIDE_MAX_MM;
   if (okL && okR) {
-    float latErrMm = (tofs[0].mm - tofs[1].mm) / 2.0;   // + = estoy mas cerca del derecho -> ir a la izquierda
+    float latErrMm = (tofs[0].mm - tofs[1].mm) / 2.0;   // + = closer to the right wall -> steer left
     latI = constrain(latI + KI_LAT * latErrMm * dt, -LAT_I_MAX, LAT_I_MAX);
     latDeg = constrain(K_LAT * latErrMm + latI, -LAT_MAX_DEG, LAT_MAX_DEG);
   } else {
@@ -438,9 +467,9 @@ float laneGoal(float dt) {
   return latDeg;
 }
 
-// ---------------- esquina = linea ----------------
+// ---------------- corner = line ----------------
 void onCorner(float odo) {
-  lineIgnoreUntil = millis() + IGNORE_LINE_S * 1000.0;   // ignorar todas las lineas durante IGNORE_LINE_S
+  lineIgnoreUntil = millis() + IGNORE_LINE_S * 1000.0;   // ignore all lines for IGNORE_LINE_S
   int n = corners + 1;
   Serial.print(F(">>> ESQUINA ")); Serial.print(n);
   Serial.print(F(" (linea) a ")); Serial.print(odo, 1); Serial.println(F(" cm"));
@@ -449,16 +478,16 @@ void onCorner(float odo) {
     lStartCm = odo - turnEndCm;
     Serial.print(F(">>> LSTART = ")); Serial.print(lStartCm, 1); Serial.println(F(" cm (fin giro 4 -> esquina 5)"));
   }
-  if (finalLeg) {                                 // ultima linea: seguir FINAL_EXTRA_S y parar (en runTest)
+  if (finalLeg) {                                 // last line: keep going FINAL_EXTRA_S, then stop (in runTest)
     finalLineSeen = true;
     finalLineMs = millis();
     Serial.println(F(">>> ULTIMA LINEA detectada: avanzo FINAL_EXTRA_S y paro"));
     return;
   }
-  state = PRE_TURN; phaseStart = millis(); pwmTarget = RUN_PWM;   // avanza hasta FRONT_TURN_CM y luego gira
+  state = PRE_TURN; phaseStart = millis(); pwmTarget = RUN_PWM;   // drive until FRONT_TURN_CM, then turn
 }
 
-// ---------------- parada ----------------
+// ---------------- stop ----------------
 void finish(const __FlashStringHelper *why) {
   brake(); servoTo(STEER_CENTER); state = DONE; doneAt = millis(); finalPrinted = false;
   Serial.print(F(">>> ")); Serial.print(why);
@@ -466,14 +495,151 @@ void finish(const __FlashStringHelper *why) {
   Serial.print(F(" | odo ")); Serial.print(odoCm(), 1); Serial.println(F(" cm"));
 }
 
-void startRun() {
-  Serial.println(F("Calibrating gyro: do NOT touch the car..."));
-  servoTo(STEER_CENTER); delay(300);
-  calibrate();
-  noInterrupts(); encRaw = 0; interrupts();
+// ---------------- PARKING ----------------
+// Parking stop: back to IDLE, START must be pressed again
+void parkStop(const __FlashStringHelper *why) {
+  motorOut(0); driveBack = false; servoTo(STEER_CENTER);
+  phase = PHASE_IDLE;
+  Serial.print(F(">>> PARQUEO PARADO: ")); Serial.println(why);
+}
+
+// Starts leaving the parking spot (START button). No recalibration: that was done at power-on.
+void startPark() {
+  if (!tofOk) {
+    Serial.println(F(">>> No arranco: falta un ToF lateral (revisa conexiones y reinicia)"));
+    return;
+  }
+  Serial.println(F(">>> PARQUEO: salgo del parqueo"));
   while (Serial.available()) Serial.read();
   inCam = false; camLen = 0;
-  state = STRAIGHT; phaseStart = millis(); pwmTarget = RUN_PWM; lastCtrl = millis();
+  yawDeg = 0; heading = 0;                 // the parking heading is the car's straight-ahead heading
+  servoTo(STEER_CENTER);
+  driveBack = false; motorOut(0);
+  parkStage = PK_WAIT_SIDES; parkStageMs = millis();
+  runStart = millis();
+  phase = PHASE_PARK;
+}
+
+// Waits for both side sensors and picks the exit side (the side with more space)
+void parkChooseDirection() {
+  unsigned long now = millis();
+  bool freshL = tofs[0].mm > 0 && now - tofs[0].lastData < 300;
+  bool freshR = tofs[1].mm > 0 && now - tofs[1].lastData < 300;
+  if (!freshL || !freshR) return;                 // wait for data from both side sensors
+  int left = tofs[0].mm, right = tofs[1].mm;
+  if (left == right) return;                      // same reading: wait for another one
+
+  bool turnLeft = left > right;                   // more space on the left = turn left
+  parkReturnSteer = turnLeft ? STEER_RIGHT_MAX : STEER_LEFT_MAX;   // counter-steer to the other side
+  servoTo(turnLeft ? STEER_LEFT_MAX : STEER_RIGHT_MAX);
+  Serial.println(turnLeft ? F("PARK: primer giro IZQUIERDA") : F("PARK: primer giro DERECHA"));
+  delay(75);                                      // let the servo move before rolling
+
+  driveBack = false;
+  motorOut(PARK_DRIVE_PWM);
+  parkStageMs = now;
+  parkStage = PK_FIRST_TURN;
+}
+
+void parkStartReverse() {
+  parkRevStart = readEncRaw();
+  parkLastCount = 0;
+  parkLastPulseMs = millis();
+  driveBack = true;                               // motor in reverse
+  parkStage = PK_REVERSING;
+  motorOut(PARK_REVERSE_PWM);
+  Serial.println(F("PARK: retrocedo"));
+}
+
+void parkUpdateReverse() {
+  long traveled = labs(readEncRaw() - parkRevStart);
+  unsigned long now = millis();
+  if (traveled >= PARK_REVERSE_TICKS) {           // distance reached: end of parking
+    motorOut(0); driveBack = false;
+    Serial.print(F("PARK: retroceso hecho, ticks ")); Serial.println(traveled);
+    Serial.println(F(">>> OPEN CHALLENGE: empiezo el recorrido"));
+    startObstacle();
+    return;
+  }
+  if (traveled != parkLastCount) {                // a new encoder pulse arrived
+    parkLastCount = traveled;
+    parkLastPulseMs = now;
+  } else if (now - parkLastPulseMs >= PARK_STALL_MS) {
+    parkStop(F("retroceso: sin pulsos del encoder"));
+    return;
+  }
+  if (PARK_REVERSE_TICKS - traveled <= PARK_REVERSE_TICKS / 5) motorOut(PARK_REVERSE_SLOW_PWM);
+}
+
+// Steers toward 0 degrees with the gyro (same idea as the run).
+// When reversing, the steering goes to the opposite side.
+void parkSteerToZero(bool reversing) {
+  float steer = KP_HEAD * (-yawDeg) - KD_HEAD * rateDps;
+  steer = constrain(steer, -MAX_STEER, MAX_STEER);
+  servoTo(reversing ? STEER_CENTER + (int)steer : STEER_CENTER - (int)steer);
+}
+
+// Parking state machine (called every loop while phase == PHASE_PARK)
+void runPark() {
+  unsigned long now = millis();
+  switch (parkStage) {
+    case PK_WAIT_SIDES:
+      parkChooseDirection();
+      break;
+
+    case PK_FIRST_TURN:                           // turning toward the open side
+      if (fabs(yawDeg) >= PARK_FIRST_ANGLE_DEG) {
+        parkOutboundSign = yawDeg >= 0.0f ? 1.0f : -1.0f;
+        servoTo(STEER_CENTER);                    // wheels straight for a moment
+        parkStraightStart = readEncRaw();
+        parkStageMs = now;
+        parkStage = PK_DRIVE_STRAIGHT;
+        Serial.println(F("PARK: 45 grados. Ruedas centradas."));
+      } else if (now - parkStageMs >= PARK_TURN_TIMEOUT_MS) {
+        parkStop(F("primer giro demasiado largo"));
+      }
+      break;
+
+    case PK_DRIVE_STRAIGHT:                       // one very short straight section
+      if (labs(readEncRaw() - parkStraightStart) >= PARK_STRAIGHT_TICKS) {
+        servoTo(parkReturnSteer);                 // initial counter-steer
+        parkStageMs = now;
+        parkStage = PK_RETURN_TURN;
+        Serial.println(F("PARK: contravolante"));
+      } else if (now - parkStageMs >= PARK_STALL_MS) {
+        parkStop(F("sin pulsos del encoder (revisa D3)"));
+      }
+      break;
+
+    case PK_RETURN_TURN:                          // PD counter-steer until 0 degrees (parallel to the start)
+      parkSteerToZero(false);
+      if (fabs(yawDeg + rateDps * TURN_PREDICT_S) <= PARK_RETURN_TOL_DEG) {
+        motorOut(0);
+        servoTo(STEER_CENTER);
+        parkStageMs = now;
+        parkStage = PK_PAUSE;
+        Serial.println(F("PARK: rumbo 0 (paralelo al inicio). Parado antes de retroceder."));
+      } else if (now - parkStageMs >= PARK_TURN_TIMEOUT_MS) {
+        parkStop(F("contravolante demasiado largo"));
+      }
+      break;
+
+    case PK_PAUSE:                                // stopped 0.5 s before reversing
+      if (now - parkStageMs >= PARK_PAUSE_MS) parkStartReverse();
+      break;
+
+    case PK_REVERSING:                            // reverses while holding the heading at 0
+      parkSteerToZero(true);
+      parkUpdateReverse();
+      break;
+  }
+}
+
+// ---------------- OPEN CHALLENGE ----------------
+// Starts the camera-guided run. Called when the parking stage ends.
+// No recalibration: the reference heading is the parking heading (0 degrees).
+void startObstacle() {
+  noInterrupts(); encRaw = 0; interrupts();       // run odometry reset to 0
   driveBack = false;
   dir = 0; corners = 0; heading = 0; turnEndCm = 0; revStartOdo = 0;
   d1Cm = -1; lStartCm = -1; stopAtCm = -1; finalLeg = false;
@@ -484,10 +650,12 @@ void startRun() {
   carX = carY = 0; segCm = 0; lastSegCm = 0; lastMapOdo = 0;
   current.used = false; nextOne.used = false; newCamData = false;
   stallOdo = 0; stallSince = millis(); runStart = millis();
+  state = STRAIGHT; phaseStart = millis(); pwmTarget = RUN_PWM; lastCtrl = millis();
+  phase = PHASE_OBSTACLE;
   Serial.println(F(">>> GO"));
 }
 
-// ---------------- logica principal ----------------
+// ---------------- main logic ----------------
 void runTest() {
   if (state == STRAIGHT) {
     float dt = (millis() - lastCtrl) / 1000.0; lastCtrl = millis();
@@ -498,13 +666,13 @@ void runTest() {
     updateMap();
     float dSeg = segCm - lastSegCm; lastSegCm = segCm;
 
-    // 0) ULTIMA LINEA vista hace FINAL_EXTRA_S: parar
+    // 0) LAST LINE seen FINAL_EXTRA_S ago: stop
     if (finalLineSeen && millis() - finalLineMs >= FINAL_EXTRA_S * 1000.0) {
       finish(F(">>> ULTIMA LINEA + avance -> STOP"));
       return;
     }
 
-    // 1) PRIORIDAD MAXIMA: LINEA = ESQUINA -> girar (si la linea aparece, se gira aunque haya pilar)
+    // 1) TOP PRIORITY: LINE = CORNER -> turn (the turn happens even if a pillar is visible)
     if (camOk && !finalLineSeen) {
       if (lineLock == LOCK_NONE) {
         if (odo >= MIN_DRIVE_CM && (camBlue || camOrange)) {
@@ -524,7 +692,7 @@ void runTest() {
       }
     }
 
-    // 2) SEGUNDA PRIORIDAD: PILARES. Si hay que esquivar, mando; si acaba de pasar, mantengo el rumbo; si no, centrado
+    // 2) SECOND PRIORITY: PILLARS. Steer to avoid a pillar if needed; if one was just passed, hold the heading; otherwise center
     if (newCamData) { newCamData = false; if (camOk) onCameraPillar(); }
     float g = 0;
     if (pillarGoal(g)) {
@@ -540,15 +708,15 @@ void runTest() {
     float steer = KP_HEAD * err - KD_HEAD * rateDps + iTerm;
     servoTo(STEER_CENTER - (int)constrain(steer, -MAX_STEER, MAX_STEER));
 
-    // 3) TRAS EL ULTIMO GIRO: seguir hasta la ultima linea. Seguridad por distancia.
+    // 3) AFTER THE LAST TURN: keep going to the last line. Distance-based safety.
     if (finalLeg && !finalLineSeen) {
       if (!finalLeg && millis() - phaseStart > MAX_STRAIGHT_MS) { finish(F("NO CORNER in 8 s -> STOP")); return; }
     }
     if (millis() - phaseStart > MAX_STRAIGHT_MS) { finish(F("NO CORNER in 8 s -> STOP")); return; }
 
   } else if (state == PRE_TURN) {
-    // linea vista: sigue recto mantenido el rumbo, ignorando pilares y lineas,
-    // hasta que el ToF frontal marque FRONT_TURN_CM (o, sin ToF frontal, tras LINE_WAIT_S)
+    // line seen: drive straight holding the heading, ignoring pillars and lines,
+    // until the front ToF reads FRONT_TURN_CM (or, without a front ToF, after LINE_WAIT_S)
     newCamData = false;
     pwmTarget = RUN_PWM;
     float steer = KP_HEAD * (-yawL()) - KD_HEAD * rateDps;
@@ -560,17 +728,26 @@ void runTest() {
                        : (millis() - phaseStart >= LINE_WAIT_S * 1000.0);
 
     if (readyToTurn) {
-      // cambio a reversa: frenar, luego girar retrocediendo
+      // brake with the wheels straight, then turn in reverse
       brake();
-      driveBack = true;
-      state = TURN; phaseStart = millis(); pwmTarget = TURN_PWM;
+      state = BRAKE; phaseStart = millis();
     } else if (millis() - phaseStart > MAX_PRE_TURN_MS) {
       finish(F("FRONT never reached FRONT_TURN_CM -> STOP"));
     }
 
+  } else if (state == BRAKE) {
+    // brake for BRAKE_S with the wheels straight before reversing
+    newCamData = false;
+    brake();
+    servoTo(STEER_CENTER);
+    if (millis() - phaseStart >= BRAKE_S * 1000.0) {
+      driveBack = true;
+      state = TURN; phaseStart = millis(); pwmTarget = TURN_PWM;
+    }
+
   } else if (state == TURN) {
-    newCamData = false;                            // no se mapean pilares mientras gira
-    // Al retroceder, el volante va al lado contrario: para girar a la izquierda, volante a la derecha
+    newCamData = false;                            // no pillars are mapped while turning
+    // When reversing, the steering goes to the opposite side: to turn left, steer right
     servoTo(dir > 0 ? STEER_RIGHT_MAX : STEER_LEFT_MAX);
     float predicted = dir * (yawDeg + rateDps * TURN_PREDICT_S - heading);
     if (predicted >= 90) {
@@ -578,10 +755,10 @@ void runTest() {
       corners++;
       if (corners >= 4 * LAPS) {
         finalLeg = true;
-        stopAtCm = -1;                             // ya no se para por distancia
+        stopAtCm = -1;                             // no longer stop based on distance
         Serial.println(F(">>> FINAL: avanzar hasta la ultima linea, luego FINAL_EXTRA_S y parar"));
       }
-      // tras el giro: retroceder hasta REAR_STOP_CM en el ToF trasero
+      // after the turn: reverse until the rear ToF reads REAR_STOP_CM
       brake();
       servoTo(STEER_CENTER);
       revStartOdo = odoCm();
@@ -596,9 +773,9 @@ void runTest() {
     }
 
   } else if (state == REVERSE) {
-    newCamData = false;                            // no se mapean pilares ni se cuentan lineas al retroceder
+    newCamData = false;                            // no pillars are mapped and no lines are counted while reversing
     servoTo(STEER_CENTER);
-    // Parar con el ToF trasero (fresco, de menos de 300 ms); si no hay dato, usar la odometria
+    // Stop with the rear ToF (fresh reading, under 300 ms old); without data, use odometry
     bool rearFresh = rearOk && rearTof.mm > 0 && (millis() - rearTof.lastData < 300);
     bool reached = rearFresh
                    ? (rearTof.mm <= REAR_STOP_CM * 10)
@@ -606,7 +783,7 @@ void runTest() {
     if (reached) {
       brake();
       driveBack = false;
-      // nuevo tramo: mapa, pilares y cuenta de lineas empiezan aqui
+      // new segment: map, pillars and line counting start here
       carX = carY = 0; segCm = 0; lastSegCm = 0; lastMapOdo = odoCm();
       turnEndCm = odoCm();
       goalLocal = 0; mode = MODE_LANE;
@@ -618,6 +795,12 @@ void runTest() {
     }
   }
 
+  // safety stop: motor on but wheels not turning
+  if (state == STRAIGHT || state == PRE_TURN || state == TURN || state == REVERSE) {
+    float o = odoCm();
+    if (fabs(o - stallOdo) > 1.0 || pwmNow < 60) { stallOdo = o; stallSince = millis(); }
+    else if (millis() - stallSince > STALL_MS) finish(F("STALLED: wheels not turning (hit a wall?) -> STOP"));
+  }
 
   if (state == DONE && !finalPrinted && millis() - doneAt > 1000) {
     finalPrinted = true; motorOut(0);
@@ -639,7 +822,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ENC_C1_PIN), encoderISR, RISING);
   steering.attach(SERVO_PIN); steering.write(STEER_CENTER);
   Serial.begin(115200); delay(500);
-  Serial.println(F("\nBOOT - OPEN CHALLENGE + PILARES"));
+  Serial.println(F("\nBOOT - PARQUEO + OPEN CHALLENGE"));
   Wire.begin(); Wire.setClock(100000); Wire.setWireTimeout(25000, true);
   tofs[0].xshut = XSHUT_LEFT;  tofs[0].addr = ADDR_LEFT;  tofs[0].name = "LEFT";
   tofs[1].xshut = XSHUT_RIGHT; tofs[1].addr = ADDR_RIGHT; tofs[1].name = "RIGHT";
@@ -651,52 +834,69 @@ void setup() {
   Serial.println(tofOk ? F("Both TOF OK") : F("WARNING: a TOF is missing"));
   Serial.println(rearOk ? F("REAR TOF OK") : F("WARNING: REAR TOF missing (reverse by odometry)"));
   Serial.println(frontOk ? F("FRONT TOF OK") : F("WARNING: FRONT TOF missing (turn by time)"));
-  calibrate();
-  Serial.println(F("Ready. Press START or g + Enter. s + Enter = stop."));
+  calibrate();                                    // calibrate the gyro at power-on
+  noInterrupts(); encRaw = 0; interrupts();
+  phase = PHASE_IDLE;
+  Serial.println(F("Ready. Press START to leave the parking spot and run the course."));
 }
 
 void loop() {
   readSerialInput();
 
-  if ((state == WAIT || state == DONE) && digitalRead(START_BTN_PIN) == LOW) {
+  if (canStartRun() && digitalRead(START_BTN_PIN) == LOW) {
     delay(30);
     if (digitalRead(START_BTN_PIN) == LOW) {
       while (digitalRead(START_BTN_PIN) == LOW) delay(5);
       delay(300);
-      startRun();
+      startPark();
     }
   }
 
   updateGyro();
   updateTof();
-  runTest();
 
-  unsigned long now = millis();
-  if (now - lastRamp >= 20) {
-    lastRamp = now;
-    bool moving = (state == STRAIGHT || state == PRE_TURN || state == TURN || state == REVERSE);
-    int target = moving ? pwmTarget : 0;
-    driveBack = (state == TURN || state == REVERSE);   // giro y retroceso van en reversa
-    if (state == DONE) { /* freno */ }
-    else if (pwmNow < target) motorOut(min(pwmNow + RAMP_STEP, target));
-    else if (pwmNow > target) motorOut(target);
+  if (phase == PHASE_PARK) {
+    runPark();
+  } else if (phase == PHASE_OBSTACLE) {
+    runTest();
+
+    unsigned long now = millis();                 // speed ramp (only during the run)
+    if (now - lastRamp >= 20) {
+      lastRamp = now;
+      bool moving = (state == STRAIGHT || state == PRE_TURN || state == TURN || state == REVERSE);
+      int target = moving ? pwmTarget : 0;
+      driveBack = (state == TURN || state == REVERSE);   // turning and reversing run the motor in reverse
+      if (state == DONE) { /* brake */ }
+      else if (pwmNow < target) motorOut(min(pwmNow + RAMP_STEP, target));
+      else if (pwmNow > target) motorOut(target);
+    }
   }
 
-  if (now - lastPrint >= 100 && state != WAIT) {
+  unsigned long now = millis();
+  if (now - lastPrint >= 100 && phase != PHASE_IDLE) {
     lastPrint = now;
-    Serial.print(STATE_NAME[state]);
-    Serial.print(F("\tc ")); Serial.print(corners);
-    Serial.print(F("\tyawL ")); Serial.print(yawL(), 1);
-    Serial.print(F("\tgoal ")); Serial.print(goalLocal, 1);
-    Serial.print(F("\t")); Serial.print(MODE_NAME[mode]);
-    Serial.print(F("\todo ")); Serial.print(odoCm(), 1);
-    Serial.print(F("\tL ")); Serial.print(tofs[0].mm);
-    Serial.print(F("\tR ")); Serial.print(tofs[1].mm);
-    Serial.print(F("\tFR ")); Serial.print(frontTof.mm);
-    Serial.print(F("\tRA ")); Serial.print(rearTof.mm);
-    Serial.print(F("\tpilar ")); Serial.print(current.used ? (current.color == 1 ? F("R") : F("G")) : F("-"));
-    Serial.print(F("\tlinea B/O ")); Serial.print(camBlue); Serial.print('/'); Serial.print(camOrange);
-    Serial.print(F("\tlock ")); Serial.print((int)lineLock);
-    Serial.print(F("\tpwm ")); Serial.println(pwmNow);
+    if (phase == PHASE_PARK) {
+      Serial.print(F("PARK ")); Serial.print(PARK_NAME[parkStage]);
+      Serial.print(F("\tyaw ")); Serial.print(yawDeg, 1);
+      Serial.print(F("\tL ")); Serial.print(tofs[0].mm);
+      Serial.print(F("\tR ")); Serial.print(tofs[1].mm);
+      Serial.print(F("\tenc ")); Serial.print(readEncRaw());
+      Serial.print(F("\tpwm ")); Serial.println(pwmNow);
+    } else {
+      Serial.print(STATE_NAME[state]);
+      Serial.print(F("\tc ")); Serial.print(corners);
+      Serial.print(F("\tyawL ")); Serial.print(yawL(), 1);
+      Serial.print(F("\tgoal ")); Serial.print(goalLocal, 1);
+      Serial.print(F("\t")); Serial.print(MODE_NAME[mode]);
+      Serial.print(F("\todo ")); Serial.print(odoCm(), 1);
+      Serial.print(F("\tL ")); Serial.print(tofs[0].mm);
+      Serial.print(F("\tR ")); Serial.print(tofs[1].mm);
+      Serial.print(F("\tFR ")); Serial.print(frontTof.mm);
+      Serial.print(F("\tRA ")); Serial.print(rearTof.mm);
+      Serial.print(F("\tpilar ")); Serial.print(current.used ? (current.color == 1 ? F("R") : F("G")) : F("-"));
+      Serial.print(F("\tlinea B/O ")); Serial.print(camBlue); Serial.print('/'); Serial.print(camOrange);
+      Serial.print(F("\tlock ")); Serial.print((int)lineLock);
+      Serial.print(F("\tpwm ")); Serial.println(pwmNow);
+    }
   }
 }

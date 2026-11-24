@@ -47,9 +47,9 @@ How the points are counted:
 
 | Attempt | Date | Commit | Scenario (Scenario Roulette) | Direction | 1.1 Sections (max 24) | 1.2 Laps (max 3) | 1.3 Stop in finish section (3 / 0) | Pillars on the correct side (yes / no) | Pillars moved (none / one or more) | Signs points (1.4 / 1.5 / 1.6 / 1.7) | 1.8.1 Started in lot (7 / 0) | 1.8.2 / 1.8.3 Parking (15 / 7 / 0) | Repair taken (yes / no) | Round score (max 62) | Round time (s) | Notes |
 |---|---|---|---|---|---:|---:|---:|---|---|---:|---:|---:|---|---:|---:|---|
-| 1 | | | | | | | | | | | | | | | | |
-| 2 | | | | | | | | | | | | | | | | |
-| 3 | | | | | | | | | | | | | | | | |
+| 1 | 24 Nov | not recorded | not recorded | right | not recorded | not recorded | 3 | not recorded | none | not recorded | not recorded | 0 | not recorded | not recorded | 1:40 | Success: yes. Stopped in the correct section but not in the parking lot (1.8.2/1.8.3 = 0). No pillars touched. Time as reported by the team ("Tiempo por vuelta"). Other criteria not recorded. |
+| 2 | 24 Nov | not recorded | not recorded | right | not recorded | not recorded | 3 | not recorded | none | not recorded | not recorded | 0 | not recorded | not recorded | 1:41 | Success: yes. Stopped in the correct section but not in the parking lot (1.8.2/1.8.3 = 0). No pillars touched. Time as reported by the team ("Tiempo por vuelta"). Other criteria not recorded. |
+| 3 | 23 Nov | not recorded | not recorded | left | not recorded | not recorded | 3 | not recorded | none | not recorded | not recorded | 0 | not recorded | not recorded | 2:00 | Success: yes. Stopped in the required section but not in the parking lot (1.8.2/1.8.3 = 0). No pillars touched. Time as reported by the team ("2", read as 2:00). |
 | 4 | | | | | | | | | | | | | | | | |
 | 5 | | | | | | | | | | | | | | | | |
 
