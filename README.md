@@ -30,16 +30,18 @@ Here you will find the full engineering process (what we tried, what failed, the
 |---|---|
 | **Size / mass** | 17.5 × 9 × 6 cm · 248 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
 | **Main controller** | Arduino Nano (ATmega328P) |
-| **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline (160 × 120 in the competition code, v3.2; the frame rate at this size is printed by the sketch and is to be recorded) |
+| **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline, 160 × 120 pixels (`obstacle_camera_v3_2`), one text message per picture to the Nano over a wired UART |
 | **Sensors** | 4 × TOF400C laser distance sensors (VL53L1X), BMI160 gyroscope, motor encoder |
 | **Drive / steering** | One N20 12 V 1000 rpm motor with encoder → 1 : 1 rear differential · parallel **rack-and-pinion** steering (module 1 mm) with an MG90 servo |
-| **Chassis** | 3D-printed PLA base (v3, all joints screwed) carrying a custom PCB (EasyEDA → JLCPCB) · cast silicone tyres |
+| **Chassis** | 3D-printed PLA base (v4, all joints screwed) carrying a custom PCB (EasyEDA → JLCPCB) · cast silicone tyres · wheelbase 9 cm, ±40° steering, 10.7 cm turning radius |
+| **Programs** | `open_challenge` (Open), `obstacle_challenge` + `obstacle_camera_v3_2` (Obstacle), `obstacle_go_out_of_parking` (parking start, not yet track-tested) |
 | **Power** | 3S HV LiPo 11.4 V 380 mAh · CN3903 5 V / 3 A buck converter |
 
 ---
 
 ## Contents
 
+0. [How this repository answers the documentation rubric](#how-this-repository-answers-the-documentation-rubric)
 1. [Repository structure](#1-repository-structure)
 2. [The team](#2-the-team)
 3. [The challenge](#3-the-challenge)
@@ -54,6 +56,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 12. [How to build, compile and upload](#12-how-to-build-compile-and-upload)
 13. [Current status and next steps](#13-current-status-and-next-steps)
 14. [Versions and release notes](#14-versions-and-release-notes)
+15. [Use of AI tools](#15-use-of-ai-tools)
 
 ---
 
@@ -63,11 +66,11 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 | Rubric criterion | What it asks for | Where it is |
 |---|---|---|
-| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 26 printed parts including the front protrusion + 2 tyre moulds, full STEP assembly, CAD v1–v3, assembly order) |
-| **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
-| **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
-| **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
-| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes · 144 commits with descriptive messages |
+| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design): speed and torque calculations checked against the 3-lap run (§5.2), steering geometry with the measured ±40° and the 10.7 cm turning radius against the 600 mm corridor (§5.3), iterations with the test that caused each one (§5.5) · [models/](models/README.md) (28 STL — 26 printed parts including the front protrusion + 2 tyre moulds, full STEP assembly, CAD v1–v4, assembly order) |
+| **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture): power tree and budget (§6.1), pin map (§6.2), each sensor's job in each program and its placement from the field geometry (§6.3) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
+| **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (Open state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (Obstacle state machine and flowchart, vision, map, steering law, limits) · [§11](#11-testing-workflow-and-metrics) (tuning loop and the measured validation results) · [src/README.md](src/README.md) |
+| **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks): explicit constraints with numbers (§10.0), dependencies (§10.1), "we chose X instead of Y because…" with the data (§10.2), risks (§10.3), every setting justified (§10.4), decision chains (§10.5) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
+| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 180 commits on `main` on 23 Nov 2026, with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
 
 ---
 
@@ -77,8 +80,8 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Vehicle:** 17.5 × 9 × 6 cm, 248 g. Rear drive motor with encoder, rack-and-pinion steering, a custom PCB, laser distance sensors and a gyroscope.
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
-- **Obstacle Challenge:** the camera detects red and green pillars; the Nano drives around them. The parking start is in the code and still being tested (§7, §9).
-- **Repository:** 144 commits on `main`. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Obstacle Challenge:** `obstacle_challenge` locks the round direction from the first floor line, turns every corner in reverse with the gyroscope and the front / rear distance sensors, dodges red and green pillars on an odometry map, and stops after the last line (§9). The camera board (`obstacle_camera_v3_2`) finds the pillars and lines. The parking start is written but not yet tested on the track (§9.7).
+- **Repository:** 180 commits on `main` on 23 Nov 2026. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -91,14 +94,14 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 │   └── images/                 ← plots used in the journal
 ├── schemes/                 ← schematic, wiring diagram, PCB, power budget, BOM, datasheets
 ├── src/                     ← all source code (see src/README.md)
-│   ├── hardware-tests/         ← one test per component: motor + encoder, steering servo, 4 TOF + gyroscope
+│   ├── hardware-tests/         ← one test per component: motor + encoder, steering servo, 4 TOF + gyroscope, camera, gyro 90° hand turn, 90° turn in motion
 │   ├── open-challenge/         ← open_challenge: the Open Challenge program (3 laps, stops at the start position)
 │   ├── obstacle-challenge/     ← the Obstacle Challenge: driving program, camera vision (v3.2), parking start
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
-├── models/                  ← 28 STL files (26 printed parts including the front protrusion + 2 tyre moulds), renders, full STEP assembly, CAD history v1–v3 and the final v4 assembly
+├── models/                  ← 28 STL files (26 printed parts including the front protrusion + 2 tyre moulds), renders, full STEP assembly, CAD history v1–v4 (v4 = the final car)
 ├── t-photos/                ← team photos (official and fun)
-├── v-photos/                ← the six official views of the vehicle + all parts laid out
+├── v-photos/                ← the six official views of the vehicle (chassis v4)
 ├── video/                   ← links to the driving videos
 └── other/                   ← component pictures, PCB manufacturing, tyre casting, build process, retired parts
 ```
@@ -169,10 +172,10 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 | 9.6 / 9.10 / 9.11 / 9.14 | Placed switched off; one power switch; waiting state; one start button; pressing it starts the run | Power switch → program calibrates the gyro and waits in `WAIT`; one push button on D10 starts the run |
 | 9.9 / 11.7 | No data entered by switches, part positions or sensor calibration before the round; no signals during the run | The program reads nothing from the team: the gyro offset is measured **automatically** by the program at power-on with the car still, and the turn direction and wall positions are detected by the sensors during the run |
 | 9.16 / 9.21 / App. A.4 | Drive in the round direction; reverse only within the section where it changed direction and the next one | Open Challenge: direction detected at the first corner, no reverse gear. Obstacle Challenge: the direction is set by the first floor line, and **every corner is turned in reverse gear** (front TOF at 40 cm → back up while steering → rear TOF at 20 cm). This reverse move happens inside the corner section, the same section where the car changes direction, so it complies with 9.21 / App. A.4: the rule allows driving against the round direction in that section and the neighbouring one (cases 1, 2 and 4), case 6 allows back-to-front driving, and the back-up never reaches the second neighbouring section (case 3). The rear TOF stop (20 cm) and `MAX_REVERSE_MS` keep it short |
-| 9.18 | Do not move walls; in the Open Challenge do not touch the outer wall | The car follows the **inner** wall at a short distance, so it stays away from the outer wall; front safety brake |
-| 9.22 / 9.24.2 / 9.24.3 / App. A.2–A.3 | After 3 laps stop completely inside the starting section (no movement after 15 s; judged after 30 s still); passing into the next corner ends the round without the stop points | After the **12th** turn: short tuned straight, then **active brake for 1 s** (both TB6612FNG inputs HIGH), then the motor is switched off (§10.4) |
+| 9.18 | Do not move walls; in the Open Challenge do not touch the outer wall | Open: the car keeps 100 mm from the **inner** wall (`INNER_TARGET_MM`), so the outer wall stays far away; any wall closer than 70 mm forces a full correction away from it (`SAFE_WALL_MM`); wheels blocked for 0.5 s → stop |
+| 9.22 / 9.24.2 / 9.24.3 / App. A.2–A.3 | After 3 laps stop completely inside the starting section (no movement after 15 s; judged after 30 s still); passing into the next corner ends the round without the stop points | After the **12th** turn — Open: drives `LSTART − D1` (the start straight measured on lap 2) and stops at the start position; Obstacle: drives 0.45 s past the next line. Then **active brake for 1 s** (both TB6612FNG inputs HIGH) and the motor is switched off (§8.2, §9.6) |
 | 9.23 | One repair per round; no program upload, no data entry | Nothing to configure: after a repair the car is switched on and started with the same button |
-| 8 (Obstacle) / 1.8.1 | Parking-lot start points only if a full lap is completed | Start position decided by the team before the round; parking still being designed |
+| 8 (Obstacle) / 1.8.1 | Parking-lot start points only if a full lap is completed | `obstacle_go_out_of_parking` is written for the parking-lot start but not yet track-tested, so those 7 points are not counted on yet; parking at the end is in design (§9.7) |
 | 3.3 / 3.7 | Own work by the team | The team designed the solution, tested it on the car and can explain the code. Part of the code and documents was written with AI assistance; see [§15](#15-use-of-ai-tools). The commit history shows the origin of each change |
 | 7 | Public GitHub repository in English; README ≥ 5000 characters (modules, link to electromechanical components, build / compile / upload); commented code; photos of every side, top and bottom; team photo; one YouTube video per challenge with ≥ 30 s of autonomous driving; ≥ 3 commits on time; repository public for 12 months after the event; hard copy at the International Final | See [§14.1 Submission checklist](#141-submission-checklist) |
 
@@ -211,7 +214,7 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
-- **Front protrusion (parking-lot rule):** the front protrusion is a separate narrow printed plate (31 × 65 × 1 mm) that is screwed to the front of the 120 mm base and extends it forward, purely to add length. It does **not** carry or move the camera: the camera's position relative to the rear (encoder) axle, `CAM_FWD_CM = 11.7 cm` in the odometry code, is fixed by where the camera board sits and is unaffected by how far the tab sticks out. The real purpose is the Obstacle Challenge parking-lot rule (rules §5, Figure 4): the lot is 20 cm wide and 1.5 × the car's declared length long. Without the protrusion the car measures ≈ 13.5 cm (the 12 cm base plus the small overhang of the camera), giving a ≈ 20.25 cm lot; with it the car measures 17.5 cm, giving a ≈ 26.25 cm lot — about 6 extra cm of manoeuvring room inside the parking walls. That margin costs nothing in manoeuvrability, because neither the wheelbase (9 cm) nor the maximum steering angle (30°) — the two things that actually decide how tight the car can turn to park — change at all. The only trade-off is a few extra centimetres of overall length, which we accepted because the car is still well under the 30 cm limit (§5.1 above) and the tab is narrow enough not to interfere with the front TOF sensor's field of view.
+- **Front protrusion (parking-lot rule):** the front protrusion is a separate narrow printed plate (31 × 65 × 1 mm) that is screwed to the front of the 120 mm base and extends it forward, purely to add length. It does **not** carry or move the camera: the camera's position relative to the rear (encoder) axle, `CAM_FWD_CM = 11.7 cm` in the odometry code, is fixed by where the camera board sits and is unaffected by how far the tab sticks out. The real purpose is the Obstacle Challenge parking-lot rule (rules §5, Figure 4): the lot is 20 cm wide and 1.5 × the car's declared length long. Without the protrusion the car measures ≈ 13.5 cm (the 12 cm base plus the small overhang of the camera), giving a ≈ 20.25 cm lot; with it the car measures 17.5 cm, giving a ≈ 26.25 cm lot — about 6 extra cm of manoeuvring room inside the parking walls. That margin costs nothing in manoeuvrability, because neither the wheelbase (9 cm) nor the maximum steering angle (40°, measured with a protractor, `docs/TESTS.md`) — the two things that actually decide how tight the car can turn to park — change at all. The only trade-off is a few extra centimetres of overall length, which we accepted because the car is still well under the 30 cm limit (§5.1 above) and the tab is narrow enough not to interfere with the front TOF sensor's field of view.
 
 <div align="center">
   <img src="models/images/front_protrusion.png" alt="Front protrusion close-up" height="220">
@@ -221,9 +224,13 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 ### 5.2 Drive
 
 - **One N20 12 V, 1000 rpm motor with a Hall encoder** drives both rear wheels through a **differential with a 1 : 1 gear ratio** (motor gear and differential gear both 22 mm). A single motor on one axle follows the rules (driving wheels must be mechanically connected), and the differential lets the inner and outer wheels turn at different speeds in corners, so the tyres do not scrub and the car follows the steering angle precisely.
-- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 129 mm. At a 1 : 1 ratio, 1000 rpm would give ≈ 2.1 m/s. That figure is only an upper bound for a 1 : 1 drive, which the encoder count does not support (see the motor data status below). The count of 9.27 ticks/cm and 119 ticks per wheel turn implies a ratio of about 17 : 1, which gives a no-load speed of about **12.6 cm/s** (calculated in `docs/TESTS.md`, not yet measured). A three-lap round in 3 minutes needs an average of about 13 cm/s (§9.9). **This is an open risk:** if the stopwatch test confirms about 12.6 cm/s, the drive is too slow for the full round, and the speed, the ratio or the PWM must be checked before the competition. The control loop is designed for ≈ 0.3–0.4 m/s, which the car does not reach at that ratio.
-- **Torque reasoning:** to accelerate the 248 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.248 × (1 + 0.05 × 9.81) ≈ **0.37 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed. Against the datasheet of the same motor family, the rated torque of 0.16 kg·cm (≈ 16 mN·m) gives a margin of about 2× and the stall torque of 0.43 kg·cm (≈ 42 mN·m) about 5×. The 2.4 kg·cm stall torque in earlier notes came from other sellers and is no longer used.
-- **Motor data status (23 Nov):** the Amazon listing gives no gear ratio and no stall values. The datasheet of the same family gives 1:30, but that ratio is not proven: 1000 rpm at 1:30 would mean about 30 000 rpm at the motor, and the measured 9.27 ticks per cm (about 119 ticks per wheel turn) matches neither 1:30 with 7 PPR (210, 420 or 840 ticks) nor a simple count. The ratio and the stall current are to be measured (`schemes/datasheets/N20_12V_1000RPM_specs.md`).
+- **Speed reasoning:** with 41 mm wheels, each wheel revolution moves the car π × 41 mm ≈ 12.9 cm. The N20 is a *gear motor*: its 1000 rpm is the speed of the **output shaft**, after its own gearbox. With our 1 : 1 differential the wheels turn at the same speed, so the no-load top speed at 12 V is 1000 / 60 × 12.9 cm ≈ **2.1 m/s**, and about **1.5 m/s** at the rated-load speed of the datasheet family (681 rpm).
+  - **What the encoder tells us:** the encoder sits on the motor shaft, *before* the gearbox, and gives 7 pulses per motor turn. We measured 9.27 ticks per cm with the motor running (190 ticks over 20.5 cm), which is about **119 ticks per wheel turn**, so the gearbox inside the N20 is about 119 / 7 ≈ **17 : 1**. That ratio is already included in the 1000 rpm rating; it does not reduce the wheel speed a second time.
+  - **Correction (24 Nov):** until v1.9.18 this README divided the 2.1 m/s by 17 again and listed a speed of 12.6 cm/s as a risk for the 3-minute round. That was a double count. The 3-lap run of 22 Nov confirms the correction: `open_challenge` stops the car if no corner arrives within `MAX_STRAIGHT_MS` = 8 s, and at 12.6 cm/s a 1 m straight already takes 7.9 s. Each side of the interior wall is 1000, 1400 or 1800 mm long (rules, Appendix B), and the run of 22 Nov had narrow corridors (the 1800 mm inner sides), so a car that slow would have hit the 8 s stop on the first full straight instead of completing 12 corners.
+  - **Speed we actually use:** the problem is the opposite one: the car is fast, and the sensors set the limit. The Open program drives at `RUN_PWM 150` (≈ 59 % duty) and turns at 90; the Obstacle program drives every phase at 70, because each camera message is one picture old and the pillar must stay on the map long enough to be dodged (§9). A round needs only about 13 cm/s on average (§9.9).
+  - **Still to measure:** the stopwatch time over 1 m at `RUN_PWM 150` and 255 (`docs/TESTS.md`). Until then the speeds above are calculated, and only the lower bound from the 22 Nov run is measured.
+- **Torque reasoning:** to accelerate the 248 g car at 1 m/s² against rolling resistance (rolling coefficient ≈ 0.05), the wheels need F = m · (a + C<sub>rr</sub> · g) ≈ 0.248 × (1 + 0.05 × 9.81) ≈ **0.37 N**, which at a 20.5 mm wheel radius is only **≈ 8 mN·m (≈ 0.08 kg·cm)** at the wheel. The light chassis is what makes a 1 : 1 transmission possible: the N20's built-in gearbox already gives enough torque, so no extra reduction (and no extra printed gears that could slip) is needed. Against the datasheet of the same motor family (1 : 30), the rated torque of 0.16 kg·cm (≈ 16 mN·m) gives a margin of about 2× and the stall torque of 0.43 kg·cm (≈ 42 mN·m) about 5×. If our gearbox is really about 17 : 1 (see above), the output torque scales by 17 / 30: rated ≈ 9 mN·m and stall ≈ 24 mN·m. That still covers the 8 mN·m for a hard 1 m/s² start, and cruising needs only the rolling term, 0.248 × 0.05 × 9.81 × 0.0205 ≈ **2.5 mN·m**, so the margin at constant speed is about 3.5× rated and 10× stall. This is why the soft start (`RAMP_STEP` 5 PWM every 20 ms) is enough and no extra reduction is needed. The 2.4 kg·cm stall torque in earlier notes came from other sellers and is no longer used.
+- **Motor data status (24 Nov):** the Amazon listing gives 12 V, 1000 rpm and a 7 PPR Hall encoder, but no gear ratio and no stall values. The datasheet of the same family says 1 : 30; our encoder count (119 ticks per wheel turn, one edge of one channel) says about 17 : 1, so our motor is probably a different gearbox of the same family. The gear ratio only changes the ticks per cm (already measured) and the torque margin above; the stall current is still to be measured (`schemes/datasheets/N20_12V_1000RPM_specs.md`).
 - **Why 1 : 1:** a reduction would give more torque that we do not need and less top speed; a step-up would make low speeds harder to control. 1 : 1 also means both gears are the same printed part size, which is simple to print and to replace.
 - **Braking:** the TB6612FNG short-brake mode (both inputs HIGH) stops the motor actively, much faster and more repeatably than coasting. In the Open Challenge the motor only drives forward. In the Obstacle Challenge each corner is taken in reverse gear (PWM 70, ramped with `RAMP_STEP`), and the rear ToF stops the back-up at 20 cm (§9.6). A sudden reverse made one gear of the drive train skip (journal Problem 34), which is why the reverse is ramped.
 
@@ -241,11 +248,13 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 - **Geometry:** the pitch diameter of the pinion is m × z = 1 × 12 = **12 mm**, so each degree of servo rotation moves the rack π × 12 / 360 ≈ **0.105 mm**. The relation between servo angle and rack position is linear and has no dead zone, so the angle we command is the angle we get.
 - **Why we left Ackermann:** in theory Ackermann is better, because the inner wheel turns more than the outer one and neither tyre slips. In practice our Ackermann linkages (v1 and v2) had too many printed joints and too much friction: the servo could not complete its travel (journal Problem 29) and **three servos were damaged** pushing against the linkage (journal Problems 17 and 33).
 - **Trade-off we accepted:** with parallel steering both front wheels turn the same angle, so in a turn the inner wheel slips a little. On a 248 g car at 0.3–0.6 m/s that slip is small, and the 1 : 1 differential at the rear already removes the larger scrubbing of the driven wheels. We traded a small geometric error for a mechanism that is **reliable, easy to print and does not break servos**.
-- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_calibration` after any mechanical change (on v3, measured on 21 Nov: centre 85, left limit 10, right limit 170, in servo units; a smaller angle steers left, as in the code).
+- **Servo mount:** the servo bracket of v3 holds the servo with screws, so its case cannot move (the problem of the first SG90 mount, journal Problem 8). Centre and limits are always **measured, not assumed**, with `servo_test` after any mechanical change (chassis v4, measured on 21 Nov: centre 85, left limit 10, right limit 170, in servo units; a smaller angle steers left, as in the code).
+- **Measured steering geometry (chassis v4):** the wheels turn **40° each way** at the servo limits (protractor, `docs/TESTS.md`). With a 9 cm wheelbase the turning radius of the rear axle is 9 / tan 40° ≈ **10.7 cm**.
+- **Does it fit the field?** A 90° turn at full lock moves the camera about 22 cm sideways by geometry alone (`docs/TESTS.md`), and 39–40 cm with braking in the tape-measured runs of 28 Oct (previous steering setup). The narrowest corridor is 600 mm and the car is 9 cm wide, so a full-lock corner leaves room on both sides. That is why the Open program can turn at the inner wall without slowing down to a stop, and why the Obstacle program can turn in reverse inside the corner section (§9.6).
 
 ### 5.4 Wheels and tyres
 
-The four 36 mm hubs are printed, and the **tyres are cast on them with C25 silicone rubber** in printed moulds (≈ 41 mm outside diameter). Silicone grips the field mat much better than printed plastic, which reduces slipping when the car accelerates, brakes and turns, so the gyro turns and the wall distances stay accurate (and, once used, the encoder distance).
+The four 36 mm hubs are printed, and the **tyres are cast on them with C25 silicone rubber** in printed moulds (≈ 41 mm outside diameter). Silicone grips the field mat much better than printed plastic, which reduces slipping when the car accelerates, brakes and turns, so the gyro turns, the wall distances and the encoder distance stay accurate.
 
 | Moulds | Mix | Pour | Result |
 |---|---|---|---|
@@ -265,6 +274,9 @@ Recipe: **30 g of part A + 23 drops of part B**, from the formula **B = ¾ · A*
 | v2 → v3 | Sizes adapted in the CAD instead of improvised fixes; new camera and servo mounts | v2 needed hand adaptations and tape |
 | v2 → v3 | Tape removed, every joint screwed | Tape showed the design was not complete and let the geometry change |
 | Printed → cast | Silicone tyres | More grip on the mat; repeatable recipe |
+| v3 → v4 | Side TOF brackets straight (0°) instead of 30° | On the black wall the angled beam read ~198 cm for a 30 cm wall; straight it reads 32.0 cm (journal Phase 10) |
+| v3 → v4 | Front protrusion screwed to the base (car 17.5 cm long) | Parking lot = 1.5 × car length, so the lot grows from ≈ 20 cm to ≈ 26 cm with no change to wheelbase or steering (§5.1) |
+| v3 → v4 | Steering re-measured: centre 85, limits 10 / 170, ±40° | The new chassis moved the servo; every driving program uses the new values since 22 Nov (journal §19.2) |
 
 <div align="center">
   <img src="other/mechanical-iterations/printed_v1.jpg" height="200">
@@ -289,9 +301,11 @@ The full electrical documentation is in [schemes/README.md](schemes/README.md): 
 
 | | Typical | Peak |
 |---|---|---|
-| Current from the battery | ≈ 0.20 A | ≈ 0.92 A |
-| Power | ≈ 2.2 W | ≈ 10.5 W |
-| Run time on one charge | ≈ 1.6 h | ≈ 14 min |
+| Current from the battery | ≈ 0.20 A | ≈ 1.27 A |
+| Power | ≈ 2.2 W | ≈ 14.5 W |
+| Run time on one charge (80 % of 4.33 Wh) | ≈ 1.6 h | ≈ 14 min |
+
+The peak column is the worst case of every load at once (motor at stall 0.7 A, servo at stall 650 mA, camera 310 mA). The full table with each load is in [schemes/README.md §4.2](schemes/README.md#42-power-budget). A round lasts 3 minutes, so even the worst case uses about a fifth of one charge.
 
 The motor uses the battery voltage directly (it is a 12 V motor); everything else uses a **switching** 5 V regulator, because a linear one would waste more power as heat than all the electronics consume. The 3 A buck has a wide margin over the ~1.05 A peak of the 5 V rail, so a servo stall cannot reset the camera.
 
@@ -318,13 +332,16 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 
 ### 6.3 Sensors: selection, placement and calibration
 
-| Sensor | Placement | Why |
-|---|---|---|
-| **TOF FRONT** | Front centre | Safety brake if a wall is too close in any phase; FRONT vs BACK check after the first turn; parking later |
-| **TOF LEFT / RIGHT** | Both sides, **straight (0°), facing the wall squarely**, centre at ~5 cm from the floor (half of the 10 cm wall), level | Distance to the wall being followed; when the wall ends, the readings become invalid → corner. We first angled them 30° forward to see corners earlier, but on the black wall the angled beam returned almost no light (journal Phase 10) |
-| **TOF BACK** | Rear centre | FRONT vs BACK check after the first turn: after a correct turn the back faces the near outer wall of the corner and the front the long straight |
-| **BMI160** | Flat on the PCB | Yaw (Z axis) for straight driving and exact 90° turns |
-| **Camera** | Front, slightly down | Sees the pillars of the next section |
+What each sensor does in each program (read from the code):
+
+| Sensor | Placement | `open_challenge` | `obstacle_challenge` | Why this placement (field geometry) |
+|---|---|---|---|---|
+| **TOF LEFT / RIGHT** (0x2A / 0x2B) | Both sides, **straight (0°), facing the wall squarely**, centre ~5 cm from the floor, level | Lane: 100 mm from the inner wall. Corner: the inner reading jumps 250 mm above its learned normal distance, or above 1200 mm | Centring between the walls when no pillar is on the map; a wall under 70 mm forces a full correction | The wall is 10 cm high, so a beam centred at 5 cm stays on it. We first angled them 30° forward to see corners earlier, but on the black wall the angled beam returned almost no light (journal Phase 10) |
+| **TOF FRONT** (0x2D) | Front centre, facing forward | Off (XSHUT held LOW) | After a corner line, the car drives on until the front wall is **40 cm** away, then starts the reverse turn | A line is seen only within ~16–23 cm of the camera, which is not a distance to the wall; the front sensor measures the wall directly (journal §18.3) |
+| **TOF REAR** (0x2C) | Rear centre, facing back | Off (XSHUT held LOW) | Ends the back-up after each reverse turn when the rear wall is **20 cm** away (30 cm by encoder if it gives no data) | After the reverse turn the rear faces the outer wall of the corner, so the back-up ends at the same place in every corner |
+| **BMI160** | Flat on the PCB | Heading hold (P + I) and 90° turns | Heading hold (P + D, + I in lane mode) and 90° reverse turns | Flat mounting makes the Z axis the turning axis; only yaw is used |
+| **Encoder** (on the motor) | Rear drive | Distances `D1`, `LSTART` for the stop at the start position; stall check | Odometry map of each straight for the pillars; back-up fallback; stall check | Measured with the motor running: 9.27 ticks per cm |
+| **Camera** | Front, slightly down, 11.7 cm ahead of the rear axle | Not used | Pillars (5–40 cm ahead), floor lines, magenta walls | Only the floor band of the picture is searched (rows 58–119 for pillars, 70–119 for lines), so objects outside the field are ignored |
 
 **Why TOF and not infrared or ultrasonic:** our first sensors were Sharp infrared sensors. Their output is non-linear, so noise grows with distance, and our tests showed they were unreliable beyond 50–60 cm, less than one corridor width (journal Problem 3). We also proved that the standard deviation of their readings could not tell a wall from an open side (journal Problem 2). Ultrasonic sensors have a wide cone that sees the floor and the neighbouring walls. The VL53L1X measures up to 4 m and lets us narrow its measurement area (ROI) in software.
 
@@ -340,8 +357,9 @@ All four TOF sensors share one I²C bus with the gyroscope. At start-up every se
 
 - **Reading filter in the current code:** a side reading counts when it is 1–3999 mm; 0 or ≥ 4000 mm is stored as "no wall" (4000 mm). The range-status flag is not checked. "Signal fail" readings gave believable but wrong numbers in our October tests (e.g. 63 cm with the wall at 30 cm), so this is a known risk (§10.3).
 - **Gyroscope:** after a 0.7 s settling time, 300 samples (≈ 1.5 s) at rest, taken when the car is started (the LED blinks meanwhile); their mean is the offset and is accepted only if at least 250 readings were good. The scale `GYRO_SCALE = 1.007` comes from a 3-lap test (§10.4).
-- **Steering:** centre and limits found with the interactive `servo_test` sketch, with 2–3° of margin before each mechanical stop.
-- **Camera colours:** HSV thresholds tuned live under the real lighting with the camera viewer (§12.5).
+- **Encoder:** the car drives itself (motor running, not pushed by hand) and the real distance is measured with a tape: 190 ticks over 20.5 cm → `TICKS_PER_CM = 9.27`. Earlier values are superseded: 15.1 (27 Oct) and 12.67 (20 Nov) were measured by pushing the car by hand, where the wheel slip is different, and the drive motor was replaced in between (journal §13.2, §17.3, §18.1).
+- **Steering:** centre and limits found with the interactive `servo_test` sketch, with 2–3° of margin before each mechanical stop; wheel angle at each stop checked with a protractor (±40°).
+- **Camera colours:** the camera settings are frozen 5 s after power-on; the H, S, V of each colour are read from the probe boxes the camera prints (or the camera viewer, §12.5), and only then are the ranges changed (journal §17.5).
 
 **Noise and interference we considered:** sunlight and strong lamps raise the TOF ambient-light level (we print the ambient value in the diagnostic sketch); dark walls return little light, and almost none when the beam hits them at an angle (journal Phase 10), so the side sensors face the wall squarely and "signal fail" readings are ignored; objects outside the field (people, flags) can look like pillars to the camera, so only a horizontal band of the image is searched.
 
@@ -381,11 +399,26 @@ flowchart LR
 | Steering | Nano | `Servo.h` on the classic Nano (500–2500 µs at 50 Hz). Centre and limits are measured, not assumed | [`servo_test`](src/hardware-tests/servo_test) |
 | Open Challenge program | Nano | Gyro heading hold with an integral term, fixed distance to the inner wall (or corridor centre), corner detection by a jump of the inner side TOF, 90° gyro turn, 12 turns, stop at the start position (§8.0) | [`open_challenge`](src/open-challenge/open_challenge) |
 | Earlier Open sketches | Nano | Wall-following PIDs, corner and turn sketches that led to `open_challenge` | History: [`corner_turn_timed`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/corner_turn_timed), [`turn_left_90_pid_brake`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/turn_left_90_pid_brake), [`wall_follow_nearest_gyro`](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/tree/f5aa0e6825ab4aaec6edc42665a4e4d067a71765/src/open-challenge/wall_follow_nearest_gyro) |
-| Camera viewer | PC browser | Test page for the camera board: live picture, pillar mask, orange / blue line mask, rows ignored, per-line status, RGB / HSV of any pixel (§12.5) | [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) |
+| Camera viewer | PC browser | Test page for the camera board, used with `camera_test` (320 × 240): live picture, pillar mask, orange / blue line mask, rows ignored, per-line status, RGB / HSV of any pixel (§12.5) | [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) |
 | Obstacle vision v3.2 | Camera | Locked camera, 160 × 120, 2 × 2 blocks, time filter, pillar position in cm (§9.3), red / magenta vote, orange and blue lines with the long-and-thin test and the floor-above check (§9.2); 14-field message to the Nano (the Nano reads 12) | [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2) |
 | Obstacle driving program | Nano | Laps by floor lines (first line sets the direction, reverse 90° turns with gyro and front / rear ToF), pillar dodging on an odometry map (§9.4), wall centring with the side ToF (§9.5), stop after the last line (§9.6) | [`obstacle_challenge`](src/obstacle-challenge/obstacle_challenge) |
-| Parking start | Nano | Leaves the parking space: side ToF, 45° gyro turn, counter-steer, timed reverse by encoder (§9.7). Not yet tested on the track | [`obstacle_go_out_of_parking`](src/obstacle-challenge/obstacle_go_out_of_parking) |
+| Parking start | Nano | Leaves the parking space: side ToF, 45° gyro turn, counter-steer, reverse by encoder ticks (§9.7). Not yet tested on the track | [`obstacle_go_out_of_parking`](src/obstacle-challenge/obstacle_go_out_of_parking) |
 | Scenario Roulette | PC browser | Draws valid official track layouts to test on and scores Open Challenge attempts | [`index.html`](src/tools/scenario-roulette/index.html) |
+
+### 7.3 Inside the two driving programs
+
+Both Nano programs have the same layers, so a fix in one layer (for example the gyro driver) is copied to the other without touching the strategy. Each sketch is one file because the Arduino IDE builds one folder per sketch; the layers are separated by function, and all settings are named constants at the top of the file, in blocks (run settings, tuning, car constants).
+
+| Layer | Functions | `open_challenge` | `obstacle_challenge` |
+|---|---|---|---|
+| Actuators | `motorOut()`, `brake()`, `servoTo()`, `encoderISR()`, `odoCm()` | ✓ | ✓ (plus reverse gear with `driveBack`) |
+| Gyro driver | `bmiStart()`, `calibrate()`, `updateGyro()` (register level, `yaw += rate × dt`) | ✓ | ✓ |
+| ToF driver | `tofStart()`, `updateTof()` (restart after 0.5 s of silence), `tofExtraOff()` | left + right | left + right + front + rear |
+| Camera link | `readSerialInput()`, `handleCameraLine()` (12 fields of the `$…` line) | — | ✓ |
+| Map and goals | `updateMap()`, `onCameraPillar()`, `pillarGoal()`, `laneGoal()` | — | ✓ |
+| Strategy | `runTest()` = the state machine, `onCorner()`, `startRun()`, `finish()` | ✓ (§8.2) | ✓ (§9.6) |
+
+**Loop timing (both programs):** every pass of `loop()` reads the serial input and the START button, updates the gyro, updates the ToF sensors and runs the state machine. The motor PWM is ramped every 20 ms (5 PWM per step, so 0 → 150 takes 0.6 s) and a status line is printed every 100 ms. The ToF sensors give a new reading every 50 ms and the camera about 10 messages per second, so the gyro is the fastest input and the steering always works on the newest heading.
 
 **Why we wrote our own drivers:** the BMI160 library we tried only returned zeros without reporting any error (journal Problem 14), and the servo libraries of the first board (a Nano ESP32) did not work (journal Problem 6). On the classic Arduino Nano the standard `Servo.h` works, so steering uses it, and the BMI160 is read with our own register-level driver, which is short, fully understood and faster.
 
@@ -467,7 +500,12 @@ stateDiagram-v2
 
 ### 8.3 Wall or no wall: how the side sensors are read
 
-> **History (not in the current code).** This window is the October design. `open_challenge` uses the distance rule of §8.0: a jump above the learned normal distance or above 1200 mm, counted with `JUMP_CONFIRM`.
+**Current code (`open_challenge`):** each side learns its *normal* distance once it has seen the wall closer than `ARM_WALL_MM` (900 mm) for `ARM_READINGS` (5) readings in a row; the normal distance is then a running average (80 % old, 20 % new) while the wall is seen. A corner is a reading more than `JUMP_DELTA_MM` (250 mm) above that normal, or above `JUMP_ABS_MM` (1200 mm). Readings of 0 mm or ≥ 4000 mm are stored as 4000 mm ("nothing in range"). Comparing each side with **its own** learned distance, instead of comparing left with right or using a fixed threshold, lets the same rule apply in 600 mm and 1000 mm corridors (the 3-lap run of 22 Nov had narrow corridors; a logged run with 1000 mm corridors is still to do).
+
+> **History (October design, not in the current code).** The window below was the design before `open_challenge`.
+
+<details>
+<summary>October design: WALL / NO WALL / NOT SURE window</summary>
 
 The side TOF sensors face the wall squarely and use ROI 16 × 8 (journal Phase 10). On the black wall each reading is either accurate or invalid, so the car does not try to measure distances it cannot see:
 
@@ -479,6 +517,8 @@ The side TOF sensors face the wall squarely and use ROI 16 × 8 (journal Phase 1
 Decisions use the last **8** readings: **6 or more** WALL → WALL (distance = median); **2 or fewer** → NO WALL; **3–5** → NOT SURE (no decision yet). The thresholds are provisional and will be confirmed after remounting the sensors (30, 45, 60 cm test).
 
 This made the algorithm **simpler**: no 2400–2600 mm "opening" threshold, no comparison of two noisy averages at ~2 m, no 165–185 cm close / far threshold, no jump threshold. The opening is the side without a wall; the corner is the moment the followed wall disappears.
+
+</details>
 
 ### 8.4 Turning, and why errors do not add up
 
@@ -506,19 +546,27 @@ Our priority is to **complete the three laps and stop correctly** — a crash lo
 
 | Case | Handling |
 |---|---|
-| Car starts at any position inside the starting section | Gyro wall following on the nearest wall; nothing about the position is assumed |
+| Car starts at any position inside the starting section | Before corner 1 the inner side is unknown, so the car holds heading 0 and centres between the two walls when both are learned and under 1200 mm (after corner 1 this centring is only the fallback when the inner wall is not usable, and it is shifted 200 mm toward the inner side). The stop uses distances measured from wherever it started (`D1`, `LSTART`), so the start position is not assumed |
+| Round direction (clockwise or counter-clockwise) | Not assumed: corner 1 sets it from the side whose reading jumps while the other does not |
 | Inner wall far away (1000 mm corridor) | A 4000 mm reading (no wall) is not used for lane control; the car keeps its heading and its learned bias until the inner wall is closer than `SIDE_MAX_MM` (1200 mm) |
 | Right after a turn, the sensor sees the tip of the inner wall diagonally | No corner is counted for 60 cm after a turn (`IGNORE_AFTER_TURN_CM`), and the inner wall must be seen again (`ARM_WALL_MM`, `ARM_READINGS`) before the next corner counts |
 | A single bad reading | Open: `JUMP_CONFIRM = 1`, one reading is enough; there is no 8-reading window in the current code (history, §8.3) |
-| Gyro drift over 3 laps | Calibration at rest before every run + wall re-alignment every straight |
-| Narrow corridor (600 mm) | The inner wall is close, its readings are valid from the start; the car follows it directly |
+| Gyro drift over 3 laps | Calibration at rest (300 samples) every time a run starts; the target heading is always an exact multiple of 90°, and the lane term (up to ±12°, with an integral) corrects the small heading error on every straight |
+| Narrow corridor (600 mm) | The inner wall is close, its readings are valid from the start; the car keeps 100 mm from it. This is the layout of the 22 Nov 3-lap run |
+| Car stuck against a wall | Motor on but encoder not moving for 0.5 s → active brake and stop (`STALL_MS`) |
+| A side sensor stops answering | No data for 0.5 s → both side sensors are restarted (`!!! TOF RESTART`) |
 | Never touch the outer wall (rule 9.18) | Open: the car keeps `INNER_TARGET_MM` (100 mm) from the **inner** wall, and any wall closer than `SAFE_WALL_MM` (70 mm) forces a full correction |
 | Wrong first turn | Not handled in the current code: there is no undo. A reverse inside the corner section is allowed (rule 9.21 / App. A.4, §3.1) |
 | Stopping inside the starting section | After exactly **12** turns (3 laps × 4 corners) the car stops at the start position (Open, by encoder) or 0.45 s after the last line (Obstacle), then brakes for 1 s and switches the motor off (§10.4). A 13th turn would carry the car out of the starting section and lose the 3 stop points (rule 9.24.3) |
 
 ### 8.7 Decision tree with encoder delays (planned 25 October; history)
 
-This is the algorithm we will build next. It keeps everything validated above (cascade controller, 90° gyro turn, active brake, WALL / NO WALL / NOT SURE window) and replaces the **timed** waits with **encoder distance**, because time-based waits changed with battery voltage (the car behaved differently on USB than on battery).
+> **History.** This plan of 25 October was replaced by `open_challenge` (§8.0), which keeps its two main ideas: decisions measured in **encoder distance** instead of time (`IGNORE_AFTER_TURN_CM`, `D1`, `LSTART`), and the inner wall as the reference after the first corner. The rest (fixed delays before the turn, Phase 2 on the outer wall, the 8-reading window) is not in the code.
+
+<details>
+<summary>The 25 October decision tree</summary>
+
+This was the algorithm planned next at that time. It kept everything validated then (cascade controller, 90° gyro turn, active brake, WALL / NO WALL / NOT SURE window) and replaced the **timed** waits with **encoder distance**, because time-based waits changed with battery voltage (the car behaved differently on USB than on battery).
 
 ```
 START
@@ -586,6 +634,8 @@ START
 
 **To measure before coding:** encoder ticks per millimetre (push the car exactly 1 m), the steering turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor. With the side sensors reliable only up to ~45 cm (journal §12.4), Phase 2 must also be checked in a 1000 mm corridor, where the outer wall may be out of range right after the first turn — in that case the car holds the gyro heading until a wall is valid.
 
+</details>
+
 ---
 
 ## 9. Obstacle Challenge strategy
@@ -602,9 +652,9 @@ The program that drives the round is [`obstacle_challenge.ino`](src/obstacle-cha
 
 | Stage | Code | Status (23 Nov 2026) |
 |---|---|---|
-| Vision: pillars, magenta walls, orange and blue lines | [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2) | Used by the driving program. 160 × 120 pixels; the pixel constants were scaled from the 320 × 240 calibration and are to be re-checked on the track |
-| Pillars on a map, and the steering law | `obstacle_challenge` (§9.4–9.5) | Same law as the straight-with-pillars tests of 27 Oct and 21 Nov (journal §18), now in the git history |
-| Corners, laps and the stop after the last line | `obstacle_challenge` (§9.6) | Committed 23 Nov; the team reports it works. Lap times and stops to be recorded in the journal |
+| Vision: pillars, magenta walls, orange and blue lines | [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2) | Runs on the car with the driving program (team report 23 Nov; Obstacle video in `video/video.md`). 160 × 120 pixels; the pixel constants were scaled from the 320 × 240 calibration, and `FOCAL_PX = 50` was confirmed by the team |
+| Pillars on a map, and the steering law | `obstacle_challenge` (§9.4–9.5) | Same law as the straight-with-pillars tests of 27 Oct and 21 Nov, where every case passed (journal §13, §18) |
+| Corners, laps and the stop after the last line | `obstacle_challenge` (§9.6) | Committed 23 Nov; the team reports it works on the car, including its edge cases. Lap times and stop positions are to be written in `docs/TESTS.md` |
 | Start from inside the parking lot | [`obstacle_go_out_of_parking`](src/obstacle-challenge/obstacle_go_out_of_parking) | Written 20 Nov; not yet tested on the track |
 | Parking after the third lap | — | In design (§9.7) |
 
@@ -620,6 +670,34 @@ flowchart LR
     L -- "yes, after the 12th turn" --> F["Drive 0.45 s more"]
     F --> E([STOP in the starting section])
 ```
+
+The states of `obstacle_challenge` (names as printed on the Serial Monitor):
+
+```mermaid
+stateDiagram-v2
+    [*] --> WAIT: power on, gyro calibrated
+    WAIT --> STRAIGHT: START button or g
+    STRAIGHT --> PRE_TURN: new line of the locked colour (first line sets blue = left, orange = right)
+    PRE_TURN --> TURN: front ToF 40 cm or less (0.75 s if no front ToF)
+    TURN --> REVERSE: predicted yaw turned 90 degrees, heading +/- 90
+    REVERSE --> STRAIGHT: rear ToF 20 cm or less (30 cm by encoder if no rear ToF), map reset
+    STRAIGHT --> DONE: after 12 turns, last line + 0.45 s
+    STRAIGHT --> DONE: safety, no line in 8 s
+    PRE_TURN --> DONE: safety, front never at 40 cm in 4 s
+    TURN --> DONE: safety, turn longer than 4 s
+    REVERSE --> DONE: safety, back-up longer than 3 s
+    DONE --> STRAIGHT: g or START (new run)
+```
+
+| State | Why it exists |
+|---|---|
+| **STRAIGHT** | One place for the three priorities: line (corner) first, then pillar, then wall centring. A line always wins, so a pillar can never hide a corner |
+| **PRE_TURN** | The camera sees a line only within ~16–23 cm, which says "a corner is coming" but not where the wall is; the front ToF measures the wall, so every turn starts at the same 40 cm |
+| **TURN** | Reversing with the wheels at the opposite lock swings the car through the corner inside the corner section (rule 9.21, §3.1); it ends by gyro angle, not time, so battery voltage does not change it |
+| **REVERSE** | Backs up straight until the rear wall is 20 cm away, so every new straight starts from the same place and the pillar map starts at (0, 0) |
+| **DONE** | Active brake, then the motor is released after 1 s and the report is printed |
+
+The stall check (motor on, wheels not turning for 0.5 s) and the `s` emergency stop work in every moving state.
 
 ### 9.2 Vision (camera board, `obstacle_camera_v3_2`)
 
@@ -721,7 +799,7 @@ The gyroscope scale is `1.007` in both programs. The hand-turn value `1.06` from
 
 ### 9.7 Parking
 
-- **Start from inside the parking lot** (+7 points): [`obstacle_go_out_of_parking`](src/obstacle-challenge/obstacle_go_out_of_parking). Two ToF sensors measure the free space, the car turns 45° toward the open side by gyro, straightens, counter-steers, and reverses a fixed number of encoder ticks. It is written but not tested on the track, and `REVERSE_TARGET_TICKS` is a placeholder until it is measured.
+- **Start from inside the parking lot** (+7 points): [`obstacle_go_out_of_parking`](src/obstacle-challenge/obstacle_go_out_of_parking). Two ToF sensors measure the free space, the car turns 45° toward the open side by gyro, straightens, counter-steers, and reverses a fixed number of encoder ticks. It is written but not tested on the track. `REVERSE_TARGET_TICKS = 597` is calculated (five wheel turns: 5 × π × 4.1 cm × 9.27 ticks/cm), not measured; the sketch has a calibration mode to measure it. It has no START button yet, which a competition run needs.
 - **Parking at the end** (+15 points): in design. After the third lap the car must find the magenta walls of the lot. The camera already detects them (they are never reported as pillars), but the message has no magenta field yet. Parallel parking needs reverse, and the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested alone first.
 
 ### 9.8 Camera viewer
@@ -736,13 +814,13 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 |---|---|---|
 | 1 | Camera detects both lines (long and thin, white floor above) | Done — 27 Oct |
 | 2 | Lines without false detections | Done — 27–28 Oct; the colour ranges were measured again with the new camera on 19 Nov |
-| 3 | Pillars on the map, steering law, dodge | Done in `obstacle_challenge` (§9.4). The same law was first validated on a straight with pillars on 27 Oct and 21 Nov with an earlier sketch (now only in the git history) |
+| 3 | Pillars on the map, steering law, dodge | Done in `obstacle_challenge` (§9.4). The same law was first validated on a straight with pillars on 27 Oct and 21 Nov with an earlier sketch (now only in the git history), where every case passed |
 | 4 | Wall centring between the pillars | Done in `obstacle_challenge` (§9.5); the team reports it works on the car (23 Nov), numbers not yet recorded |
 | 5 | Corners by reverse 90° turns, first line sets the direction | Done in `obstacle_challenge` (§9.6); the team reports it works; to record in the journal |
 | 6 | Three laps and stop after the last line | Done in `obstacle_challenge` (§9.6); to record in the journal, with lap times |
 | 7 | Gyro scale checked on the full round (yaw per corner) | To do — `1.007` in both driving programs; check the yaw per corner (§9.6) |
 | 8 | Camera sends the magenta walls to the Nano | To do — not in the message yet |
-| 9 | Start from inside the parking lot | Written 20 Nov; to test on the track |
+| 9 | Start from inside the parking lot | Written 20 Nov; to test on the track (`REVERSE_TARGET_TICKS` 597 calculated; START button to add) |
 | 10 | Parallel parking after the third lap | In design |
 | 11 | One final program, start button, battery only | `obstacle_challenge`: START button (D10), battery on first. The parking start has no button yet |
 
@@ -768,6 +846,24 @@ A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in b
 
 ## 10. Systems thinking: constraints, trade-offs and risks
 
+### 10.0 Constraints we designed against
+
+Every design choice in this repository answers one of these limits. The numbers come from the rules, the datasheets or our own measurements.
+
+| Constraint | Number | Source | What it forced |
+|---|---|---|---|
+| Car size and mass | ≤ 300 × 200 × 300 mm, ≤ 1.5 kg | Rules 11.1, 11.2 | Nothing hard; we chose 175 × 90 × 60 mm and 248 g for room in the corridors (§5.1) |
+| Narrowest corridor | 600 mm (± 100 mm at the final) | Rules §8 | Short wheelbase (9 cm) and ±40° steering: 10.7 cm turning radius (§5.3) |
+| Black walls, 100 mm high | Dark surface, low reflectance | Rules 13.3–13.6 | Side ToF straight at ~5 cm height, ROI 16 × 8; angled sensors read ~198 cm for a 30 cm wall (§6.3) |
+| Reliable ToF range on the black wall | ≈ 45 cm (straight sensor) | Journal Phase 10 | Open: keep 100 mm from the inner wall, so it is always in range; corners from jumps, not absolute distances (§8.3) |
+| Inner walls and round direction random | Each round | Rules §8 | Direction found at corner 1 (Open) or from the first line colour (Obstacle); nothing about the layout is stored (rule 9.9) |
+| Round time | 3 minutes for 3 laps (≈ 24 m) | Rules | ≥ 13 cm/s on average; the car is far faster (§5.2), so speed was spent on sensing (Obstacle PWM 70) |
+| No radio during rounds | No Wi-Fi / Bluetooth | Rule 11.6 | Camera talks to the Nano by UART cable; the Wi-Fi view is bench-only (journal §19) |
+| Main controller memory | ATmega328P: 2 KB RAM, 32 KB flash | Datasheet | One 320 × 240 RGB565 picture is 150 KB, so the vision runs on the ESP32-S3 (8 MB PSRAM) and sends a short text line (§7.1) |
+| One driving axle, ≤ 2 motors, mechanically joined | One N20 + 1 : 1 differential | Rules 11.4, 11.5 | No torque vectoring; all steering by the servo; the differential prevents rear-tyre scrub in turns (§5.2) |
+| Camera line range | Lines seen only within ~16–23 cm (low camera) | Journal Phase 11 | A line is a corner *event*; the turn point comes from the front ToF at 40 cm (§9.6) |
+| Budget and time | One PCB order ≈ 2 weeks; parts break (3 servos, 1 board, 1 camera, 1 motor) | Journal §17 | Hardware tests for every component, battery-off uploads, a spare camera board (§10.3) |
+
 ### 10.1 How the subsystems depend on each other
 
 | Decision | Affects | Example |
@@ -787,16 +883,19 @@ A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in b
 | We chose | Instead of | Because (data or test) |
 |---|---|---|
 | TOF400C (VL53L1X) | Sharp infrared | Sharp unreliable beyond 50–60 cm in our tests (journal Problem 3) |
-| Binary "wall / open" and jump detection | Comparing left vs right distances | Comparing magnitudes beyond 50 cm gave false decisions (journal §2.3) |
+| Each side compared with its own learned wall distance (jump detection) | Comparing left vs right distances | Comparing magnitudes beyond 50 cm gave false decisions with the Sharp sensors (journal §2.3); the same idea survives in `open_challenge` (§8.3) |
 | Side TOF **straight (0°)** | Angled 30° forward to see corners earlier | Black wall at 30 cm: ~198 cm (wrong) at 30°, 32.0 cm with 30/30 valid readings straight (journal Phase 10). Correct data over early data |
 | ROI **16 × 8** | ROI 1 × 6 | 1 × 6 was invalid even on a white sheet; 16 × 8 measured 38.1 cm at 40 cm, spread < 1 cm; 16 × 16 read short because its tall cone sees the floor |
 | Jump against the wall's learned normal distance (current code, §8.0) | Absolute distance thresholds at ~2 m | Beyond ~45 cm the black wall gives no valid readings, so "far wall" and "no wall" cannot be told apart by absolute distance (journal Phase 10) |
-| Wall as heading reference every straight | Gyro-only absolute headings | Gyro scale error (~1.5° per turn) exceeded the ±8° the wall controller can correct after ~6 turns (journal Problem 43) |
-| Moving reference for jump detection | Fixed reference | The fixed version tested worse on the track (journal Problem 4) |
-| Following the outer wall at its start distance | Centring between the walls | The inner walls move every round, so the centre changes; the outer wall never moves |
+| Gyro heading hold + a wall term on every straight (`K_LAT`, `KI_LAT`, up to ±12°) | Gyro-only headings | In October a gyro error of ~1.5° per turn grew to more than 8° after 6 turns and the car hit the inner wall (journal Problem 43). The current code corrects it with the measured `GYRO_SCALE` 1.007 and a lane term with an integral on every straight; the October wall re-alignment (`REALIGN_WITH_WALL`) is not in the current code |
+| Moving reference for jump detection (Sharp sensors, September) | Fixed reference | The fixed version tested worse on the track (journal Problem 4). History: the current code uses a learned normal distance instead (§8.3) |
+| Open: 100 mm from the **inner** wall (`LANE_MODE 1`) | Centre of the corridor (`LANE_MODE 0`, still in the code) or the outer wall | The inner wall stays well inside the ~45 cm reliable ToF range on the black wall in both corridor widths, the outer wall stays far away (rule 9.18: never touch it), and the shorter inside path saves time. This setting ran the 3 laps of 22 Nov |
 | Floor lines for corners in the Obstacle Challenge | Side TOF jumps | Pillars near the walls could create false jumps; the lines are fixed by the rules |
 | Pillar position in cm + odometry map of the straight (27 Oct) | "Correct third" of the image (our 7 Oct plan) | A pillar passed at a safe distance leaves the picture 15 cm before the car reaches it; with only the picture the car reacted too late (first test, 26 Oct). The map keeps the pillar while it is out of sight and says *how much* to move. Every straight-with-pillars case passed on the track |
-| Floor line measured in cm and stored on the map | Turning when the line leaves the bottom of the picture | Leaving the picture happens only ~3–5 cm ahead, with few pixels, and later at higher speed because the camera message is ~0.2 s old; a map position does not depend on speed or delay |
+| Obstacle: floor line as a corner **event** + front ToF at 40 cm to start the turn | Turning when the line leaves the picture, or at a line distance in cm | The low camera sees a line only within ~16–23 cm and its message is one picture old, so the line says *a corner is coming* but not *where the wall is*. The front ToF measures the wall itself, so every turn starts at the same distance whatever the speed (journal §18.3) |
+| Camera at 160 × 120 (`obstacle_camera_v3_2`) | 320 × 240 (v3.1) | 4 × fewer pixels per picture, so more messages per second for the pillar map; the cost is coarser distances (a pillar at 20 cm is ~12 px wide instead of ~25). The 320 × 240 pipeline measured ~12.5 fps (journal §19.1) |
+| Only the colour of the first line counts as a corner (`ONLY_LOCKED_COLOR`) | Both colours | Each corner has one blue and one orange line; locking one colour and ignoring all lines for 4 s after a corner means each corner is counted once (§9.6) |
+| Reverse 90° turn, then back up to 20 cm from the rear wall | Forward turn at the line | Every straight then starts from the same place, so the pillar map starts at (0, 0) and the next pillars are seen from the same distance; the reverse stays inside the corner section (rule 9.21, §3.1) |
 | `BLUE_MAX_SAT = 120` (October light) | Only minimum thresholds | The locked camera saw the blue line grey-teal (S 48–103), the same hue as the green pillar (S ≥ 152): a maximum saturation separated them. Since the new camera (19 Nov) blue starts at 165° and `BLUE_MAX_SAT = 200`, so the hue separates it from the green pillar |
 | Our own BMI160 driver | DFRobot library | The library returned only zeros, without errors (journal Problem 14) |
 | Standard `Servo.h` (500–2500 µs) on the classic Nano | ESP32Servo / LEDC / hand-made pulse | Built into the AVR core and works at the first try; the ESP32 libraries did not work on the earlier Nano ESP32 (journal Problem 6) |
@@ -819,7 +918,7 @@ A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in b
 | Camera 3.3 V TX into the Nano RX | No divider: 3.3 V is read as HIGH by the ATmega328P at 5 V; the link is one-way (the Nano TX is not connected to the camera; `NANO_RX_PIN = -1` in the camera sketch) |
 | Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin |
 | Drive gear skips on a sudden reverse (journal Problem 34) | Open: forward only. Obstacle: reverse ramped with `RAMP_STEP`, stopped by the rear ToF; short brake at the end |
-| Drive too slow for three laps in 3 minutes (about 13 cm/s needed; about 12.6 cm/s calculated from the encoder count) | Open: stopwatch test over 1 m at `RUN_PWM` 150 and 255 in `docs/TESTS.md`; if confirmed, check the gear ratio, the PWM and the wheel diameter before the round |
+| Too fast for the sensors (no-load top speed ≈ 2.1 m/s at 12 V, §5.2) | Speeds limited in software: Open `RUN_PWM 150` / `TURN_PWM 90`, Obstacle 70 on every phase; soft start `RAMP_STEP`. The earlier "too slow" risk (12.6 cm/s) was a calculation error, corrected on 24 Nov (§5.2). Stopwatch test over 1 m still to log (`docs/TESTS.md`) |
 | I²C bus freezes and hangs the program (journal Problem 12) | Wire timeout of 25 ms (`Wire.setWireTimeout(25000, true)`, the value in the current sketches; 50 ms in October); check connectors; each sensor tested alone first |
 | Loose sensor wire (journal Problem 30) | Locking connectors on the PCB; hardware tests before every session |
 | Lighting at the venue differs from home | Colour thresholds re-tuned on site with the camera viewer in minutes |
@@ -828,47 +927,53 @@ A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in b
 | Side TOF cannot see the black wall (journal Problem 46) | Sensors straight at ~5 cm, ROI 16 × 8; re-test with a tape measure after any change to the sensor mounts. The code checks distance only (no range status): check the readings on the track |
 | Wrong turn side at the first corner | Decision on the first jump of the first side (Open); no undo or front/back check in the current code (§3.1, §8.5) |
 | Gyro error accumulates over 12 turns | Wall re-alignment every straight |
-| The camera sees the floor lines only up to ~22 cm (low camera) | Lines put on the map and confirmed with 2 messages; if not enough, raise / tilt the camera and recalibrate |
-| Motor gear ratio and stall current not confirmed | Wrong speed, odometry or power estimates | Measure the ratio with 10 wheel turns and the stall current with a multimeter (`schemes/datasheets/N20_12V_1000RPM_specs.md`); until then the budget uses the stall value of the datasheet family |
-| Motor held at stall for a long time | Gear damage and motor heating | The code stops the motor after `STALL_MS` (0.5 s) when the wheels do not turn; do not hold the wheel by hand |
-| Steering travel not symmetric from the centre (75 servo units to the left, 85 to the right) | The car may turn better one way | Measure the wheel angle at both stops with a protractor (`docs/TESTS.md`, "Steering") and correct the centre if needed |
-| Wheel diameter is a design value (41 mm) | Speed and encoder constants drift | Measure the four mounted wheels with a calliper |
-| Parallel parking needs reverse, and the drive gear skipped on a sudden reverse | Gentle reverse only, tested alone before the parking manoeuvre. Parking is not in the competition code (§9.7) |
+| The camera sees the floor lines only within ~16–23 cm (low camera) | The line is used only as a corner event (rising edge of the locked colour); the turn point comes from the front ToF at 40 cm; all lines ignored for 4 s after a corner; without a front ToF the turn starts 0.75 s after the line |
+| Motor stall current not confirmed (power budget) | The budget uses the 0.7 A of the datasheet family; measure the peak with a multimeter, holding the wheel < 0.5 s (`schemes/datasheets/N20_12V_1000RPM_specs.md`). Odometry does not depend on it: ticks per cm are measured directly |
+| Motor held at stall for a long time (gear damage, heating) | The code stops the motor after `STALL_MS` (0.5 s) when the wheels do not turn; do not hold the wheel by hand |
+| Steering travel not symmetric from the centre (75 servo units to the left, 85 to the right, both 40°) | The heading integral (`KI_HEAD`) learns the real straight-ahead servo angle during the run, so a small centre error does not make the car drift; re-measure the centre with the wheels straight (`docs/TESTS.md`, "Steering") |
+| Wheel diameter is a design value (41 mm) | Odometry uses the measured ticks per cm (driven distance), not the diameter; the diameter only enters the speed estimate and the parking reverse count. Measure the four mounted wheels with a calliper |
+| Parallel parking needs reverse, and the drive gear skipped on a sudden reverse | The Obstacle corners already reverse 12 times per round with ramping, and the team reports the program works on the car; the parking manoeuvre is tested alone first. Parking is not in the competition code (§9.7) |
 
 The complete list of the **68 problems** we found, with their causes and solutions, is in [journal §15](docs/ENGINEERING_JOURNAL.md#15-summary-of-problems-and-solutions).
 
 ### 10.4 Why each setting has its value
 
-**Current values (from the code, 23 Nov):** `open_challenge`: `RUN_PWM 150`, `TURN_PWM 90`, `LANE_MODE 1` with `INNER_TARGET_MM 100`, side TOF ROI 16 × 8 and 50 ms budget, `GYRO_SCALE 1.007`, `TICKS_PER_CM 9.27`, steering 85 (10 / 170), gyro calibration 300 samples. `obstacle_challenge`: all speeds 70 PWM, front TOF 40 cm starts a reverse turn, rear TOF 20 cm ends the back-up, `TARGET_CM 17`, `PASS_CM 50`, `BLEND 0.3`, `FINAL_EXTRA_S 0.45`. The table below keeps the reasoning of the first design; rows whose number differs from the list above are historical.
-
-The table describes the settings of the earlier Open Challenge design (§8.1–8.7); the current values of `open_challenge` are in the header of its file (§8.0). Every number in the Open Challenge code comes from a measurement, from the field geometry, or from the rules. Values marked *provisional* are confirmed in the next test after the side sensors are remounted.
+Every number below is the value in the competition code (`open_challenge`, `obstacle_challenge`) and comes from a measurement, from the field geometry or from the rules. Settings of the October design that are no longer in the code are listed after the table.
 
 | Setting | Value | Why this value | Evidence |
 |---|---|---|---|
 | Side TOF angle | **0°** (facing the wall) | At 30° the black wall reflects the laser away: a wall at 30 cm read ~198 cm. Straight: 32.0 cm, 30/30 valid | Journal §12.3 |
 | Side TOF height | ~**5 cm** (centre) | Half of the 10 cm wall. With a 16×8 cone (≈ ±7° vertical) the beam at 50 cm covers ≈ −1 to +11 cm: almost all on the wall, little floor, nothing over the top | Journal §12.4, rule 13.3 (100 mm walls) |
 | ROI | **16 × 8** | Wide and low: measured 38.1 cm at 40 cm (30/30). 16×16 reads short (floor in the cone), 1×6 is invalid even on white | Journal §12.4 |
-| Timing budget | **50 ms** (*provisional*; 100 / 140 ms to be tested) | 33 ms gave invalid readings with narrow ROIs; more time = more light but fewer readings per second | Journal §12.2–12.4 |
+| Timing budget | **50 ms**, continuous (20 readings per second), Long mode | 33 ms gave invalid readings with narrow ROIs; more time = more light but fewer readings per second. At 0.6 m/s the car moves 3 cm between two readings | Journal §12.2–12.4, code |
 | Readings used | any distance: 0 or ≥ 4000 mm = no wall; the range-status flag is not checked (code) | "Signal fail" gave believable but wrong numbers in the October tests (63 cm at 30 cm, 65.5 cm at 80 cm) | Journal §12.3–12.4 |
-| `WALL_MAX_MM` (October design, not in the current code) | **550 mm** | 100 % valid at 400 mm, 0–27 % at 600 mm: the cut goes between | Journal §12.6 |
-| Decision window (October design, not in the current code) | **8 readings: ≥ 6 WALL, ≤ 2 NO WALL, else NOT SURE** | Wall at 40 cm: 30/30 valid; no wall: 0/30; 60 cm: 0–27 %. The NOT SURE band avoids guessing on the edge | Journal §12.6 |
 | Target distance to the inner wall | **100 mm** (`INNER_TARGET_MM`, the value of the 22 Nov 3-lap run) | The October value of 250 mm (provisional) is history. The car drives close to the inner wall, so the outer wall stays far away even in a 600 mm corridor (rule 9.18: never touch the outer wall). `SAFE_WALL_MM` (70 mm) forces a full correction from any wall | Rules 8 and 9.18, journal §12.4, code |
-| Max correction while following the wall | **12°** heading correction (`LAT_MAX_DEG`); steering command limit 70° in `obstacle_challenge` (`MAX_STEER`) | The October value of 5–8° is history | Code |
+| Steering command limit | `MAX_STEER` **70** servo units in `obstacle_challenge`; the servo itself is clamped to 10–170 in both programs | Keeps the command inside the measured mechanical stops (centre 85 ± 75 / 85) | Code, `docs/TESTS.md` |
 | Heading correction limit | **±12°** per straight (`LAT_MAX_DEG`), integral limited to ±8° (`LAT_I_MAX`) | Largest correction the wall controller can command; a bigger gyro error is not corrected by the wall alone | Journal Problem 43, code |
 | Gyro range / rate | **±500 °/s** (register 0x43 = 0x02). The output data rate is not set in the code: the program reads the sensor every loop and uses the measured time step `dt` | A 90° turn takes about 1 s (≈ 90–150 °/s peak), so ±500 °/s never saturates and gives 4× the resolution of ±2000 °/s (65.6 vs 16.4 LSB per °/s) | `open_challenge`, `obstacle_challenge` |
 | Gyro calibration | **300 samples after 0.7 s of settling** (current code; an earlier plan was 1000) | Averaging more samples makes the offset more exact. It runs automatically when the run is started with the car still, and needs no input from the team (rule 9.9) | Rules 9.9, 9.11 |
-| `GYRO_SCALE` | **1.007** (current code). The October hand-turn method (`YAW_SCALE`, see `docs/ENGINEERING_JOURNAL.md`) is history | 3-lap test (code comment); journal Problem 43 | `open_challenge`, `obstacle_challenge` |
+| `GYRO_SCALE` | **1.007** | The gyro read ~0.7 % less than the real rotation over the 3-lap test (code comment). The 21 Nov hand turn (1.06) belonged to an older sketch | `open_challenge`, `obstacle_challenge` |
 | Turn end | **90° by gyroscope**, predicted `TURN_PREDICT_S = 0.12 s` ahead; `TURN_LEAD_DEG = 0` | A turn by time changes with battery voltage and speed. The earlier brake-early and PD version is `turn_left_90_pid_brake` (history) | Code: `open_challenge`, `obstacle_challenge` |
 | Corner right after a turn | **60 cm** with no corner counted (`IGNORE_AFTER_TURN_CM`); the inner wall must be seen again (`ARM_WALL_MM = 900`, `ARM_READINGS = 5`) | A sensor that sees the tip of the inner wall right after a turn caused false corners (journal Problem 44) | Journal Problem 44, `open_challenge` |
 | Start of the turn | Open: the turn starts at the jump of the inner wall, with no delay. Obstacle: the car drives until the front ToF reads 40 cm (`FRONT_TURN_CM`) | A fixed delay depended on speed and battery; the sensor-based start does not | Code |
-| Speed | Open: `RUN_PWM 150`; Obstacle: 70 on every phase | The Obstacle car is slower on purpose: the camera needs time for each message (§8.0) | Code |
-| Lower speed in the turn | Open `TURN_PWM 90`, Obstacle `TURN_PWM 70` | Lower values were too weak to turn the car (`open_challenge` comment) | Code |
-| FRONT/BACK check after the first turn | — | Not in the current code (history, §8.5) | — |
+| Speed | Open: `RUN_PWM 150`; Obstacle: 70 on every phase | The car can go far faster (§5.2); the Obstacle car is slower on purpose because each camera message is one picture old and the pillar must be mapped before the car reaches it | Code |
+| Lower speed in the turn | Open `TURN_PWM 90`, Obstacle `TURN_PWM 70` | A slower turn overshoots less; lower values were too weak to turn the car (`open_challenge` comment) | Code |
 | Turns before stopping | **12** | 3 laps × 4 corners; a 13th turn leaves the starting section (rule 9.24.3) | Rules 9.22, 9.24.3 |
 | Final stop | **active brake for 1 s**, then the motor is switched off (`finish()` brakes; after 1 s `motorOut(0)`) | Stops the car at the end of the run; rule 9.24.2 asks for no movement after 15 s, so this is to be checked on the track | Rules, code |
 | Motor direction | Open: forward only. Obstacle: reverse for each corner, ramped | A sudden reverse made a drive gear skip | Journal Problem 34 |
 
-**The motor encoder is wired and used by `open_challenge`.** It is connected to D2 / D3 (the Nano's two interrupt pins). The program converts the counts to distance with `TICKS_PER_CM = 9.27` (measured 21 Nov with the motor running) and uses that distance for odometry. Distance-based delays for the straights before each turn (§8.7) are not in the code yet; the current program still uses time for those.
+**Pillar-dodging settings (`obstacle_challenge`):**
+
+| Setting | Value | Why this value |
+|---|---|---|
+| `TARGET_CM` | 17 cm | Half the car (4.5) + 10 cm gap + half the pillar (2.5): the pillar centre is never closer than this to the car centre |
+| `ARRIVE_BEFORE_CM` | 55 cm | The car must already be on the safe side before the pillar. With a 10.7 cm turning radius the sideways move needs room. The value was raised on the track step by step (28 → 40 → 55 cm); at 28 cm the car turned almost on top of the pillar (team notes of 21 Nov, journal §24) |
+| `RETURN_AFTER_CM` | 25 cm | The camera is 11.7 cm ahead of the rear axle, so a pillar must be well behind the camera before the car returns, or the rear of the car clips it (journal §18.2) |
+| `PASS_CM` | 50 cm | After a pillar is passed the car keeps its heading this far before centring again, so it does not swing back toward the pillar it just passed |
+| `SAME_PILLAR_CM` / `BLEND` | 15 cm / 0.3 | Two detections of the same colour closer than 15 cm are the same pillar; each new picture moves the stored position 30 %, which averages the noise of single pictures |
+| `MAX_AIM_DEG` / `LOOK_MIN_CM` | 60° / 12 cm | The aiming angle is limited, and the look-ahead never shrinks below 12 cm, so the steering never "explodes" next to a pillar |
+
+**History (October design, not in the current code):** `WALL_MAX_MM` 550 mm and the 8-reading WALL / NO WALL / NOT SURE window (journal §12.6), the FRONT / BACK check after the first turn, the wall re-alignment `REALIGN_WITH_WALL` (Problem 43) and the timed delays of §8.7. The encoder, wired to D2 / D3, is used by both programs for distances (`TICKS_PER_CM = 9.27`, measured 21 Nov with the motor running); no program uses timed delays before a turn.
 
 ---
 
@@ -882,8 +987,9 @@ The journal shows the design as a chain of decisions, each one changing the cons
 | Mechanics → servo → code | Ackermann friction destroyed three servos (Problems 29 and 33) | Parallel rack and pinion. Every steering constant (centre 85, limits 10 and 170) depends on this mechanism, so a change to the mount means measuring the centre again (§10.3) |
 | Encoder → odometry → map | 19.6 ticks per cm made the pillar map 23 % short (Problem 54). The constant was measured again and changed twice | The code uses 9.27 ticks per cm, measured on 21 Nov with the motor running. The same odometry drives the pillar map, the lane logic of the Obstacle program and the final stop of the Open program, so one calibration error reaches all three |
 | Power → sensors and servo | The TOF sensors and the servo share the 5 V buck rail. The TOF supply was moved back to 5 V on 17 Nov (Problem 67) | A voltage drop under servo load can show up as wrong distances, not as an error. The stall test on the rail is still open (§10.3) |
-| Failures → schedule → what was tested | A dead N20 motor (Problem 63), a swapped TOF (Problem 64) and a damaged camera board (Problem 65) between 29 Oct and 20 Nov (journal §17) | The Open program was restarted and its three-lap run is recorded on 22 Nov. The full Obstacle program has no recorded lap on the track yet (§20.5), so its numbers are design values until it is tested |
+| Failures → schedule → what was tested | A dead N20 motor (Problem 63), a swapped TOF (Problem 64) and a damaged camera board (Problem 65) between 29 Oct and 20 Nov (journal §17) | The Open program was restarted and its three-lap run is recorded on 22 Nov. The Obstacle program was consolidated on 23 Nov; the team reports it works on the car and the video is recorded, but its lap times are not yet logged (journal §20.5) |
 | Sudden reverse → gear → speed | A sudden reverse made a drive gear skip (Problem 34) | Open drives forward only. Obstacle reverses at PWM 70 with ramping, so it is slower by design (§8.0) |
+| Wrong speed estimate → risk list → priorities | A double-counted gear ratio made the car look too slow for the 3-minute round (corrected 24 Nov, §5.2) | Checking a calculation against a run that already happened (the 8 s safety stop never fired in 12 corners) caught it; the real limit is the sensors, so the speeds stay capped in software |
 
 ---
 
@@ -906,6 +1012,41 @@ Every component is tested alone before it is joined to the rest:
 | Open Challenge score | Laps completed and official points, logged per attempt in Scenario Roulette |
 | Scenario generator correctness | 600 generated scenarios checked automatically, 0 rule violations (journal §7) |
 | Motor, steering, ToF, gyroscope, camera and car geometry | Planned measurements with a column for each value, the commit tested and the battery voltage: [docs/TESTS.md](docs/TESTS.md). Values not yet measured are left empty, not estimated |
+
+### 11.1 How a parameter is tuned
+
+We change **one thing at a time** and measure before and after, with the program printing what it decided:
+
+1. **Make the program report its decision.** Every driving program prints its state, the distances, the yaw and the mode every 100 ms, and a final report (yaw, heading error, corners, `D1`, `LSTART`, time). The camera prints its fps, each line's accept / reject reason and the H, S, V of two probe boxes.
+2. **Measure against a reference that does not come from the car:** tape measure, protractor, kitchen scale, stopwatch, or the official field geometry.
+3. **Change one constant**, run again, and keep the change only if the measurement improves. When a change made things worse we went back to the last version that worked and changed one thing at a time from there (journal §13.6, 28 Oct: several line-detection changes together gave false blue lines; going back to the last good version and adding one change at a time — the floor-above check, then `BLUE_HUE_LOW` 110 — fixed it).
+4. **Log it** in the journal (with the problem number) and, for runs, in `docs/TESTS.md`.
+
+Examples of that loop with real numbers: ROI 1 × 6 → 16 × 8 (§6.3), `TICKS_PER_CM` 19.6 → 15.1 → 9.27 (§6.3), `BLUE_HUE_LOW` 85 → 110 → 165 as the light and the camera changed (§9.2), `RETURN_AFTER_CM` raised until the car stopped clipping the pillar it had just passed (journal §18.2), `FOCAL_PX` 112 → 100 at 320 × 240 from three measured distances (journal §13.2).
+
+### 11.2 Validation results (measured)
+
+Only measured values, each with its source. Values that are still calculated are marked as such in `docs/TESTS.md` and are not in this table.
+
+| What was validated | Test | Result | Source |
+|---|---|---|---|
+| **Open Challenge, full round** | `open_challenge`, `LAPS = 3`, narrow corridors | **3 laps, 12 corners, first attempt**, no hand intervention, stopped by the program inside the starting section near the start wall | Journal §19.2 (22 Nov) |
+| Side ToF on the black wall, sensor straight, ROI 16 × 8 | Wall at 40 / 60 cm, 30 readings each | 38.1 cm (30/30 valid, spread < 1 cm) / 59.2 cm (8/30 valid) → reliable range ≈ 45 cm | Journal §12.4 |
+| Side ToF angled 30° (rejected design) | Wall at 30 cm | ~198 cm (wrong) at ROI 1 × 6; straight (ROI 16 × 16) 32.0 cm | Journal §12.3 |
+| Encoder, motor running | 190 ticks over a taped 20.5 cm | 9.27 ticks per cm | Journal §18.1 |
+| 90° gyro turn while moving (method) | 6 runs, 3 left + 3 right (28 Oct constants) | Final angle 89.3–90.3° | `docs/TESTS.md`, `turn_measure_moving` |
+| Turning sweep at full lock | Tape measure, 6 runs | Left 12 cm forward / 40 cm sideways; right 15 / 39 cm | `docs/TESTS.md` |
+| Steering geometry | Protractor at both servo stops | ±40°, turning radius 10.7 cm (wheelbase 9 cm) | `docs/TESTS.md` |
+| Pillar distance from width (320 × 240) | Pillar at 30 / 50 cm, centred and 16.75 cm to the side | 50 cm read as 51 cm ahead and ±18 cm to the side (symmetric) → `FOCAL_PX` 100 | Journal §13.2 |
+| Straight with pillars (map + steering law) | Every case of one straight, on the track | All cases passed ("works perfectly") after the encoder fix | Journal §13.4, Problem 54 |
+| Floor line row → distance | 8 distances, 2–22 cm | `d = 276.2 / (row − 129.2) − 1.8`, error ≤ 1 cm | Journal §13.2 |
+| Floor lines, false detections (v3.1) | Empty floor in 3 places, black wall | No false line; orange seen from 16 cm, blue from 9 cm, 12.5 fps | Journal §13.6 |
+| Vision frame rate | 320 × 240, pillars + both lines | ~12.5 fps (4.5 fps with the rejected "join pieces" filter) | Journal §13.6 |
+| Gyro calibration quality | Every start | Offset accepted only with ≥ 250 / 300 good samples | Code (`calibrate()`) |
+| Scenario generator | 600 generated layouts checked automatically | 0 rule violations | Journal §7 |
+| Mass and size | Kitchen scale, ruler | 248 g; 17.5 × 9 × 6 cm | `docs/TESTS.md` |
+
+**Not yet measured (listed so nobody mistakes them for results):** Open and Obstacle round times and the 5-attempt score tables; the stopwatch speed; the 160 × 120 frame rate; the gyro drift at rest; the stall current. The empty rows are in `docs/TESTS.md`.
 
 ---
 
@@ -950,45 +1091,49 @@ If the upload stays at `Connecting...`: hold **BOOT**, press and release **RESET
 
 **Camera viewer** (the page we use to test the camera): upload [`camera_test`](src/hardware-tests/camera_test) (the vision code of the **v3.1** camera sketch, 320 × 240; the driving camera [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2) uses 160 × 120) to the camera board with `STREAM_TO_PC = true`, close the Serial Monitor, open [`camera_viewer.html`](src/tools/camera_viewer/camera_viewer.html) in **Chrome or Edge** (Web Serial is needed), press **Connect camera** and choose the camera port. It shows the picture, the pillar mask, the orange / blue line mask, the rows the car ignores, the status of each floor line, and the RGB / HSV of the pixel under the mouse. Set `STREAM_TO_PC = false` again before driving.
 
+The page is drawn for 320 × 240 pictures, so it is used with `camera_test`. To check the driving camera `obstacle_camera_v3_2` (160 × 120), keep `STREAM_TO_PC = false` and read its status lines on the Serial Monitor: fps, each line's accept / reject reason and the H, S, V of the two probe boxes.
+
 The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps its own `IGNORE_TOP_ROWS`, 58 in v3.2, 115 in v3.1); after a RESET of the camera the page reconnects by itself.
 
 ---
 
 ## 13. Current status and next steps
 
+Status on 24 Nov 2026. "Validated" means tested on the car with a result recorded in the journal; "team report" means the team saw it work but the numbers are not logged yet.
+
 | Part | Status |
 |---|---|
-| Custom PCB and wiring | Done — Manufactured and working |
-| TOF sensors (×4), unique addresses, ROI, filtering | Done — Working |
-| Gyroscope heading | Done — Working (own driver) |
-| Drive motor through TB6612FNG | Done — Tested |
-| Pillar detection | Done in the October tests (v3.1). The v3.2 constants are not validated on the track yet (§9.2) |
-| Obstacle vision v3.2 (QQVGA, half resolution) | Used by the driving program since 23 Nov (`obstacle_camera_v3_2`); the pixel constants are not validated on the track yet |
-| Live camera view over WiFi | Bench test only (`camera_webserver_emakefun`). The competition camera sketch has no Wi-Fi code (rule 11.6: no radio during rounds) |
-| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 26 printed parts including the front protrusion + 2 tyre moulds; full STEP assembly in `models/`) |
-| Steering calibration on v3 | Done 21 Nov — centre 85, left 10 / right 170 (servo units). **Open check:** the midpoint of the two stops is 90, not 85; to re-measure with the wheels straight (`docs/TESTS.md`). Used by `obstacle_challenge`, `open_challenge`, the parking sketch and the tests since 22 Nov |
-| Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
-| 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
-| One complete corner (decide, turn, check, follow inner wall) | Validated 21–24 Oct (`corner_turn_front_trigger`, `corner_turn_timed`, one-corner version; in the git history) |
-| Side TOF data on the black wall | In progress — Cause found (30° angle + ROI 1 × 6); remounting straight at ~5 cm with ROI 16 × 8 |
-| Open Challenge program (`open_challenge`, 12 turns, stop at the start position) | Three laps completed on the first attempt, stopping in the starting section near the same wall (journal §19.2). Program in the repository since 20 Nov (§8.0) |
-| Encoder: delays in distance instead of time (§8.7) | Planned — the ticks per cm (9.27, 21 Nov) are now used in `open_challenge` too; the distance-based delays are not in the code yet |
-| Videos: one per challenge (≥ 30 s autonomous) | Done — Open and Obstacle videos recorded (`video/video.md`, rule 7) |
-| Gyroscope (Obstacle Challenge) | Both programs use `GYRO_SCALE = 1.007`; the 21 Nov hand turn (`1.06`) belonged to an older sketch and is not used. Check the yaw per corner on the track |
-| Camera → Nano UART link | Done — Working (14-field message, the first 12 read by `obstacle_challenge`) |
-| Obstacle: pillars on a map (steering law) | Validated 27 Oct and 21 Nov on one straight (earlier sketch, now in the git history); the same law is in `obstacle_challenge` since 23 Nov |
-| Obstacle: stop after the last line | Written 23 Nov in `obstacle_challenge`: drives `FINAL_EXTRA_S` (0.45 s) after the last line, then stops. The team reports it works on the car; not yet recorded in numbers |
-| Obstacle: orange and blue lines in cm | Validated 28 Oct: no false lines (floor, wall); orange from 16 cm, blue from 9 cm; row → cm formula measured |
-| Obstacle: corners, 3 laps, stop | Written 23 Nov in `obstacle_challenge`: first line sets the direction, reverse 90° turns, 12 corners. The team reports it works; lap results to be recorded in `docs/TESTS.md` |
-| Parking | Start from inside the lot written 20 Nov (`obstacle_go_out_of_parking`), not yet tested on the track. Parking at the end of the round: in design |
-| Camera viewer page (`src/tools/camera_viewer`) | Done — Used to test the new camera board (picture, masks, floor-line status, pixel HSV) |
-| Documentation review against the rubric | Done — 20 Nov: links repaired, rubric map, Obstacle flowchart, status tables updated (CHANGELOG v1.9) |
+| Custom PCB, wiring, power | Done — manufactured and working; budget in `schemes/README.md` §4.2 |
+| Chassis v4: printed base, rack-and-pinion steering (±40°), silicone tyres, front protrusion | Done — built; 28 STL files and the full STEP assembly in `models/` |
+| Sensors: 4 × ToF (unique addresses), BMI160 (own driver), encoder | Done — hardware tests in `src/hardware-tests`; side ToF straight at ~5 cm with ROI 16 × 8 (§6.3) |
+| Steering calibration | Done 21 Nov — centre 85, limits 10 / 170. **Open check:** the midpoint of the two stops is 90; the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
+| **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. To do: log 5 attempts with times in `docs/TESTS.md`, including 1000 mm corridors and both directions |
+| **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Team report** — works on the car including its edge cases (23 Nov); video recorded. The pillar map and steering law were validated on 27 Oct and 21 Nov; the lines on 28 Oct. To do: log 5 attempts in `docs/TESTS.md` and the 160 × 120 frame rate |
+| Parking start (`obstacle_go_out_of_parking`) | Written 20 Nov, not tested on the track; needs a START button and a measured `REVERSE_TARGET_TICKS` |
+| Parking at the end of the round | In design; the camera already separates the magenta walls but does not send them yet (§9.7) |
+| Camera viewer page | Done — used to set up the new camera board on 19 Nov (journal §17.5) |
+| Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19, journal §24) |
+
+**Next steps, in order of points at risk:** (1) log the 5-attempt tables for both challenges; (2) time 1 m at `RUN_PWM 150` and 255; (3) parking start: START button, measure the reverse count, test; (4) send the magenta walls to the Nano and design the final parking.
+
+<details>
+<summary>Earlier milestones (October, now in the git history)</summary>
+
+| Milestone | Status |
+|---|---|
+| Gyro wall following | Validated 20 Oct (`wall_follow_nearest_gyro`) |
+| 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`) |
+| One complete corner (decide, turn, check, follow inner wall) | Validated 21–24 Oct (`corner_turn_front_trigger`, `corner_turn_timed`) |
+| Side ToF on the black wall | Cause found 24–25 Oct (30° angle + ROI 1 × 6); fixed by mounting the sensors straight with ROI 16 × 8 |
+| Pillar detection at 320 × 240 (v3.1) | Validated in October; replaced by v3.2 at 160 × 120 |
+
+</details>
 
 ---
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (the scoring commit of 23 Nov, described in the changelog).
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (23 Nov) and **v1.9.19** (24 Nov, this documentation review: speed reasoning corrected, constraints and validation tables, Obstacle state machine, every document checked against the code). Both are described in the changelog.
 
 ### 14.1 Submission checklist
 
@@ -999,12 +1144,12 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 | First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Met by `814ddcf` (4 Oct, 31.2 % of the final code). The first commit in the history, `f3a9770`, contains no code. Details in [docs/COMMITS.md](docs/COMMITS.md). The organisers should confirm this reading of the rule |
 | Second commit | ≤ 8 Nov 2026 | Met by `06f5685` (5 Nov) |
 | Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | Sent on 23 Nov 2026; receipt confirmed by the organisers (journal §22.1) |
-| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Committed on 23 Nov: the final Open and Obstacle programs, the AI disclosure (§15), the commit history, the checklist, the test log (with the turn sketch `src/hardware-tests/turn_measure_moving`) and the journal. Measured values are still missing; they can only be added in later commits, which the rules may not score |
-| Motor data (gear ratio, stall current) for the power budget | — | Partly — the budget uses the stall current of a datasheet of the same family (0.7 A); the gear ratio and the stall current of this motor are to be measured ([schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md)). The 6 V datasheet `N20_motors.pdf` (a different motor) was removed on 23 Nov |
+| Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Final programs, AI disclosure (§15), commit history, checklist, test log and journal committed on 23 Nov; the documentation review v1.9.19 (no code logic changed) is committed on 24 Nov, inside the deadline once it is merged into `main` that day. Measured values added later may not be scored |
+| Motor data (gear ratio, stall current) for the power budget | — | Partly — the budget uses the stall current of a datasheet of the same family (0.7 A); the gear ratio (≈ 17 : 1 from the encoder count, §5.2) and the stall current of this motor are to be measured ([schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md)). The 6 V datasheet `N20_motors.pdf` (a different motor) was removed on 23 Nov |
 | Test log with runs, successes, times and stop positions | — | Template created in [docs/TESTS.md](docs/TESTS.md); rows are added after each run |
 | AI tools disclosure | — | Done — [§15](#15-use-of-ai-tools) |
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
-| Code for **every** programmed component, with comments | — | In progress — Obstacle: `obstacle_challenge`, `obstacle_camera_v3_2` and `obstacle_go_out_of_parking`, each with its README (23 Nov); hardware tests in `src/`; the Open Challenge program is `open_challenge` and its earlier versions are in the git history; the three-lap run is recorded in the journal (§19.2) |
+| Code for **every** programmed component, with comments | — | Done — every program that runs on the car is in `src/` with a README: `open_challenge`, `obstacle_challenge`, `obstacle_camera_v3_2`, `obstacle_go_out_of_parking` and the hardware tests; earlier versions are in the git history |
 | Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/`. Printed photo of chassis v4 still pending |
 | YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`) |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
@@ -1017,7 +1162,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 
 Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-Of the 144 commits on `main`, 69 are authored by the Claude account (`noreply@anthropic.com`). The commits are not rewritten, so each change can be traced to its author.
+Of the 180 commits on `main` on 23 Nov 2026, 96 are authored by the Claude account (`noreply@anthropic.com`); the review of 24 Nov adds a few more by the same account. The commits are not rewritten, so each change can be traced to its author.
 
 - **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.
