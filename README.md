@@ -513,7 +513,7 @@ stateDiagram-v2
 | **TURN** | Full steering toward the inner side until the predicted yaw reaches the old heading ± 90°. Then the target heading changes by 90°, `corners` goes up, the walls are forgotten and the car returns to STRAIGHT. When `corners` reaches `4 × LAPS`, `finalLeg` becomes true |
 | **DONE** | Wheels straight and active brake (both TB6612FNG inputs HIGH). One second later the motor is switched off and the final report prints (yaw, heading, error, corners, D1, WALL, LSTART, time) |
 
-**Where the car stops.** Corner 1 sets `D1`. With `LAPS ≥ 2`, `LSTART` is measured on lap 2 (end of turn 4 → corner 5). When the last turn ends, `stopAtCm` = turn end + (`LSTART − D1 + STOP_OFFSET_CM`). With `LAPS = 1` the stop is `WALL − D1` after the inner wall is seen, or `FALLBACK_CM` if nothing was measured.
+**Where the car stops.** Corner 1 sets `D1`. With `LAPS ≥ 2`, `LSTART` is measured on lap 2 (end of turn 4 → corner 5). When the last turn ends, `stopAtCm` = turn end + (`LSTART − D1 + STOP_OFFSET_CM`), with `STOP_OFFSET_CM` = 10 cm (the value the team uses since 24 Nov, so the car stops 10 cm further than the measured start position). With `LAPS = 1` the stop is `WALL − D1` after the inner wall is seen, or `FALLBACK_CM` if nothing was measured.
 
 ### 8.3 Wall or no wall: how the side sensors are read
 
@@ -977,7 +977,7 @@ Only measured values, each with its source. Values that are still calculated are
 | Scenario generator | 600 generated layouts checked automatically | 0 rule violations | Journal §7 |
 | Mass and size | Kitchen scale, ruler | 248 g; 17.5 × 9 × 6 cm | `docs/TESTS.md` |
 
-**Not yet measured (listed so nobody mistakes them for results):** the points of the Open runs (six runs with round times of 24.21–25.19 s are logged in `docs/TESTS.md`, journal §24.11, but their points, battery voltage and commit are not recorded), the Obstacle round times and score table; the stopwatch speed; the 160 × 120 frame rate; the gyro drift at rest; the stall currents read in series with the multimeter (N20 and MG90 are calculated from the winding resistances, see §5.2 and [schemes/datasheets/MG90_stall_current_measurement.md](schemes/datasheets/MG90_stall_current_measurement.md)); the 5 V rail under servo stall. The empty rows are in `docs/TESTS.md`.
+**Not yet measured (listed so nobody mistakes them for results):** the battery voltage and commit of the six Open runs (logged in `docs/TESTS.md`, journal §24.11, with round times of 24.21–25.19 s and 30 of 30 points each), the Obstacle round times and score table; the stopwatch speed; the 160 × 120 frame rate; the gyro drift at rest; the stall currents read in series with the multimeter (N20 and MG90 are calculated from the winding resistances, see §5.2 and [schemes/datasheets/MG90_stall_current_measurement.md](schemes/datasheets/MG90_stall_current_measurement.md)); the 5 V rail under servo stall. The empty rows are in `docs/TESTS.md`.
 
 ---
 
@@ -1038,7 +1038,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Chassis v4: printed base, rack-and-pinion steering (±40°), silicone tyres, front protrusion | Done — built; 28 STL files and the full STEP assembly in `models/` |
 | Sensors: 4 × ToF (unique addresses), BMI160 (own driver), encoder | Done — hardware tests in `src/hardware-tests`; side ToF straight at ~5 cm with ROI 16 × 8 (§6.3) |
 | Steering calibration | Done 21 Nov — centre 85; ±40° took 75 units to the left and 85 to the right, so the code uses 85 ± 80 = limits 5 / 165 (PR #39, 24 Nov). **Open check:** the two sides are not symmetric (75 against 85); the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
-| **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. Six more runs on 24 Nov, three ccw and three cw from different start sections, all reported successful with a good stop (round time 24.21–25.19 s for three laps; `docs/TESTS.md`, journal §24.11). To do: fill in the points, battery voltage and commit of those runs, and log runs with 1000 mm corridors |
+| **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. Six more runs on 24 Nov, three ccw and three cw from different start sections, all with three laps, no wall touch, no repair and a correct stop: 30 of 30 points, round time 24.21–25.19 s (`docs/TESTS.md`, journal §24.11). To do: fill in the battery voltage and commit of those runs, and log runs with 1000 mm corridors |
 | **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Team report** — works on the car including its edge cases (23 Nov); video recorded. The pillar map and steering law were validated on 27 Oct and 21 Nov; the lines on 28 Oct. To do: log 5 attempts in `docs/TESTS.md` and the 160 × 120 frame rate |
 | Parking start (`obstacle_go_out_of_parking`) | Written 20 Nov, not tested on the track; needs a START button and a measured `REVERSE_TARGET_TICKS` |
 | Parking at the end of the round | In design; the camera already separates the magenta walls but does not send them yet (§9.7) |

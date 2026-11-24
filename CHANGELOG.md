@@ -6,11 +6,12 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day). 
 
 ## v1.9.28 — 24 November · Six Open Challenge runs logged
 
-Only documents changed; **no code changed**.
+**Code changed in one constant:** `STOP_OFFSET_CM` in `open_challenge.ino` from 0 to **10**, the value the team uses (README §8.0 and the sketch README match). No other code changed.
 
 - **`docs/TESTS.md`:** the empty Open Challenge table now has six rows from the team's runs of 24 Nov: three ccw (24.21, 24.36, 24.41 s) and three cw (24.79, 24.97, 25.19 s), each from a different starting section; all reported as success with a good final stop.
 - **Round time:** the team confirmed that the times are for the **full three-lap round**; they are in the "Round time (s)" column.
-- **Left empty on purpose:** commit, battery voltage, outer wall, repair and the points of 1.1–1.3 were not reported.
+- **Points:** the team confirmed no repair, no outer-wall touch, three laps and the right stop section in all six runs: 24 + 3 + 3 = **30 points** each.
+- **Left empty:** commit and battery voltage were not reported.
 - README "Not yet measured" and Open Challenge status updated; journal §24.11.
 
 ## v1.9.27 — 24 November · Servo MG90 stall current measured
