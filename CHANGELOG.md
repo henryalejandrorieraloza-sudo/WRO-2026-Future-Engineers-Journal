@@ -4,6 +4,14 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day) and is the tag of the scoring commit._
 
+## Unreleased — 23 November (late) · Reproducibility of the test log
+
+- **Turn sketch added:** `src/hardware-tests/turn_measure_moving/` holds the sketch behind the six 90° in-motion gyro runs in `docs/TESTS.md`. Its README states its constants (`YAW_SCALE` 1.00, `TICKS_PER_CM` 15.1, steering centre 120) and that they differ from the current code.
+- **Test log:** the 22 Nov three-lap run is narrowed to `3010306` or `c3441cd`; both have `STEER_CENTER` 85 and `TICKS_PER_CM` 9.27, and their parent `30f5ca9` has 90 and 15.1.
+- **Open check:** the steering stops 10 and 170 average 90, not the centre 85. Listed in `docs/TESTS.md` for measurement.
+- **Index:** `src/README.md` lists the turn sketch in the hardware-tests table.
+- No value was added without a measurement, and no competition program changed.
+
 ## v1.9.18 — 23 November (night) · Car width 9 cm everywhere, docs aligned with the code
 
 - **Width:** the car is **9 cm wide** (measured and confirmed on 23 Nov). The 9.5 cm in the README, the journal, the models, the photos and the test log is corrected to 9 cm.
