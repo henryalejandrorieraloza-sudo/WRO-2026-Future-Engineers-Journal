@@ -26,7 +26,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 | Printed base plate | 120 mm × 70 mm |
 | Wheels | 36 mm printed hub + cast silicone tyre ≈ 41 mm outside diameter |
 | Steering | 12-tooth pinion, module 1 mm, on a 68 mm rack |
-| Differential | 1 : 1 between the motor gear and the differential gear (both 22 mm outside diameter) |
+| Differential | 1 : 1 between the motor gear and the differential gear (30 teeth each, both 22 mm outside diameter) |
 
 Dimensions in the table above were measured on the STL files and on the real car.
 
@@ -61,10 +61,10 @@ All parts are in [`stl/`](stl). The "Qty" column is the number of copies needed 
 
 | Part | Render | Qty | Size (mm) | Function |
 |---|---|---|---|---|
-| [`motor_gear.stl`](stl/motor_gear.stl) | <img src="images/motor_gear.png" height="110"> | 1 | Ø 22 × 8 | Gear on the N20 shaft |
+| [`motor_gear.stl`](stl/motor_gear.stl) | <img src="images/motor_gear.png" height="110"> | 1 | Ø 22 × 8 | Gear on the N20 shaft, 30 teeth |
 | [`motor_restrain.stl`](stl/motor_restrain.stl) | <img src="images/motor_restrain.png" height="110"> | 1 | 24 × 10 × 6 | Clamp that holds the N20 motor against the base |
 | [`differential_support.stl`](stl/differential_support.stl) | <img src="images/differential_support.png" height="110"> | 2 | 18 × 30 × 25 | Holds the differential and the rear axle |
-| [`differential_gear.stl`](stl/differential_gear.stl) | <img src="images/differential_gear.png" height="110"> | 1 | Ø 22 × 5 | Ring gear driven 1 : 1 by the motor gear |
+| [`differential_gear.stl`](stl/differential_gear.stl) | <img src="images/differential_gear.png" height="110"> | 1 | Ø 22 × 5 | Ring gear, 30 teeth, driven 1 : 1 by the motor gear |
 | [`differential_box.stl`](stl/differential_box.stl) | <img src="images/differential_box.png" height="110"> | 1 | 27 × 20 × 12 | Housing of the bevel gears |
 | [`diff_bevel_gear.stl`](stl/diff_bevel_gear.stl) | <img src="images/diff_bevel_gear.png" height="110"> | 4 | Ø 13 × 4 | Bevel gears that let the rear wheels turn at different speeds in corners |
 | [`diff_big_axle.stl`](stl/diff_big_axle.stl) | <img src="images/diff_big_axle.png" height="110"> | 2 | 45 × Ø 3.3 | Cross axle of the differential |
