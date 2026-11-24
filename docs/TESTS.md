@@ -85,10 +85,10 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | --- | --- | --- | --- |
 | Wheel diameter, four wheels, mounted | calliper | — | Design value 41 mm |
 | Wheelbase (front to rear axle) | ruler | 9 cm | Confirmed on 23 Nov 2026 (first measured 19 Nov for the earlier `straight_pillars.ino`) |
-| Car width | ruler | 9 cm | Confirmed on 23 Nov 2026. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` and `TARGET_CM` (4.5 + 10 + 2.5 = 17 cm) |
+| Car width, including the wheels | ruler | 9 cm | Confirmed on 23 Nov 2026 and again on 24 Nov 2026. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` and `TARGET_CM` (4.5 + 10 + 2.5 = 17 cm) |
 | Full length, with front protrusion | ruler | 17.5 cm | Protrusion about 4 cm |
 | Rear (encoder) axle to camera lens | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` |
-| Track width (between wheels) | ruler | 9 cm | Measured by the team on 23 Nov 2026 |
+| Car body width, without the wheels | ruler | 7 cm | Measured on 24 Nov 2026 (the 9 cm above is this 7 cm plus the wheels) |
 | Mass, ready to run, with battery | kitchen scale, ±1 g | 248 g | Weighed with the battery. Note what is mounted |
 | Turning sweep at full lock, left (from the lens) | tape measure, 6 runs | 12 cm forward, 40 cm sideways | Includes about 2.4 cm of braking. Source: notes of 28 Oct |
 | Turning sweep at full lock, right (from the lens) | tape measure, 6 runs | 15 cm forward, 39 cm sideways | Includes about 2.2 cm of braking. Less repeatable than the left turn in the tape readings. Source: notes of 28 Oct |

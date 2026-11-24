@@ -4,6 +4,12 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.22 — 24 November · Width with and without wheels
+
+Only documents changed; **no code changed**.
+
+- **Width:** the car is **9 cm wide including the wheels** and **7 cm without them** (measured on 24 Nov). The 9 cm used in the code (`SAFE_LAT_CM`, half width 4.5 cm) is the width with wheels, which is the right one for clearance. `docs/TESTS.md` now has one row for each width (the old "track width 9 cm" row said the same as the car width) and README §5.1 states both.
+
 ## v1.9.21 — 24 November · Flow diagrams checked against the code
 
 Only documents changed; **no code changed**. All 7 Mermaid diagrams were compared with `open_challenge.ino` and `obstacle_challenge.ino` and render without errors.
