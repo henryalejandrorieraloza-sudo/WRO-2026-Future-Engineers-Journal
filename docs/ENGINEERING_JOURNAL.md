@@ -1941,6 +1941,10 @@ The same datasheet gave a second finding: the TB6612FNG's recommended output cur
 
 New rules: charge only as 3S HV, and measure the pack before the first run of the day and write it in `docs/TESTS.md`. Open: one test run with a fully charged pack and one with a half-used pack, with the same PWM, to compare the distance travelled.
 
+### 24.9 Motor-to-wheel ratio counted (24 November)
+
+I counted the turns of the motor output shaft against the turns of the wheel: **1 : 1**. It confirms that the differential adds no reduction, so the 1000 rpm of the N20 is the wheel speed and the 119 encoder ticks per wheel turn are also per output-shaft turn. It does not measure the gearbox inside the N20 (≈ 17 : 1, calculated from the encoder count); that still needs the hand-turn count of `schemes/datasheets/N20_12V_1000RPM_specs.md`. Recorded in README §5.2 and the checklist table, the N20 notes and `docs/TESTS.md`.
+
 ## 25. Archive of earlier Open Challenge designs
 
 Moved here from the README on 24 November 2026, unchanged except for the headings, so the README describes only the code that runs on the car. These designs are not in the current code; the program that runs today is `open_challenge` (README §8.0). Where a number here differs from README §8.0 or from the code, the code wins.

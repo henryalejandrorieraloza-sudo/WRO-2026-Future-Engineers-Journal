@@ -10,7 +10,7 @@ Drive motor used on the vehicle.
 
 This file replaces the earlier `N20_motors.pdf`, which described a different motor (6 V, 33 RPM). That PDF was removed from the repository on 23 Nov 2026; it stays in the git history.
 
-**Update (24 Nov 2026):** the winding resistance of the motor on the car was measured (**11.7 Ω**) and the stall current was calculated from it: **≈ 1.03 A** (range 0.95 to 1.20 A). See [N20_stall_current_measurement.md](N20_stall_current_measurement.md). The gear ratio is still not measured.
+**Update (24 Nov 2026):** the winding resistance of the motor on the car was measured (**11.7 Ω**) and the stall current was calculated from it: **≈ 1.03 A** (range 0.95 to 1.20 A). See [N20_stall_current_measurement.md](N20_stall_current_measurement.md). **Counted on 24 Nov 2026:** motor output-shaft turns against wheel turns = **1 : 1** (no reduction in the differential). The internal gearbox ratio (≈ 17 : 1 from the encoder count) still needs the hand-turn check below.
 
 **Status (23 Nov 2026):** the gear ratio and the stall values of the motor on the car are **not yet confirmed for this ASIN**. The values below come from a datasheet of the same family, which is probably but not certainly the same motor. The team has to measure the ratio on the car (see "Measurements to take").
 
@@ -93,7 +93,7 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which did not matc
 
 ## To do
 
-1. Measure the gear ratio on the car (see "Measurements to take") and record it here.
+1. ~~Motor-to-wheel ratio~~ Counted 1 : 1 on 24 Nov. Still to do: the hand-turn count of encoder pulses per wheel turn to confirm the internal ≈ 17 : 1 (see "Measurements to take").
 2. ~~Measure the stall current~~ Done 24 Nov (indirect, from the winding resistance: 1.03 A). Optional: confirm with a reading in series.
 3. ~~Replace `N20_motors.pdf` (6 V, 33 RPM, a different motor)~~ Done 23 Nov: the 6 V PDF was removed. Optional: save a copy of the product listing next to this file.
 4. Update `schemes/README.md` §4.2 and the encoder constants that depend on counts per output revolution, once the ratio is measured.

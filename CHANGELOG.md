@@ -4,6 +4,12 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.25 — 24 November · Motor-to-wheel ratio counted
+
+Only documents changed; **no code changed**.
+
+- **Motor output-shaft turns against wheel turns = 1 : 1** (counted by hand, 24 Nov). README §5.2 and the checklist row, the N20 notes, `schemes/README.md` §7 and `docs/TESTS.md` updated; journal §24.9 added. The internal gearbox (≈ 17 : 1 from the encoder) still needs the hand-turn count.
+
 ## v1.9.24 — 24 November · Fully charged battery voltage (13.05 V) documented
 
 Only documents changed; **no code changed**.
