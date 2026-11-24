@@ -13,7 +13,7 @@ It is the **driving half** of the Obstacle Challenge. The vision half is [`obsta
 | Board | Arduino Nano (classic, ATmega328P) |
 | Libraries | *VL53L1X* by Pololu, `Servo.h` (built in) |
 | Companion sketch | `obstacle_camera_v3_2` on the ESP32-S3-CAM, connected TX (GPIO43) → Nano D0 |
-| Status | Code committed 23 Nov 2026, the version the team reports as working on the car, including its edge cases; the Obstacle video is in [`video/video.md`](../../../video/video.md). Lap times, stops and pillar passes are to be logged in [`docs/TESTS.md`](../../../docs/TESTS.md) |
+| Status | Version uploaded 24 Nov 2026 (open challenge laps + pillar dodging + wall centring, v1). It replaces the 23 Nov version, which the team reported as working on the car. This one still has to be validated on the track; the Obstacle video in [`video/video.md`](../../../video/video.md) shows the 23 Nov version. Lap times, stops and pillar passes are to be logged in [`docs/TESTS.md`](../../../docs/TESTS.md) |
 
 ## 1. Hardware it uses
 
@@ -21,7 +21,7 @@ It is the **driving half** of the Obstacle Challenge. The vision half is [`obsta
 |---|---|---|
 | Drive motor (TB6612FNG) | PWMA **D6**, AIN1 **D7**, AIN2 **D8** | Reverse is done by swapping the two direction pins |
 | Motor encoder | **D3** (C1, interrupt), **D2** (C2, direction) | 9.27 pulses per cm |
-| Steering servo | **D9** | Centre 85, left limit 5, right limit 165 (servo units; 85 ± 80) |
+| Steering servo | **D9** | Centre 85, left limit 10, right limit 170 (servo units) |
 | Start button | **D10** | Active LOW, input pull-up |
 | Status LED | D13 | Blinks during the gyro calibration, on when ready |
 | Gyroscope (BMI160) | I²C address **0x69** | Yaw is integrated from the Z rate |
@@ -51,12 +51,12 @@ The sketch groups its constants in five blocks. The most important ones are belo
 | Constant | Value | Meaning |
 |---|---|---|
 | `LAPS` | 3 | Laps to drive. One lap is four corners, so `LAPS = 3` means **12 corners** |
-| `RUN_PWM` | 70 | Motor speed on straights |
-| `TURN_PWM` | 70 | Motor speed during the reverse turn |
-| `REVERSE_PWM` | 70 | Motor speed for the reverse after each turn |
-| `FRONT_TURN_CM` | 40 | After the line, drive until the front ToF reads this or less, then start the turn |
+| `RUN_PWM` | 75 | Motor speed on straights |
+| `TURN_PWM` | 85 | Motor speed during the reverse turn |
+| `REVERSE_PWM` | 75 | Motor speed for the reverse after each turn |
+| `FRONT_TURN_CM` | 50 | After the line, drive until the front ToF reads this or less, then start the turn |
 | `MAX_PRE_TURN_MS` | 4000 | Safety: stop if the front ToF never reaches `FRONT_TURN_CM` |
-| `REAR_STOP_CM` | 20 | After the turn, reverse until the rear ToF reads this or less |
+| `REAR_STOP_CM` | 40 | After the turn, reverse until the rear ToF reads this or less |
 | `REVERSE_CM` | 30 | Fallback: reverse this far by encoder if the rear ToF is not working |
 | `MAX_REVERSE_MS` | 3000 | Safety: stop if the reverse takes longer |
 | `ONLY_LOCKED_COLOR` | true | Only the colour of the first line counts as a corner for the rest of the run |
@@ -71,9 +71,9 @@ The sketch groups its constants in five blocks. The most important ones are belo
 | `MAX_AIM_DEG` | 60 | Largest heading change the program asks for to dodge a pillar |
 | `LOOK_MIN_CM` | 12 | Minimum look-ahead distance used for the aiming angle, so it never explodes next to a pillar |
 | `ARRIVE_BEFORE_CM` | 55 | The car should be on the safe side this far before the pillar |
-| `RETURN_AFTER_CM` | 25 | A pillar counts as passed when the car is this far past its centre |
-| `PASS_CM` | 50 | After a pillar is passed, keep the same heading for this distance |
-| `SAME_PILLAR_CM` | 15 | A new detection closer than this to a stored pillar of the same colour is the same pillar |
+| `RETURN_AFTER_CM` | 10 | A pillar counts as passed when the car is this far past its centre |
+| `PASS_CM` | 25 | After a pillar is passed, keep the same heading for this distance |
+| `SAME_PILLAR_CM` | 30 | A new detection closer than this to a stored pillar of the same colour is the same pillar |
 | `BLEND` | 0.3 | How much each new detection moves the stored position (30 %) |
 | `MAX_SIDE_CM` | 60 | Pillars further to the side than this are ignored as noise |
 | `PILLAR_CM` | 5 | Real width of a pillar |
@@ -100,7 +100,7 @@ The sketch groups its constants in five blocks. The most important ones are belo
 |---|---|---|
 | `TICKS_PER_CM` | 9.27 | Encoder pulses per cm, measured with the motor running (21 Nov) |
 | `GYRO_SCALE` | 1.007 | Gyro scale factor, same as `open_challenge` (the earlier `straight_pillars` sketch used 1.06; see §9) |
-| `STEER_CENTER` / `STEER_LEFT_MAX` / `STEER_RIGHT_MAX` | 85 / 5 / 165 (`STEER_RANGE` = 80) | Servo angles. A smaller angle steers **left** |
+| `STEER_CENTER` / `STEER_LEFT_MAX` / `STEER_RIGHT_MAX` | 85 / 10 / 170 | Servo angles, set directly (no `STEER_RANGE` in this version). A smaller angle steers **left** |
 | `MOTOR_REVERSED` / `ENCODER_REVERSED` | true / true | Wiring polarity, measured on this car |
 
 **Block 5: timeouts**
@@ -109,10 +109,10 @@ The sketch groups its constants in five blocks. The most important ones are belo
 |---|---|---|
 | `MAX_TURN_MS` | 4000 | A turn longer than this stops the program |
 | `MAX_STRAIGHT_MS` | 8000 | No corner within this time on a straight stops the program |
-| `STALL_MS` | 500 | Motor on but wheels not turning for this long stops the program |
+| `STALL_MS` | 500 | Declared but **not used** in this version: there is no wheel-stall stop |
 | `CAMERA_TIMEOUT_MS` | 500 | No camera message for this long: the car does not drive |
 
-The constants `MAX_FINAL_CM`, `STOP_OFFSET_CM` and `FALLBACK_CM` were removed: they were declared but not used by this program (`open_challenge` still uses them).
+The constants `MAX_FINAL_CM`, `STOP_OFFSET_CM` and `FALLBACK_CM` are still declared in the sketch but not used by this program (`open_challenge` uses them).
 
 ## 4. Program flow
 
@@ -125,14 +125,14 @@ stateDiagram-v2
     [*] --> WAIT
     WAIT --> STRAIGHT: START button or g (after gyro calibration)
     STRAIGHT --> PRE_TURN: a line is seen (not in the final leg)
-    PRE_TURN --> TURN: front ToF reads 40 cm or less (or 0.75 s without front ToF)
+    PRE_TURN --> TURN: front ToF reads 50 cm or less (or 0.75 s without front ToF)
     TURN --> REVERSE: yaw has turned 90 degrees (predicted)
-    REVERSE --> STRAIGHT: rear ToF reads 20 cm or less (or 30 cm by encoder)
+    REVERSE --> STRAIGHT: rear ToF reads 40 cm or less (or 30 cm by encoder)
     STRAIGHT --> DONE: last line seen, then 0.45 s more
-    PRE_TURN --> DONE: front ToF never reads 40 cm within 4 s
+    PRE_TURN --> DONE: front ToF never reads 50 cm within 4 s
     TURN --> DONE: turn takes more than 4 s
     REVERSE --> DONE: reverse takes more than 3 s
-    STRAIGHT --> DONE: no corner in 8 s, or wheels stalled for 0.5 s
+    STRAIGHT --> DONE: no corner in 8 s
     STRAIGHT --> DONE: s + Enter (emergency stop, also from PRE_TURN, TURN, REVERSE)
     DONE --> STRAIGHT: g or START (new run)
 ```
@@ -141,9 +141,9 @@ stateDiagram-v2
 |---|---|---|
 | **WAIT** | Motor off, servo centred. Waits for START or `g` | START or `g` |
 | **STRAIGHT** | Drives forward, steers with the priorities of §4.2, counts lines | A new corner line is seen, or the final line is passed, or a safety stop |
-| **PRE_TURN** | Keeps driving straight on the same heading until the front wall is close | Front ToF reads `FRONT_TURN_CM` (40 cm) |
+| **PRE_TURN** | Keeps driving straight on the same heading until the front wall is close | Front ToF reads `FRONT_TURN_CM` (50 cm) |
 | **TURN** | Brakes, then reverses with the steering turned to the **opposite** side, so the rear swings into the turn. Ends when the predicted yaw has changed by 90° | Predicted yaw ≥ 90° |
-| **REVERSE** | Steering centred, reverses on the new heading | Rear ToF reads 20 cm or less |
+| **REVERSE** | Steering centred, reverses on the new heading | Rear ToF reads 40 cm or less |
 | **DONE** | Brakes, centres the steering, and after 1 s switches the motor off and prints the report | `g` or START starts a new run |
 
 ### 4.2 What the program does on every loop in STRAIGHT
@@ -164,7 +164,7 @@ flowchart TD
     C -- no --> F{"Pillar to avoid on the map?<br>the current one, or the next one<br>once level with the current"}
     Z --> F
     F -- yes --> G["BLOCK mode<br>aim at the lateral goal<br>(max 60 degrees)"]
-    F -- no --> H{"Pillar passed<br>less than 50 cm ago?"}
+    F -- no --> H{"Pillar passed<br>less than 25 cm ago?"}
     H -- yes --> I["PASS mode<br>keep the heading"]
     H -- no --> J["LANE mode<br>centre between the side walls<br>(left and right ToF)"]
     G --> K["Gyro controller<br>steering = KP x error - KD x rate<br>(+ integral in LANE mode only)"]
@@ -178,10 +178,10 @@ flowchart TD
 ### 4.3 One corner, step by step
 
 1. A line is seen in the locked colour (for the first corner, either colour). The program enters PRE_TURN and records the corner.
-2. The car drives straight until the **front ToF** reads 40 cm. With no front ToF, it drives for 0.75 s instead.
+2. The car drives straight until the **front ToF** reads 50 cm. With no front ToF, it drives for 0.75 s instead.
 3. The car brakes, and the motor is switched to reverse. The steering turns to the **opposite** side from the turn direction, so the rear of the car swings toward the corner.
 4. The car reverses while it watches its yaw. When the predicted yaw (current yaw plus 0.12 s of yaw rate) is 90° from the old heading, the program adds ±90° to the target heading and increases the corner counter.
-5. The car brakes, centres the steering and reverses straight until the **rear ToF** reads 20 cm (or 30 cm by encoder if there is no rear sensor).
+5. The car brakes, centres the steering and reverses straight until the **rear ToF** reads 40 cm (or 30 cm by encoder if there is no rear sensor).
 6. The odometry map is reset (the new straight starts at x = 0, y = 0) and the car drives forward again on the new heading. The 4 s line-ignore window started when the line was seen (step 1), so the second line of the same corner is not counted.
 
 Because the target heading is always a multiple of 90° (0, 90, 180, 270…), the error of one turn is corrected on the next straight instead of adding up. The wall centring also keeps the car away from the inner wall on every straight.
@@ -211,7 +211,7 @@ pillarX = camX + fwd·cos(h) − left·sin(h)
 pillarY = camY + fwd·sin(h) + left·cos(h)     where h = yaw − heading
 ```
 
-When the same colour is seen again within `SAME_PILLAR_CM` (15 cm) of a stored pillar, it is the same pillar. Its stored position moves by `BLEND` (30 %) toward the new reading, which averages out the noise of single pictures.
+When the same colour is seen again within `SAME_PILLAR_CM` (30 cm) of a stored pillar, it is the same pillar. Its stored position moves by `BLEND` (30 %) toward the new reading, which averages out the noise of single pictures.
 
 ### 5.3 Lateral goal
 
@@ -232,7 +232,7 @@ heading = atan2(goalY − camY, look)                    limited to ±60°
 steering = 2.0 · (heading − yaw) − 0.03 · yawRate      P + D (+ integral in LANE mode), limited to ±70°
 ```
 
-The car starts moving sideways about 55 cm before the pillar, so it is already on the safe side when it reaches it. At 25 cm past the pillar's centre, the pillar is cleared and the program aims at the next pillar, or back at the centre of the lane.
+The car starts moving sideways about 55 cm before the pillar, so it is already on the safe side when it reaches it. At 10 cm past the pillar's centre, the pillar is cleared and the program aims at the next pillar, or back at the centre of the lane.
 
 **Example:** car at (0, 0), red pillar centre at (40, +10). The goal is `min(0, 10 − 17) = −7` cm, the look distance is `max(12, 40 − 2.5 − 0 − 55) = 12` cm, so the heading is `atan2(−7, 12) ≈ −30°` (to the right).
 
@@ -281,7 +281,7 @@ Every stop prints a reason and the final report (yaw, heading, corners, D1, time
 | `TURN TOO LONG -> STOP` | The reverse turn took longer than 4 s | Battery, wheels blocked, `TURN_PREDICT_S` |
 | `REVERSE TOO LONG -> STOP` | The reverse took longer than 3 s | Rear ToF, wall behind the car |
 | `NO CORNER in 8 s -> STOP` | No line in 8 s on a straight | Camera, lines out of view, the final leg |
-| `STALLED: wheels not turning (hit a wall?) -> STOP` | Motor on for 0.5 s without encoder movement | Wheels against a wall, encoder wires on D2/D3 |
+| ~~`STALLED`~~ | Not in this version (`STALL_MS` is not used). A car stuck against a wall is only caught by the other timeouts | Encoder wires on D2/D3 if the wheels do not turn |
 | `LAST LINE + extra drive -> STOP` | Normal end: the last line was seen and `FINAL_EXTRA_S` passed | Nothing to fix |
 | `STOPPED (s)` | Emergency stop with `s` + Enter | Nothing to fix |
 
@@ -304,13 +304,13 @@ This program reads the **first 12 fields** (`sscanf` with 12 values). The last t
 | `seq` | Message counter (printed as a number, not checked) |
 | `distCm`, `latCm` | Position of the pillar: how far ahead and to the side (cm) |
 
-A message without a pillar sends `color = 0` and `distCm = -1`. A pillar already on the map **stays there** while the camera does not see it, and is removed only when the car has passed its centre by 25 cm. That is what lets the car keep avoiding a pillar that has left the picture.
+A message without a pillar sends `color = 0` and `distCm = -1`. A pillar already on the map **stays there** while the camera does not see it, and is removed only when the car has passed its centre by 10 cm. That is what lets the car keep avoiding a pillar that has left the picture.
 
 ## 9. Known differences and things to measure
 
 - **Gyro scale.** Both driving programs use `GYRO_SCALE = 1.007`. A hand-turn measurement of 21 Nov (`gyro_90_test`) gave `1.06` for an earlier sketch and is not used. Check the yaw of a 90° turn in the final report (`yaw` should be about 90 per corner).
-- **Pillar distances.** The pillar distances come from the camera v3.2, which uses a focal length of 50 px (half of the 100 px measured at 320 × 240; confirmed by the team on 23 Nov 2026).
-- **Turn point.** The turn starts at 40 cm from the front wall. Changing `FRONT_TURN_CM` changes where every corner starts, so measure it on the real field after changing the camera or the chassis.
+- **Pillar distances.** The pillar distances come from the camera v3.2, which uses a focal length of 50 px (half of the 100 px measured at 320 × 240). The sketch marks it as not yet re-measured at 160 × 120.
+- **Turn point.** The turn starts at 50 cm from the front wall. Changing `FRONT_TURN_CM` changes where every corner starts, so measure it on the real field after changing the camera or the chassis.
 - **Lines.** The lines are used only as events (they are not converted into distances). The camera sees the floor lines only up to about 22 cm, so a line must be in view when the car reaches the corner. The corner is a rising edge, so a line that stays in view for a long time counts once.
 - **Walls that end.** A side reading above 1200 mm means the wall has ended (at a corner, or behind a missing wall), so that side is not used for centring. On those straights the car relies on the pillar logic and on its gyro heading.
 

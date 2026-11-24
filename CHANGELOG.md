@@ -4,6 +4,14 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.31 — 24 November · Obstacle sketches replaced by v1 (open laps + pillar dodging) and camera v3.2 at 160 × 120
+
+**Code changed:** `obstacle_challenge.ino` (Nano) and `obstacle_camera_v3_2.ino` (camera) are replaced by the versions uploaded on 24 Nov. The previous 23 Nov version stays in the git history (`48c57b6`). Main changes in the Nano sketch: `RUN_PWM` 75, `TURN_PWM` 85, `REVERSE_PWM` 75; `FRONT_TURN_CM` 50 and `REAR_STOP_CM` 40; `RETURN_AFTER_CM` 10, `PASS_CM` 25, `SAME_PILLAR_CM` 30; steering centre 85 with limits 10 / 170 set directly. The wheel-stall stop (`STALL_MS`) is no longer used in this sketch.
+
+- **Documentation updated to match the code:** `src/obstacle-challenge/obstacle_challenge/README.md`, `src/obstacle-challenge/obstacle_camera_v3_2/README.md`, `src/README.md` (status column), and `README.md` §9 and the car-constants and safety tables.
+- **Not validated yet:** the 24 Nov version has to be tested on the track. Its `FOCAL_PX = 50` is marked in the sketch as not re-measured at 160 × 120. The 23 Nov video and lap times refer to the previous version.
+- **Not updated in this entry:** `docs/TESTS.md` and the engineering journal, which keep the history.
+
 ## v1.9.30 — 24 November · Gear teeth of the 1 : 1 drive recorded
 
 **No code logic changed.** The team confirmed that the motor gear and the differential gear have **30 teeth each**, and that one turn of one gear gives exactly one turn of the other (counted by hand). This is the external 1 : 1 stage only; the internal gearbox of the N20 (≈ 17 : 1 from the encoder count, 1 : 30 in the datasheet of the same family) is still to be confirmed with the hand-turn count of encoder pulses.

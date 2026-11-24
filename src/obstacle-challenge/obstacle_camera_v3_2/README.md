@@ -2,7 +2,7 @@
 
 Sketch for the **ESP32-S3-CAM** (emakefun board, OV2640 camera) that looks at the track and tells the Arduino Nano where the **pillars** and the **floor lines** are. It is the vision half of the Obstacle Challenge. The driving half, [`obstacle_challenge`](../obstacle_challenge/README.md), reads its messages (the first 12 of the 14 fields).
 
-**Status: runs on the car with `obstacle_challenge` since 23 Nov 2026 (team report; Obstacle video in `video/video.md`).** Every pixel-count, row and column constant was scaled from the 320 x 240 calibration (each one is commented with its old value), and `FOCAL_PX = 50` was confirmed by the team on 23 Nov. The 160 × 120 frame rate and the edge-case results are still to be logged in `docs/TESTS.md`. The previous 320 x 240 version (v3.1, folder `obstacle_camera`) is no longer in `src/`; it is in the git history, and its vision code lives on in `src/hardware-tests/camera_test`.
+**Status: version uploaded 24 Nov 2026, replacing the 23 Nov one.** The vision pipeline, the colour ranges and the 14-field message are the same. Every pixel-count, row and column constant was scaled from the 320 x 240 calibration (each one is commented with its old value). `FOCAL_PX = 50` is still marked in the sketch as not re-measured at 160 × 120. This version has to be validated on the car: the 160 × 120 frame rate, the pillar distances and the edge-case results are still to be logged in `docs/TESTS.md`. The previous 320 x 240 version (v3.1, folder `obstacle_camera`) is no longer in `src/`; it is in the git history, and its vision code lives on in `src/hardware-tests/camera_test`.
 
 ## What changed from v3.1 (`obstacle_camera`, in the git history)
 
@@ -98,13 +98,13 @@ The sketch also prints the reason when a line is rejected (`few pixels`, `too sh
 
 ### 6. Distance and side
 
-The pillar position is computed with a **pinhole model**: `distance = FOCAL_PX × seenCm / width`, where `seenCm` is the pillar width seen from the angle (two faces). The side distance comes from similar triangles. `FOCAL_PX` = 50 is half of the 100 px measured at 320 × 240 (journal §13.2); the team confirmed it for 160 × 120 on 23 Nov.
+The pillar position is computed with a **pinhole model**: `distance = FOCAL_PX × seenCm / width`, where `seenCm` is the pillar width seen from the angle (two faces). The side distance comes from similar triangles. `FOCAL_PX` = 50 is half of the 100 px measured at 320 × 240 (journal §13.2); the sketch marks it as not yet re-measured at 160 × 120.
 
 ## Settings to check first after a camera change
 
 | Constant | Why check it |
 |---|---|
-| `FOCAL_PX` (50) | Half of the 100 px measured at 320 × 240; confirmed by the team on 23 Nov 2026. It sets every distance in cm |
+| `FOCAL_PX` (50) | Half of the 100 px measured at 320 × 240; not yet re-measured at 160 × 120. It sets every distance in cm |
 | `X_CENTER_OFFSET` (6) | Halved from 12. Shows where a pillar straight ahead appears in the picture |
 | `BLOCK_MIN_PIXELS`, `MIN_BLOCKS`, `RED_MIN_PIXELS`, `GREEN_MIN_PIXELS` | Smaller pixel counts at QQVGA. Too low = noise pillars, too high = pillars missed far away |
 | `LINE_TOP_ROW`, `ORANGE_MIN_PIXELS`, `BLUE_MIN_PIXELS` | The lines are fewer pixels at QQVGA |
