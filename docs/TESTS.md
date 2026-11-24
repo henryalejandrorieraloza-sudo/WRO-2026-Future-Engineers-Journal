@@ -21,11 +21,11 @@ How the points are counted:
 
 | Attempt | Date | Commit | 1.1 Sections driven (max 24) | 1.2 Full laps (max 3) | 1.3 Stopped in finish section (3 / 0) | Outer wall touched (yes / no) | Repair taken (yes / no) | Round score (max 30) | Round time (s) | Notes |
 |---|---|---|---:|---:|---:|---|---|---:|---:|---|
-| 1 |  |  |  |  |  |  |  |  |  |  |
-| 2 |  |  |  |  |  |  |  |  |  |  |
-| 3 |  |  |  |  |  |  |  |  |  |  |
-| 4 |  |  |  |  |  |  |  |  |  |  |
-| 5 |  |  |  |  |  |  |  |  |  |  |
+| 1 | | | | | | | | | | |
+| 2 | | | | | | | | | | |
+| 3 | | | | | | | | | | |
+| 4 | | | | | | | | | | |
+| 5 | | | | | | | | | | |
 
 ## Obstacle Challenge: 5 attempts (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, without parking)
 
@@ -44,11 +44,11 @@ How the points are counted:
 
 | Attempt | Date | Commit | Scenario (Scenario Roulette) | Direction | 1.1 Sections (max 24) | 1.2 Laps (max 3) | 1.3 Stop in finish section (3 / 0) | Pillars on the correct side (yes / no) | Pillars moved (none / one or more) | Signs points (1.4 / 1.5 / 1.6 / 1.7) | 1.8.1 Started in lot (7 / 0) | 1.8.2 / 1.8.3 Parking (15 / 7 / 0) | Repair taken (yes / no) | Round score (max 62) | Round time (s) | Notes |
 |---|---|---|---|---|---:|---:|---:|---|---|---:|---:|---:|---|---:|---:|---|
-| 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 3 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 4 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 5 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | | | | | | | | | | | | | | | | |
+| 2 | | | | | | | | | | | | | | | | |
+| 3 | | | | | | | | | | | | | | | | |
+| 4 | | | | | | | | | | | | | | | | |
+| 5 | | | | | | | | | | | | | | | | |
 
 Edge cases of the Obstacle program: see the last section of this file.
 
@@ -56,42 +56,42 @@ Edge cases of the Obstacle program: see the last section of this file.
 
 Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to take". Record every value with the battery voltage and the commit of the code used.
 
-| Test | Date | Commit | Battery (V) | Method | Value | Repetitions | Notes |
-|---|---|---|---|---|---|---:|---|
-| Encoder ticks per cm, motor running | 21 Nov 2026 | not recorded | not recorded | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | 1 | `TICKS_PER_CM` in `open_challenge.ino`, `obstacle_challenge.ino`, `straight_pillars.ino`. Hand-pushed values (12.67, 16.1) are superseded |
-| Encoder pulses per wheel turn (10 turns) | — | calculated | — | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks; ratio 17.1:1 | — | Ratio = 119.4 ÷ 7 (one edge: the firmware counts only the rising edge of C1). Hand-turn count still to do |
-| Stall current (peak, < 0.5 s) | — | — | — | datasheet, same family (not measured) | 0.7 A | — | Do not hold the wheel longer. Multimeter reading still to do |
-| Speed over 1 m at `RUN_PWM 150` | — | calculated | 12 V (reference) | calculated upper bound, no load: 12.6 cm/s × 150/255 | 13.5 s | — | Not measured. Stopwatch test still to do |
-| Speed over 1 m at `RUN_PWM 255` | — | calculated | 12 V (reference) | calculated upper bound, no load: 12.6 cm/s | 7.9 s | — | Not measured. Stopwatch test still to do |
-| Torque check (ramp or spring scale) | — | — | — | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | — | Ramp or spring scale still to do |
-| Reverse ticks to leave the parking space (five wheel turns) | — | — | — | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | — | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |
+| Test | Battery (V) | Method | Value | Notes |
+| --- | --- | --- | --- | --- |
+| Encoder ticks per cm, motor running | not recorded | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | `TICKS_PER_CM` in `open_challenge.ino`, `obstacle_challenge.ino`, `straight_pillars.ino`. Hand-pushed values (12.67, 16.1) are superseded |
+| Encoder pulses per wheel turn (10 turns) | — | calculated: π × 41 mm × 9.27 ticks/cm | 119 ticks; ratio 17.1:1 | Ratio = 119.4 ÷ 7 (one edge: the firmware counts only the rising edge of C1). Hand-turn count still to do |
+| Stall current (peak, < 0.5 s) | — | datasheet, same family (not measured) | 0.7 A | Do not hold the wheel longer. Multimeter reading still to do |
+| Speed over 1 m at `RUN_PWM 150` | 12 V (reference) | calculated upper bound, no load: 12.6 cm/s × 150/255 | 13.5 s | Not measured. Stopwatch test still to do |
+| Speed over 1 m at `RUN_PWM 255` | 12 V (reference) | calculated upper bound, no load: 12.6 cm/s | 7.9 s | Not measured. Stopwatch test still to do |
+| Torque check (ramp or spring scale) | — | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | Ramp or spring scale still to do |
+| Reverse ticks to leave the parking space (five wheel turns) | — | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |
 
 ## Steering: centre, limits and symmetry
 
 Procedure: run `servo_test` with the chassis fully assembled, then measure the real wheel angle at each stop with a protractor or a top-view photo.
 
-| Test | Date | Commit | Servo value | Left wheel angle (°) | Right wheel angle (°) | Symmetric? | Notes |
-|---|---|---|---|---:|---:|---|---|
-| Centre (wheels straight) | 21 Nov 2026 | not recorded | 85 | — | — | Confirmed | Value confirmed as driving straight. `STEER_CENTER` in the code |
-| Left stop | 21 Nov 2026 | not recorded | 10 | 40 | — | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing. Smaller servo value steers left |
-| Right stop | 21 Nov 2026 | not recorded | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
-| Turning radius at full lock | — | calculated | — | wheelbase ÷ tan(40°) | 10.7 cm | — | Wheelbase 9 cm, wheel angle 40° |
+| Test | Servo value | Left wheel angle (°) | Right wheel angle (°) | Symmetric? | Notes |
+| --- | --- | ---: | ---: | --- | --- |
+| Centre (wheels straight) | 85 | — | — | Confirmed | Value confirmed as driving straight. `STEER_CENTER` in the code |
+| Left stop | 10 | 40 | — | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing. Smaller servo value steers left |
+| Right stop | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
+| Turning radius at full lock | — | wheelbase ÷ tan(40°) | 10.7 cm | — | Wheelbase 9 cm, wheel angle 40° |
 
 ## Car geometry and mass
 
-| Measure | Date | Method | Value | Notes |
-|---|---|---|---|---|
-| Wheel diameter, four wheels, mounted | — | calliper | — | Design value 41 mm |
-| Wheelbase (front to rear axle) | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
-| Car width | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` (4.5 + 10 + 2.5 = 17 cm) |
-| Full length, with front protrusion | 19 Nov 2026 | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
-| Rear (encoder) axle to camera lens | 20 Nov 2026 | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
-| Track width (between wheels) | 23 Nov 2026 | ruler | 9 cm | Measured by the team on 23 Nov 2026 |
-| Mass, ready to run, with battery | 23 Nov 2026 | kitchen scale, ±1 g | 248 g | Weighed with the battery. Note what is mounted |
-| Turning sweep at full lock, left (from the lens) | 28 Oct 2026 | tape measure, 6 runs | 12 cm forward, 40 cm sideways | Includes about 2.4 cm of braking. Source: notes of 28 Oct |
-| Turning sweep at full lock, right (from the lens) | 28 Oct 2026 | tape measure, 6 runs | 15 cm forward, 39 cm sideways | Includes about 2.2 cm of braking. Less repeatable than the left turn in the tape readings. Source: notes of 28 Oct |
-| Odometry against tape (lens path, straight part) | 28 Oct 2026 | tape measure | Y within ±1–2 cm; X 2–3.5 cm more than the odometry | Possible small slip in the curve. Source: notes of 28 Oct |
-| Turning sweep at full lock, calculated (from the lens) | — | calculated | 22.4 cm sideways, −1.0 cm forward | Turn centre 10.7 cm from the rear axle (wheelbase 9 cm ÷ tan 40°); lens 11.7 cm forward of the axle; 90° turn | Geometry only, no braking. Compare with the tape rows above |
+| Measure | Method | Value | Notes |
+| --- | --- | --- | --- |
+| Wheel diameter, four wheels, mounted | calliper | — | Design value 41 mm |
+| Wheelbase (front to rear axle) | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
+| Car width | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` (4.5 + 10 + 2.5 = 17 cm) |
+| Full length, with front protrusion | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
+| Rear (encoder) axle to camera lens | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
+| Track width (between wheels) | ruler | 9 cm | Measured by the team on 23 Nov 2026 |
+| Mass, ready to run, with battery | kitchen scale, ±1 g | 248 g | Weighed with the battery. Note what is mounted |
+| Turning sweep at full lock, left (from the lens) | tape measure, 6 runs | 12 cm forward, 40 cm sideways | Includes about 2.4 cm of braking. Source: notes of 28 Oct |
+| Turning sweep at full lock, right (from the lens) | tape measure, 6 runs | 15 cm forward, 39 cm sideways | Includes about 2.2 cm of braking. Less repeatable than the left turn in the tape readings. Source: notes of 28 Oct |
+| Odometry against tape (lens path, straight part) | tape measure | Y within ±1–2 cm; X 2–3.5 cm more than the odometry | Possible small slip in the curve. Source: notes of 28 Oct |
+| Turning sweep at full lock, calculated (from the lens) | calculated | 22.4 cm sideways, −1.0 cm forward | Turn centre 10.7 cm from the rear axle (wheelbase 9 cm ÷ tan 40°); lens 11.7 cm forward of the axle; 90° turn | Geometry only, no braking. Compare with the tape rows above |
 
 ## ToF sensors (distance, on the black and the white wall)
 
@@ -108,31 +108,31 @@ Procedure: place the car at 5, 20, 40 and 60 cm from the wall, read 30 samples p
 
 ## Gyroscope: drift and turn accuracy
 
-| Test | Date | Commit | Method | Value | Notes |
-|---|---|---|---|---|---|
-| Drift at rest, 60 s | — | — | `src/hardware-tests/tof_and_gyro_test` | — (°/min) | Car still on the floor |
-| Heading error after one 90° turn, in motion | 28 Oct 2026 | not recorded | Turn with the PD gyro while driving (`turn_measure_moving`), 6 runs | 89.3 to 90.3 ° | Source: notes of 28 Oct. The commit of that sketch was not recorded. The 10 hand turns each way with `gyro_90_test` are still to be done |
-| Heading error after 12 turns | — | calculated | 12 × per-turn error range (−0.7° to +0.3°) | −8.4° to +3.6° (worst case) | Not measured. Run `open_challenge` and measure the final heading. Also record the run in the Open Challenge table |
-| Yaw of a hand-turned 90° (`gyro_90_test`) | 21 Nov 2026 | not recorded | Turn the car exactly 90° by hand | 85° printed, giving `YAW_SCALE` 1.06 | Old value, used only by the earlier `straight_pillars.ino`. Decision (23 Nov): `GYRO_SCALE` 1.007 is the value of `open_challenge` and `obstacle_challenge` |
+| Test | Method | Value | Notes |
+| --- | --- | --- | --- |
+| Drift at rest, 60 s | `src/hardware-tests/tof_and_gyro_test` | — (°/min) | Car still on the floor |
+| Heading error after one 90° turn, in motion | Turn with the PD gyro while driving (`turn_measure_moving`), 6 runs | 89.3 to 90.3 ° | Source: notes of 28 Oct. The commit of that sketch was not recorded. The 10 hand turns each way with `gyro_90_test` are still to be done |
+| Heading error after 12 turns | 12 × per-turn error range (−0.7° to +0.3°) | −8.4° to +3.6° (worst case) | Not measured. Run `open_challenge` and measure the final heading. Also record the run in the Open Challenge table |
+| Yaw of a hand-turned 90° (`gyro_90_test`) | Turn the car exactly 90° by hand | 85° printed, giving `YAW_SCALE` 1.06 | Old value, used only by the earlier `straight_pillars.ino`. Decision (23 Nov): `GYRO_SCALE` 1.007 is the value of `open_challenge` and `obstacle_challenge` |
 
 ## Camera: frame rate and colour detection
 
-| Test | Date | Commit | Resolution | Lighting | Value | Notes |
-|---|---|---|---|---|---|---|
-| Frames per second, colour detection | — | — | 160 × 120 | room / venue | — (fps) | The README asks for this value; it was measured only at 320 × 240 |
-| Pillar detected at 20, 40, 60 cm | 27 Oct 2026 | not recorded | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
-| Pillar width in pixels at 20, 40, 60 cm | — | calculated | 160 × 120 | — | 12.5 px / 6.25 px / 4.2 px | Calculated, not measured: 50 px focal length × 5 cm pillar ÷ distance. `MAX_AHEAD_CM` = 40 in `obstacle_camera_v3_2` |
-| Floor line detected at 9, 16 cm | 28 Oct 2026 | not recorded | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
-| Focal length at 160 × 120, `FOCAL_PX` | — | — | 160 × 120 | camera_viewer.html | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
+| Test | Resolution | Lighting | Value | Notes |
+| --- | --- | --- | --- | --- |
+| Frames per second, colour detection | 160 × 120 | room / venue | — (fps) | The README asks for this value; it was measured only at 320 × 240 |
+| Pillar detected at 20, 40, 60 cm | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
+| Pillar width in pixels at 20, 40, 60 cm | 160 × 120 | — | 12.5 px / 6.25 px / 4.2 px | Calculated, not measured: 50 px focal length × 5 cm pillar ÷ distance. `MAX_AHEAD_CM` = 40 in `obstacle_camera_v3_2` |
+| Floor line detected at 9, 16 cm | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
+| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | camera_viewer.html | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
 
 ## Obstacle Challenge: edge cases to add
 
 The cases below are suggestions, not results. Replace them with the cases the team checked on 23 Nov (team report, not yet written down), and add one row per case with the commit tested and the result.
 
-| Case | Commit | Result (pass / fail) | What happened |
-|---|---|---|---|
-| Two pillars of the same colour in a row | — | — | — |
-| Pillar at the edge of the picture | — | — | — |
-| Battery below the working level | — | — | — |
-| Corridor 600 mm (instead of 1000 mm) | — | — | — |
-| Start from inside the parking lot | — | — | — |
+| Case | Result (pass / fail) | What happened |
+| --- | --- | --- |
+| Two pillars of the same colour in a row | — | — |
+| Pillar at the edge of the picture | — | — |
+| Battery below the working level | — | — |
+| Corridor 600 mm (instead of 1000 mm) | — | — |
+| Start from inside the parking lot | — | — |
