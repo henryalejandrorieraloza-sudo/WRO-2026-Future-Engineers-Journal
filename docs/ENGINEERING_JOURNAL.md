@@ -1804,6 +1804,7 @@ Nothing in the code was changed in this phase.
 
 - **Organisers' link:** sent and receipt confirmed on 23 November.
 - **Final programs in `src`:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` (ESP32-S3-CAM) are the competition code. On 23 November the team tested `open_challenge` (run of 22 November, §19.2) and reports that `obstacle_challenge` works on the car, including the edge cases it checked. No lap, time or stop data was written down for the Obstacle run. The parking sketch is still a placeholder and was not tested (§22.3).
+- **Reverse corner turns (rule 9.21 / Appendix A.4):** on 23 November the team decided that they comply, because the back-up stays inside the same corner section where the direction changes (README §3.1). The earlier "to confirm" notes in §§17–21 are the history of that question.
 - **Documents:** the checklist in §16 is updated to the state of 23 November. The AI section (README §15) and the team paragraph were confirmed by the team and kept as written.
 
 ### 22.2 How the final code was checked
