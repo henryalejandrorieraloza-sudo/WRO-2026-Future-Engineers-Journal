@@ -52,6 +52,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Speed over 1 m at `RUN_PWM 150` | — | — | — | stopwatch | — | 3 | |
 | Speed over 1 m at `RUN_PWM 255` | — | — | — | stopwatch | — | 3 | |
 | Torque check (ramp or spring scale) | — | — | — | — | — | — | |
+| Reverse ticks to leave the parking space (five wheel turns) | — | — | — | calibration mode of `obstacle_go_out_of_parking` | — | 5 | `REVERSE_TARGET_TICKS` = 1024 is a placeholder in the code, not measured |
 
 ## Steering: centre, limits and symmetry
 
@@ -70,7 +71,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 |---|---|---|---|---|
 | Wheel diameter, four wheels, mounted | — | calliper | — | Design value 41 mm |
 | Wheelbase (front to rear axle) | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
-| Car width | 19 Nov 2026 | ruler | 9 cm | Also in `straight_pillars.ino`, measured 19 Nov |
+| Car width | 19 Nov 2026 | ruler | 9 cm | Also in `straight_pillars.ino`, measured 19 Nov. Conflict: the README and the journal give 9.5 cm, and the comment in `src/hardware-tests/camera_test/camera_test.ino` uses a half width of 4.25 cm (8.5 cm). Measure again and use one value everywhere |
 | Full length, with front protrusion | 19 Nov 2026 | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
 | Rear (encoder) axle to camera lens | 20 Nov 2026 | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
 | Track width (between wheels) | — | ruler | — | |
@@ -108,6 +109,7 @@ Procedure: place the car at 5, 20, 40 and 60 cm from the wall, read 30 samples p
 | Frames per second, colour detection | — | — | 160 × 120 | room / venue | — (fps) | The README asks for this value; it was measured only at 320 × 240 |
 | Pillar detected at 20, 40, 60 cm | 27 Oct 2026 | not recorded | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
 | Floor line detected at 9, 16 cm | 28 Oct 2026 | not recorded | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
+| Focal length at 160 × 120, `FOCAL_PX` | — | — | 160 × 120 | camera_viewer.html | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Not measured again at this resolution |
 
 ## Obstacle Challenge: edge cases to add
 
