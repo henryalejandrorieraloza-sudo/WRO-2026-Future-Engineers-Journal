@@ -46,6 +46,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 
 | Test | Date | Commit | Battery (V) | Method | Value | Repetitions | Notes |
 |---|---|---|---|---|---|---:|---|
+| Encoder ticks per cm, motor running | 21 Nov 2026 | not recorded | not recorded | 190 ticks over 20.5 cm of real travel | 9.27 ticks/cm | 1 | `TICKS_PER_CM` in `open_challenge.ino`, `obstacle_challenge.ino`, `straight_pillars.ino`. Hand-pushed values (12.67, 16.1) are superseded |
 | Encoder pulses per wheel turn (10 turns) | — | — | — | hand turn, motor off | — | 10 | Ratio = pulses per turn ÷ (7 × edges counted) |
 | Stall current (peak, < 0.5 s) | — | — | — | multimeter in series | — | — | Do not hold the wheel longer |
 | Speed over 1 m at `RUN_PWM 150` | — | — | — | stopwatch | — | 3 | |
@@ -58,9 +59,9 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 
 | Test | Date | Commit | Servo value | Left wheel angle (°) | Right wheel angle (°) | Symmetric? | Notes |
 |---|---|---|---|---:|---:|---|---|
-| Centre (wheels straight) | — | — | 85 | — | — | — | |
-| Left stop | — | — | 10 | — | — | — | Listen for buzzing or forcing |
-| Right stop | — | — | 170 | — | — | — | Listen for buzzing or forcing |
+| Centre (wheels straight) | 21 Nov 2026 | not recorded | 85 | — | — | Confirmed | Value confirmed as driving straight. `STEER_CENTER` in the code |
+| Left stop | 21 Nov 2026 | not recorded | 10 | 40 | — | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing. Smaller servo value steers left |
+| Right stop | 21 Nov 2026 | not recorded | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
 | Turning radius at full lock | — | — | — | — | — | — | Need wheelbase and wheel angle |
 
 ## Car geometry and mass
@@ -68,7 +69,10 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Measure | Date | Method | Value | Notes |
 |---|---|---|---|---|
 | Wheel diameter, four wheels, mounted | — | calliper | — | Design value 41 mm |
-| Wheelbase (front to rear axle) | 19 Nov 2026 | ruler (team notes, to confirm with a tape measure) | 9 cm | Source: measurement notes of the new car, 19 Nov. Not yet re-measured on the final chassis |
+| Wheelbase (front to rear axle) | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
+| Car width | 19 Nov 2026 | ruler | 9 cm | Also in `straight_pillars.ino`, measured 19 Nov |
+| Full length, with front protrusion | 19 Nov 2026 | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
+| Rear (encoder) axle to camera lens | 20 Nov 2026 | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
 | Track width (between wheels) | — | ruler | — | |
 | Mass, ready to run, with battery | — | kitchen scale, ±1 g | — | Design value 248 g. Note what is mounted |
 | Turning sweep at full lock, left (from the lens) | 28 Oct 2026 | tape measure, 6 runs | 12 cm forward, 40 cm sideways | Includes about 2.4 cm of braking. Source: notes of 28 Oct |
@@ -95,6 +99,7 @@ Procedure: place the car at 5, 20, 40 and 60 cm from the wall, read 30 samples p
 | Drift at rest, 60 s | — | — | `src/hardware-tests/tof_and_gyro_test` | — (°/min) | Car still on the floor |
 | Heading error after one 90° turn, in motion | 28 Oct 2026 | not recorded | Turn with the PD gyro while driving (`turn_measure_moving`), 6 runs | 89.3 to 90.3 ° | Source: notes of 28 Oct. The commit of that sketch was not recorded. The 10 hand turns each way with `gyro_90_test` are still to be done |
 | Heading error after 12 turns | — | — | run `open_challenge` and measure the final heading | — (°) | Also record the run in the three-lap table |
+| Yaw of a hand-turned 90° (`gyro_90_test`) | 21 Nov 2026 | not recorded | Turn the car exactly 90° by hand | 85° printed, giving `YAW_SCALE` 1.06 | Used by `straight_pillars.ino`. `open_challenge` and `obstacle_challenge` still use `GYRO_SCALE` 1.007 (3-lap test). Decide which value to keep |
 
 ## Camera: frame rate and colour detection
 
