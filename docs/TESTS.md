@@ -8,7 +8,7 @@ Rows are added after each run, using the final code of the commit shown.
 
 One row per attempt, with the points the judges give for each criterion of the scoring table (rule 10.2, items 1.1 to 1.3). Fill it in right after each run. Pass criterion: three laps, then a stop inside the starting section. Write the battery voltage, the direction and the stop position in Notes.
 
-Earlier run (22 Nov 2026, commit `3010306` or `c3441cd`, which one ran is not recorded; journal §19.2): three laps (12 corners) completed on the first attempt with no hand intervention, stopped in the starting section close to the start wall. Its points, lap times, direction and battery voltage were not written down, so it is not a row in the table.
+Earlier run (22 Nov 2026, journal §19.2): three laps (12 corners) completed on the first attempt with no hand intervention, stopped in the starting section close to the start wall. Its commit is `3010306` or `c3441cd`; which one ran is not recorded. Both have `STEER_CENTER` 85 and `TICKS_PER_CM` 9.27, while their parent `30f5ca9` has 90 and 15.1. Its points, lap times, direction and battery voltage were not written down, so it is not a row in the table.
 
 How the points are counted:
 
@@ -77,6 +77,8 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Right stop | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
 | Turning radius at full lock | — | wheelbase ÷ tan(40°) | 10.7 cm | — | Wheelbase 9 cm, wheel angle 40° |
 
+**Open check.** With the centre at 85, the left stop (10) is 75 servo units away and the right stop (170) is 85 units away, for the same 40°. The midpoint of the two stops is 90, not 85. Either the servo response is not linear, or the centre is not 85. Measure the wheel angle again with the wheels straight before using 85 in a new test, and record the result here.
+
 ## Car geometry and mass
 
 | Measure | Method | Value | Notes |
@@ -98,7 +100,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Test | Method | Value | Notes |
 | --- | --- | --- | --- |
 | Drift at rest, 60 s | `src/hardware-tests/tof_and_gyro_test` | — (°/min) | Car still on the floor |
-| Heading error after one 90° turn, in motion | Turn with the PD gyro while driving (`turn_measure_moving`), 6 runs | 89.3 to 90.3 ° | Source: notes of 28 Oct. The commit of that sketch was not recorded. The 10 hand turns each way with `gyro_90_test` are still to be done |
+| Heading error after one 90° turn, in motion | Turn with the PD gyro while driving (`turn_measure_moving`), 6 runs | 89.3 to 90.3 ° | Source: notes of 28 Oct. The sketch is in the repository: `src/hardware-tests/turn_measure_moving/` (version of 28 Oct). Its constants were `YAW_SCALE` 1.00, `TICKS_PER_CM` 15.1 and steering centre 120, so these runs are not the error of the current code (see its README). The 10 hand turns each way with `gyro_90_test` are still to be done |
 | Heading error after 12 turns | 12 × per-turn error range (−0.7° to +0.3°) | −8.4° to +3.6° (worst case) | Not measured. Run `open_challenge` and measure the final heading. Also record the run in the Open Challenge table |
 | Yaw of a hand-turned 90° (`gyro_90_test`) | Turn the car exactly 90° by hand | 85° printed, giving `YAW_SCALE` 1.06 | Old value, used only by the earlier `straight_pillars.ino`. Decision (23 Nov): `GYRO_SCALE` 1.007 is the value of `open_challenge` and `obstacle_challenge` |
 
