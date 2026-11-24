@@ -7,6 +7,7 @@ Versions of the car and of this repository. Dates are in 2026.
 - **Width:** the car is **9 cm wide** (measured and confirmed on 23 Nov). The 9.5 cm in the README, the journal, the models, the photos and the test log is corrected to 9 cm.
 - **Half width:** `SAFE_LAT_CM = 17` is 4.5 + 10 + 2.5 cm. The comments in `obstacle_camera_v3_2`, `camera_test` and `obstacle_challenge` said 4.25 cm; they now say 4.5 cm. No value changed.
 - **Test log:** the width row is now confirmed; the "to measure" and conflict notes are removed.
+- **Checklist (README §14.1):** the deadline sentence now says that the dates are counted back from 8 December (rule 7: 2 months, 1 month, 3 weeks, 2 weeks). No date changed.
 
 ## Unreleased — 23 November (evening) · Motor data, power budget and measurement plan
 
