@@ -21,7 +21,7 @@ The car runs two programmable boards that communicate over a wired UART link. **
 | Start button | D10 |
 | I²C bus (BMI160 and the four TOF sensors) | SDA A4 · SCL A5 |
 | TOF `XSHUT` lines | FRONT A1 · BACK A0 · RIGHT A2 · LEFT A3 |
-| UART to the camera board | D0 · D1 |
+| UART from the camera board (one way) | D0 (RX) |
 
 The full wiring, power budget and schematic are in [`../schemes`](../schemes/README.md).
 

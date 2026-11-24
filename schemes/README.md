@@ -46,11 +46,11 @@ The schematic is organised in functional blocks. It was drawn for our first main
 
 | Block | Connections |
 |---|---|
-| **Arduino Nano** | VIN from the battery rail (VCC) · D0/D1 = UART to the camera board · D2/D3 = encoder C2/C1 · D6/D7/D8 = PWMA/AIN1/AIN2 · D9 = servo · D10 = start button · A4/A5 = I²C SDA/SCL · A0/A1/A2/A3 = XSHUT of the BACK/FRONT/RIGHT/LEFT TOF sensors |
+| **Arduino Nano** | VIN from the battery rail (VCC) · D0 = UART receive from the camera board (camera GPIO43 → D0; the Nano sends nothing to the camera) · D2/D3 = encoder C2/C1 · D6/D7/D8 = PWMA/AIN1/AIN2 · D9 = servo · D10 = start button · A4/A5 = I²C SDA/SCL · A0/A1/A2/A3 = XSHUT of the BACK/FRONT/RIGHT/LEFT TOF sensors |
 | **Power stage** | Battery (VCC, 11.4 V) → power switch → CN3903 buck → +5 V rail |
 | **Distance sensors** | 4 × 3-pin connectors (XSHUT, +5 V, GND); SDA/SCL of all TOF sensors share the I²C bus with the BMI160 |
 | **TB6612FNG** | VM = battery, VCC = +5 V, **STBY tied to +5 V** (driver always enabled, no MCU pin needed), channel A only (single motor) |
-| **Camera interface** | +5 V / GND power connector and RX/TX connector (camera GPIO44 / GPIO43) |
+| **Camera interface** | +5 V / GND power connector and TX connector (camera GPIO43 → Nano D0; GPIO44 not used) |
 | **BMI160** | VIN = +5 V (module has its own regulator), SCL = A5, SDA = A4 |
 | **Motor + encoder** | 6-pin connector: M1, M2 (motor), C1, C2 (encoder channels), +5 V, GND |
 | **Servo** | Signal = D9, +5 V, GND |
@@ -71,7 +71,7 @@ The schematic is organised in functional blocks. It was drawn for our first main
 
 | Device | Signal | Pin |
 |---|---|---|
-| Camera board (ESP32-S3-CAM) | UART RX / TX | D0 / D1 ↔ GPIO43 / GPIO44 |
+| Camera board (ESP32-S3-CAM) | UART, one way | GPIO43 (TX) → Nano D0 (RX); GPIO44 not used |
 | Encoder | C1 / C2 | D3 / D2 |
 | TB6612FNG | PWMA / AIN1 / AIN2 | D6 / D7 / D8 |
 | TB6612FNG | STBY | +5 V (hard-wired) |
@@ -144,7 +144,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 | Risk | What could happen | Mitigation |
 |---|---|---|
 | Servo peaks on the shared 5 V rail reach the TOF sensors | A servo stall could glitch a distance reading or make a sensor reset | 3 A buck with large margin (see budget). Measure the 5 V rail with a multimeter while the servo stalls and the four sensors are ranging |
-| Nano 5 V UART into the camera's 3.3 V pins | The classic Nano's TX line is 5 V; the ESP32-S3 pins are not 5 V tolerant | Before the camera link is connected, add a resistor divider (1 kΩ / 2 kΩ) on the Nano TX → camera RX line; camera TX → Nano RX works directly (3.3 V is read as HIGH by the ATmega328P) |
+| Camera 3.3 V TX into the Nano RX | The ESP32-S3 drives 3.3 V; the ATmega328P reads 3.3 V as HIGH at 5 V (input-high threshold about 3.0 V) | No resistor divider. The link is one-way: the camera never listens to the Nano (`NANO_RX_PIN = -1`), so the Nano TX pin carries nothing to the camera |
 | Battery voltage on a 3.3 V pin | Permanent damage to the main controller (it happened: journal Problem 31) | On the PCB the battery rail only reaches VIN, the TB6612FNG VM pin and the buck input. Journal Problem 31 led to a safety rule: **upload code with the battery off** |
 | Servo stall pulls the 5 V rail down | Camera or sensors reset during a run | 3 A buck with large margin (see budget) |
 | Loose sensor wires | A TOF stops answering, I²C bus freezes | Locking JST connectors on the PCB; `Wire.setTimeOut()` in code so a frozen bus does not hang the program (journal Problems 12 and 30) |
@@ -168,7 +168,7 @@ The TOF row is on the 5 V buck rail, so its cost reaches the battery through the
 **Calibration methods**
 
 - **Gyroscope:** 300 samples (≈ 1.5 s, after 0.7 s of settling) at rest when the run is started, with the LED blinking; the average is subtracted as offset (like taring a scale). The scale is checked with 4 hand turns (1440°) → `YAW_SCALE`.
-- **TOF sensors:** ROI 16 × 8 and mounting angle chosen with tape-measure experiments on the black wall (`tof_roi_budget_test`, journal Phase 10); only "range valid" readings; decisions from a window of 8 readings.
+- **TOF sensors:** ROI 16 × 8 and mounting angle chosen with tape-measure experiments on the black wall (`tof_roi_budget_test`, journal Phase 10); distance readings (0 or ≥ 4000 mm = no wall; the range status is not checked). The 8-reading window is October history (README §8.3).
 - **Steering:** centre and limits measured on the real chassis with the `servo_test` sketch, with a 2–3° margin before each mechanical stop.
 - **Camera colours:** HSV thresholds tuned live with the camera viewer under the real lighting.
 

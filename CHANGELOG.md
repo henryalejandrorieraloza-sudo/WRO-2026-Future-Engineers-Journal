@@ -2,6 +2,15 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## Unreleased — 23 November · README checked line by line against the three competition sketches
+
+- **Checked against the code:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` are the reference. Constants and behaviour in the README now match them.
+- **Corrected:** reverse gear (Obstacle turns in reverse, Open forward only); steering limits (left 10, right 170); the camera link is one-way (camera TX → Nano RX, no resistor divider needed); the gyro output rate is not set in the code; the turn, the stop and the side-sensor rules described as current now match the code; the 13 cm/s speed arithmetic.
+- **History marked:** the 8-reading window, the undo, the 1 s and 500 ms delays and the PD turn are documented as October design, not as the current code.
+- **Added:** a table of the limits and fallbacks of `obstacle_challenge` (README §9.10).
+- **Counts updated:** 144 commits, 69 by the Claude account, 28 STL files (26 printed and 2 tyre moulds).
+- **Status:** the organisers' link was sent and its receipt confirmed on 23 November.
+
 ## v1.9.17 — 23 November · Unused constants and obsolete comments removed
 - **Constants removed where they were not used:** `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM` in `obstacle_challenge`; `SIDE_ZONE`, `LINE_TRIGGER_ROW`, `MAGENTA_MIN_PIXELS` and `TURN_CONFIRM_FRAMES` in `obstacle_camera_v3_2`. The three first names are still used by `open_challenge`, so they stay there.
 - **Obsolete comments removed or corrected:** the "PASTE HERE" block note in the camera sketch, old colour-threshold notes, references to the removed `straight_pillars` sketch in the Open Challenge and parking sketches, and the `obstacle_challenge` README sentence about the constants.
