@@ -778,7 +778,7 @@ This reverses the earlier plan to power the sensors from the Nano's 3.3 V pin, w
 | Mobility and mechanical design | Three CAD + printed iterations, gear geometry (module 1, 12 teeth), torque and speed reasoning, trade-off Ackermann vs parallel |
 | Power and sensor architecture | Recalculated power budget and a new failure point (servo peaks on the shared 5 V rail) with a test and a margin check |
 | Systems thinking | A mechanical problem (friction) caused electrical damage (servos) and changed software constants: one decision fixed all three |
-| Reproducibility | 25 STL files, STEP assembly, tyre recipe and assembly order published in `models/` |
+| Reproducibility | 28 STL files (26 printed parts + 2 tyre moulds), STEP assembly, tyre recipe and assembly order published in `models/` |
 
 ---
 

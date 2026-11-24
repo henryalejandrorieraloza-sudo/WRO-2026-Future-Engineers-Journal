@@ -9,7 +9,7 @@ This folder contains every printed part of the car, ready to slice and print, pl
 
 | File / folder | Content |
 |---|---|
-| [`stl/`](stl) | **28 STL files**: 25 printed parts, 2 tyre moulds and the `front_protrusion` piece (chassis v4), in millimetres |
+| [`stl/`](stl) | **28 STL files**: 26 printed parts (including the `front_protrusion` piece), 2 tyre moulds (chassis v4), in millimetres |
 | [`images/`](images) | A render of each part, with the same name as its STL |
 | [`iterations/`](iterations) | CAD screenshots of chassis v1, v2, v3 and v4 |
 | [`enner_valencia_cad.png`](enner_valencia_cad.png) | Render of the full assembly |

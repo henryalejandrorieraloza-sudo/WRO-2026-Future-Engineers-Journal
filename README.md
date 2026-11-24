@@ -63,7 +63,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 | Rubric criterion | What it asks for | Where it is |
 |---|---|---|
-| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 25 printed parts + 2 tyre moulds + the front protrusion, full STEP assembly, CAD v1–v3, assembly order) |
+| **1. Mobility and mechanical design** | Chassis, steering and drive justification, torque / speed reasoning, stability, diagrams, reproducible | [§5](#5-mobility-and-mechanical-design) (torque and speed calculations in §5.2, steering trade-off in §5.3, iterations in §5.5) · [models/](models/README.md) (28 STL — 26 printed parts including the front protrusion + 2 tyre moulds, full STEP assembly, CAD v1–v3, assembly order) |
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (flowchart, vision, map, steering law) · [§11](#11-testing-workflow-and-metrics) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks) (dependencies, "we chose X instead of Y because…", risks, every setting justified) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
@@ -78,7 +78,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** the camera detects red and green pillars; the Nano drives around them. The parking start is in the code and still being tested (§7, §9).
-- **Repository:** 136 commits on `main`. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Repository:** 142 commits on `main`. Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -96,7 +96,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 │   ├── obstacle-challenge/     ← the Obstacle Challenge: driving program, camera vision (v3.2), parking start
 │   └── tools/                  ← browser tools: camera_viewer (test the camera), scenario-roulette (track layouts)
 │   (earlier Open Challenge sketches and older hardware tests: kept in the git history — see src/README.md)
-├── models/                  ← 28 STL files (25 printed parts + 2 tyre moulds + front protrusion), renders, full STEP assembly, CAD history v1–v3 and the final v4 assembly
+├── models/                  ← 28 STL files (26 printed parts including the front protrusion + 2 tyre moulds), renders, full STEP assembly, CAD history v1–v3 and the final v4 assembly
 ├── t-photos/                ← team photos (official and fun)
 ├── v-photos/                ← the six official views of the vehicle + all parts laid out
 ├── video/                   ← links to the driving videos
@@ -193,7 +193,7 @@ How the car and this repository meet each rule of the *WRO 2026 Future Engineers
 
 ## 5. Mobility and mechanical design
 
-All printed parts (25 STL files), the full STEP assembly, the CAD of every iteration and the tyre-casting process are in [models/README.md](models/README.md).
+All printed parts (26 STL files, plus 2 tyre moulds), the full STEP assembly, the CAD of every iteration and the tyre-casting process are in [models/README.md](models/README.md).
 
 <div align="center">
 
@@ -791,7 +791,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 
 | Risk | Mitigation |
 |---|---|
-| Main board damaged by a wrong voltage (journal Problem 31: the Nano ESP32 was lost) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
+| Main board (Nano ESP32) lost during an upload with the robot powered and USB connected; the cause is not confirmed (journal Problem 31) | Battery only reaches VIN, VM and the buck; code is uploaded with the battery **off** |
 | Servo peaks on the shared 5 V rail reach the TOF sensors | Measure the 5 V rail under servo stall with the sensors ranging; 3 A buck margin |
 | Classic Nano (5 V) TX into the camera's 3.3 V RX | Resistor divider on that line before the camera link is connected |
 | Servo blocked by the steering mechanism | Rack and pinion with low friction; limits measured with 2–3° margin |
@@ -920,7 +920,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 | Pillar detection | Done — Finished and tested on the robot (v3: locked camera, blocks, time filter, distance in cm) |
 | Obstacle vision v3.2 (QQVGA, half resolution) | Used by the driving program since 23 Nov (`obstacle_camera_v3_2`); the pixel constants are not validated on the track yet |
 | Live camera view over WiFi | Done for bench tests only — `WIFI_STREAM = false` in the competition build (rule 11.6: no radio during rounds) |
-| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 25 printed parts + 2 tyre moulds + front protrusion; full STEP assembly in `models/`) |
+| Chassis v3: printed base, rack-and-pinion steering, silicone tyres | Done — Built (28 STL files published: 26 printed parts including the front protrusion + 2 tyre moulds; full STEP assembly in `models/`) |
 | Steering calibration on v3 | Done 21 Nov — centre 85, limits 170 / 10 (servo units). Used by `obstacle_challenge`, `open_challenge`, the parking sketch and the tests since 22 Nov |
 | Gyro wall following on v3 | Validated 20 Oct (`wall_follow_nearest_gyro`; code in the git history since 20 Nov) |
 | 90° gyro turn with active brake | Validated 21 Oct (`turn_left_90_pid_brake`; in the git history) |
@@ -944,7 +944,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car.
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`).
 
 ### 14.1 Submission checklist
 
@@ -973,7 +973,7 @@ International Final: **8–10 December 2026, San Juan, Puerto Rico**. Deadlines 
 
 Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-Of the 136 commits on `main`, 64 are authored by the Claude account: 30 change code files, 30 change only documentation, and 4 change other files. The commits are not rewritten, so each change can be traced to its author.
+Of the 142 commits on `main`, 67 are authored by the Claude account (`noreply@anthropic.com`). The commits are not rewritten, so each change can be traced to its author.
 
 - **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.

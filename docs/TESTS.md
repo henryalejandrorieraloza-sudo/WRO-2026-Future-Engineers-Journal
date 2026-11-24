@@ -14,13 +14,15 @@ Target: at least 20 runs with the final code (the rubric's example for level 6 u
 
 | Run | Date | Commit | Battery (V) | Laps completed | Success (yes / no) | Time per lap (s) | Direction | Stop position | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-|   |   |   |   |   |   |   |   |   |   |
+| 1 | 22 Nov 2026 | not recorded (code of 22 Nov; to confirm) | not recorded | 3 (12 corners) | yes | not recorded | not recorded | Starting section, close to the start wall (not the exact spot) | First attempt, no hand intervention. Corridors narrow. Source: journal §19.2 |
 
 ## Summary
 
+Only one run is recorded so far. The 20-run series is still to be done; the fields marked "not recorded" were not written down at the time.
+
 | Test | Runs | Successes | Success rate | Median time per lap (s) |
 |---|---:|---:|---:|---:|
-|   |   |   |   |   |
+| Open Challenge, 3 laps | 1 | 1 | 100 % (1 run so far) | not recorded |
 
 ## Other tests
 
