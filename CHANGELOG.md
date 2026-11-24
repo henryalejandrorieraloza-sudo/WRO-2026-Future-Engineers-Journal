@@ -2,6 +2,11 @@
 
 Versions of the car and of this repository. Dates are in 2026.
 
+## v1.9.17 — 23 November · Unused constants and obsolete comments removed
+- **Constants removed where they were not used:** `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM` in `obstacle_challenge`; `SIDE_ZONE`, `LINE_TRIGGER_ROW`, `MAGENTA_MIN_PIXELS` and `TURN_CONFIRM_FRAMES` in `obstacle_camera_v3_2`. The three first names are still used by `open_challenge`, so they stay there.
+- **Obsolete comments removed or corrected:** the "PASTE HERE" block note in the camera sketch, old colour-threshold notes, references to the removed `straight_pillars` sketch in the Open Challenge and parking sketches, and the `obstacle_challenge` README sentence about the constants.
+- **No logic changed:** only declarations and comments. Brace counts were checked before and after. Compilation on the Arduino IDE is still to be done.
+
 ## v1.9.16 — 23 November · Videos added and documents reconciled with the code
 - **Videos:** Open Challenge `4p94mWkXhsk` and Obstacle Challenge `ccAdp2c7_7Y` added to `video/` and the root README.
 - **Docs corrected to match the sketches** (no `.ino` behaviour changed): TOF addresses of the driving programs (0x2A–0x2D), gyro calibration (300 samples), `servo_calibration` → `servo_test`, constants table of §8.0, old design sections marked as history, camera x range (−80…+79), `camera_test` = v3.1, gyro scale 1.007 in both programs, reverse-turn rule note. Details in journal §21.
