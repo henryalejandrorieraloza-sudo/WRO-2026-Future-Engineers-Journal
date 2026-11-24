@@ -4,6 +4,14 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.29 — 24 November · Total car length 17.5 cm checked in the whole repository
+
+**No code logic changed.** The team confirmed that the **total length of the car is 17.5 cm**. Every file of the repository was read and searched for the car's length; the README, `models/README.md`, `v-photos/README.md`, `docs/TESTS.md`, the journal (§9.2) and the compliance rows (175 × 90 × 60 mm) already said 17.5 cm. What was still different:
+
+- **`src/tools/scenario-roulette/index.html`:** the robot-length box showed `20` as its example and the field drawing used 20 cm when the box was empty; both are now 17.5 cm (the parking box is 1.5 × 17.5 = 26.25 cm).
+- **`CHANGELOG.md` v0.7:** the old "13 × 9 × 6 cm" is marked as the size of chassis v3, with a pointer to the 17.5 cm of chassis v4.
+- **`README.md` §5.1 and `docs/TESTS.md`:** the length is now broken down the same way in both (≈ 13.5 cm without the protrusion + about 4 cm of protrusion = 17.5 cm), and a self-referencing "see §5.1" inside §5.1 was removed.
+
 ## v1.9.28 — 24 November · Six Open Challenge runs logged
 
 **Code changed in one constant:** `STOP_OFFSET_CM` in `open_challenge.ino` from 0 to **10**, the value the team uses (README §8.0 and the sketch README match). No other code changed.
@@ -351,7 +359,7 @@ Rule used: the three programs that run on the car (`open_challenge`, `obstacle_c
 - **3D models published:** 25 STL files of every printed part in `models/stl/` with a render of each part, the STEP assembly link, the CAD of chassis v1, v2 and v3, printing notes and the assembly order (`models/README.md`).
 - **Steering iteration documented:** v1 Ackermann → v2 Ackermann with a steering rack → v3 parallel **rack and pinion** (12-tooth pinion, module 1 mm). Reason: the Ackermann linkage damaged three servos (journal Problem 33).
 - **Custom silicone tyres:** casting process with C25 silicone in printed moulds, formula B = ¾ A (30 g → 23 drops), 5–6 h cure (`models/README.md §4`, `other/tyres/`).
-- **Six official vehicle views** of the final car plus all parts laid out (`v-photos/`). Size 13 × 9 × 6 cm, mass 248 g.
+- **Six official vehicle views** of the final car plus all parts laid out (`v-photos/`). Size at that time (chassis v3): 13 × 9 × 6 cm, mass 248 g; with the front protrusion of chassis v4 the car is **17.5 cm** long (v1.9.3).
 - **Power:** TOF sensors now powered from the Nano's 3.3 V pin; power budget recalculated (≈ 2.5 W typical, ≈ 11.0 W peak, ≈ 1.4 h per charge) and new failure points (3.3 V pin current, 5 V UART into the 3.3 V camera).
 - **Corrections:** side TOF sensors raised 1.5 cm (not ~2 cm); main controller is the classic Arduino Nano everywhere in the docs; mechanical section rewritten with torque reasoning, 1 : 1 differential, gear geometry and the Ackermann vs parallel trade-off.
 - Team and car names explained (Team X67, *Enner Valencia*). Build-process photos, soldered PCB and retired components added (`other/`, `schemes/`).

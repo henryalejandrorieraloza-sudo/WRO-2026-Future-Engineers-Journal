@@ -104,7 +104,7 @@ Procedure and numbers: `schemes/datasheets/MG90_stall_current_measurement.md` (o
 | Wheel diameter, four wheels, mounted | calliper | — | Design value 41 mm |
 | Wheelbase (front to rear axle) | ruler | 9 cm | Confirmed on 23 Nov 2026 (first measured 19 Nov for the earlier `straight_pillars.ino`) |
 | Car width, including the wheels | ruler | 9 cm | Confirmed on 23 Nov 2026 and again on 24 Nov 2026. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` and `TARGET_CM` (4.5 + 10 + 2.5 = 17 cm) |
-| Full length, with front protrusion | ruler | 17.5 cm | Protrusion about 4 cm |
+| Full length, with front protrusion (total length of the car) | ruler | 17.5 cm | ≈ 13.5 cm without the protrusion (120 mm base plus the camera overhang) plus about 4 cm of protrusion. This 17.5 cm is the length declared for the parking-lot rule (lot = 1.5 × 17.5 ≈ 26.25 cm) |
 | Rear (encoder) axle to camera lens | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` |
 | Car body width, without the wheels | ruler | 7 cm | Measured on 24 Nov 2026 (the 9 cm above is this 7 cm plus the wheels) |
 | Mass, ready to run, with battery | kitchen scale, ±1 g | 248 g | Weighed with the battery. Note what is mounted |

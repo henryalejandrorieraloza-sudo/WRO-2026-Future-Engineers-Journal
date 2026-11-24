@@ -231,7 +231,7 @@
       </div>
       <div class="field">
         <label for="largoRobot">Robot length (cm)</label>
-        <input type="number" id="largoRobot" min="1" step="0.5" placeholder="20">
+        <input type="number" id="largoRobot" min="1" step="0.5" placeholder="17.5">
       </div>
       <button class="btn-primary" id="btnGenerar" type="button">🎲 Generate scenario</button>
     </div>
@@ -904,7 +904,7 @@
     // Parking lot: 200 mm deep against the outer wall; the first magenta
     // piece sits right next to the section line at the clockwise-upstream
     // end (Figure 4), the second one 1.5 × robot length further along.
-    var lenMm = (robotLenCm ? robotLenCm : 20) * 15;
+    var lenMm = (robotLenCm ? robotLenCm : 17.5) * 15;
     var ps = e.parkingSection;
     var tA = 0.02, tB = 0.02 + lenMm/1000;
     svg += polygon(cellRect(ps, tA, tB, 0, 200), 'fill="var(--magenta)" fill-opacity="0.13" stroke="var(--magenta)" stroke-width="5" stroke-dasharray="20 14"');
