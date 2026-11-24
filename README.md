@@ -987,7 +987,7 @@ The *IGNORED top* slider of the page only moves the drawn line (the sketch keeps
 
 ## 14. Versions and release notes
 
-See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then [v1.9.18](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.18) (the scoring commit of 23 Nov).
+See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. The versions are tagged on GitHub and published as releases: [v1.9.16](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.16) (`bf83835`) and [v1.9.17](https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal/releases/tag/v1.9.17) (`698cf5d`), then v1.9.18 (the scoring commit of 23 Nov, described in the changelog).
 
 ### 14.1 Submission checklist
 
