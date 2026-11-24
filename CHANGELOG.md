@@ -12,6 +12,7 @@ Only documents changed; **no code changed**. All 7 Mermaid diagrams were compare
 - **README §8.2 (Open state machine):** `DONE → STRAIGHT` is started by the START button or `g` (the diagram said only `g`).
 - **README §9.1 (round flowchart):** the first line of the run locks the colour.
 - **README §7.1:** the camera link sends one short text line per frame (not "a few bytes").
+- **Text checked against the code:** the Wi-Fi sketch `camera_webserver_emakefun` is no longer described as present (README §3.1); `src/README.md` names the sketch that really drives D5 (`turn_measure_moving`); `video/video.md` no longer says the Obstacle video includes parking; gyro calibration time in the Obstacle README (§6.1).
 - Checked and unchanged: Open state diagram (both READMEs) and Obstacle state diagram (both READMEs).
 
 ## v1.9.20 — 24 November · README easier to read
