@@ -743,7 +743,7 @@ The turn always ends when the gyroscope says the car has rotated **exactly 90°*
 | **No tape**, every joint screwed | Tape showed that the design was not finished and let the geometry move |
 | Side TOF sensors **1.5 cm** higher | Confirmed measurement of the change of Problem 16 |
 
-Final car: **17.5 cm long, 9.5 cm wide, 6 cm high, 248 g**. N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
+Final car: **17.5 cm long, 9 cm wide, 6 cm high, 248 g**. N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
 
 #### Problem 34 — A drive gear skipped when the motor reversed suddenly ✅
 - **What I observed (10 Oct):** when the motor jumped suddenly to reverse, one gear of the drive train skipped.
@@ -1245,7 +1245,7 @@ heading = atan2(goalY − carY, look)
 - **`look = max(12, pillarX − 2.5 − carX − 10)`:** the distance from the car to 10 cm **before** the pillar's front face. The car should already be at the safe side when it gets there. The minimum of 12 cm stops the angle from growing huge right next to the pillar (a tiny `look` would give almost 90°).
 - **Limited to ±45°:** in the simulation, 35° was not enough to reach the second pillar; more than 45° makes the car lose speed and turn too sharply.
 
-**`goalY` for each colour** (17 cm = 4.25 half car + 10 gap + 2.5 half pillar):
+**`goalY` for each colour** (17 cm = 4.5 half car + 10 gap + 2.5 half pillar):
 
 ```
 red   (pillar must stay on the LEFT):   goalY = min(carY, pillarY − 17)

@@ -71,7 +71,7 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 |---|---|---|---|---|
 | Wheel diameter, four wheels, mounted | — | calliper | — | Design value 41 mm |
 | Wheelbase (front to rear axle) | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov |
-| Car width | 19 Nov 2026 | ruler | 9 cm | **To measure on 24 Nov.** Also in `straight_pillars.ino`, measured 19 Nov. Conflict: the README and the journal give 9.5 cm, and the comment in `src/hardware-tests/camera_test/camera_test.ino` uses a half width of 4.25 cm (8.5 cm). Measure again and use one value everywhere |
+| Car width | 19 Nov 2026 | ruler | 9 cm | Confirmed on 23 Nov 2026. Also in `straight_pillars.ino`, measured 19 Nov. Used everywhere: half width 4.5 cm in `SAFE_LAT_CM` (4.5 + 10 + 2.5 = 17 cm) |
 | Full length, with front protrusion | 19 Nov 2026 | ruler | 17.5 cm | Protrusion about 4 cm. Also in `straight_pillars.ino` |
 | Rear (encoder) axle to camera lens | 20 Nov 2026 | ruler | 11.7 cm | `CAM_FWD_CM` in `obstacle_challenge.ino` and `straight_pillars.ino` |
 | Track width (between wheels) | — | ruler | — | |

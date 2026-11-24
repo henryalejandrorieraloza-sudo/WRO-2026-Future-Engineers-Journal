@@ -1,6 +1,6 @@
 # Vehicle photos — *Enner Valencia* (chassis v4)
 
-The six views required by the rules, of the final car: **17.5 cm long, 9.5 cm wide, 6 cm high, 248 g**.
+The six views required by the rules, of the final car: **17.5 cm long, 9 cm wide, 6 cm high, 248 g**.
 
 | Front | Back |
 |---|---|

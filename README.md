@@ -28,7 +28,7 @@ Here you will find the full engineering process (what we tried, what failed, the
 
 | | |
 |---|---|
-| **Size / mass** | 17.5 × 9.5 × 6 cm · 248 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
+| **Size / mass** | 17.5 × 9 × 6 cm · 248 g (limits: 30 × 20 × 30 cm, 1.5 kg) |
 | **Main controller** | Arduino Nano (ATmega328P) |
 | **Vision** | ESP32-S3-CAM (OV2640) running our own colour-detection pipeline (160 × 120 in the competition code, v3.2; the frame rate at this size is printed by the sketch and is to be recorded) |
 | **Sensors** | 4 × TOF400C laser distance sensors (VL53L1X), BMI160 gyroscope, motor encoder |
@@ -74,7 +74,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 
 ## Summary
 
-- **Vehicle:** 17.5 × 9.5 × 6 cm, 248 g. Rear drive motor with encoder, rack-and-pinion steering, a custom PCB, laser distance sensors and a gyroscope.
+- **Vehicle:** 17.5 × 9 × 6 cm, 248 g. Rear drive motor with encoder, rack-and-pinion steering, a custom PCB, laser distance sensors and a gyroscope.
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** the camera detects red and green pillars; the Nano drives around them. The parking start is in the code and still being tested (§7, §9).
@@ -207,7 +207,7 @@ All 28 STL files (26 printed parts and 2 tyre moulds), the full STEP assembly, t
 ### 5.1 Chassis
 
 - **Two layers:** a **3D-printed PLA base** (120 × 70 mm) carries the drive train at the rear and the steering at the front; the **custom PCB** sits on printed supports above it and carries all the electronics. The 3S battery lies flat on the PCB.
-- **Size and mass:** 17.5 cm long, 9.5 cm wide, 6 cm high, **248 g** (to confirm by weighing, see `docs/TESTS.md`; chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see §5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
+- **Size and mass:** 17.5 cm long, 9 cm wide, 6 cm high, **248 g** (to confirm by weighing, see `docs/TESTS.md`; chassis v4: the 120 mm base plus the front protrusion, which brings the total to 17.5 cm to enlarge the parking-lot space — see §5.1). That is still less than two-thirds of the allowed length and less than half of the allowed width, and under 20 % of the allowed mass.
 - **Why so small:** the narrowest corridor is 60 cm. A short, narrow car has more free space on each side to correct its path and to pass pillars, and a short wheelbase turns in a smaller radius.
 - **Stability:** the car is only 6 cm high and the heaviest parts (battery, motor, PCB) are in its lower half, so the centre of mass is low and the car does not roll in turns. The PCB is 1.6 mm FR-4 and is screwed to the base, which makes the whole chassis stiff.
 - **Everything is screwed:** in chassis v2 some parts were held with tape, which showed the design was incomplete. In v3 every joint is a screw, so the geometry does not change after a crash or after taking the car apart.
@@ -777,7 +777,7 @@ A side sensor silent for 0.5 s restarts all the sensors (`!!! TOF RESTART`) in b
 | TOF height on the chassis | Sensors, software | 1.5 cm higher fixed the readings over the wall without any code change |
 | TOF mounting angle | Sensors, software, strategy | At 30° the black wall returned no light and every decision based on it failed; straight sensors made the data trustworthy and the algorithm simpler |
 | Steering mechanism | Mechanics, electronics, software | Ackermann friction broke three servos; rack and pinion protects the servo and makes angle → wheel position linear |
-| Car size and mass (17.5 × 9.5 cm, 248 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
+| Car size and mass (17.5 × 9 cm, 248 g) | Mechanics, power, strategy | Light enough for a 1 : 1 drive and a 380 mAh battery; narrow enough to have room on both sides in a 60 cm corridor |
 | TOF on the 5 V buck rail | Power, sensors | The Nano works with 5 V logic, so the sensors connect directly; they share the rail with the servo, which the 3 A buck margin covers |
 | Servo mount angle | Mechanics, software | Steering centre must be measured in software after every mechanical change |
 | Battery voltage directly to the motor | Power, control | Speed changes as the battery discharges, so turns are controlled by gyro angle, not time |

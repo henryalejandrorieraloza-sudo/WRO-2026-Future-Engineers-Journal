@@ -67,7 +67,7 @@ The sketch groups its constants in five blocks. The most important ones are belo
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `TARGET_CM` | 17 | Wanted distance from the pillar centre to the car centre when passing it (4.25 cm half car + 10 cm gap + 2.5 cm half pillar) |
+| `TARGET_CM` | 17 | Wanted distance from the pillar centre to the car centre when passing it (4.5 cm half car + 10 cm gap + 2.5 cm half pillar) |
 | `MAX_AIM_DEG` | 60 | Largest heading change the program asks for to dodge a pillar |
 | `LOOK_MIN_CM` | 12 | Minimum look-ahead distance used for the aiming angle, so it never explodes next to a pillar |
 | `ARRIVE_BEFORE_CM` | 55 | The car should be on the safe side this far before the pillar |

@@ -85,7 +85,7 @@ const bool FLIP_VERTICAL     = false;   // both are applied by the sensor (set_h
 // ---------- Real-world sizes (from the measurements) ----------
 const float FOCAL_PX    = 50.0;   // focal length in pixels at QQVGA (160x120). NOT independently re-measured: re-check with camera_viewer.html
 const float PILLAR_CM   = 5.0;    // real pillar width in cm (rules: 50 x 50 x 100 mm)
-const float SAFE_LAT_CM = 17.0;   // safe sideways distance: car half width 4.25 + 10 cm gap + pillar half width 2.5
+const float SAFE_LAT_CM = 17.0;   // safe sideways distance: car half width 4.5 + 10 cm gap + pillar half width 2.5
 const int   X_CENTER_OFFSET = 6;  // a pillar straight ahead shows up this many px off center (camera turned ~6 deg)
 
 // ---------- Vision improvements (switch each one off to compare) ----------
