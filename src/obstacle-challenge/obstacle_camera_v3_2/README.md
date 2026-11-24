@@ -30,7 +30,7 @@ The camera never listens to the Nano, so `NANO_RX_PIN` is `-1`.
 
 **Board settings (Arduino IDE):** ESP32S3 Dev Module, USB CDC On Boot: Enabled, Flash 8 MB, Partition 8M with SPIFFS (3 MB APP / 1.5 MB SPIFFS), PSRAM: OPI PSRAM.
 
-**Upload:** press BOOT and RESET on the camera. Hold the Nano's RESET while uploading, because both boards share the D0 line.
+**Upload:** press BOOT and RESET on the camera.
 
 **Start-up:** power the camera while it looks at the **empty floor**. The camera settings are frozen `LOCK_AFTER_MS` (5 s) after power-on, so the colours stay the same during the run. Calibrate the colours after the lock, not before.
 
