@@ -729,7 +729,7 @@ The gyroscope scale is `1.007` in both programs. The hand-turn value `1.06` from
 ### 9.7 Parking
 
 - **Start from inside the parking lot** (+7 points): the parking exit is the first stage of [`obstacle_challenge`](src/obstacle-challenge/obstacle_challenge), started by the START button. Two ToF sensors measure the free space, the car turns 45° toward the open side by gyro, straightens, counter-steers, and reverses `PARK_REVERSE_TICKS` = 1200 encoder ticks. Runs 1–3 in `docs/TESTS.md` started from the lot. 1200 ticks is confirmed by the team on the car (24 Nov 2026). The 597 ticks from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm) is a calculation only and is not used.
-- **Parking at the end** (+15 points): in design. After the third lap the car must find the magenta walls of the lot. The camera already detects them (they are never reported as pillars), but the message has no magenta field yet. Parallel parking needs reverse, and the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested alone first.
+- **Parking at the end** (+15 points): **not finished — we have not programmed it yet.** The car does not park at the end of the round. After the third lap the program stops the car in the starting section (§9.6, §9.11), so the parking points are not scored in our runs. What exists: the camera already separates the magenta walls of the lot (they are never reported as pillars), but the message to the Nano has no magenta field yet. Parallel parking needs reverse, and the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested alone first. The next steps are in §13.
 
 ### 9.8 Camera viewer
 
@@ -750,7 +750,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | 7 | Gyro scale checked on the full round (yaw per corner) | To do — `1.007` in both driving programs; check the yaw per corner (§9.6) |
 | 8 | Camera sends the magenta walls to the Nano | To do — not in the message yet |
 | 9 | Start from inside the parking lot | Done in `obstacle_challenge` (parking exit, §9.7); runs 1–3 started from the lot. `PARK_REVERSE_TICKS` = 1200, confirmed on the car |
-| 10 | Parallel parking after the third lap | In design |
+| 10 | Parallel parking after the third lap | Not finished: not programmed yet. The car stops in the starting section instead (§9.11) |
 | 11 | One final program, start button, battery only | `obstacle_challenge`: START button (D10), battery on first. The START button also starts the parking exit |
 
 ### 9.10 Limits and fallbacks in `obstacle_challenge` (from the code)
@@ -771,6 +771,46 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | `MAX_STEER` | 70° | Limit of the steering command |
 
 A side sensor silent for 0.5 s restarts the sensors in use (`!!! TOF RESTART`): the two side sensors in `open_challenge` (front and rear stay off), all four in `obstacle_challenge`.
+
+### 9.11 Flowchart of `obstacle_challenge`
+
+This flowchart follows the code of `obstacle_challenge.ino` (functions `startPark()`, `runPark()`, `startObstacle()`, `runTest()` and `loop()`). It is simplified: the exact conditions are in the code. The parking exit is its own phase; the run after it has the states `STRAIGHT`, `PRE_TURN`, `BRAKE`, `TURN`, `REVERSE` and `DONE`. The run ends in the starting section; **there is no parking at the end of the round yet** (§9.7).
+
+```mermaid
+flowchart TD
+    P0([Power on]) --> P1[Calibrate gyro bias, 4 ToF sensors, encoder to 0<br/>car does not move]
+    P1 --> W{START button pressed?}
+    W -- no --> W
+    W -- yes --> PK[PHASE_PARK: parking exit<br/>first turn 45 deg, counter-steer to heading 0,<br/>pause 0.5 s, reverse PARK_REVERSE_TICKS = 1200]
+    PK -- timeout or no encoder pulses --> IDLE([STOP: back to idle, press START again])
+    PK -- reverse done --> S[STRAIGHT: lane following<br/>GO printed, odometry and map start]
+
+    S --> PIL[Camera pillar message:<br/>block, pass or centre between side ToF]
+    PIL --> S
+    S --> LN{First or next line seen after MIN_DRIVE_CM<br/>and not in the 6 s ignore window?}
+    LN -- no --> SAFE{Safety checks}
+    LN -- yes --> PT[PRE_TURN: hold heading<br/>until front ToF reaches 40 cm]
+
+    SAFE -- no corner in 8 s --> X1([STOP: no corner])
+    SAFE -- wheels still 0.5 s with motor on --> X2([STOP: stalled])
+    SAFE -- last line + 1 s drive-on --> DN([DONE: stop in starting section])
+    SAFE -- ok --> S
+
+    PT -- front ToF not reached in 4 s --> X3([STOP: front never reached 40 cm])
+    PT -- front ToF at 40 cm --> BR[BRAKE 0.5 s, wheels straight]
+    BR --> TU[TURN: steer to the opposite side and reverse<br/>until gyro predicts 90 deg]
+    TU -- more than 4 s --> X4([STOP: turn too long])
+    TU -- 90 deg done --> CN{4 x LAPS corners done?}
+    CN -- no --> RV[REVERSE: back up until rear ToF 30 cm]
+    CN -- yes --> FL[Final leg: drive to the last line,<br/>then drive on 1 s] --> RV
+    RV -- more than 3 s --> X5([STOP: reverse too long])
+    RV -- rear ToF 30 cm --> S
+
+    DN --> W2{START pressed again?}
+    W2 -- yes --> PK
+```
+
+Each safety stop above stops the motor and prints its reason on the Serial Monitor. The limits behind them are in the table in §9.10.
 
 ---
 
@@ -1042,7 +1082,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. Six more runs on 24 Nov, three ccw and three cw from different start sections, all with three laps, no wall touch, no repair and a correct stop: 30 of 30 points, round time 24.21–25.19 s (`docs/TESTS.md`, journal §24.11). To do: measure the battery before each run from now on, record the commit, and log runs with 1000 mm corridors |
 | **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Validated on the car** — three runs logged in `docs/TESTS.md`: 3 laps, correct stop in the starting section, started in the parking lot, no pillar moved, no repair; 47 of 62 points each (round times 1:40, 1:41 and 2:00). Video recorded on 23 Nov (that day's code). To do: more runs and the 160 × 120 frame rate |
 | Parking exit (first stage of `obstacle_challenge`) | Started by START; runs 1–3 started from the lot. `PARK_REVERSE_TICKS` = 1200, confirmed on the car |
-| Parking at the end of the round | In design; the camera already separates the magenta walls but does not send them yet (§9.7) |
+| Parking at the end of the round | **Not finished — not programmed yet.** The camera separates the magenta walls but does not send them yet (§9.7) |
 | Camera viewer page | Done — used to set up the new camera board on 19 Nov (journal §17.5) |
 | Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19 and v1.9.20, journal §24–§25) |
 
