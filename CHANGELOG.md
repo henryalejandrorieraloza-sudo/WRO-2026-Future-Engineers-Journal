@@ -6,14 +6,26 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day). 
 
 ## v1.9.34 — 24 November · full read of the repository against the code
 
-**Corrected (comments, docs and unused declarations; no logic change):**
-- `obstacle_camera_v3_2.ino`: the comment for `SAFE_LAT_CM` says car half width 4.5 cm (was 4.25); the car is 9 cm wide.
-- `obstacle_challenge.ino`: removed the unused declarations `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM`.
-- `src/README.md`: the folder holds the two driving programs (was "three").
-- `schemes/datasheets/MG90_stall_current_measurement.md`: the Obstacle steering limits are 10 / 170 (the 5 / 165 values belong to the Open Challenge).
-- Root `README.md`: removed the "Pillar Vision Lab" name; the camera viewer is the tool.
+**Code (comments and unused declarations only; no logic change):**
+- `obstacle_camera_v3_2.ino`: the `SAFE_LAT_CM` comment uses car half width 4.5 cm (was 4.25); the car is 9 cm wide.
+- `obstacle_challenge.ino`: `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM` removed (declared, never used). The v1.9.17 entry said they were already removed; they stayed in the code until this version.
+- `gyro_90_test`: references to `straight_pillars.ino` are marked as an earlier sketch that is only in git history.
 
-**Known, not changed:** the EasyEDA schematic in `schemes/schematic.png` labels the controller "ARDUINO NANO ESP32", while the code and the README use an Arduino Nano (ATmega328P). The image is not edited here.
+**Documentation corrected:**
+- Root `README.md` §11: "Pillar Vision Lab" removed (the camera viewer is the tool); the next-step counts now match the logs.
+- `src/README.md`: two driving programs, not three.
+- `schemes/README.md`: the schematic note says the Nano ESP32 was the first controller, damaged and replaced by a normal Arduino Nano (ATmega328P); the PCB did not change. The board-failure sentence now states only what the repository records.
+- `schemes/datasheets/MG90_stall_current_measurement.md`: Obstacle steering limits are 10 / 170; 5 / 165 belongs to the Open program.
+- `docs/TESTS.md`: the Obstacle table is "3 runs logged" (it said 5 attempts); the steering "Symmetric" cells show the measured 40° and point to the open centre check; the focal-length wording is unified.
+- `docs/ENGINEERING_JOURNAL.md`: §9.2 chassis v3 is 13 cm long (17.5 cm is the final car with the front protrusion); §16 camera UART item says which direction needs a divider; §18.2 gives the later `RETURN_AFTER_CM` of 25 cm; §24.7 points to the current power budget; §20.4 and §21.3 updated.
+- `src/hardware-tests`, camera and Obstacle READMEs: `TICKS_PER_CM` 9.27 is the value in the code; the 16.1 of 28 Oct is marked as not used.
+- **`FOCAL_PX`: one wording everywhere:** half of the 100 px measured at 320 × 240; reported correct by the team on 23 Nov; not independently re-measured at 160 × 120. The v1.9.18 entry is corrected here.
+
+**Not verified in this session (open):**
+- `TICKS_PER_CM`: 9.27 (21 Nov, motor running, 190 ticks over 20.5 cm) and 16.1 (28 Oct, a 100 cm run that read 97 cm) differ by about 1.7×. The code uses 9.27, counted on the rising edge of C1. A 100 cm run with the final code is needed.
+- Steering centre: 85 is used, but the protractor limits (10 and 170) have a midpoint of 90. The check is open in `docs/TESTS.md`.
+- The schematic image still shows "Arduino Nano ESP32"; it is explained in a note, not redrawn in EasyEDA.
+- Nothing was compiled in this session.
 
 ## v1.9.33 — 24 November · README checked line by line against the code
 
@@ -175,7 +187,7 @@ Rule used: the three programs that run on the car (`open_challenge`, `obstacle_c
 
 - **Width:** the car is **9 cm wide** (measured and confirmed on 23 Nov). The 9.5 cm in the README, the journal, the models, the photos and the test log is corrected to 9 cm.
 - **Half width:** `SAFE_LAT_CM = 17` is 4.5 + 10 + 2.5 cm. The comments in `obstacle_camera_v3_2`, `camera_test` and `obstacle_challenge` said 4.25 cm; they now say 4.5 cm. No value changed.
-- **Focal length:** `FOCAL_PX = 50` is confirmed by the team as the correct value for 160 × 120; the "not measured" notes are removed from the README, the camera README, the test log and the journal.
+- **Focal length:** `FOCAL_PX = 50` was reported correct by the team on 23 Nov (not independently re-measured at 160 × 120). The "not measured" notes were removed in this version and are restored in v1.9.34.
 - **Videos:** durations in `video/video.md` corrected to the real ones: Open Challenge 34 s (rule 7 asks for at least 30 s of autonomous driving) and Obstacle Challenge 2:14.
 - **Motor datasheet:** `schemes/datasheets/N20_motors.pdf` (6 V, 33 rpm, a different motor) is removed; the `schemes/README.md` source table points to `N20_12V_1000RPM_specs.md`.
 - **Rule 9.21 (README §3.1):** the reading of the reverse corner turns against rule 9.21, App. A.4 cases 1–6 and the published Q&A is written down: it stays inside the same corner section, so the team states that it complies.

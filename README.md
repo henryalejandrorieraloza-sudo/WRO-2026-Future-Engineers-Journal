@@ -1044,7 +1044,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Camera viewer page | Done — used to set up the new camera board on 19 Nov (journal §17.5) |
 | Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19 and v1.9.20, journal §24–§25) |
 
-**Next steps, in order of points at risk:** (1) log the 5-attempt tables for both challenges; (2) time 1 m at `RUN_PWM 150` and 255; (3) log the parking runs in `docs/TESTS.md`; (4) send the magenta walls to the Nano and design the final parking.
+**Next steps, in order of points at risk:** (1) log more attempts (the Open table has 6 runs and the Obstacle table has 3 runs); (2) time 1 m at `RUN_PWM 150` and 255; (3) log the parking runs in `docs/TESTS.md`; (4) send the magenta walls to the Nano and design the final parking.
 
 <details>
 <summary>Earlier milestones (October, now in the git history)</summary>

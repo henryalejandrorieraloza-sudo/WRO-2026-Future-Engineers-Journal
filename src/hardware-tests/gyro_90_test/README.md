@@ -1,10 +1,10 @@
 # gyro_90_test
 
-Standalone hand-turn calibration test for the **BMI160 gyroscope**, used to measure `YAW_SCALE` and confirm `YAW_REVERSED` (it was written for the earlier `straight_pillars.ino` sketch, now only in the git history; the current programs use `GYRO_SCALE = 1.007` and `YAW_SIGN`) (Obstacle Challenge). It reuses that sketch's exact register-level BMI160 driver (no external gyro library), so a value measured here applies directly to the main sketch with no conversion.
+Standalone hand-turn calibration test for the **BMI160 gyroscope**, used to measure `YAW_SCALE` and confirm `YAW_REVERSED` (it was written for the earlier `straight_pillars.ino` (earlier sketch, now only in git history) sketch, now only in the git history; the current programs use `GYRO_SCALE = 1.007` and `YAW_SIGN`) (Obstacle Challenge). It reuses that sketch's exact register-level BMI160 driver (no external gyro library), so a value measured here applies directly to the main sketch with no conversion.
 
 ## Why this is needed
 
-The gyroscope measures angular **rate** (degrees per second), not angle. `straight_pillars.ino` integrates that rate over time into an absolute heading (`yaw`). A real sensor never reads exactly the true rate: there is a small gain error (needs `YAW_SCALE`), and the sign depends on which way the chip sits on the board (needs `YAW_REVERSED`). Both have to be measured on the actual car.
+The gyroscope measures angular **rate** (degrees per second), not angle. `straight_pillars.ino` (earlier sketch, now only in git history) integrates that rate over time into an absolute heading (`yaw`). A real sensor never reads exactly the true rate: there is a small gain error (needs `YAW_SCALE`), and the sign depends on which way the chip sits on the board (needs `YAW_REVERSED`). Both have to be measured on the actual car.
 
 ## How to use
 
@@ -16,24 +16,24 @@ The gyroscope measures angular **rate** (degrees per second), not angle. `straig
 
 ## Reading the result (call it Y)
 
-- If **Y is negative** (yaw went down instead of up when turning left): set `YAW_REVERSED = true` in `straight_pillars.ino` (it currently is `false`).
+- If **Y is negative** (yaw went down instead of up when turning left): set `YAW_REVERSED = true` in `straight_pillars.ino` (earlier sketch, now only in git history) (it currently is `false`).
 - **New `YAW_SCALE` = 90.0 / abs(Y)**
   - Example: Y = 73.5 → `YAW_SCALE = 90/73.5 = 1.224`
   - Example: Y = 108.2 → `YAW_SCALE = 90/108.2 = 0.832`
-- Put that `YAW_SCALE` (and the correct `YAW_REVERSED`) into `straight_pillars.ino` and re-upload.
+- Put that `YAW_SCALE` (and the correct `YAW_REVERSED`) into `straight_pillars.ino` (earlier sketch, now only in git history) and re-upload.
 - Repeat 2-3 times; results within ±5° of each other are fine.
 
 ## Result on this chassis (21 November 2026)
 
-Y = 85° for an intended 90° turn, and the sign was positive (so `YAW_REVERSED` stays `false`). `YAW_SCALE = 90 / 85 = 1.06` was applied in `straight_pillars.ino` (now in the git history).
+Y = 85° for an intended 90° turn, and the sign was positive (so `YAW_REVERSED` stays `false`). `YAW_SCALE = 90 / 85 = 1.06` was applied in `straight_pillars.ino` (earlier sketch, now only in git history) (now in the git history).
 
 **Current programs:** `open_challenge` and `obstacle_challenge` do not use this value. They use `GYRO_SCALE = 1.007` (from a 3-lap test) and `YAW_SIGN = 1`. The difference between a one-turn hand measurement (1.06) and a 12-corner driving measurement (1.007) is why the competition value comes from driving: over 12 corners a 6 % scale error would be about 65°. To use this test for the current programs, put the result in `GYRO_SCALE` instead.
 
 ## Wiring
 
-Same as `straight_pillars.ino`: I²C SDA = A4, SCL = A5 (BMI160 at 0x68 or 0x69), START button on D10 (internal pull-up).
+Same as `straight_pillars.ino` (earlier sketch, now only in git history): I²C SDA = A4, SCL = A5 (BMI160 at 0x68 or 0x69), START button on D10 (internal pull-up).
 
 ## Notes
 
-- `YAW_REVERSED` and `YAW_SCALE` in this test sketch are hardcoded to their neutral values (`false` / `1.00`) on purpose, so the printed number is the *raw* integrated yaw — exactly what the `YAW_SCALE = 90 / Y` formula above needs. Do not change them here; change them in `straight_pillars.ino` once Y is known.
+- `YAW_REVERSED` and `YAW_SCALE` in this test sketch are hardcoded to their neutral values (`false` / `1.00`) on purpose, so the printed number is the *raw* integrated yaw — exactly what the `YAW_SCALE = 90 / Y` formula above needs. Do not change them here; change them in `straight_pillars.ino` (earlier sketch, now only in git history) once Y is known.
 - If `ERROR: BMI160 not found` prints, check the SDA/SCL wiring before anything else — the test halts there, because no yaw measurement is possible without the sensor.

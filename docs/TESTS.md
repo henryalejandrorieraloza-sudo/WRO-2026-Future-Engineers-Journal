@@ -30,7 +30,7 @@ How the points are counted:
 
 **Runs of 24 Nov 2026 (team report).** Six Open Challenge runs, three counter-clockwise (ccw) and three clockwise (cw), each from a different starting section (central, farthest from and closest to the inner wall). All six: success yes, final stop good. Round times: ccw 24.21, 24.36, 24.41 s; cw 24.79, 24.97, 25.19 s (range 24.21–25.19 s; the times rise from run to run, and the cw runs are on average about 0.65 s slower than the ccw runs). **Confirmed by the team afterwards:** no repair and no outer-wall touch in any run, three laps completed in all six, and the final stop inside the required section each time, so each round is entered as 24 + 3 + 3 = **30 points**. The runs used `STOP_OFFSET_CM = 10`, the value now in `open_challenge.ino`. **Battery:** the first run started with a fully charged pack, and the team did not measure the voltage before each run; a fully charged pack measured 13.05 V on 24 Nov (schemes §4.4), but the voltage of these runs is **not measured**. The slow rise in time from run 1 to run 6 (24.21 to 25.19 s) could go with the pack discharging, but it cannot be confirmed without measurements. **Not recorded:** the commit. The team confirmed that each time is the **full round of three laps**, so it is entered in the "Round time (s)" column.
 
-## Obstacle Challenge: 5 attempts (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, with the parking exit as its first stage)
+## Obstacle Challenge: 3 runs logged (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, with the parking exit as its first stage)
 
 Procedure: place the car at the start of the Obstacle track with the pillars set (Scenario Roulette), press START, and record each run. One row per attempt, with the points of each criterion of rule 10.2. The `>>> FINAL` line of the Serial Monitor gives the stop position; copy it to Notes. The driver leaves the parking space itself (parking exit is its first stage). The stop inside the parking lot (1.8.2 / 1.8.3) is not implemented yet, so those columns stay at 0.
 
@@ -78,8 +78,8 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Test | Servo value | Left wheel angle (°) | Right wheel angle (°) | Symmetric? | Notes |
 | --- | --- | ---: | ---: | --- | --- |
 | Centre (wheels straight) | 85 | — | — | Confirmed | Value confirmed as driving straight. `STEER_CENTER` in the code |
-| Left stop | 10 | 40 | — | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing. Smaller servo value steers left |
-| Right stop | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
+| Left stop | 10 | 40 | — | 40° measured with a protractor; centre check open (see below) | Listen for buzzing or forcing. Smaller servo value steers left |
+| Right stop | 170 | — | 40 | 40° measured with a protractor; centre check open (see below) | Listen for buzzing or forcing |
 | Turning radius at full lock | — | wheelbase ÷ tan(40°) | 10.7 cm | — | Wheelbase 9 cm, wheel angle 40° |
 
 **Open check.** With the centre at 85, the left stop (10) is 75 servo units away and the right stop (170) is 85 units away, for the same 40°. The midpoint of the two stops is 90, not 85. Either the servo response is not linear, or the centre is not 85. Measure the wheel angle again with the wheels straight before using 85 in a new test, and record the result here.
@@ -130,7 +130,7 @@ Procedure and numbers: `schemes/datasheets/MG90_stall_current_measurement.md` (o
 | Pillar detected at 20, 40, 60 cm | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
 | Pillar width in pixels at 20, 40, 60 cm | 160 × 120 | — | 12.5 px / 6.25 px / 4.2 px | Calculated, not measured: 50 px focal length × 5 cm pillar ÷ distance. `MAX_AHEAD_CM` = 40 in `obstacle_camera_v3_2` |
 | Floor line detected at 9, 16 cm | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
-| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
+| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Reported correct by the team on 23 Nov 2026; not independently re-measured at 160 × 120 |
 
 ## Obstacle Challenge: edge cases to add
 
