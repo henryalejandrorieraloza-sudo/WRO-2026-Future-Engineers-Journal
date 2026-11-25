@@ -42,8 +42,9 @@ git ls-tree -r -l c1fa640 | awk -F'\t' '$2 ~ /\.(ino|html)$/ {split($1,a," "); s
 - The literal first commit (`f3a9770`) contains **no code**, so it does not meet the 1/5 requirement by itself. The git history is not rewritten, so this cannot be changed.
 - The colour-detection method (HSV thresholds and BFS blob grouping) is described in the engineering journal in that first commit. The code for it first appears in the same day's commits.
 - The first commit with at least 1/5 of the final code is `814ddcf` (33.4 %), the same day as the first commit.
-- **Team reading of the rule:** the first commit, due not later than 8 Oct 2026 (two months before the 8 Dec 2026 final), must contain at least 1/5 of the final code. That condition is met on 4 Oct 2026 by `814ddcf`, 110,854 bytes = 33.4 % of the code at `c1fa640`, which is before the deadline. The team considers the first-commit requirement fulfilled by this commit.
-- The organisers have not yet confirmed this reading (see the question below).
+- **Rule text (General Rules, rule 7):** "the first commit not later than 2 months before the competition – it must contain not less than 1/5 of the final amount of the code."
+- **Literal reading:** the first commit, `f3a9770`, contains no code. Read literally, the requirement is **not met**.
+- **Team reading (not confirmed):** the first commit with at least 1/5 of the code is `814ddcf`, made on 4 Oct 2026 (before the 8 Oct deadline), with 110,854 bytes = 33.4 % of the code at `c1fa640`. Under this reading, the 1/5 requirement is met before 8 Oct 2026. The team asks the organisers whether this commit is accepted. Until they answer, this is not a confirmed compliance.
 
 ## Interpretation to confirm with the organisers
 
