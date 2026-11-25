@@ -14,6 +14,7 @@ All figures use one reference commit: **`c1fa640`** (24 Nov 2026, merge of PR #5
 
 - The state of `main` on 24 Nov 2026 is frozen with the tag **`rubric-snapshot-24nov-2026`** (commit `eaf2576`, 21:35 local time). The judges' third commit is this state. Later changes go in later commits and may not be scored.
 - The tag points to an existing commit; no history was rewritten.
+- **Final snapshot for scoring:** the commit that adds this text is the team's third commit for scoring. It was made on 24 Nov 2026, before midnight local time (America/Guayaquil), so before the 24 Nov deadline, and is tagged **`rubric-snapshot-final-24nov-2026`**. It contains the corrected Obstacle flowchart (README §9.11, 0.45 s and 20 cm) and the first-commit reading above. The earlier tag `rubric-snapshot-24nov-2026` (`eaf2576`) remains as the earlier state.
 
 ## Notes on the early history
 
@@ -41,6 +42,8 @@ git ls-tree -r -l c1fa640 | awk -F'\t' '$2 ~ /\.(ino|html)$/ {split($1,a," "); s
 - The literal first commit (`f3a9770`) contains **no code**, so it does not meet the 1/5 requirement by itself. The git history is not rewritten, so this cannot be changed.
 - The colour-detection method (HSV thresholds and BFS blob grouping) is described in the engineering journal in that first commit. The code for it first appears in the same day's commits.
 - The first commit with at least 1/5 of the final code is `814ddcf` (33.4 %), the same day as the first commit.
+- **Team reading of the rule:** the first commit, due not later than 8 Oct 2026 (two months before the 8 Dec 2026 final), must contain at least 1/5 of the final code. That condition is met on 4 Oct 2026 by `814ddcf`, 110,854 bytes = 33.4 % of the code at `c1fa640`, which is before the deadline. The team considers the first-commit requirement fulfilled by this commit.
+- The organisers have not yet confirmed this reading (see the question below).
 
 ## Interpretation to confirm with the organisers
 
