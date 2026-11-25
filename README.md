@@ -97,7 +97,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** `obstacle_challenge` locks the round direction from the first floor line, turns every corner in reverse with the gyroscope and the front / rear distance sensors, dodges red and green pillars on an odometry map, and stops after the last line (§9). The camera board (`obstacle_camera_v3_2`) finds the pillars and lines. The first stage leaves the parking lot after START (§9.7); runs 1–3 in `docs/TESTS.md` started from the lot.
-- **Repository:** 242 commits on `main` at commit `c1fa640` (24 Nov 2026). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Repository:** 264 commits on `main` at commit `ebc30c8` (24 Nov 2026). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -1134,7 +1134,7 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 
 Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-Of the 242 commits on `main` at commit `c1fa640` (24 Nov 2026), 137 carry the author name Claude and 5 more are marked "Henry Riera (via Claude)". The commits are not rewritten, so each change can be traced to its author.
+Of the 264 commits on `main` at commit `ebc30c8` (24 Nov 2026), 149 carry the author name Claude and 5 more are marked "Henry Riera (via Claude)". The commits are not rewritten, so each change can be traced to its author.
 
 - **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.

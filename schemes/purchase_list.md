@@ -1,6 +1,6 @@
 # Purchase list (parts list, Team X67)
 
-This is the team's complete parts list for the car, Revision 27-09-2026, copied from [`materials_list_rev27-09-2026.pdf`](materials_list_rev27-09-2026.pdf). It lists everything bought or made for the car, with the source, the quantity bought, what was actually used and the cost as written in the list. The electronic components are explained one by one in [§1 of the schemes README](README.md#1-bill-of-materials-bom).
+This is the team's complete parts list for the car, Revision 27-09-2026 (final version), copied from [`materials_list_rev27-09-2026.pdf`](materials_list_rev27-09-2026.pdf). It lists everything bought or made for the car, with the source, the quantity bought, what was actually used and the cost as written in the list. The electronic components are explained one by one in [§1 of the schemes README](README.md#1-bill-of-materials-bom).
 
 Note the difference between **Qty** (how many were bought) and what was used. Several electronic parts were bought as spares; the list says "Only 1 was used" when that is the case.
 
@@ -23,8 +23,8 @@ Costs are copied as written (decimal comma). The list does not state the currenc
 | 11 | Start button | 2-pin push button | Already in possession | 1 | Starts the car program | 0,25 |
 | 12 | Power switch | 2-pin power switch | Already in possession | 1 | Turns the car on and off | 0,25 |
 | 13 | Custom PCB | Custom design, manufactured by JLCPCB | JlcPCB | 5 | Only 1 was used (connects all electrical components) | 80,00 |
-| 44 | XT30 male | XT30 male connector | Already in possession | 1 | Battery to car connector | 1,00 |
-| 45 | 24 AWG cable kit | 24 AWG silicone cable, multiple colours | Amazon.us | 1 | Electrical connections | 10,29 |
+| 49 | XT30 male | XT30 male connector | Already in possession | 1 | Battery to car connector | 1,00 |
+| 50 | 24 AWG cable kit | 24 AWG silicone cable, multiple colours | Amazon.us | 1 | Electrical connections | 10,29 |
 
 ## Tyres
 
@@ -56,32 +56,32 @@ All of these are printed in PLA and cost 0,00 in the list (own printing).
 | 25 | `steering_gear.stl` | 1 | 38 | `rear_wheel.stl` | 2 |
 | 26 | `gear_rack.stl` | 1 | 39 | `front_sensor_bracket.stl` | 1 |
 | 27 | `left_steering_knuckle.stl` | 1 | 40 | `rear_sensor_bracket.stl` | 1 |
-| 28 | `right_steering_knuckle.stl` | 1 | 41 | `sensor_bracket.stl` | 1 |
+| 28 | `right_steering_kunckle.stl` (spelled this way in the list) | 1 | 41 | `sensor_bracket.stl` | 1 |
 | 29 | `motor_gear.stl` | 1 | 42 | `camera_bracket.stl` | 1 |
-| 30 | `motor_restrain.stl` | 1 | 43 | (item 43 in the list, file name not given) | 1 |
+| 30 | `motor_restrain.stl` | 1 | 43 | `front_protrusion.stl` | 1 |
 | | | | 44 | `inner_wheel_mould.stl` (tyre mould) | 4 |
 | | | | 45 | `outer_wheel_mould.stl` (tyre mould) | 4 |
 
-Compared with `models/stl/`, the file names match except for two points. Item 28 is spelled `right_steering_kunckle.stl` in the list, and the repository uses `right_steering_knuckle.stl`. The repository also has `front_protrusion.stl`, which the list does not name. Item 43 in the list has no file name, so it may be that part. Check both against [`models/README.md`](../models/README.md) before printing.
+The repository's file for item 28 is `right_steering_knuckle.stl` (the list has a typo). Check the names against [`models/README.md`](../models/README.md) before printing.
 
 ## Fasteners and bearings
 
 | Item | Part | Qty bought | Usage | Cost |
 |---|---|---|---|---|
-| 41 | M3 round-headed screw kit (1050 pieces) | 1 kit | Mechanical structure | 9,99 |
-| 41.1 | M3 × 35 mm | 4 | Mechanical structure | |
-| 41.2 | M3 × 12 mm | 8 | Mechanical structure | |
-| 41.3 | M3 × 8 mm | 9 | Mechanical structure | |
-| 41.4 | M3 × 10 mm | 6 | Mechanical structure | |
-| 41.5 | M3 × 16 mm | 2 | Mechanical structure | |
-| 41.6 | M3 nuts | 10 | Mechanical structure | |
-| 42 | M2 cap-headed screw kit (900 pieces) | 1 kit | Mechanical structure | 6,90 |
-| 42.1 | M2 × 4 mm | 1 | Mechanical structure | |
-| 42.2 | M2 × 6 mm | 12 | Mechanical structure | |
-| 42.3 | M2 × 12 mm | 4 | Mechanical structure | |
-| 42.4 | M2 washers | 2 | Mechanical structure | |
-| 42.5 | M2 nuts | 6 | Mechanical structure | |
-| 43 | 684ZZ bearing, 4 × 9 × 4 mm | 20 | Only 9 were used | 9,99 |
+| 46 | M3 round-headed screw kit (1050 pieces) | 1 kit | Mechanical structure | 9,99 |
+| 46.1 | M3 × 35 mm | 4 | Mechanical structure | |
+| 46.2 | M3 × 12 mm | 8 | Mechanical structure | |
+| 46.3 | M3 × 8 mm | 9 | Mechanical structure | |
+| 46.4 | M3 × 10 mm | 6 | Mechanical structure | |
+| 46.5 | M3 × 16 mm | 2 | Mechanical structure | |
+| 46.6 | M3 nuts | 10 | Mechanical structure | |
+| 47 | M2 cap-headed screw kit (900 pieces) | 1 kit | Mechanical structure | 6,90 |
+| 47.1 | M2 × 4 mm | 1 | Mechanical structure | |
+| 47.2 | M2 × 6 mm | 12 | Mechanical structure | |
+| 47.3 | M2 × 12 mm | 4 | Mechanical structure | |
+| 47.4 | M2 washers | 2 | Mechanical structure | |
+| 47.5 | M2 nuts | 6 | Mechanical structure | |
+| 48 | 684ZZ bearing, 4 × 9 × 4 mm | 20 | Only 9 were used | 9,99 |
 
 ## Totals
 
