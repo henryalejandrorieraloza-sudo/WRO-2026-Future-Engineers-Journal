@@ -110,7 +110,7 @@ const bool  MOTOR_REVERSED   = true;
 const bool  ENCODER_REVERSED = true;
 const int   YAW_SIGN         = 1;     // +1: turning left increases the yaw
 const float GYRO_SCALE       = 1.007;
-const int   STEER_CENTER = 85, STEER_LEFT_MAX = 10, STEER_RIGHT_MAX = 170;   // left = smaller angle
+const int   STEER_CENTER = 85, STEER_RANGE = 80, STEER_LEFT_MAX = STEER_CENTER - STEER_RANGE, STEER_RIGHT_MAX = STEER_CENTER + STEER_RANGE;   // wheels straight = 85; limits 85 +/- 80 = 5 / 165, same as open_challenge. left = smaller angle
 const int   RAMP_STEP = 5;
 const float TICKS_PER_CM = 9.27;
 const uint8_t BMI = 0x69;

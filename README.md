@@ -78,7 +78,7 @@ Older designs that are no longer in the code are kept in the [engineering journa
 
 ## How this repository answers the documentation rubric
 
-For the evaluators: where to find each criterion of the *Future Engineers 2026 Documentation Rubric*.
+For the evaluators: where to find each criterion of the *Future Engineers 2026 Documentation Rubric*. Step-by-step reading route with the commands to check the history: [docs/EVALUATION_ROUTE.md](docs/EVALUATION_ROUTE.md).
 
 | Rubric criterion | What it asks for | Where it is |
 |---|---|---|
@@ -86,7 +86,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture): power tree and budget (§6.1), pin map (§6.2), each sensor's job in each program and its placement from the field geometry (§6.3) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (Open state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (Obstacle state machine and flowchart, vision, map, steering law, limits) · [§11](#11-testing-workflow-and-metrics) (tuning loop and the measured validation results) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks): explicit constraints with numbers (§10.0), dependencies (§10.1), "we chose X instead of Y because…" with the data (§10.2), risks (§10.3), every setting justified (§10.4), decision chains (§10.5) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
-| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 231 commits on `main` at commit `f3d1e0a` (24 Nov 2026, before the review of this day), with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
+| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 239 commits on `main` at commit `6985e72` (24 Nov 2026), with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
 
 ---
 
@@ -97,7 +97,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** `obstacle_challenge` locks the round direction from the first floor line, turns every corner in reverse with the gyroscope and the front / rear distance sensors, dodges red and green pillars on an odometry map, and stops after the last line (§9). The camera board (`obstacle_camera_v3_2`) finds the pillars and lines. The first stage leaves the parking lot after START (§9.7); runs 1–3 in `docs/TESTS.md` started from the lot.
-- **Repository:** 231 commits on `main` at commit `f3d1e0a` (24 Nov 2026, before the review of this day). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Repository:** 239 commits on `main` at commit `6985e72` (24 Nov 2026). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -292,7 +292,7 @@ Recipe: **30 g of part A + 23 drops of part B**, from the formula **B = ¾ · A*
 | Printed → cast | Silicone tyres | More grip on the mat; repeatable recipe |
 | v3 → v4 | Side TOF brackets straight (0°) instead of 30° | On the black wall the angled beam read ~198 cm for a 30 cm wall; straight it reads 32.0 cm (journal Phase 10) |
 | v3 → v4 | Front protrusion screwed to the base (car 17.5 cm long) | Parking lot = 1.5 × car length, so the lot grows from ≈ 20 cm to ≈ 26 cm with no change to wheelbase or steering (§5.1) |
-| v3 → v4 | Steering re-measured: centre 85, ±40° (75 units left, 85 right); limits in `open_challenge` 5 / 165 (85 ± 80) | The new chassis moved the servo; the driving programs used the new values from 22 Nov (journal §19.2); `obstacle_challenge` sets 10 / 170 directly |
+| v3 → v4 | Steering re-measured: centre 85, ±40° (75 units left, 85 right); limits in `open_challenge` 5 / 165 (85 ± 80) | The new chassis moved the servo; the driving programs used the new values from 22 Nov (journal §19.2); `obstacle_challenge` uses the same 5 / 165 (aligned 24 Nov 2026) |
 
 <div align="center">
   <img src="other/mechanical-iterations/printed_v1.jpg" height="200">
@@ -474,12 +474,12 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 |---|---|---|---|
 | Encoder `TICKS_PER_CM` | 9.27 | 9.27 | Measured with the motor running (190 ticks = 20.5 cm, 21 Nov) |
 | `GYRO_SCALE` | 1.007 | 1.007 | From a 3-lap test. It is the only gyro scale used by the current programs. The earlier hand-turn value `1.06` (`gyro_90_test`, 21 Nov) belonged to an older sketch and is not used |
-| Steering centre / limits | 85, left 5, right 165 (85 ± 80) | 85, left 10, right 170 (set directly) | A smaller servo angle steers left |
+| Steering centre / limits | 85, left 5, right 165 (85 ± 80) | 85, left 5, right 165 (85 ± 80, same as Open) | A smaller servo angle steers left |
 | Run / turn speed (PWM) | `RUN_PWM` 150, `TURN_PWM` 90 | `RUN_PWM` 70, `TURN_PWM` 70, `REVERSE_PWM` 70 | The Obstacle car is slower on purpose: the camera needs time |
 | Gyro calibration | 300 samples after 0.7 s settling | same | LED blinks while it runs |
 | TOF restart | Left and right only | Triggered by left and right; all four re-initialised | After 0.5 s without data from a side sensor |
 
-The Obstacle driver (`obstacle_challenge`) uses `STEER_CENTER` 85 with hard-coded limits `STEER_LEFT_MAX` 10 and `STEER_RIGHT_MAX` 170. Their average is 90, not the centre 85; the limits are not 85 ± 80 (the Open program uses 5 / 165) and this is an open item in `docs/TESTS.md`. `servo_test` sweeps 10–170 on purpose to find the mechanical stops. The Open program uses 5 / 165, as above.
+The Obstacle driver (`obstacle_challenge`) uses the same steering limits as the Open program: `STEER_CENTER` 85 ± `STEER_RANGE` 80 = 5 / 165 (aligned on 24 Nov 2026). `servo_test` sweeps 10–170 on purpose to find the mechanical stops.
 
 ### 8.1 Earlier designs (moved to the journal)
 
@@ -578,7 +578,7 @@ The program that drives the round is [`obstacle_challenge.ino`](src/obstacle-cha
 
 | Stage | Code | Status (24 Nov 2026) |
 |---|---|---|
-| Vision: pillars, magenta walls, orange and blue lines | [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2) | Validated on the car in the logged runs (`docs/TESTS.md`). 160 × 120 pixels; the pixel constants were scaled from the 320 × 240 calibration, and `FOCAL_PX = 50` is not yet re-measured at 160 × 120 |
+| Vision: pillars, magenta walls, orange and blue lines | [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2) | Validated on the car in the logged runs (`docs/TESTS.md`). 160 × 120 pixels; the pixel constants were scaled from the 320 × 240 calibration, and `FOCAL_PX = 50` confirmed at 160 × 120 with the camera viewer (24 Nov 2026) |
 | Pillars on a map, and the steering law | `obstacle_challenge` (§9.4–9.5) | Same law as the straight-with-pillars tests of 27 Oct and 21 Nov, where every case passed (journal §13, §18) |
 | Corners, laps and the stop after the last line | `obstacle_challenge` (§9.6) | Validated on the car: three runs of three laps with a correct stop, logged in `docs/TESTS.md` (runs 1–2 on 24 Nov, run 3 dated 23 Nov) |
 | Start from inside the parking lot | `obstacle_challenge` (parking exit, §9.7) | Runs 1–3 in `docs/TESTS.md` started from the lot |
@@ -668,7 +668,7 @@ ahead  = f · seen / width                 cm ahead of the camera (f = FOCAL_PX 
 side   = ahead · xc / f                   cm to the side (+ right, − left)
 ```
 
-`cos a + sin a` accounts for the two faces of the square pillar that are visible when it is seen from an angle. `f = 50` is half of the value measured for the 320 × 240 camera (100), and the sketch marks 50 as not yet re-measured at 160 × 120, to be checked with the camera viewer (camera README: [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2/README.md)).
+`cos a + sin a` accounts for the two faces of the square pillar that are visible when it is seen from an angle. `f = 50` is half of the value measured for the 320 × 240 camera (100), and the team confirmed 50 at 160 × 120 with the camera viewer (24 Nov 2026) (camera README: [`obstacle_camera_v3_2`](src/obstacle-challenge/obstacle_camera_v3_2/README.md)).
 
 ### 9.4 Odometry map and pillar dodging
 
@@ -880,7 +880,7 @@ Every number below is the value in the competition code (`open_challenge`, `obst
 | Timing budget | **50 ms**, continuous (20 readings per second), Long mode | 33 ms gave invalid readings with narrow ROIs; more time = more light but fewer readings per second. At 0.6 m/s the car moves 3 cm between two readings | Journal §12.2–12.4, code |
 | Readings used | any distance: 0 or ≥ 4000 mm = no wall; the range-status flag is not checked (code) | "Signal fail" gave believable but wrong numbers in the October tests (63 cm at 30 cm, 65.5 cm at 80 cm) | Journal §12.3–12.4 |
 | Target distance to the inner wall | **100 mm** (`INNER_TARGET_MM`, the value of the 22 Nov 3-lap run) | The October value of 250 mm (provisional) is history. The car drives close to the inner wall, so the outer wall stays far away even in a 600 mm corridor (rule 9.18: never touch the outer wall). `SAFE_WALL_MM` (70 mm) forces a full correction from any wall | Rules 8 and 9.18, journal §12.4, code |
-| Steering command limit | `MAX_STEER` **70** servo units in `obstacle_challenge`; the servo is clamped to 5–165 in `open_challenge` (`STEER_CENTER` 85 ± `STEER_RANGE` 80) and to 10–170 in `obstacle_challenge` (its own constants) | Keeps the command inside the measured mechanical stops (centre 85; 40° of wheel angle measured at 75 units to the left and 85 to the right; the code uses the average, ±80) | Code, `docs/TESTS.md` |
+| Steering command limit | `MAX_STEER` **70** servo units in `obstacle_challenge`; the servo is clamped to 5–165 in `open_challenge` (`STEER_CENTER` 85 ± `STEER_RANGE` 80) and to 5–165 in `obstacle_challenge` (same constants) | Keeps the command inside the measured mechanical stops (centre 85; 40° of wheel angle measured at 75 units to the left and 85 to the right; the code uses the average, ±80) | Code, `docs/TESTS.md` |
 | Heading correction limit | **±12°** per straight (`LAT_MAX_DEG`), integral limited to ±8° (`LAT_I_MAX`) | Largest correction the wall controller can command; a bigger gyro error is not corrected by the wall alone | Journal Problem 43, code |
 | Gyro range / rate | **±500 °/s** (register 0x43 = 0x02). The output data rate is not set in the code: the program reads the sensor every loop and uses the measured time step `dt` | A 90° turn takes about 1 s (≈ 90–150 °/s peak), so ±500 °/s never saturates and gives 4× the resolution of ±2000 °/s (65.6 vs 16.4 LSB per °/s) | `open_challenge`, `obstacle_challenge` |
 | Gyro calibration | **300 samples after 0.7 s of settling** (current code; an earlier plan was 1000) | Averaging more samples makes the offset more exact. It runs automatically when the run is started with the car still, and needs no input from the team (rule 9.9) | Rules 9.9, 9.11 |
@@ -1038,7 +1038,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Custom PCB, wiring, power | Done — manufactured and working; budget in `schemes/README.md` §4.2 |
 | Chassis v4: printed base, rack-and-pinion steering (±40°), silicone tyres, front protrusion | Done — built; 28 STL files and the full STEP assembly in `models/` |
 | Sensors: 4 × ToF (unique addresses), BMI160 (own driver), encoder | Done — hardware tests in `src/hardware-tests`; side ToF straight at ~5 cm with ROI 16 × 8 (§6.3) |
-| Steering calibration | Done 21 Nov — centre 85; ±40° took 75 units to the left and 85 to the right, so `open_challenge` uses 85 ± 80 = limits 5 / 165 (PR #39, 24 Nov), and the Obstacle code uses 10 / 170 (not re-measured). **Open check:** the two sides are not symmetric (75 against 85); the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
+| Steering calibration | Done 21 Nov — centre 85; ±40° took 75 units to the left and 85 to the right, so `open_challenge` uses 85 ± 80 = limits 5 / 165 (PR #39, 24 Nov), and the Obstacle code uses the same 5 / 165 (aligned on 24 Nov 2026). **Open check:** the two sides are not symmetric (75 against 85); the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
 | **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. Six more runs on 24 Nov, three ccw and three cw from different start sections, all with three laps, no wall touch, no repair and a correct stop: 30 of 30 points, round time 24.21–25.19 s (`docs/TESTS.md`, journal §24.11). To do: measure the battery before each run from now on, record the commit, and log runs with 1000 mm corridors |
 | **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Validated on the car** — three runs logged in `docs/TESTS.md`: 3 laps, correct stop in the starting section, started in the parking lot, no pillar moved, no repair; 47 of 62 points each (round times 1:40, 1:41 and 2:00). Video recorded on 23 Nov (that day's code). To do: more runs and the 160 × 120 frame rate |
 | Parking exit (first stage of `obstacle_challenge`) | Started by START; runs 1–3 started from the lot. `PARK_REVERSE_TICKS` = 1200, confirmed on the car |
@@ -1046,7 +1046,7 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Camera viewer page | Done — used to set up the new camera board on 19 Nov (journal §17.5) |
 | Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19 and v1.9.20, journal §24–§25) |
 
-**Next steps, in order of points at risk:** (1) log more attempts (the Open table has 6 runs and the Obstacle table has 3 runs); (2) time 1 m at `RUN_PWM 150` and 255; (3) log the parking runs in `docs/TESTS.md`; (4) send the magenta walls to the Nano and design the final parking.
+**Next steps, in order of points at risk:** (1) the Obstacle table keeps the 3 logged runs (decided 24 Nov; the Open table has 6); (2) time 1 m at `RUN_PWM 150` and 255; (3) log the parking runs in `docs/TESTS.md`; (4) send the magenta walls to the Nano and design the final parking.
 
 <details>
 <summary>Earlier milestones (October, now in the git history)</summary>
@@ -1075,14 +1075,14 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 |---|---|---|
 | First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Pending confirmation: `814ddcf` (4 Oct, 31.8 % of the code at `main` `3e13b68`). The first commit in the history, `f3a9770`, contains no code. Details in [docs/COMMITS.md](docs/COMMITS.md). The organisers should confirm this reading of the rule |
 | Second commit | ≤ 8 Nov 2026 | Met by `06f5685` (5 Nov) |
-| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | **Met:** sent before 17 Nov 2026 by the team's coach to the organiser in Ecuador (exact date to be added). Receipt confirmed by the organisers (journal §22.1). |
+| Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | **Met:** sent before 17 Nov 2026 by the team's coach to the organiser in Ecuador (sent on 7 Nov 2026). Receipt confirmed by the organisers (journal §22.1). |
 | Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Final programs, AI disclosure (§15), commit history, checklist, test log and journal committed on 23 Nov; the documentation review v1.9.19 and the readability pass v1.9.20 (no code logic changed) are committed on 24 Nov, inside the deadline once it is merged into `main` that day. Measured values added later may not be scored |
 | Motor data (gear ratio, stall current) for the power budget | — | Partly — the stall current is calculated from the measured winding resistance (11.7 Ω → 1.03 A, 24 Nov; [schemes/datasheets/N20_stall_current_measurement.md](schemes/datasheets/N20_stall_current_measurement.md)) and the budget uses it; the rear differential ratio is **1 : 1** (30 teeth on each gear, counted by hand on 24 Nov, §5.2), and the internal N20 gearbox (≈ 17 : 1, estimated from the encoder count) still needs a hand count ([schemes/datasheets/N20_12V_1000RPM_specs.md](schemes/datasheets/N20_12V_1000RPM_specs.md)). The 6 V datasheet `N20_motors.pdf` (a different motor) was removed on 23 Nov |
 | Test log with runs, successes, times and stop positions | — | Template created in [docs/TESTS.md](docs/TESTS.md); rows are added after each run |
 | AI tools disclosure | — | Done — [§15](#15-use-of-ai-tools) |
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
 | Code for **every** programmed component, with comments | — | Done — every program that runs on the car is in `src/` with a README: `open_challenge`, `obstacle_challenge`, `obstacle_camera_v3_2` and the hardware tests; earlier versions are in the git history |
-| Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/`. Printed photo of chassis v4 still pending |
+| Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
 | YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`) |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
 | Repository public until at least December 2027 | — | Done — public; do not delete or make private |
@@ -1094,7 +1094,7 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 
 Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-Of the 231 commits on `main` at commit `f3d1e0a` (24 Nov 2026), 131 carry the author name Claude and 5 more are marked "Henry Riera (via Claude)". The commits are not rewritten, so each change can be traced to its author.
+Of the 239 commits on `main` at commit `6985e72` (24 Nov 2026), 135 carry the author name Claude and 5 more are marked "Henry Riera (via Claude)". The commits are not rewritten, so each change can be traced to its author.
 
 - **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.

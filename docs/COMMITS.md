@@ -45,7 +45,7 @@ The rules note that changes after the third commit may not be scored, so documen
 
 ## Current figures (24 Nov 2026)
 
-- `main` at `f3d1e0a` (24 Nov 2026, before the review of this day): **231 commits** (`git rev-list --count main`). **131** have the author name Claude, and **5** more are marked "Henry Riera (via Claude)".
+- `main` at `6985e72` (24 Nov 2026): **239 commits** (`git rev-list --count main`). **135** have the author name Claude, and **5** more are marked "Henry Riera (via Claude)".
 - Code (`.ino` + `.html`, all tracked files) at `3e13b68`: **348,149 bytes**. 1/5 of it = **69,629 bytes**.
 - First commit with code, `814ddcf`: **110,854 bytes = 31.8 %** of that code. The 1/5 rule is met.
 - These figures change after the final merge. Recount before the deadline with `git rev-list --count` and the byte totals above.
