@@ -43,7 +43,7 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
   <br><em>Schematic drawn on 8 July 2026, before the final components were chosen. <strong>Two labels in the image are outdated:</strong> it says "ARDUINO NANO ESP32" (the car uses the classic <strong>Arduino Nano</strong>, ATmega328P) and "SG90" (the car uses the <strong>MG90</strong> metal-gear servo).</em>
 </div>
 
-> **Note — outdated schematic image.** We drew `schematic.png` before changing these two parts and did not redraw it, because the PCB itself did not change. Only the labels are outdated:
+> **Note — outdated schematic image (old version).** The current main controller is the classic **Arduino Nano**, not the Nano ESP32 printed on this image. The labels "ARDUINO NANO ESP32" and "SERVO - SG90" are from the old version: the servo is now an MG90S. We drew `schematic.png` before changing these two parts and did not redraw it, because the PCB itself did not change. Only the labels are outdated:
 >
 > | In the image | On the real car | Why it is the same board |
 > |---|---|---|

@@ -4,6 +4,16 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.36 — 24 November · Coherence pass before the scoring deadline
+
+- **Steering:** `obstacle_challenge.ino` now uses `STEER_CENTER` 85 ± `STEER_RANGE` 80 = 5 / 165, the same as `open_challenge`. Documentation aligned in `README.md` §5.3, §8, §10.4, §11, the Obstacle README, `docs/TESTS.md` and the MG90 datasheet note.
+- **Focal length:** `FOCAL_PX = 50` at 160 × 120 confirmed with `camera_viewer.html` on 24 Nov 2026; the "not re-measured" notes are updated.
+- **Submission:** the repository link was sent on 7 Nov 2026 (exact date added).
+- **Photos:** the chassis v4 printed photo is no longer listed as pending.
+- **Commit counts:** 239 commits on `main` at `6985e72` (135 with the author name Claude). `README §1`, `§15`, `docs/COMMITS.md` updated.
+- **Evaluation route:** [docs/EVALUATION_ROUTE.md](docs/EVALUATION_ROUTE.md) gives the judges a reading order and the commands to check the history.
+- **Not changed:** `schemes/schematic.png` still has the two outdated labels (noted in `schemes/README.md`); stall currents are still calculated; the Obstacle edge cases and the video timing are not measured.
+
 ## v1.9.35 — 24 November · Rubric review corrections (documentation only, no code change)
 
 - **Submission:** the repository link was sent before the 17 Nov 2026 date, by the team's coach to the organiser in Ecuador (exact date to be added). `README §14.1` now marks it as met. The question for the organisers about the first commit is in `docs/COMMITS.md`.
