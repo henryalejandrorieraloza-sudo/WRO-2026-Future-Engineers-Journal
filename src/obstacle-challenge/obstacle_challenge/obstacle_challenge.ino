@@ -65,7 +65,7 @@ const unsigned long PARK_STALL_MS = 1500;   // no encoder pulses = error
 const int   PARK_DRIVE_PWM        = 90;     // speed of the first turn
 const int   PARK_REVERSE_PWM      = 90;     // speed when reversing out of the parking spot
 const int   PARK_REVERSE_SLOW_PWM = 75;     // last 20 % of the reverse move
-const long  PARK_REVERSE_TICKS    = 1200;   // 5 vueltas de rueda: 5 x pi x 41 mm x 9.27 ticks/cm
+const long  PARK_REVERSE_TICKS    = 1200;   // confirmed by the team on the car (24 Nov 2026). The 597 ticks calculated from 5 wheel turns (5 x pi x 4.1 cm x 9.27 ticks/cm) are not used
 
 // #####################################################################
 // ##  2. PILLARS                                                       ##
@@ -139,7 +139,7 @@ enum State { WAIT, STRAIGHT, PRE_TURN, BRAKE, TURN, REVERSE, DONE };
 const char *STATE_NAME[] = { "WAIT", "STRAIGHT", "PRE_TURN", "BRAKE", "TURN", "REVERSE", "DONE" };
 enum LineLock { LOCK_NONE, LOCK_BLUE, LOCK_ORANGE };
 enum Mode { MODE_LANE, MODE_BLOCK, MODE_PASS };
-const char *MODE_NAME[] = { "CENTRADO", "PILAR", "PASO" };
+const char *MODE_NAME[] = { "CENTER", "PILLAR", "PASS" };
 
 // main phases: calibrate (IDLE) -> parking (PARK) -> run (OBSTACLE)
 enum Phase { PHASE_IDLE, PHASE_PARK, PHASE_OBSTACLE };
@@ -408,7 +408,7 @@ void onCameraPillar() {
   MapPillar fresh = {true, px, py, camColor, 1};
   if (!current.used) {
     current = fresh;
-    Serial.print(F(">> PILAR NUEVO ")); Serial.println(camColor == 1 ? F("ROJO") : F("VERDE"));
+    Serial.print(F(">> NEW PILLAR ")); Serial.println(camColor == 1 ? F("RED") : F("GREEN"));
   } else if (px > current.x + SAME_PILLAR_CM) {
     nextOne = fresh;
   }
@@ -427,7 +427,7 @@ bool pillarGoal(float &goalOut) {
   if (current.used) {
     relativeToCar(current.x, current.y, fwd, left);
     if (fwd < -RETURN_AFTER_CM) {
-      Serial.println(F(">> PILAR PASADO"));
+      Serial.println(F(">> PILLAR PASSED"));
       current = nextOne;
       nextOne.used = false;
       if (current.used) relativeToCar(current.x, current.y, fwd, left);
@@ -472,16 +472,16 @@ void onCorner(float odo) {
   lineIgnoreUntil = millis() + IGNORE_LINE_S * 1000.0;   // ignore all lines for IGNORE_LINE_S
   int n = corners + 1;
   Serial.print(F(">>> ESQUINA ")); Serial.print(n);
-  Serial.print(F(" (linea) a ")); Serial.print(odo, 1); Serial.println(F(" cm"));
+  Serial.print(F(" (line) at ")); Serial.print(odo, 1); Serial.println(F(" cm"));
   if (n == 1) { d1Cm = odo; Serial.print(F(">>> D1 = ")); Serial.print(d1Cm, 1); Serial.println(F(" cm")); }
   if (n == 5 && lStartCm < 0) {
     lStartCm = odo - turnEndCm;
-    Serial.print(F(">>> LSTART = ")); Serial.print(lStartCm, 1); Serial.println(F(" cm (fin giro 4 -> esquina 5)"));
+    Serial.print(F(">>> LSTART = ")); Serial.print(lStartCm, 1); Serial.println(F(" cm (end of turn 4 -> corner 5)"));
   }
   if (finalLeg) {                                 // last line: keep going FINAL_EXTRA_S, then stop (in runTest)
     finalLineSeen = true;
     finalLineMs = millis();
-    Serial.println(F(">>> ULTIMA LINEA detectada: avanzo FINAL_EXTRA_S y paro"));
+    Serial.println(F(">>> LAST LINE detected: driving FINAL_EXTRA_S, then stopping"));
     return;
   }
   state = PRE_TURN; phaseStart = millis(); pwmTarget = RUN_PWM;   // drive until FRONT_TURN_CM, then turn
@@ -500,16 +500,16 @@ void finish(const __FlashStringHelper *why) {
 void parkStop(const __FlashStringHelper *why) {
   motorOut(0); driveBack = false; servoTo(STEER_CENTER);
   phase = PHASE_IDLE;
-  Serial.print(F(">>> PARQUEO PARADO: ")); Serial.println(why);
+  Serial.print(F(">>> PARKING STOP: ")); Serial.println(why);
 }
 
 // Starts leaving the parking spot (START button). No recalibration: that was done at power-on.
 void startPark() {
   if (!tofOk) {
-    Serial.println(F(">>> No arranco: falta un ToF lateral (revisa conexiones y reinicia)"));
+    Serial.println(F(">>> Not starting: a side ToF is missing (check the wiring and restart)"));
     return;
   }
-  Serial.println(F(">>> PARQUEO: salgo del parqueo"));
+  Serial.println(F(">>> PARKING: leaving the parking space"));
   while (Serial.available()) Serial.read();
   inCam = false; camLen = 0;
   yawDeg = 0; heading = 0;                 // the parking heading is the car's straight-ahead heading
@@ -532,7 +532,7 @@ void parkChooseDirection() {
   bool turnLeft = left > right;                   // more space on the left = turn left
   parkReturnSteer = turnLeft ? STEER_RIGHT_MAX : STEER_LEFT_MAX;   // counter-steer to the other side
   servoTo(turnLeft ? STEER_LEFT_MAX : STEER_RIGHT_MAX);
-  Serial.println(turnLeft ? F("PARK: primer giro IZQUIERDA") : F("PARK: primer giro DERECHA"));
+  Serial.println(turnLeft ? F("PARK: first turn LEFT") : F("PARK: first turn RIGHT"));
   delay(75);                                      // let the servo move before rolling
 
   driveBack = false;
@@ -556,8 +556,8 @@ void parkUpdateReverse() {
   unsigned long now = millis();
   if (traveled >= PARK_REVERSE_TICKS) {           // distance reached: end of parking
     motorOut(0); driveBack = false;
-    Serial.print(F("PARK: retroceso hecho, ticks ")); Serial.println(traveled);
-    Serial.println(F(">>> OPEN CHALLENGE: empiezo el recorrido"));
+    Serial.print(F("PARK: reverse done, ticks ")); Serial.println(traveled);
+    Serial.println(F(">>> OBSTACLE CHALLENGE: starting the round"));
     startObstacle();
     return;
   }
@@ -565,7 +565,7 @@ void parkUpdateReverse() {
     parkLastCount = traveled;
     parkLastPulseMs = now;
   } else if (now - parkLastPulseMs >= PARK_STALL_MS) {
-    parkStop(F("retroceso: sin pulsos del encoder"));
+    parkStop(F("reverse: no encoder pulses"));
     return;
   }
   if (PARK_REVERSE_TICKS - traveled <= PARK_REVERSE_TICKS / 5) motorOut(PARK_REVERSE_SLOW_PWM);
@@ -596,7 +596,7 @@ void runPark() {
         parkStage = PK_DRIVE_STRAIGHT;
         Serial.println(F("PARK: 45 grados. Ruedas centradas."));
       } else if (now - parkStageMs >= PARK_TURN_TIMEOUT_MS) {
-        parkStop(F("primer giro demasiado largo"));
+        parkStop(F("first turn too long"));
       }
       break;
 
@@ -607,7 +607,7 @@ void runPark() {
         parkStage = PK_RETURN_TURN;
         Serial.println(F("PARK: contravolante"));
       } else if (now - parkStageMs >= PARK_STALL_MS) {
-        parkStop(F("sin pulsos del encoder (revisa D3)"));
+        parkStop(F("no encoder pulses (check D3)"));
       }
       break;
 
@@ -618,7 +618,7 @@ void runPark() {
         servoTo(STEER_CENTER);
         parkStageMs = now;
         parkStage = PK_PAUSE;
-        Serial.println(F("PARK: rumbo 0 (paralelo al inicio). Parado antes de retroceder."));
+        Serial.println(F("PARK: heading 0 (parallel to the start). Stopped before reversing."));
       } else if (now - parkStageMs >= PARK_TURN_TIMEOUT_MS) {
         parkStop(F("contravolante demasiado largo"));
       }
@@ -668,7 +668,7 @@ void runTest() {
 
     // 0) LAST LINE seen FINAL_EXTRA_S ago: stop
     if (finalLineSeen && millis() - finalLineMs >= FINAL_EXTRA_S * 1000.0) {
-      finish(F(">>> ULTIMA LINEA + avance -> STOP"));
+      finish(F(">>> LAST LINE + drive-on -> STOP"));
       return;
     }
 
@@ -679,8 +679,8 @@ void runTest() {
           lineLock = camOrange ? LOCK_ORANGE : LOCK_BLUE;
           dir = (lineLock == LOCK_BLUE) ? 1 : -1;
           sameLinePrev = true;
-          Serial.println(lineLock == LOCK_BLUE ? F(">> PRIMERA LINEA AZUL: giro a la IZQUIERDA")
-                                               : F(">> PRIMERA LINEA NARANJA: giro a la DERECHA"));
+          Serial.println(lineLock == LOCK_BLUE ? F(">> FIRST BLUE LINE: turn LEFT")
+                                               : F(">> FIRST ORANGE LINE: turn RIGHT"));
           onCorner(odo);
           return;
         }
@@ -756,7 +756,7 @@ void runTest() {
       if (corners >= 4 * LAPS) {
         finalLeg = true;
         stopAtCm = -1;                             // no longer stop based on distance
-        Serial.println(F(">>> FINAL: avanzar hasta la ultima linea, luego FINAL_EXTRA_S y parar"));
+        Serial.println(F(">>> FINAL: drive to the last line, then FINAL_EXTRA_S and stop"));
       }
       // after the turn: reverse until the rear ToF reads REAR_STOP_CM
       brake();
@@ -767,7 +767,7 @@ void runTest() {
       goalLocal = 0; passLeftCm = 0; mode = MODE_LANE;
       current.used = false; nextOne.used = false;
       Serial.print(F(">>> GIRO ")); Serial.print(corners); Serial.print(F(" hecho | yaw ")); Serial.print(yawDeg, 1);
-      Serial.print(F(" -> rumbo ")); Serial.println(heading, 0);
+      Serial.print(F(" -> heading ")); Serial.println(heading, 0);
     } else if (millis() - phaseStart > MAX_TURN_MS) {
       finish(F("TURN TOO LONG -> STOP"));
     }
@@ -789,7 +789,7 @@ void runTest() {
       goalLocal = 0; mode = MODE_LANE;
       sameLinePrev = lineVisibleForCount();
       state = STRAIGHT; phaseStart = millis(); pwmTarget = RUN_PWM; lastCtrl = millis();
-      Serial.println(F(">>> RETROCESO hecho -> avanzo"));
+      Serial.println(F(">>> REVERSE done -> driving on"));
     } else if (millis() - phaseStart > MAX_REVERSE_MS) {
       finish(F("REVERSE TOO LONG -> STOP"));
     }
@@ -805,7 +805,7 @@ void runTest() {
   if (state == DONE && !finalPrinted && millis() - doneAt > 1000) {
     finalPrinted = true; motorOut(0);
     Serial.print(F(">>> FINAL yaw: ")); Serial.print(yawDeg, 1);
-    Serial.print(F(" | rumbo ")); Serial.print(heading, 0);
+    Serial.print(F(" | heading ")); Serial.print(heading, 0);
     Serial.print(F(" | esquinas ")); Serial.print(corners);
     Serial.print(F(" | D1 ")); Serial.print(d1Cm, 1);
     Serial.print(F(" | LSTART ")); Serial.print(lStartCm, 1);
@@ -822,7 +822,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ENC_C1_PIN), encoderISR, RISING);
   steering.attach(SERVO_PIN); steering.write(STEER_CENTER);
   Serial.begin(115200); delay(500);
-  Serial.println(F("\nBOOT - PARQUEO + OPEN CHALLENGE"));
+  Serial.println(F("\nBOOT - PARKING + OBSTACLE CHALLENGE"));
   Wire.begin(); Wire.setClock(100000); Wire.setWireTimeout(25000, true);
   tofs[0].xshut = XSHUT_LEFT;  tofs[0].addr = ADDR_LEFT;  tofs[0].name = "LEFT";
   tofs[1].xshut = XSHUT_RIGHT; tofs[1].addr = ADDR_RIGHT; tofs[1].name = "RIGHT";
@@ -893,8 +893,8 @@ void loop() {
       Serial.print(F("\tR ")); Serial.print(tofs[1].mm);
       Serial.print(F("\tFR ")); Serial.print(frontTof.mm);
       Serial.print(F("\tRA ")); Serial.print(rearTof.mm);
-      Serial.print(F("\tpilar ")); Serial.print(current.used ? (current.color == 1 ? F("R") : F("G")) : F("-"));
-      Serial.print(F("\tlinea B/O ")); Serial.print(camBlue); Serial.print('/'); Serial.print(camOrange);
+      Serial.print(F("\tpillar ")); Serial.print(current.used ? (current.color == 1 ? F("R") : F("G")) : F("-"));
+      Serial.print(F("\tline B/O ")); Serial.print(camBlue); Serial.print('/'); Serial.print(camOrange);
       Serial.print(F("\tlock ")); Serial.print((int)lineLock);
       Serial.print(F("\tpwm ")); Serial.println(pwmNow);
     }

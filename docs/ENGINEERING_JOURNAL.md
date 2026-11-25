@@ -2072,4 +2072,5 @@ START
 - The Obstacle driver has no USB command input. The `g` and `s` commands of the earlier version were removed on 24 Nov (rules 11.6–11.7).
 - Distances of the Obstacle driver in the code: the front ToF at 40 cm starts each turn, and the rear ToF at 20 cm stops the back-up. The 50 cm and 40 cm values of the earlier 24 Nov sketch on `main` are not in the code now.
 - Round results of the three runs logged in `docs/TESTS.md` (47 of 62 points each) are the team's records; the journal keeps its earlier entries unchanged.
-
+- `PARK_REVERSE_TICKS` = 1200 is confirmed by the team on the car. The 597 ticks from five wheel turns are a calculation only.
+- `open_challenge` no longer reads `g` or `s` over USB during a run (rules 11.6–11.7); START is the only start.

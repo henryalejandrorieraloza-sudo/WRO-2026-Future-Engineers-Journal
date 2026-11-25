@@ -76,7 +76,7 @@ If the camera messages stop, the car stops driving until they come back (`CAMERA
 
 **Open items to check on the car:**
 
-- `PARK_REVERSE_TICKS` is set to 1200. The comment in the sketch says "5 wheel turns: 5 × π × 41 mm × 9.27 ticks/cm", and that formula gives about 597 ticks. One of the two is wrong; measure the parking reverse on the car and set the constant from the measurement.
+- `PARK_REVERSE_TICKS` is 1200, confirmed by the team on the car (24 Nov 2026). The 597 ticks from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm) are a calculation only and are not used.
 - `TICKS_PER_CM` is 9.27. The team's Oct 28 notes measured 16.1 ticks/cm with the motor running, so check this value before the run.
 
 ## Pins

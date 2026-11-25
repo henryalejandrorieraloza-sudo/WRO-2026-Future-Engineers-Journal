@@ -492,8 +492,8 @@ The sketch has four states, named `WAIT`, `STRAIGHT`, `TURN` and `DONE` (the nam
 ```mermaid
 stateDiagram-v2
     [*] --> WAIT: power on, gyro calibrated
-    WAIT --> STRAIGHT: START button or g
-    DONE --> STRAIGHT: START button or g (new run)
+    WAIT --> STRAIGHT: START button
+    DONE --> STRAIGHT: START button (new run)
     STRAIGHT --> TURN: corner detected, not in the final leg
     TURN --> STRAIGHT: 90 deg turned, corners below 4 x LAPS
     TURN --> STRAIGHT: 4 x LAPS corners done, final leg starts
@@ -501,14 +501,12 @@ stateDiagram-v2
     STRAIGHT --> DONE: safety, corner in the final leg or final leg too long
     STRAIGHT --> DONE: safety, no corner in 8 s or wheels stalled
     TURN --> DONE: safety, turn longer than 4 s or wheels stalled
-    STRAIGHT --> DONE: s + Enter, emergency stop
-    TURN --> DONE: s + Enter, emergency stop
     DONE --> [*]: active brake, motor off after 1 s
 ```
 
 | State | What the car does |
 |---|---|
-| **WAIT** | Calibrates the gyro offset with the car still (the LED blinks, then stays on) and waits for START or `g` |
+| **WAIT** | Calibrates the gyro offset with the car still (the LED blinks, then stays on) and waits for START |
 | **STRAIGHT** | Holds the target heading (a multiple of 90°) with the gyro and keeps its lane (`LANE_MODE`). **Corner 1** (`dir = 0`): the side that jumps while the other does not becomes the inner side and sets `dir`. **Later corners**: only the inner side is watched, and only after `ARM_READINGS` close readings of the inner wall. A corner sends the car to TURN, unless `finalLeg` is set. In the final leg it drives on until `stopAtCm` |
 | **TURN** | Full steering toward the inner side until the predicted yaw reaches the old heading ± 90°. Then the target heading changes by 90°, `corners` goes up, the walls are forgotten and the car returns to STRAIGHT. When `corners` reaches `4 × LAPS`, `finalLeg` becomes true |
 | **DONE** | Wheels straight and active brake (both TB6612FNG inputs HIGH). One second later the motor is switched off and the final report prints (yaw, heading, error, corners, D1, WALL, LSTART, time) |
@@ -682,7 +680,7 @@ carY   += ds · sin(yaw − heading)
 
 Each pillar is placed on the map at its **centre** (distance ahead + 2.5 cm, side as measured). A pillar of the same colour seen again within 30 cm is the same pillar, and its stored position moves 30 % toward the new reading, which averages out the noise of single pictures. The map keeps two pillars: the **current** one and the **next** one.
 
-The camera loses a pillar when it is close, but the pillar stays on the map, so the car knows where it is. A pillar is removed only when the camera lens is 10 cm past its centre (`RETURN_AFTER_CM` = 10, measured from the camera, which is 11.7 cm ahead of the rear axle). This is why the map is used at all: a pillar that has left the picture is still known, and the car can plan **how much** to move, not only **which way** (the reasoning is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026)).
+The camera loses a pillar when it is close, but the pillar stays on the map, so the car knows where it is. A pillar is removed only when the camera lens is 25 cm past its centre (`RETURN_AFTER_CM` = 25, measured from the camera, which is 11.7 cm ahead of the rear axle). This is why the map is used at all: a pillar that has left the picture is still known, and the car can plan **how much** to move, not only **which way** (the reasoning is in [journal Phase 11](docs/ENGINEERING_JOURNAL.md#13-phase-11--obstacle-challenge-from-pixels-to-centimetres-2627-october-2026)).
 
 **Lateral goal.** The pillar centre must stay at least 17 cm from the car centre (half the car, 10 cm of gap, half the pillar). The goal never moves the car **toward** the pillar:
 
@@ -699,7 +697,7 @@ heading = atan2(goalY − camY, look)           limited to ±60°
 steering = 2.0 · (heading − yaw) − 0.03 · yawRate      (P + D, plus integral in LANE mode)
 ```
 
-After the camera passes the pillar centre, the car aims at the next pillar only, and it does not move back toward the pillar it has passed. Where there is no pillar, the car keeps its last heading for 25 cm after a pillar (`PASS_CM`), then centres again (§9.5).
+After the camera passes the pillar centre, the car aims at the next pillar only, and it does not move back toward the pillar it has passed. Where there is no pillar, the car keeps its last heading for 30 cm after a pillar (`PASS_CM`), then centres again (§9.5).
 
 **Example:** car at (0, 0), red pillar centre at (40, +10). The goal is `min(0, 10 − 17) = −7` cm, the look distance is `max(12, 40 − 2.5 − 0 − 55) = 12` cm, so the heading is `atan2(−7, 12) ≈ −30°`: to the right.
 
@@ -728,7 +726,7 @@ The gyroscope scale is `1.007` in both programs. The hand-turn value `1.06` from
 
 ### 9.7 Parking
 
-- **Start from inside the parking lot** (+7 points): the parking exit is the first stage of [`obstacle_challenge`](src/obstacle-challenge/obstacle_challenge), started by the START button. Two ToF sensors measure the free space, the car turns 45° toward the open side by gyro, straightens, counter-steers, and reverses `PARK_REVERSE_TICKS` = 1200 encoder ticks. Runs 1–3 in `docs/TESTS.md` started from the lot. The code value (1200) and the value calculated from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm ≈ 597) disagree; the reverse distance has not been measured yet.
+- **Start from inside the parking lot** (+7 points): the parking exit is the first stage of [`obstacle_challenge`](src/obstacle-challenge/obstacle_challenge), started by the START button. Two ToF sensors measure the free space, the car turns 45° toward the open side by gyro, straightens, counter-steers, and reverses `PARK_REVERSE_TICKS` = 1200 encoder ticks. Runs 1–3 in `docs/TESTS.md` started from the lot. 1200 ticks is confirmed by the team on the car (24 Nov 2026). The 597 ticks from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm) is a calculation only and is not used.
 - **Parking at the end** (+15 points): in design. After the third lap the car must find the magenta walls of the lot. The camera already detects them (they are never reported as pillars), but the message has no magenta field yet. Parallel parking needs reverse, and the drive gear once skipped on a sudden reverse (journal Problem 34), so the reverse must be gentle and tested alone first.
 
 ### 9.8 Camera viewer
@@ -749,7 +747,7 @@ The [camera viewer](src/tools/camera_viewer/camera_viewer.html) is the calibrati
 | 6 | Three laps and stop after the last line | Done in `obstacle_challenge` (§9.6); validated on the car, lap times in `docs/TESTS.md` |
 | 7 | Gyro scale checked on the full round (yaw per corner) | To do — `1.007` in both driving programs; check the yaw per corner (§9.6) |
 | 8 | Camera sends the magenta walls to the Nano | To do — not in the message yet |
-| 9 | Start from inside the parking lot | Done in `obstacle_challenge` (parking exit, §9.7); runs 1–3 started from the lot. `PARK_REVERSE_TICKS` is 1200 in the code and 597 calculated: to measure |
+| 9 | Start from inside the parking lot | Done in `obstacle_challenge` (parking exit, §9.7); runs 1–3 started from the lot. `PARK_REVERSE_TICKS` = 1200, confirmed on the car |
 | 10 | Parallel parking after the third lap | In design |
 | 11 | One final program, start button, battery only | `obstacle_challenge`: START button (D10), battery on first. The START button also starts the parking exit |
 
@@ -900,9 +898,9 @@ Every number below is the value in the competition code (`open_challenge`, `obst
 |---|---|---|
 | `TARGET_CM` | 17 cm | Half the car (4.5) + 10 cm gap + half the pillar (2.5): the pillar centre is never closer than this to the car centre |
 | `ARRIVE_BEFORE_CM` | 55 cm | The car must already be on the safe side before the pillar. With a 10.7 cm turning radius the sideways move needs room. The value was raised on the track step by step (28 → 40 → 55 cm); at 28 cm the car turned almost on top of the pillar (team notes of 21 Nov, journal §24) |
-| `RETURN_AFTER_CM` | 10 cm | The camera is 11.7 cm ahead of the rear axle, so a pillar must be well behind the camera before the car returns, or the rear of the car clips it (journal §18.2) |
-| `PASS_CM` | 25 cm | After a pillar is passed the car keeps its heading this far before centring again, so it does not swing back toward the pillar it just passed |
-| `SAME_PILLAR_CM` / `BLEND` | 30 cm / 0.3 | Two detections of the same colour closer than 30 cm are the same pillar; each new picture moves the stored position 30 %, which averages the noise of single pictures |
+| `RETURN_AFTER_CM` | 25 cm | The camera is 11.7 cm ahead of the rear axle, so a pillar must be well behind the camera before the car returns, or the rear of the car clips it (journal §18.2) |
+| `PASS_CM` | 30 cm | After a pillar is passed the car keeps its heading this far before centring again, so it does not swing back toward the pillar it just passed |
+| `SAME_PILLAR_CM` / `BLEND` | 15 cm / 0.3 | Two detections of the same colour closer than 15 cm are the same pillar; each new picture moves the stored position 30 %, which averages the noise of single pictures |
 | `MAX_AIM_DEG` / `LOOK_MIN_CM` | 60° / 12 cm | The aiming angle is limited, and the look-ahead never shrinks below 12 cm, so the steering never "explodes" next to a pillar |
 
 **History (October design, not in the current code):** `WALL_MAX_MM` 550 mm and the 8-reading WALL / NO WALL / NOT SURE window (journal §12.6), the FRONT / BACK check after the first turn, the wall re-alignment `REALIGN_WITH_WALL` (Problem 43) and the timed delays of §8.7. The encoder, wired to D2 / D3, is used by both programs for distances (`TICKS_PER_CM = 9.27`, measured 21 Nov with the motor running); no program uses timed delays before a turn.
@@ -1040,13 +1038,13 @@ Status on 24 Nov 2026. "Validated" means tested on the car with a result recorde
 | Sensors: 4 × ToF (unique addresses), BMI160 (own driver), encoder | Done — hardware tests in `src/hardware-tests`; side ToF straight at ~5 cm with ROI 16 × 8 (§6.3) |
 | Steering calibration | Done 21 Nov — centre 85; ±40° took 75 units to the left and 85 to the right, so `open_challenge` uses 85 ± 80 = limits 5 / 165 (PR #39, 24 Nov), and the Obstacle code uses 10 / 170 (not re-measured). **Open check:** the two sides are not symmetric (75 against 85); the heading integral absorbs the difference, but re-measure with the wheels straight (`docs/TESTS.md`) |
 | **Open Challenge** (`open_challenge`) | **Validated** — 3 laps, 12 corners, stop in the starting section on the first attempt (22 Nov, journal §19.2); video recorded. Six more runs on 24 Nov, three ccw and three cw from different start sections, all with three laps, no wall touch, no repair and a correct stop: 30 of 30 points, round time 24.21–25.19 s (`docs/TESTS.md`, journal §24.11). To do: measure the battery before each run from now on, record the commit, and log runs with 1000 mm corridors |
-| **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Validated on the car** — three runs logged in `docs/TESTS.md`: 3 laps, correct stop in the starting section, started in the parking lot, no pillar moved, no repair; 47 of 62 points each (round times 1:40, 1:41 and 2:00). Video recorded. To do: more runs and the 160 × 120 frame rate |
-| Parking exit (first stage of `obstacle_challenge`) | Started by START; runs 1–3 started from the lot. `PARK_REVERSE_TICKS` is 1200 in the code and 597 calculated: to measure |
+| **Obstacle Challenge** (`obstacle_challenge` + `obstacle_camera_v3_2`) | **Validated on the car** — three runs logged in `docs/TESTS.md`: 3 laps, correct stop in the starting section, started in the parking lot, no pillar moved, no repair; 47 of 62 points each (round times 1:40, 1:41 and 2:00). Video recorded on 23 Nov (that day's code). To do: more runs and the 160 × 120 frame rate |
+| Parking exit (first stage of `obstacle_challenge`) | Started by START; runs 1–3 started from the lot. `PARK_REVERSE_TICKS` = 1200, confirmed on the car |
 | Parking at the end of the round | In design; the camera already separates the magenta walls but does not send them yet (§9.7) |
 | Camera viewer page | Done — used to set up the new camera board on 19 Nov (journal §17.5) |
 | Documentation | Reviewed against the code and the rubric on 24 Nov (CHANGELOG v1.9.19 and v1.9.20, journal §24–§25) |
 
-**Next steps, in order of points at risk:** (1) log the 5-attempt tables for both challenges; (2) time 1 m at `RUN_PWM 150` and 255; (3) measure the parking reverse (`PARK_REVERSE_TICKS`: 1200 in the code, 597 calculated); (4) send the magenta walls to the Nano and design the final parking.
+**Next steps, in order of points at risk:** (1) log the 5-attempt tables for both challenges; (2) time 1 m at `RUN_PWM 150` and 255; (3) log the parking runs in `docs/TESTS.md`; (4) send the magenta walls to the Nano and design the final parking.
 
 <details>
 <summary>Earlier milestones (October, now in the git history)</summary>

@@ -5,7 +5,7 @@ Rule 7 of the WRO 2026 Future Engineers General Rules asks for **one YouTube vid
 | Challenge | Video | Status |
 |---|---|---|
 | Open Challenge (3 laps, random inner walls, stop in the starting section) | https://www.youtube.com/watch?v=4p94mWkXhsk | Done — Open Challenge run with the current `open_challenge` program |
-| Obstacle Challenge (3 laps obeying red / green pillars, stop in the starting section) | https://www.youtube.com/watch?v=ccAdp2c7_7Y | Done — run with the `obstacle_challenge` program, which the team confirms is the current version |
+| Obstacle Challenge (3 laps obeying red / green pillars, stop in the starting section) | https://www.youtube.com/watch?v=ccAdp2c7_7Y | Done — recorded on 23 Nov with the code of that day (before the 24 Nov changes logged in `docs/TESTS.md`) |
 | Earlier videos (superseded): previous Open Challenge run `ISvP-OZAk6c`, earlier demonstration | https://www.youtube.com/watch?v=J5yrJuZZ5P8 | Kept for history |
 
 ### Thumbnails

@@ -4,12 +4,17 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
-## v1.9.32 — 24 November · Obstacle code and documentation made coherent (no USB commands, parking exit inside one program)
+## v1.9.32 — 24 November · Obstacle and Open code and documentation made coherent (no USB commands during a run, English code)
 
-**Code changed:** `obstacle_challenge.ino` no longer reads `g` or `s` from the computer (rules 11.6–11.7); the run starts only with the START button (rule 9.11). Its comments are in English. The parking exit is its first stage; the separate sketch `obstacle_go_out_of_parking` is removed (it stays in the git history). `obstacle_camera_v3_2.ino`: comments in English, no logic change.
+**Code changed (no change to any driving value):**
+- `obstacle_challenge.ino`: no USB command input (`g` and `s` removed, rules 11.6–11.7); the run starts only with the START button (rule 9.11). The parking exit is its first stage. All comments and printed messages are in English. The separate sketch `obstacle_go_out_of_parking` is removed (it stays in the git history).
+- `open_challenge.ino`: the `g` (start) and `s` (emergency stop) keyboard commands are removed (rules 11.6–11.7); START (D10) is the only start. Comments are in English.
+- `obstacle_camera_v3_2.ino`: comments in English, no logic change.
+- `obstacle_challenge.ino`: the comment of `PARK_REVERSE_TICKS` now states the value 1200 is confirmed on the car; the 597 ticks are a calculation only.
 
-- **Documentation updated:** `README.md` (§9, §9.7, §13, §14, commit counts at `3e13b68`), `src/README.md`, both Obstacle READMEs, `docs/TESTS.md` (Obstacle attempts), `docs/COMMITS.md` (current counts and first-commit share), `video/video.md` (Obstacle row), `docs/ENGINEERING_JOURNAL.md` (§26).
-- **Known open items:** `PARK_REVERSE_TICKS` is 1200 in the code and 597 calculated; `open_challenge` still reads `g` and `s` over USB and is not yet changed to match rules 11.6–11.7.
+**Documentation updated:** `README.md` (§8, §9, §9.7, §13, §14, commit counts at `3e13b68`), `src/README.md`, both Obstacle READMEs, `src/open-challenge/open_challenge/README.md`, `docs/TESTS.md`, `docs/COMMITS.md`, `video/video.md`, `docs/ENGINEERING_JOURNAL.md` (§26).
+
+**Video:** the Obstacle video was recorded on 23 Nov with the code of that day.
 
 ## v1.9.31 — 24 November · Obstacle sketches replaced by v1 (open laps + pillar dodging) and camera v3.2 at 160 × 120
 

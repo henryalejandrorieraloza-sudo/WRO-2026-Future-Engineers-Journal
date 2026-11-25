@@ -69,7 +69,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 1000 rpm × 12.9 cm × 150/255 ≈ 1.26 m/s | ≥ 0.8 s | Not measured. Stopwatch test still to do. **Correction (24 Nov):** the earlier 12.6 cm/s (13.5 s) divided by the gearbox ratio twice (README §5.2). The 22 Nov 3-lap run, with the 8 s no-corner stop active, already shows the car is much faster than 12.6 cm/s |
 | Speed over 1 m at `RUN_PWM 255` | calculated upper bound, no load: 1000 rpm × 12.9 cm ≈ 2.15 m/s | ≥ 0.47 s | Not measured. Stopwatch test still to do (corrected 24 Nov, see the row above) |
 | Torque check (ramp or spring scale) | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | Ramp or spring scale still to do |
-| Reverse ticks to leave the parking space (five wheel turns) | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | `PARK_REVERSE_TICKS` in `obstacle_challenge.ino` is set to 1200, not 597. Measure on the car and set the constant from the measurement |
+| Reverse ticks to leave the parking space | confirmed by the team on the car, 24 Nov 2026 | 1200 ticks | `PARK_REVERSE_TICKS` in `obstacle_challenge.ino` = 1200. The 597 ticks calculated from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm) is not used |
 
 ## Steering: centre, limits and symmetry
 
