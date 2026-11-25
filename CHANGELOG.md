@@ -4,6 +4,19 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.35 — 24 November · Rubric review corrections (documentation only, no code change)
+
+- **Submission:** the repository link was sent on 23 Nov 2026, six days after the 17 Nov date. `README §14.1` now says so and no longer marks it as met. Whether the late link is accepted is pending; the question for the organisers is in `docs/COMMITS.md`.
+- **First commit:** `814ddcf` is the commit with at least 1/5 of the code; the first commit `f3a9770` has none. Marked as pending confirmation until the organisers answer.
+- **Commit counts:** 231 commits on `main` at `f3d1e0a` (131 with the author name Claude). `README §1`, `§15`, §14.1 and `docs/COMMITS.md` updated.
+- **README §9.6:** the reverse move ends when the rear ToF reads 20 cm, as in the code (`REAR_STOP_CM`), not 40 cm.
+- **README §9.1:** the `BRAKE` state (0.5 s with the wheels straight before reversing) is added to the diagram and the state table.
+- **README §5.2 and §14.1:** the 1 : 1 ratio counted by hand is the rear differential. The internal N20 gearbox ratio (about 17 : 1) is an estimate until the motor-shaft and output-shaft turns are counted by hand.
+- **`docs/TESTS.md`:** the table of suggested Obstacle edge cases is removed, because it had no results.
+- **`video/video.md`:** a note that the Open video (34 s) may not reach 30 s of autonomous driving.
+- **Tags and release notes:** tags for v1.9.18 to v1.9.35 added, each on the commit that first added that version here.
+- **Competition date:** README §14.1 marks 8–10 Dec 2026 as the dates this team uses, to be confirmed against the organisers' announcement.
+
 ## v1.9.34 — 24 November · full read of the repository against the code
 
 **Code (comments and unused declarations only; no logic change):**

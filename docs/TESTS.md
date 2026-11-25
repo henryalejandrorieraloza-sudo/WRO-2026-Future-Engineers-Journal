@@ -53,7 +53,7 @@ How the points are counted:
 
 Scenarios: random, picked by the Scenario Roulette page for each run.
 
-Edge cases of the Obstacle program: see the last section of this file.
+Obstacle edge cases are not logged yet: there are no measured results for them. How the code handles them is in README §9.10.
 
 ## Motor: gear ratio, speed and stall (drive)
 
@@ -131,15 +131,3 @@ Procedure and numbers: `schemes/datasheets/MG90_stall_current_measurement.md` (o
 | Pillar width in pixels at 20, 40, 60 cm | 160 × 120 | — | 12.5 px / 6.25 px / 4.2 px | Calculated, not measured: 50 px focal length × 5 cm pillar ÷ distance. `MAX_AHEAD_CM` = 40 in `obstacle_camera_v3_2` |
 | Floor line detected at 9, 16 cm | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
 | Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Reported correct by the team on 23 Nov 2026; not independently re-measured at 160 × 120 |
-
-## Obstacle Challenge: edge cases to add
-
-The cases below are suggestions, not results. Replace them with the cases the team checked on 23 Nov (team report, not yet written down), and add one row per case with the commit tested and the result.
-
-| Case | Result (pass / fail) | What happened |
-| --- | --- | --- |
-| Two pillars of the same colour in a row | — | — |
-| Pillar at the edge of the picture | — | — |
-| Battery below the working level | — | — |
-| Corridor 600 mm (instead of 1000 mm) | — | — |
-| Start from inside the parking lot | — | — |
