@@ -93,7 +93,7 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which did not matc
 
 ## To do
 
-1. ~~Motor-to-wheel ratio~~ Counted 1 : 1 on 24 Nov (rear differential, 30 teeth each). ~~Internal gearbox ratio~~ Counted by hand by the team's mechanic: **17 : 1**.
+1. ~~Motor-to-wheel ratio~~ Counted 1 : 1 on 24 Nov (rear differential, 20 teeth each). ~~Internal gearbox ratio~~ Counted by hand by the team's mechanic: **17 : 1**.
 2. ~~Measure the stall current~~ Done 24 Nov (indirect, from the winding resistance: 1.03 A). Optional: confirm with a reading in series.
 3. ~~Replace `N20_motors.pdf` (6 V, 33 RPM, a different motor)~~ Done 23 Nov: the 6 V PDF was removed. Optional: save a copy of the product listing next to this file.
 4. Update `schemes/README.md` §4.2 and the encoder constants that depend on counts per output revolution, once the ratio is measured.

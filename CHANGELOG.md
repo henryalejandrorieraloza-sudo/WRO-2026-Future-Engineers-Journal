@@ -4,6 +4,12 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.38 — 24 November · Gear count corrected to 20 teeth
+
+- The motor gear and the differential gear are **20 teeth each**, not 30, according to the mechanic's count. The ratio stays 1 : 1.
+- Updated the text in `README.md`, `schemes/README.md`, `schemes/datasheets/N20_12V_1000RPM_specs.md`, `models/README.md` and `docs/TESTS.md`.
+- Not yet updated: the gear STL and PNG files in `models/`. They still show 30 teeth and must be re-exported from CAD.
+
 ## v1.9.37 — 24 November · Consistency pass (figures, English comments, schematic rev 2)
 
 - **Commit counts:** one reference commit for every figure, `c1fa640` (24 Nov 2026): 242 commits on `main` (137 with the author name Claude, 5 marked "via Claude"). Code at `c1fa640`: 331,624 bytes (.ino + .html); `814ddcf` = 110,854 bytes = 33.4 %. `README` §1, §14.1 and §15 and `docs/COMMITS.md` updated; the earlier 239 / 348,149 / 355,526 figures are retired.
