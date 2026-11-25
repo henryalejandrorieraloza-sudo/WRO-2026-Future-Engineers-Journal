@@ -10,6 +10,16 @@ All figures use one reference commit: **`c1fa640`** (24 Nov 2026, merge of PR #5
 - Code at `c1fa640`: all tracked `.ino` and `.html` files, **331,624 bytes**. 1/5 of it = **66,325 bytes**.
 - First commit with code, `814ddcf` (4 Oct 2026): **110,854 bytes = 33.4 %** of the code at `c1fa640`. The 1/5 rule is met.
 
+## Snapshot for the third commit
+
+- The state of `main` on 24 Nov 2026 is frozen with the tag **`rubric-snapshot-24nov-2026`** (commit `eaf2576`, 21:35 local time). The judges' third commit is this state. Later changes go in later commits and may not be scored.
+- The tag points to an existing commit; no history was rewritten.
+
+## Notes on the early history
+
+- `f3a9770` and `5baf921` are titled "Add files via upload", and `814ddcf` too. Their titles are not descriptive; the history is kept as it is, and the commits that matter for the rule are listed in the table above.
+- Measure the commits with the byte count above (`.ino` and `.html` only). Paths in this repository contain spaces (`WRO code/`, `WRO diario/`), so split the `git ls-tree` output on the tab character (`awk -F'\t'`), not on whitespace, or the sizes come out as zero.
+
 Recount with the commands below before the deadline. These figures change after any later code commit.
 
 ```

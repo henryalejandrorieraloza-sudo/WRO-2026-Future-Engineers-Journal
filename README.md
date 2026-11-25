@@ -793,7 +793,7 @@ flowchart TD
 
     SAFE -- no corner in 8 s --> X1([STOP: no corner])
     SAFE -- wheels still 0.5 s with motor on --> X2([STOP: stalled])
-    SAFE -- last line + 1 s drive-on --> DN([DONE: stop in starting section])
+    SAFE -- last line + 0.45 s drive-on --> DN([DONE: stop in starting section])
     SAFE -- ok --> S
 
     PT -- front ToF not reached in 4 s --> X3([STOP: front never reached 40 cm])
@@ -801,10 +801,10 @@ flowchart TD
     BR --> TU[TURN: steer to the opposite side and reverse<br/>until gyro predicts 90 deg]
     TU -- more than 4 s --> X4([STOP: turn too long])
     TU -- 90 deg done --> CN{4 x LAPS corners done?}
-    CN -- no --> RV[REVERSE: back up until rear ToF 30 cm]
-    CN -- yes --> FL[Final leg: drive to the last line,<br/>then drive on 1 s] --> RV
+    CN -- no --> RV[REVERSE: back up until rear ToF 20 cm]
+    CN -- yes --> FL[Final leg: drive to the last line,<br/>then drive on 0.45 s] --> RV
     RV -- more than 3 s --> X5([STOP: reverse too long])
-    RV -- rear ToF 30 cm --> S
+    RV -- rear ToF 20 cm --> S
 
     DN --> W2{START pressed again?}
     W2 -- yes --> PK
