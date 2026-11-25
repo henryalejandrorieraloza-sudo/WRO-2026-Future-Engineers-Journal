@@ -34,6 +34,8 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
 | **Power switch** | <img src="../other/components/switch.jpg" width="140"> | 1 | Main power on/off (required by the rules) | Between the battery and the PCB |
 | **Custom tyres** | <img src="../other/components/custom_tire.jpeg" width="140"> | 4 | Grip | 41 mm diameter, C25 silicone rubber cast in printed moulds ([how we make them](../models/README.md#4-custom-silicone-tyres)) |
 
+The complete parts list with sources, quantities bought, what was used and costs (including the mechanical parts and fasteners) is in [`purchase_list.md`](purchase_list.md), copied from [`materials_list_rev27-09-2026.pdf`](materials_list_rev27-09-2026.pdf).
+
 ---
 
 ## 2. Schematic

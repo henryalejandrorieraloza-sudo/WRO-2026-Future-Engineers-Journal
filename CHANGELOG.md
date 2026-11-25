@@ -4,6 +4,12 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.39 — 24 November · Parts list added
+
+- Added the team's complete parts list (Revision 27-09-2026) as `schemes/purchase_list.md`, with the PDF copy `schemes/materials_list_rev27-09-2026.pdf`. It lists sources, quantities bought, what was used and costs, including the 3D-printed parts and fasteners.
+- Linked it from the BOM section of `schemes/README.md`.
+- Open point: the list calls the buck converter "3A Mini DC-DC Buck 5V", while `schemes/README.md` names it CN3903. Confirm they are the same part before the final.
+
 ## v1.9.38 — 24 November · Gear count corrected to 20 teeth
 
 - The motor gear and the differential gear are **20 teeth each**, not 30, according to the mechanic's count. The ratio stays 1 : 1.
