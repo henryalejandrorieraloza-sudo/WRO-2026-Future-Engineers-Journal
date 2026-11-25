@@ -47,7 +47,7 @@ All the electronics are mounted on a **custom PCB that we designed in EasyEDA an
 >
 > | In the image | On the real car | Why it is the same board |
 > |---|---|---|
-> | Arduino Nano ESP32 | Arduino Nano (classic, ATmega328P) | Same pin positions and footprint; it replaced the first controller after that board was damaged (journal Problem 31) |
+> | Arduino Nano ESP32 | Arduino Nano (classic, ATmega328P) | Same pin positions and footprint. The Nano ESP32 was the first controller; it was damaged and replaced by a normal Arduino Nano (journal Problem 31) |
 > | SG90 servo | MG90 servo (metal gears) | Pin-compatible; the SG90 moved inside its mount (journal Problem 8) |
 >
 > Everything else in the schematic (power stage, TB6612FNG, TOF sensors, BMI160, camera connector) matches the car. The bill of materials in section 1 lists the parts actually installed. The wiring diagram (section 3) and the PCB block images (section 6.4) for the camera and TOF connectors are the updated versions.
@@ -259,7 +259,7 @@ We used **EasyEDA Pro** (web version) because its learning curve is shorter than
   <br><em>The same PCB with every module soldered (top) and the wiring on the back. These two photos are from the <strong>previous chassis (v3)</strong>; the board itself has not changed, and they are kept because they are the clearest view of every component soldered in place.</em>
 </div>
 
-The boards arrived in under two weeks and have worked without a single failure since. To reproduce them: open the [OSHWLab project](https://oshwlab.com/edu560/project_ehytvvog), choose *Order PCB*, keep 1.6 mm thickness, then solder female headers for the Arduino Nano, the BMI160, the TB6612FNG and the buck converter, and JST connectors for the external components.
+The boards arrived in under two weeks and No board failure is recorded in this repository; the damaged parts are listed in [other/README.md](../other/README.md). To reproduce them: open the [OSHWLab project](https://oshwlab.com/edu560/project_ehytvvog), choose *Order PCB*, keep 1.6 mm thickness, then solder female headers for the Arduino Nano, the BMI160, the TB6612FNG and the buck converter, and JST connectors for the external components.
 
 ### 6.4 PCB blocks
 

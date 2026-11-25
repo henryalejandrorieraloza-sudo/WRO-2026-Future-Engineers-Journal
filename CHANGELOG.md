@@ -4,12 +4,59 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.34 — 24 November · full read of the repository against the code
+
+**Code (comments and unused declarations only; no logic change):**
+- `obstacle_camera_v3_2.ino`: the `SAFE_LAT_CM` comment uses car half width 4.5 cm (was 4.25); the car is 9 cm wide.
+- `obstacle_challenge.ino`: `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM` removed (declared, never used). The v1.9.17 entry said they were already removed; they stayed in the code until this version.
+- `gyro_90_test`: references to `straight_pillars.ino` are marked as an earlier sketch that is only in git history.
+
+**Documentation corrected:**
+- Root `README.md` §11: "Pillar Vision Lab" removed (the camera viewer is the tool); the next-step counts now match the logs.
+- `src/README.md`: two driving programs, not three.
+- `schemes/README.md`: the schematic note says the Nano ESP32 was the first controller, damaged and replaced by a normal Arduino Nano (ATmega328P); the PCB did not change. The board-failure sentence now states only what the repository records.
+- `schemes/datasheets/MG90_stall_current_measurement.md`: Obstacle steering limits are 10 / 170; 5 / 165 belongs to the Open program.
+- `docs/TESTS.md`: the Obstacle table is "3 runs logged" (it said 5 attempts); the steering "Symmetric" cells show the measured 40° and point to the open centre check; the focal-length wording is unified.
+- `docs/ENGINEERING_JOURNAL.md`: §9.2 chassis v3 is 13 cm long (17.5 cm is the final car with the front protrusion); §16 camera UART item says which direction needs a divider; §18.2 gives the later `RETURN_AFTER_CM` of 25 cm; §24.7 points to the current power budget; §20.4 and §21.3 updated.
+- `src/hardware-tests`, camera and Obstacle READMEs: `TICKS_PER_CM` 9.27 is the value in the code; the 16.1 of 28 Oct is marked as not used.
+- **`FOCAL_PX`: one wording everywhere:** half of the 100 px measured at 320 × 240; reported correct by the team on 23 Nov; not independently re-measured at 160 × 120. The v1.9.18 entry is corrected here.
+
+**Not verified in this session (open):**
+- `TICKS_PER_CM`: 9.27 (21 Nov, motor running, 190 ticks over 20.5 cm) and 16.1 (28 Oct, a 100 cm run that read 97 cm) differ by about 1.7×. The code uses 9.27, counted on the rising edge of C1. A 100 cm run with the final code is needed.
+- Steering: the design centre is 85 with sides ±80 (Open: 5 / 165). The Obstacle program hard-codes 10 / 170, whose average is 90, not 85. Confirmed by Henry on 24 Nov; the decision and the re-measurement are open in `docs/TESTS.md`.
+- Encoder: the 9.27 against 16.1 ticks/cm difference (about 1.7×) is confirmed by Henry on 24 Nov. A 100 cm run with the final code is still to be done.
+- The schematic image still shows "Arduino Nano ESP32"; it is explained in a note, not redrawn in EasyEDA.
+- Nothing was compiled in this session.
+
+## v1.9.33 — 24 November · README checked line by line against the code
+
+**Corrected in the README and the journal (no code change):**
+- Obstacle speeds: 70 straight, 70 turn, 70 reverse (were 75 / 85 / 75 in the text).
+- Obstacle `IGNORE_LINE_S` is 6 s (the text said 4 s); the Open program has no line ignore.
+- Obstacle pillar rule: a detection within `SAME_PILLAR_CM` 15 cm is the same pillar (text said 30 cm).
+- Obstacle steering law: `KP_HEAD` 2.5 (text said 2.0).
+- Safety stop on a wheel stall applies to both programs (text said Open only).
+- Obstacle strategy row lists the parking functions (`startPark`, `runPark`, `startObstacle`) instead of `startRun`.
+- TOF restart: triggered by the side sensors in both programs; the restart re-initialises the sensors in use.
+
+## v1.9.32 — 24 November · Obstacle and Open code and documentation made coherent (no USB commands during a run, English code)
+
+**Code changed (no change to any driving value):**
+- `obstacle_challenge.ino`: no USB command input (`g` and `s` removed, rules 11.6–11.7); the run starts only with the START button (rule 9.11). The parking exit is its first stage. All comments and printed messages are in English. The separate sketch `obstacle_go_out_of_parking` is removed (it stays in the git history).
+- `open_challenge.ino`: the `g` (start) and `s` (emergency stop) keyboard commands are removed (rules 11.6–11.7); START (D10) is the only start. Comments are in English.
+- `obstacle_camera_v3_2.ino`: comments in English, no logic change.
+- `obstacle_challenge.ino`: the comment of `PARK_REVERSE_TICKS` now states the value 1200 is confirmed on the car; the 597 ticks are a calculation only.
+
+**Documentation updated:** `README.md` (§8, §9, §9.7, §13, §14, commit counts at `3e13b68`), `src/README.md`, both Obstacle READMEs, `src/open-challenge/open_challenge/README.md`, `docs/TESTS.md`, `docs/COMMITS.md`, `video/video.md`, `docs/ENGINEERING_JOURNAL.md` (§26).
+
+**Video:** the Obstacle video was recorded on 23 Nov with the code of that day.
+
 ## v1.9.31 — 24 November · Obstacle sketches replaced by v1 (open laps + pillar dodging) and camera v3.2 at 160 × 120
 
-**Code changed:** `obstacle_challenge.ino` (Nano) and `obstacle_camera_v3_2.ino` (camera) are replaced by the versions uploaded on 24 Nov. The previous 23 Nov version stays in the git history (`48c57b6`). Main changes in the Nano sketch: `RUN_PWM` 75, `TURN_PWM` 85, `REVERSE_PWM` 75; `FRONT_TURN_CM` 50 and `REAR_STOP_CM` 40; `RETURN_AFTER_CM` 10, `PASS_CM` 25, `SAME_PILLAR_CM` 30; steering centre 85 with limits 10 / 170 set directly. The wheel-stall stop (`STALL_MS`) is no longer used in this sketch.
+**Code changed:** `obstacle_challenge.ino` (Nano) and `obstacle_camera_v3_2.ino` (camera) are replaced by the versions uploaded on 24 Nov. The previous 23 Nov version stays in the git history (`48c57b6`). Values of the 24 Nov Nano sketch: `RUN_PWM`, `TURN_PWM` and `REVERSE_PWM` 70; `FRONT_TURN_CM` 40 and `REAR_STOP_CM` 20; `RETURN_AFTER_CM` 25, `PASS_CM` 30, `SAME_PILLAR_CM` 15; steering centre 85 with limits 10 / 170 set directly. The wheel-stall stop (`STALL_MS`) is in this sketch.
 
 - **Documentation updated to match the code:** `src/obstacle-challenge/obstacle_challenge/README.md`, `src/obstacle-challenge/obstacle_camera_v3_2/README.md`, `src/README.md` (status column), and `README.md` §9 and the car-constants and safety tables.
-- **Not validated yet:** the 24 Nov version has to be tested on the track. Its `FOCAL_PX = 50` is marked in the sketch as not re-measured at 160 × 120. The 23 Nov video and lap times refer to the previous version.
+- **Validated on the car:** three runs logged in `docs/TESTS.md` (3 laps, correct stop, started in the parking lot, no pillar moved, no repair). Its `FOCAL_PX = 50` is still not re-measured at 160 × 120.
 - **Not updated in this entry:** `docs/TESTS.md` and the engineering journal, which keep the history.
 
 ## v1.9.30 — 24 November · Gear teeth of the 1 : 1 drive recorded
@@ -141,7 +188,7 @@ Rule used: the three programs that run on the car (`open_challenge`, `obstacle_c
 
 - **Width:** the car is **9 cm wide** (measured and confirmed on 23 Nov). The 9.5 cm in the README, the journal, the models, the photos and the test log is corrected to 9 cm.
 - **Half width:** `SAFE_LAT_CM = 17` is 4.5 + 10 + 2.5 cm. The comments in `obstacle_camera_v3_2`, `camera_test` and `obstacle_challenge` said 4.25 cm; they now say 4.5 cm. No value changed.
-- **Focal length:** `FOCAL_PX = 50` is confirmed by the team as the correct value for 160 × 120; the "not measured" notes are removed from the README, the camera README, the test log and the journal.
+- **Focal length:** `FOCAL_PX = 50` was reported correct by the team on 23 Nov (not independently re-measured at 160 × 120). The "not measured" notes were removed in this version and are restored in v1.9.34.
 - **Videos:** durations in `video/video.md` corrected to the real ones: Open Challenge 34 s (rule 7 asks for at least 30 s of autonomous driving) and Obstacle Challenge 2:14.
 - **Motor datasheet:** `schemes/datasheets/N20_motors.pdf` (6 V, 33 rpm, a different motor) is removed; the `schemes/README.md` source table points to `N20_12V_1000RPM_specs.md`.
 - **Rule 9.21 (README §3.1):** the reading of the reverse corner turns against rule 9.21, App. A.4 cases 1–6 and the published Q&A is written down: it stays inside the same corner section, so the team states that it complies.

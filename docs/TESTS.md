@@ -21,18 +21,18 @@ How the points are counted:
 
 | Attempt | Date | Commit | 1.1 Sections driven (max 24) | 1.2 Full laps (max 3) | 1.3 Stopped in finish section (3 / 0) | Outer wall touched (yes / no) | Repair taken (yes / no) | Round score (max 30) | Round time (s) | Notes |
 |---|---|---|---:|---:|---:|---|---|---:|---:|---|
-| 1 | 24 Nov | not recorded | 24 | 3 | 3 | no | no | 30 | 24.21 | Direction **ccw**. Reported as success, final stop good. Started in a central section. Time confirmed by the team as the full three-lap round |
-| 2 | 24 Nov | not recorded | 24 | 3 | 3 | no | no | 30 | 24.36 | Direction **ccw**. Reported as success, final stop good. Started in one of the sections farthest from the inner wall. Time confirmed by the team as the full three-lap round |
-| 3 | 24 Nov | not recorded | 24 | 3 | 3 | no | no | 30 | 24.41 | Direction **ccw**. Reported as success, final stop good. Started in one of the sections closest to the inner wall. Time confirmed by the team as the full three-lap round |
-| 4 | 24 Nov | not recorded | 24 | 3 | 3 | no | no | 30 | 24.79 | Direction **cw**. Reported as success, final stop good. Started in a central section. Time confirmed by the team as the full three-lap round |
-| 5 | 24 Nov | not recorded | 24 | 3 | 3 | no | no | 30 | 24.97 | Direction **cw**. Reported as success, final stop good. Started in one of the sections farthest from the inner wall. Time confirmed by the team as the full three-lap round |
-| 6 | 24 Nov | not recorded | 24 | 3 | 3 | no | no | 30 | 25.19 | Direction **cw**. Reported as success, final stop good. Started in one of the sections closest to the inner wall. Time confirmed by the team as the full three-lap round |
+| 1 | 24 Nov | f0b94b7 | 24 | 3 | 3 | no | no | 30 | 24.21 | Direction **ccw**. Reported as success, final stop good. Started in a central section. Time confirmed by the team as the full three-lap round |
+| 2 | 24 Nov | f0b94b7 | 24 | 3 | 3 | no | no | 30 | 24.36 | Direction **ccw**. Reported as success, final stop good. Started in one of the sections farthest from the inner wall. Time confirmed by the team as the full three-lap round |
+| 3 | 24 Nov | f0b94b7 | 24 | 3 | 3 | no | no | 30 | 24.41 | Direction **ccw**. Reported as success, final stop good. Started in one of the sections closest to the inner wall. Time confirmed by the team as the full three-lap round |
+| 4 | 24 Nov | f0b94b7 | 24 | 3 | 3 | no | no | 30 | 24.79 | Direction **cw**. Reported as success, final stop good. Started in a central section. Time confirmed by the team as the full three-lap round |
+| 5 | 24 Nov | f0b94b7 | 24 | 3 | 3 | no | no | 30 | 24.97 | Direction **cw**. Reported as success, final stop good. Started in one of the sections farthest from the inner wall. Time confirmed by the team as the full three-lap round |
+| 6 | 24 Nov | f0b94b7 | 24 | 3 | 3 | no | no | 30 | 25.19 | Direction **cw**. Reported as success, final stop good. Started in one of the sections closest to the inner wall. Time confirmed by the team as the full three-lap round |
 
 **Runs of 24 Nov 2026 (team report).** Six Open Challenge runs, three counter-clockwise (ccw) and three clockwise (cw), each from a different starting section (central, farthest from and closest to the inner wall). All six: success yes, final stop good. Round times: ccw 24.21, 24.36, 24.41 s; cw 24.79, 24.97, 25.19 s (range 24.21–25.19 s; the times rise from run to run, and the cw runs are on average about 0.65 s slower than the ccw runs). **Confirmed by the team afterwards:** no repair and no outer-wall touch in any run, three laps completed in all six, and the final stop inside the required section each time, so each round is entered as 24 + 3 + 3 = **30 points**. The runs used `STOP_OFFSET_CM = 10`, the value now in `open_challenge.ino`. **Battery:** the first run started with a fully charged pack, and the team did not measure the voltage before each run; a fully charged pack measured 13.05 V on 24 Nov (schemes §4.4), but the voltage of these runs is **not measured**. The slow rise in time from run 1 to run 6 (24.21 to 25.19 s) could go with the pack discharging, but it cannot be confirmed without measurements. **Not recorded:** the commit. The team confirmed that each time is the **full round of three laps**, so it is entered in the "Round time (s)" column.
 
-## Obstacle Challenge: 5 attempts (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, without parking)
+## Obstacle Challenge: 3 runs logged (rule 10.2, maximum 62 points; driving program `obstacle_challenge`, with the parking exit as its first stage)
 
-Procedure: place the car at the start of the Obstacle track with the pillars set (Scenario Roulette), press START, and record each run. One row per attempt, with the points of each criterion of rule 10.2. The `>>> FINAL` line of the Serial Monitor gives the stop position; copy it to Notes. The car does not park yet, so the parking columns stay at 0 until `obstacle_go_out_of_parking` and the parking routine are tested on the track.
+Procedure: place the car at the start of the Obstacle track with the pillars set (Scenario Roulette), press START, and record each run. One row per attempt, with the points of each criterion of rule 10.2. The `>>> FINAL` line of the Serial Monitor gives the stop position; copy it to Notes. The driver leaves the parking space itself (parking exit is its first stage). The stop inside the parking lot (1.8.2 / 1.8.3) is not implemented yet, so those columns stay at 0.
 
 How the points are counted:
 
@@ -45,13 +45,13 @@ How the points are counted:
 - **Repair:** the round points are divided by 2.
 - **Time** decides between equal scores (rule 10.7).
 
-| Attempt | Date | Commit | Scenario (Scenario Roulette) | Direction | 1.1 Sections (max 24) | 1.2 Laps (max 3) | 1.3 Stop in finish section (3 / 0) | Pillars on the correct side (yes / no) | Pillars moved (none / one or more) | Signs points (1.4 / 1.5 / 1.6 / 1.7) | 1.8.1 Started in lot (7 / 0) | 1.8.2 / 1.8.3 Parking (15 / 7 / 0) | Repair taken (yes / no) | Round score (max 62) | Round time (s) | Notes |
-|---|---|---|---|---|---:|---:|---:|---|---|---:|---:|---:|---|---:|---:|---|
-| 1 | | | | | | | | | | | | | | | | |
-| 2 | | | | | | | | | | | | | | | | |
-| 3 | | | | | | | | | | | | | | | | |
-| 4 | | | | | | | | | | | | | | | | |
-| 5 | | | | | | | | | | | | | | | | |
+| Attempt | Date | Commit | Direction | 1.1 Sections (max 24) | 1.2 Laps (max 3) | 1.3 Stop in finish section (3 / 0) | Pillars on the correct side (yes / no) | Pillars moved (none / one or more) | Signs points (1.4 / 1.5 / 1.6 / 1.7) | 1.8.1 Started in lot (7 / 0) | 1.8.2 / 1.8.3 Parking (15 / 7 / 0) | Repair taken (yes / no) | Round score (max 62) | Round time (s) | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 24 Nov | 32d873d | right | 24 | 3 | 3 | yes | none | 10 | 7 | 0 | no | 47 | 1:40 | Stopped in the correct section, not in the parking lot. Started in the parking lot. |
+| 2 | 24 Nov | 32d873d | right | 24 | 3 | 3 | yes | none | 10 | 7 | 0 | no | 47 | 1:41 | Stopped in the correct section, not in the parking lot. Started in the parking lot. |
+| 3 | 23 Nov | 32d873d | left | 24 | 3 | 3 | yes | none | 10 | 7 | 0 | no | 47 | 2:00 | Stopped in the correct section, not in the parking lot. No pillars touched. |
+
+Scenarios: random, picked by the Scenario Roulette page for each run.
 
 Edge cases of the Obstacle program: see the last section of this file.
 
@@ -69,7 +69,7 @@ Procedure: see `schemes/datasheets/N20_12V_1000RPM_specs.md`, "Measurements to t
 | Speed over 1 m at `RUN_PWM 150` | calculated upper bound, no load: 1000 rpm × 12.9 cm × 150/255 ≈ 1.26 m/s | ≥ 0.8 s | Not measured. Stopwatch test still to do. **Correction (24 Nov):** the earlier 12.6 cm/s (13.5 s) divided by the gearbox ratio twice (README §5.2). The 22 Nov 3-lap run, with the 8 s no-corner stop active, already shows the car is much faster than 12.6 cm/s |
 | Speed over 1 m at `RUN_PWM 255` | calculated upper bound, no load: 1000 rpm × 12.9 cm ≈ 2.15 m/s | ≥ 0.47 s | Not measured. Stopwatch test still to do (corrected 24 Nov, see the row above) |
 | Torque check (ramp or spring scale) | datasheet, same family (not measured) | 0.43 kg·cm stall (≈ 42 mN·m) | Ramp or spring scale still to do |
-| Reverse ticks to leave the parking space (five wheel turns) | calculated: 5 × π × 41 mm × 9.27 ticks/cm | 597 ticks | Set in `obstacle_go_out_of_parking.ino`. Check with calibration mode |
+| Reverse ticks to leave the parking space | confirmed by the team on the car, 24 Nov 2026 | 1200 ticks | `PARK_REVERSE_TICKS` in `obstacle_challenge.ino` = 1200. The 597 ticks calculated from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm) is not used |
 
 ## Steering: centre, limits and symmetry
 
@@ -78,11 +78,11 @@ Procedure: run `servo_test` with the chassis fully assembled, then measure the r
 | Test | Servo value | Left wheel angle (°) | Right wheel angle (°) | Symmetric? | Notes |
 | --- | --- | ---: | ---: | --- | --- |
 | Centre (wheels straight) | 85 | — | — | Confirmed | Value confirmed as driving straight. `STEER_CENTER` in the code |
-| Left stop | 10 | 40 | — | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing. Smaller servo value steers left |
-| Right stop | 170 | — | 40 | Yes (±40° each side, measured with a protractor) | Listen for buzzing or forcing |
+| Left stop | 10 | 40 | — | 40° measured with a protractor; centre check open (see below) | Listen for buzzing or forcing. Smaller servo value steers left |
+| Right stop | 170 | — | 40 | 40° measured with a protractor; centre check open (see below) | Listen for buzzing or forcing |
 | Turning radius at full lock | — | wheelbase ÷ tan(40°) | 10.7 cm | — | Wheelbase 9 cm, wheel angle 40° |
 
-**Open check.** With the centre at 85, the left stop (10) is 75 servo units away and the right stop (170) is 85 units away, for the same 40°. The midpoint of the two stops is 90, not 85. Either the servo response is not linear, or the centre is not 85. Measure the wheel angle again with the wheels straight before using 85 in a new test, and record the result here.
+**Open check (confirmed by Henry, 24 Nov).** The design centre is 85 and the sides are ±80, so the Open program uses 5 / 165. The protractor stops are 10 and 170: for the same 40°, the left stop is 75 units from 85 and the right stop is 85 units from 85. The stops average 90, not 85. The Obstacle program hard-codes 10 / 170 (`STEER_LEFT_MAX`, `STEER_RIGHT_MAX`), not 85 ± 80. Open items: measure the wheel angle again with the wheels straight, and decide whether the Obstacle program should use 5 / 165 like the Open program. Record the result here.
 
 **What the code uses (PR #39, 24 Nov).** `open_challenge` and `obstacle_challenge` take the average of the two distances: `STEER_CENTER` 85 and `STEER_RANGE` 80, so the limits are **5 (left) and 165 (right)**. The measured stops above (10 and 170) are the record of the protractor test. The code limit on the left (5) is 5 servo units beyond the measured left stop (10) and the right limit (165) is 5 units short of the right stop (170): listen for buzzing at full lock on the left and re-check it with `servo_test`. A servo pushed against a stop stalls at about 1.27 A (table above), and the servo code has no stall timeout.
 
@@ -130,7 +130,7 @@ Procedure and numbers: `schemes/datasheets/MG90_stall_current_measurement.md` (o
 | Pillar detected at 20, 40, 60 cm | not recorded | not recorded | Detected up to about 50 cm (centred pillar); 60 cm not tested | Source: notes of 27 Oct. Red and green, each side, not recorded separately |
 | Pillar width in pixels at 20, 40, 60 cm | 160 × 120 | — | 12.5 px / 6.25 px / 4.2 px | Calculated, not measured: 50 px focal length × 5 cm pillar ÷ distance. `MAX_AHEAD_CM` = 40 in `obstacle_camera_v3_2` |
 | Floor line detected at 9, 16 cm | not recorded | not recorded | Orange from 16 cm; blue from 9 cm | Source: camera v3.1 test, journal Phase 11. No false line on the empty floor or the black wall |
-| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Confirmed by the team on 23 Nov 2026 as the correct value |
+| Focal length at 160 × 120, `FOCAL_PX` | 160 × 120 | — | 50 | Value in `obstacle_camera_v3_2.ino`: half of the 100 px measured at 320 × 240 in `camera_test.ino`. Reported correct by the team on 23 Nov 2026; not independently re-measured at 160 × 120 |
 
 ## Obstacle Challenge: edge cases to add
 

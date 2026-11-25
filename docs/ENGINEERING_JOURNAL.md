@@ -746,7 +746,7 @@ The turn always ends when the gyroscope says the car has rotated **exactly 90°*
 | **No tape**, every joint screwed | Tape showed that the design was not finished and let the geometry move |
 | Side TOF sensors **1.5 cm** higher | Confirmed measurement of the change of Problem 16 |
 
-Final car: **17.5 cm long, 9 cm wide, 6 cm high, 248 g**. N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
+Chassis v3: **13 cm long, 9 cm wide, 6 cm high**. The final car (chassis v4 with the front protrusion) is **17.5 cm long** and weighs **248 g** (see [models/README.md](../models/README.md)). N20 motor of **1000 rpm** driving a differential with a **1 : 1** gear ratio.
 
 #### Problem 34 — A drive gear skipped when the motor reversed suddenly ✅
 - **What I observed (10 Oct):** when the motor jumped suddenly to reverse, one gear of the drive train skipped.
@@ -1500,7 +1500,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [x] New steering mechanism (rack and pinion, chassis v3) — Problems 29 and 33.
 - [x] Measure the final centre and limits of the v3 steering with `servo_calibration` (provisional 120° / 180° / 50°). Done on 21 Nov for `straight_pillars`: centre 85, limits 170 / 10. `open_challenge` used 90 until 22 Nov, when it was changed to 85 (§19.2).
 - [ ] Measure the 5 V buck rail during a servo stall (calculated at ≈ 1.27 A, §24.10) while the four TOF sensors are ranging (section 9.4).
-- [ ] Add a resistor divider on the Nano TX → camera RX line before connecting the UART (the classic Nano is 5 V).
+- [ ] Check the camera UART direction before connecting it. The code and the earlier sketch header connect the camera TX (GPIO43) to the Nano D0 (RX), which needs no divider. A Nano TX (5 V) → camera RX line (3.3 V logic, not 5 V tolerant) would need a resistor divider. The wiring diagram labels do not show the direction clearly, so check it with a meter.
 - [ ] Solder the right TOF wire again and fix all wires against vibration.
 - [x] Repeat the ROI test with other sizes: done in Phase 10 — 16 × 8 replaces 1 × 6 ✅
 - [x] First driving test (`drive_until_left_open`, now in the git history): superseded by the validated wall-following and corner sketches.
@@ -1621,6 +1621,8 @@ With the new camera mounted and mirrored correctly (Phase 12), the Obstacle Chal
 
 **Outcome:** `RETURN_AFTER_CM` was raised from 30 to 45 cm (fix #2 only). Combined with the gyro and encoder fixes above, this alone resolved the crash on the track — the smoothing fix (#1) was not needed and is not in the committed sketch.
 
+**Later value:** the final `obstacle_challenge.ino` uses `RETURN_AFTER_CM` = 25 cm (`obstacle_challenge.ino`, checked on 24 Nov). The 45 cm above was the 21 Nov value; the code is the reference.
+
 ### 18.3 After the blue/orange floor line: ignore the pillars, drive to the wall, stop
 
 The camera sketch (`obstacle_camera.ino` v3.1) had already been sending `blueFound` and `orangeFound` in every message for several phases (fields 5 and 11 of its 14-field message), but `straight_pillars.ino`'s `readCamera()` only parsed the first 10 fields — `blueFound` was read into a throwaway local variable and immediately discarded, and `orangeFound` was never parsed at all.
@@ -1729,7 +1731,7 @@ The sketches in `src` were compared with the two sketches the team sent, with th
 
 ### 20.3 What the code actually does (read from the sketch)
 
-- The **first line** sets the direction (blue = left, orange = right) and is accepted after 10 cm of driving. Later corners use only that colour, and a corner is a rising edge of it. After a corner, lines are ignored for 4 s.
+- The **first line** sets the direction (blue = left, orange = right) and is accepted after 10 cm of driving. Later corners use only that colour, and a corner is a rising edge of it. After a corner, lines are ignored for 6 s.
 - A **turn** starts when the front ToF reads 40 cm. It is a reverse turn with the steering on the opposite side, and it ends when the predicted yaw has changed by 90°. The car then reverses until the rear ToF reads 20 cm.
 - After **12 turns** the next line is the last one: the car drives 0.45 s more and stops.
 - A **pillar** is placed on the map at its centre, and it stays on the map after the camera stops seeing it. It is removed 25 cm after the car passes its centre. The car steers toward a lateral goal of 17 cm from the pillar, never toward it.
@@ -1742,8 +1744,8 @@ The sketches in `src` were compared with the two sketches the team sent, with th
 |---|---|---|---|
 | Gyro scale | `obstacle_challenge` / `open_challenge` | `GYRO_SCALE = 1.007` | The 21 Nov hand turn gave `YAW_SCALE = 1.06` for `straight_pillars`. Check the yaw per corner in the final report |
 | Farthest pillar | camera v3.1 / v3.2 | 130 cm / 40 cm | v3.2 reads pillars up to 40 cm. Check that the pillars are not seen too late at the start of a straight |
-| Focal length | camera v3.2 | `FOCAL_PX = 50` | Half of the 320 × 240 value (100); confirmed by the team on 23 Nov 2026 |
-| Unused constants | `obstacle_challenge` | `MAX_FINAL_CM`, `STOP_OFFSET_CM`, `FALLBACK_CM` | Declared, never used. Can be removed |
+| Focal length | camera v3.2 | `FOCAL_PX = 50` | Half of the 320 × 240 value (100); reported correct by the team on 23 Nov 2026, not independently re-measured at 160 × 120 |
+| Unused constants | `obstacle_challenge` | `MAX_FINAL_CM`, `STOP_OFFSET_CM`, `FALLBACK_CM` | Declared, never used. Removed on 24 Nov (v1.9.34); the v1.9.17 entry had wrongly said they were already removed |
 | Magenta walls | camera v3.2 | not in the message | The camera removes them from the pillars but does not send them, so parking at the end is not possible yet |
 | Parking start | `obstacle_go_out_of_parking` | no START button, `REVERSE_TARGET_TICKS = 1024` | Placeholder; the button and the encoder count are still to be added and measured |
 
@@ -1792,7 +1794,7 @@ Nothing in the code was changed.
 
 ### 21.3 Still not verified (not stated as done)
 
-- Whether the Nano TX → camera RX divider is installed and the 5 V rail under servo stall (open items of §16).
+- Whether the camera UART wires match the code (direction, open item of §16) and the 5 V rail under servo stall.
 - Lap times, direction and stop position of the recorded Obstacle run.
 - Whether the judges accept the reverse turns of `obstacle_challenge` under rules 9.16 / 9.21 / A.4: ask in the WRO Q&A.
 - `obstacle_go_out_of_parking` has not been tested on the track and its `REVERSE_TARGET_TICKS` is a placeholder.
@@ -1921,7 +1923,9 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 
 ### 24.6 Still open (not stated as done)
 
-- The 5-attempt tables of `docs/TESTS.md` for both challenges (times, direction, stop position), and a logged Open run with 1000 mm corridors.
+- Confirm which steering limits the Obstacle program should use (its code is 10 / 170 around a centre of 85); the decision needs a protractor check.
+- A 100 cm run with the final code, to settle the encoder value (9.27 in the code, 16.1 measured on 28 Oct; Henry confirmed the 1.7× difference on 24 Nov).
+- More logged attempts in `docs/TESTS.md`: the Open table has 6 runs and the Obstacle table has 3 (times, direction, stop position), and a logged Open run with 1000 mm corridors.
 - The stopwatch speed at `RUN_PWM` 150 and 255, the 160 × 120 frame rate, the gyro drift at rest, the stall current.
 - The parking start: START button, measured reverse count, first track test.
 
@@ -1932,6 +1936,8 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 The power budget had used 0.7 A, taken from the datasheet of another motor of the same family. On 24 November I measured the real motor. With the motor disconnected and the rotor still (so there is no back-EMF), I put the multimeter on the Ω scale, touched the motor terminals at room temperature and waited for the reading to settle: **R = 11.7 Ω**. At stall the back-EMF is zero, so Ohm's law gives I<sub>stall</sub> = 12 V / 11.7 Ω ≈ **1.03 A**. The commutator has three segments and the probes add some resistance, so the real value depends on the rotor position: the working range is **0.95 to 1.20 A**.
 
 What changed: the budget in `schemes/README.md` §4.2 now uses 1.03 A (peak from the battery ≈ 1.60 A, ≈ 18.3 W, ≈ 11 min of continuous worst case; these peak numbers were raised again by the servo stall of §24.10), and the driver and the supply must carry at least 1.2 A per motor. The result is calculated from a resistance, not read as a current in series; that reading is still optional. Method and numbers: [`schemes/datasheets/N20_stall_current_measurement.md`](../schemes/datasheets/N20_stall_current_measurement.md).
+
+For the current budget, use `schemes/README.md` §4.2. It includes the servo stall (§24.10) and the 13.05 V pack (§24.8), which the figures above do not.
 
 ### 24.8 Fully charged battery: 13.05 V (24 November)
 
@@ -2065,3 +2071,12 @@ START
 **To measure before coding:** encoder ticks per millimetre (push the car exactly 1 m), the steering turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor. With the side sensors reliable only up to ~45 cm (journal §12.4), Phase 2 must also be checked in a 1000 mm corridor, where the outer wall may be out of range right after the first turn — in that case the car holds the gyro heading until a wall is valid.
 
 </details>
+
+## 26. Corrections of 24 November 2026
+
+- The parking exit is no longer a separate sketch. It is the first stage of `obstacle_challenge`, started by the START button. Entries in §24 and earlier that name `obstacle_go_out_of_parking` describe the separate sketch, which is in the git history.
+- The Obstacle driver has no USB command input. The `g` and `s` commands of the earlier version were removed on 24 Nov (rules 11.6–11.7).
+- Distances of the Obstacle driver in the code: the front ToF at 40 cm starts each turn, and the rear ToF at 20 cm stops the back-up. The 50 cm and 40 cm values of the earlier 24 Nov sketch on `main` are not in the code now.
+- Round results of the three runs logged in `docs/TESTS.md` (47 of 62 points each) are the team's records; the journal keeps its earlier entries unchanged.
+- `PARK_REVERSE_TICKS` = 1200 is confirmed by the team on the car. The 597 ticks from five wheel turns are a calculation only.
+- `open_challenge` no longer reads `g` or `s` over USB during a run (rules 11.6–11.7); START is the only start.

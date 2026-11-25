@@ -52,14 +52,14 @@ stateDiagram-v2
     STRAIGHT --> DONE: final leg, start position reached (LSTART - D1)
     STRAIGHT --> DONE: safety (no corner in 8 s, stall, corner in final leg)
     TURN --> DONE: safety (turn longer than 4 s, stall)
-    DONE --> STRAIGHT: g or START (new run)
+    DONE --> STRAIGHT: START (new run)
 ```
 
 The full table of states and transitions is in [README §8.2](../../../README.md#82-state-machine).
 
 ## How it runs
 ### Start
-1. Press **START** (D10) or send `g` and Enter in the Serial Monitor.
+1. Press **START** (D10). The run has no keyboard command.
 2. The gyro is calibrated for about 2 s (700 ms settling + 300 samples at ~5 ms each; the LED blinks, **do not touch the car**). The encoder count and the walls are reset.
 3. The car drives straight with the wheels centered.
 
@@ -93,13 +93,12 @@ The car stops (brake, wheels straight, reason printed) when:
 - a turn takes more than 4 s,
 - there is no corner for 8 s on a straight,
 - a corner appears in the last leg before the start position (wrong measurement),
-- the final leg drives more than 250 cm,
-- the **s** key (emergency stop) is sent.
+- the final leg drives more than 250 cm.
 
 If a ToF sensor stops answering for 0.5 s, both side sensors restart (`TOF RESTART`).
 
 ## Serial output
-Press `g` + Enter or START to start. The Serial Monitor (115200 baud) shows:
+Press START to start. The Serial Monitor (115200 baud) shows:
 - events: `CORNER n on LEFT/RIGHT`, `D1`, `WALL`, `LSTART`, `FINAL`, `TURN n done`,
 - a status line every 100 ms with the state, corners, target and real heading, odometry, servo, the integral, the lateral correction, the side distances and their normal values, and the motor PWM,
 - a final report one second after stopping: yaw, heading, error (yaw − heading), corners, D1, WALL, LSTART and total time.

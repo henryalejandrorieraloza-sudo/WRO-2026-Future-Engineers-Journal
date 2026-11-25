@@ -27,8 +27,8 @@
 //  - Safety: STALLED (wheels blocked) or no corner in MAX_STRAIGHT_MS -> stop.
 //
 // Put the car in the MIDDLE of a straight, centered and aligned with the walls.
-// Press START (D10) or g + Enter. Do NOT touch it while the LED blinks (gyro calibration).
-// s + Enter = emergency stop. Battery ON FIRST, then USB.
+// Press START (D10). Do NOT touch it while the LED blinks (gyro calibration).
+// There is no USB command during a run (rules 11.6-11.7). Battery ON FIRST, then USB (upload only).
 // Board: Arduino Nano | TB6612: PWMA D6, AIN1 D7, AIN2 D8 | Encoder C1 D3, C2 D2 | Servo D9 | START D10
 // BMI160 0x69 (A4/A5) | TOF left XSHUT A3 -> 0x2A | TOF right XSHUT A2 -> 0x2B | LED D13
 // TOF front XSHUT A1 + TOF rear XSHUT A0: SOLDERED BUT OFF (XSHUT held LOW the whole time, never
@@ -131,7 +131,6 @@ float d1Cm = -1, armCm = -1, wallCm = -1, stopAtCm = -1, lStartCm = -1;   // sta
 float latDeg = 0, latI = 0;           // corridor-center correction (+ = move left) and its integral
 unsigned long runStart = 0;           // time when GO was pressed
 bool  finalLeg = false;               // true after the last turn: now looking for the start position
-char  cmd = 0;                        // last letter typed in the Serial Monitor
 
 // ---------------- motor / encoder / servo ----------------
 void encoderISR() { if (digitalRead(ENC_C2_PIN)) encRaw++; else encRaw--; }   // count +1 or -1 depending on channel C2
@@ -242,7 +241,7 @@ void finish(const __FlashStringHelper *why) {   // stops the car and prints why
   Serial.print(F(" | yaw ")); Serial.print(yawDeg, 1);   // heading at the end
   Serial.print(F(" | odo ")); Serial.print(odoCm(), 1); Serial.println(F(" cm"));   // distance travelled
 }
-void startRun() {                     // called when START or g is pressed
+void startRun() {                     // called when START is pressed
   Serial.println(F("Calibrating gyro: do NOT touch the car..."));
   servoTo(STEER_CENTER); delay(300);  // wheels straight before calibrating
   calibrate();                        // measure the gyro offset
@@ -385,18 +384,10 @@ void setup() {                        // runs once when the Nano starts
   Serial.println(g ? F("BMI160 OK") : F("WARNING: BMI160 not ready (battery ON first?)"));
   Serial.println(tofOk ? F("Both TOF OK") : F("WARNING: a TOF is missing"));
   calibrate();                        // gyro offset at boot too
-  Serial.println(F("Ready. Press START or g + Enter. s + Enter = stop."));
+  Serial.println(F("Ready. Press START to run."));
 }
 
 void loop() {                         // runs again and again after setup()
-  while (Serial.available()) {        // read the keys typed in the Serial Monitor
-    char c = Serial.read();           // one character
-    if (c == '\n' || c == '\r') {     // the line is finished
-      if ((cmd == 's' || cmd == 'S') && (state == STRAIGHT || state == TURN)) finish(F("STOPPED (s)"));   // "s" = emergency stop while running
-      else if ((cmd == 'g' || cmd == 'G') && (state == WAIT || state == DONE)) startRun();   // "g" = start when waiting or finished
-      cmd = 0;                        // clear the command
-    } else cmd = c;                   // remember the last letter typed
-  }
   if ((state == WAIT || state == DONE) && digitalRead(START_BTN_PIN) == LOW) {   // START button pressed?
     delay(30);                        // debounce
     if (digitalRead(START_BTN_PIN) == LOW) { while (digitalRead(START_BTN_PIN) == LOW) delay(5); delay(300); startRun(); }   // wait for release, then start
@@ -418,7 +409,7 @@ void loop() {                         // runs again and again after setup()
     Serial.print(STATE_NAME[state]);  // current state
     Serial.print(F("\tc ")); Serial.print(corners);   // corners done
     Serial.print(F("\thead ")); Serial.print(heading, 0);   // target heading
-    Serial.print(F("\todo ")); Serial.print(odoCm(), 1);     // distance travelled
+    Serial.print(F("\todometry ")); Serial.print(odoCm(), 1);     // distance travelled
     Serial.print(F("\tyaw ")); Serial.print(yawDeg, 1);      // real heading
     Serial.print(F("\tservo ")); Serial.print(servoNow);     // servo angle now
     Serial.print(F("\tI ")); Serial.print(iTerm, 1);         // heading integral

@@ -1,7 +1,7 @@
 // =====================================================================
 // GYRO 90 TEST - measures YAW_SCALE and YAW_REVERSED by hand, on this chassis.
 //
-// Uses the EXACT SAME register-level BMI160 driver as straight_pillars.ino (no
+// Uses the EXACT SAME register-level BMI160 driver as straight_pillars.ino (earlier sketch, now only in git history) (no
 // external gyro library), so whatever this test measures transfers directly to
 // the main sketch: same registers, same scale factor, same integration method.
 //
@@ -29,11 +29,11 @@
 //
 // WHAT TO DO WITH THE NUMBER YOU READ (call it Y):
 //   - If Y came out NEGATIVE (yaw went DOWN instead of up when turning left):
-//       set YAW_REVERSED = true in straight_pillars.ino (it currently is false).
+//       set YAW_REVERSED = true in straight_pillars.ino (earlier sketch, now only in git history) (it currently is false).
 //   - New YAW_SCALE = 90.0 / abs(Y)
 //       Example: if Y = 73.5  -> YAW_SCALE = 90/73.5 = 1.224
 //       Example: if Y = 108.2 -> YAW_SCALE = 90/108.2 = 0.832
-//   - Put that YAW_SCALE (and the correct YAW_REVERSED) into straight_pillars.ino
+//   - Put that YAW_SCALE (and the correct YAW_REVERSED) into straight_pillars.ino (earlier sketch, now only in git history)
 //     and re-upload.
 //
 //   Repeat the test 2-3 times to confirm Y comes out similar every time (it does
@@ -41,16 +41,16 @@
 //
 // Result measured on this chassis, 21 November 2026: Y = 85 (positive, so
 // YAW_REVERSED stays false) for an intended 90-degree turn -> YAW_SCALE = 90/85 = 1.06.
-// Both values are already applied in straight_pillars.ino.
+// Both values are already applied in straight_pillars.ino (earlier sketch, now only in git history).
 //
-// Wiring: same as straight_pillars.ino -> I2C: SDA=A4, SCL=A5 | START button on D10.
+// Wiring: same as straight_pillars.ino (earlier sketch, now only in git history) -> I2C: SDA=A4, SCL=A5 | START button on D10.
 // =====================================================================
 
 #include <Wire.h>
 
 const int BUTTON_PIN = 10;
 
-// ---------------- BMI160 (same registers as straight_pillars.ino) ----------------
+// ---------------- BMI160 (same registers as straight_pillars.ino (earlier sketch, now only in git history)) ----------------
 const float GYRO_SCALE = 65.6;       // LSB per deg/s at the +-500 deg/s range
 uint8_t bmiAddr = 0x68;
 float gyroBias = 0;
