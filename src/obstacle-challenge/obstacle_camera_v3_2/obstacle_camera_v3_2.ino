@@ -124,7 +124,7 @@ const bool REJECT_AT_EDGE   = true;  // a patch touching the left / right pictur
 const bool LENS_CORRECTION  = true;  // true = turn on the sensor's lens shading correction
 
 // ===== PASTE HERE what "Copy as Arduino code" gives you in viewer.html =====
-// (if you paste again: put back BLUE_HUE_LOW = 110, BLUE_MAX_SAT and the line minimums, the viewer does not have them)
+// Note: camera_viewer.html does not implement BLUE_HUE_LOW (165) or BLUE_MAX_SAT (200); keep the viewer and this sketch in step by hand.
 // Red and green are ~70 degrees apart in hue, so the bands never touch.
 // Measured with the camera locked (yellow cast): red pillar H 15-23, green pillar H 86-95.
 // Probe on 28 Oct: red pillar H 4-22 S 204-255 V 112-136.

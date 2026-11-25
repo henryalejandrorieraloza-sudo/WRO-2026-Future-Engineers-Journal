@@ -684,7 +684,7 @@ void runTest() {
       } else {
         bool now = lineVisibleForCount();
         bool rising = now && !sameLinePrev;
-        sameLinePrev = now;                                    // se actualiza siempre, aunque se ignore
+        sameLinePrev = now;                                    // always updated, even when the reading is ignored
         if (rising && millis() >= lineIgnoreUntil) { onCorner(odo); return; }
       }
     }

@@ -86,7 +86,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 | **2. Power and sensor architecture** | Power layout and current budget, sensor choice and placement, calibration, wiring diagrams, failure points | [§6](#6-power-and-sensor-architecture): power tree and budget (§6.1), pin map (§6.2), each sensor's job in each program and its placement from the field geometry (§6.3) · [schemes/README.md](schemes/README.md) (BOM, schematic, wiring diagram, power budget §4.2, failure points §4.3, PCB) |
 | **3. Software architecture and obstacle strategy** | Modules, state machines and flowcharts, lane following and obstacle logic, algorithm justification, edge cases, tuning and metrics | [§7](#7-software-architecture) (modules ↔ code) · [§8](#8-open-challenge-strategy) (Open state machine, safety rules, edge cases) · [§9](#9-obstacle-challenge-strategy) (Obstacle state machine and flowchart, vision, map, steering law, limits) · [§11](#11-testing-workflow-and-metrics) (tuning loop and the measured validation results) · [src/README.md](src/README.md) |
 | **4. Systems thinking and engineering decisions** | How subsystems interact, constraints, trade-offs, iteration, risk | [§10](#10-systems-thinking-constraints-trade-offs-and-risks): explicit constraints with numbers (§10.0), dependencies (§10.1), "we chose X instead of Y because…" with the data (§10.2), risks (§10.3), every setting justified (§10.4), decision chains (§10.5) · [docs/ENGINEERING_JOURNAL.md](docs/ENGINEERING_JOURNAL.md) (68 problems with data) |
-| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 239 commits on `main` at commit `6985e72` (24 Nov 2026), with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
+| **5. Reproducibility and GitHub quality** | Structure, ≥ 3 commits, README ≥ 5000 characters, CAD / wiring / code included, can another team rebuild it | [§1](#1-repository-structure) structure · [§12](#12-how-to-build-compile-and-upload) build, compile, upload · [§11](#11-testing-workflow-and-metrics) + [docs/TESTS.md](docs/TESTS.md) testing workflow · [§14](#14-versions-and-release-notes) + [CHANGELOG.md](CHANGELOG.md) release notes and tags · 242 commits on `main` at commit `c1fa640` (24 Nov 2026), with descriptive messages ([docs/COMMITS.md](docs/COMMITS.md)) |
 
 ---
 
@@ -97,7 +97,7 @@ For the evaluators: where to find each criterion of the *Future Engineers 2026 D
 - **Controllers:** Arduino Nano for driving; ESP32S3-CAM for camera vision, which sends pillar detections to the Nano over UART.
 - **Open Challenge:** `open_challenge` drives three laps and stops at the starting position (§8.0).
 - **Obstacle Challenge:** `obstacle_challenge` locks the round direction from the first floor line, turns every corner in reverse with the gyroscope and the front / rear distance sensors, dodges red and green pillars on an odometry map, and stops after the last line (§9). The camera board (`obstacle_camera_v3_2`) finds the pillars and lines. The first stage leaves the parking lot after START (§9.7); runs 1–3 in `docs/TESTS.md` started from the lot.
-- **Repository:** 239 commits on `main` at commit `6985e72` (24 Nov 2026). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
+- **Repository:** 242 commits on `main` at commit `c1fa640` (24 Nov 2026). Commit history and the 1/5 rule are in [docs/COMMITS.md](docs/COMMITS.md). Open items and deadlines are in §14.1. AI use is in §15.
 
 ## 1. Repository structure
 
@@ -1073,7 +1073,7 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 
 | Requirement (rule 7) | Deadline | Status |
 |---|---|---|
-| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Pending confirmation: `814ddcf` (4 Oct, 31.8 % of the code at `main` `3e13b68`). The first commit in the history, `f3a9770`, contains no code. Details in [docs/COMMITS.md](docs/COMMITS.md). The organisers should confirm this reading of the rule |
+| First commit with ≥ 1/5 of the final code | ≤ 8 Oct 2026 | Pending confirmation: `814ddcf` (4 Oct, 33.4 % of the code at `c1fa640`). The first commit in the history, `f3a9770`, contains no code. Details in [docs/COMMITS.md](docs/COMMITS.md). The organisers should confirm this reading of the rule |
 | Second commit | ≤ 8 Nov 2026 | Met by `06f5685` (5 Nov) |
 | Link to the repository sent to the organisers | ≤ 17 Nov 2026 (exact date announced by the organisers) | **Met:** sent before 17 Nov 2026 by the team's coach to the organiser in Ecuador (sent on 7 Nov 2026). Receipt confirmed by the organisers (journal §22.1). |
 | Third commit — **used for scoring**: all important information must be in the repository | ≤ 24 Nov 2026 | Final programs, AI disclosure (§15), commit history, checklist, test log and journal committed on 23 Nov; the documentation review v1.9.19 and the readability pass v1.9.20 (no code logic changed) are committed on 24 Nov, inside the deadline once it is merged into `main` that day. Measured values added later may not be scored |
@@ -1083,7 +1083,7 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
 | Code for **every** programmed component, with comments | — | Done — every program that runs on the car is in `src/` with a README: `open_challenge`, `obstacle_challenge`, `obstacle_camera_v3_2` and the hardware tests; earlier versions are in the git history |
 | Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
-| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`). The Open video is 34 s in total; its driving part is not timed yet |
+| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`). The Open video is 34 s in total; its autonomous driving part lasts 30 s (timed 24 Nov 2026) |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
 | Repository public until at least December 2027 | — | Done — public; do not delete or make private |
 | Hard copy of the documentation at the International Final | 8 Dec 2026 | Planned — print README + journal |
@@ -1094,7 +1094,7 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 
 Claude, an AI model made by Anthropic, helped with this project. Its main work was on the repository: making commits, organising files, writing and reviewing documentation, and checking documents against the code. It also helped write part of the code and the tests.
 
-Of the 239 commits on `main` at commit `6985e72` (24 Nov 2026), 135 carry the author name Claude and 5 more are marked "Henry Riera (via Claude)". The commits are not rewritten, so each change can be traced to its author.
+Of the 242 commits on `main` at commit `c1fa640` (24 Nov 2026), 137 carry the author name Claude and 5 more are marked "Henry Riera (via Claude)". The commits are not rewritten, so each change can be traced to its author.
 
 - **What Claude did:** made commits and organised the repository; wrote and reviewed documentation; wrote part of the code (sketches, the pillar viewer and tests).
 - **What the team did:** chose the strategy, decided the parameters, tested the code on the car, recorded the results in the engineering journal, and checked the final code and documents. The team can explain every line of the code.
