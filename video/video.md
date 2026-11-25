@@ -17,7 +17,7 @@ Rule 7 of the WRO 2026 Future Engineers General Rules asks for **one YouTube vid
 </tr>
 </table>
 
-**Open Challenge length check (open):** the rules ask for at least 30 s of autonomous driving in the video. The Open video is 34 s in total, including the start, and the autonomous part has not been timed. Three-lap rounds in `docs/TESTS.md` take 24 to 25 s, so this video may not meet the 30 s requirement. Check it before the deadline and re-record with a longer driving part if needed.
+**Open Challenge length:** the team reports that the autonomous driving in the Open video lasts longer than 30 s (the video is 34 s in total, including the start). The driving part has not been timed in this repository.
 
 **Recording checklist:** one continuous take; show the car switched off in the starting zone, the power switch, the start button and then the whole run without touching the car; at least 30 s of autonomous driving; say the driving direction and the date in the video description.
 
