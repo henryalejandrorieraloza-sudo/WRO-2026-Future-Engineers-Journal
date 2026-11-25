@@ -4,6 +4,11 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.40 — 24 November · Final parts list and commit counts
+
+- **Commit counts:** 264 commits on `main` at `ebc30c8` (149 with the author name Claude, 5 marked "via Claude"). `README` summary and §15 updated. The count was taken from the GitHub API.
+- The final parts list (items 1–50) replaces the earlier draft in `schemes/purchase_list.md`. The PDF copy is the final version. Item 43 is now named `front_protrusion.stl`.
+
 ## v1.9.39 — 24 November · Parts list added
 
 - Added the team's complete parts list (Revision 27-09-2026) as `schemes/purchase_list.md`, with the PDF copy `schemes/materials_list_rev27-09-2026.pdf`. It lists sources, quantities bought, what was used and costs, including the 3D-printed parts and fasteners.
