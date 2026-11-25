@@ -4,6 +4,13 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.37 — 24 November · Consistency pass (figures, English comments, schematic rev 2)
+
+- **Commit counts:** one reference commit for every figure, `c1fa640` (24 Nov 2026): 242 commits on `main` (137 with the author name Claude, 5 marked "via Claude"). Code at `c1fa640`: 331,624 bytes (.ino + .html); `814ddcf` = 110,854 bytes = 33.4 %. `README` §1, §14.1 and §15 and `docs/COMMITS.md` updated; the earlier 239 / 348,149 / 355,526 figures are retired.
+- **Open video:** 34 s in total; the autonomous driving part is 30 s (timed 24 Nov 2026). `video/video.md` and `README` §14.1 updated.
+- **Schematic:** `schemes/schematic.png` redrawn as rev 2 from `schemes/make_schematic.py`. The "ARDUINO NANO ESP32" and "SG90" labels are replaced by the classic Arduino Nano and the MG90 servo; the wires shown follow the real prototype connections. `schemes/README.md` §2 describes the new drawing.
+- **Code comments:** the remaining Spanish comments in the sketches are translated to English and the comments on the turn and camera-viewer notes are updated (`turn_measure_moving.ino`, `obstacle_challenge.ino`, `camera_test.ino`, `obstacle_camera_v3_2.ino`).
+
 ## v1.9.36 — 24 November · Coherence pass before the scoring deadline
 
 - **Steering:** `obstacle_challenge.ino` now uses `STEER_CENTER` 85 ± `STEER_RANGE` 80 = 5 / 165, the same as `open_challenge`. Documentation aligned in `README.md` §5.3, §8, §10.4, §11, the Obstacle README, `docs/TESTS.md` and the MG90 datasheet note.

@@ -2,7 +2,7 @@
 // TURN MEASURE WHILE MOVING - Step 2 of the Obstacle lap (Arduino Nano classic)
 // Measures how the car really turns 90 degrees when it arrives MOVING (as in a corner):
 //   START -> gyro calibration (car still) -> straight STRAIGHT_CM with the gyro PD
-//   -> without stopping, gyro PD turn of 90 degrees (same as "giro de 90 grados")
+//   -> without stopping, gyro PD turn of 90 degrees (same as the validated 90-degree gyro turn "turn_left_90_pid_brake")
 //   -> wheels straight + brake -> numbers saved in EEPROM.
 // The car does NOT need the computer: every run is saved in the Nano's memory.
 // Plug the USB afterwards and open the Serial Monitor: it prints all saved runs.
@@ -58,7 +58,7 @@ const float KP_HEADING = 2.0;
 const float KD_HEADING = 0.10;
 const float MAX_STEER  = 60.0;
 
-// --- Turn PD (validated "giro de 90 grados" values) ---
+// --- Turn PD (validated 90-degree gyro turn values) ---
 const float TURN_ANGLE_DEG = 90.0;
 const float K_TURN         = 2.5;
 const float K_RATE         = 0.15;
