@@ -1083,7 +1083,7 @@ International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed 
 | README in English, ≥ 5000 characters, modules ↔ electromechanical components, build / compile / upload | — | Done — (§7, §12) |
 | Code for **every** programmed component, with comments | — | Done — every program that runs on the car is in `src/` with a README: `open_challenge`, `obstacle_challenge`, `obstacle_camera_v3_2` and the hardware tests; earlier versions are in the git history |
 | Photos: front, back, left, right, top, bottom + team photo | — | Done — `v-photos/`, `t-photos/` |
-| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`) |
+| YouTube: **one video per challenge**, ≥ 30 s of autonomous driving | — | Done — one video per challenge (`video/video.md`). The Open video is 34 s in total; its driving part is not timed yet |
 | 3D-printing files, wiring diagram, schematic | — | Done — `models/`, `schemes/` |
 | Repository public until at least December 2027 | — | Done — public; do not delete or make private |
 | Hard copy of the documentation at the International Final | 8 Dec 2026 | Planned — print README + journal |
