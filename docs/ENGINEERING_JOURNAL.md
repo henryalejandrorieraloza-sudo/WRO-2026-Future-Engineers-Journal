@@ -1729,7 +1729,7 @@ The sketches in `src` were compared with the two sketches the team sent, with th
 
 ### 20.3 What the code actually does (read from the sketch)
 
-- The **first line** sets the direction (blue = left, orange = right) and is accepted after 10 cm of driving. Later corners use only that colour, and a corner is a rising edge of it. After a corner, lines are ignored for 4 s.
+- The **first line** sets the direction (blue = left, orange = right) and is accepted after 10 cm of driving. Later corners use only that colour, and a corner is a rising edge of it. After a corner, lines are ignored for 6 s.
 - A **turn** starts when the front ToF reads 40 cm. It is a reverse turn with the steering on the opposite side, and it ends when the predicted yaw has changed by 90°. The car then reverses until the rear ToF reads 20 cm.
 - After **12 turns** the next line is the last one: the car drives 0.45 s more and stops.
 - A **pillar** is placed on the map at its centre, and it stays on the map after the camera stops seeing it. It is removed 25 cm after the car passes its centre. The car steers toward a lateral goal of 17 cm from the pillar, never toward it.

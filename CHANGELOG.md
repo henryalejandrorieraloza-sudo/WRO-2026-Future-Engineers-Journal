@@ -4,6 +4,17 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.33 — 24 November · README checked line by line against the code
+
+**Corrected in the README and the journal (no code change):**
+- Obstacle speeds: 70 straight, 70 turn, 70 reverse (were 75 / 85 / 75 in the text).
+- Obstacle `IGNORE_LINE_S` is 6 s (the text said 4 s); the Open program has no line ignore.
+- Obstacle pillar rule: a detection within `SAME_PILLAR_CM` 15 cm is the same pillar (text said 30 cm).
+- Obstacle steering law: `KP_HEAD` 2.5 (text said 2.0).
+- Safety stop on a wheel stall applies to both programs (text said Open only).
+- Obstacle strategy row lists the parking functions (`startPark`, `runPark`, `startObstacle`) instead of `startRun`.
+- TOF restart: triggered by the side sensors in both programs; the restart re-initialises the sensors in use.
+
 ## v1.9.32 — 24 November · Obstacle and Open code and documentation made coherent (no USB commands during a run, English code)
 
 **Code changed (no change to any driving value):**
