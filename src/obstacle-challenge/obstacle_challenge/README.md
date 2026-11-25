@@ -78,7 +78,7 @@ If the camera messages stop, the car stops driving until they come back (`CAMERA
 
 - `PARK_REVERSE_TICKS` is 1200, confirmed by the team on the car (24 Nov 2026). The 597 ticks from five wheel turns (5 × π × 4.1 cm × 9.27 ticks/cm) are a calculation only and are not used.
 - `TICKS_PER_CM` is 9.27, the value in the code, measured on 21 Nov with the motor running (190 ticks over 20.5 cm). The 16.1 value of 28 Oct (a 100 cm run that read 97 cm) is not used. Henry confirmed on 24 Nov that the two values differ by about 1.7×. Run a 100 cm check with the final code before the competition.
-- `STEER_CENTER` is 85, but the limits are hard-coded at 10 and 170 (average 90), not 85 ± 80 = 5 / 165 as in the Open program. Open item in `docs/TESTS.md`.
+- `STEER_CENTER` is 85 and the limits are `STEER_CENTER` ± `STEER_RANGE` (80) = 5 / 165, the same as the Open program (aligned on 24 Nov 2026). The protractor stops of 10 and 170 are the record of the test in `docs/TESTS.md`.
 
 ## Pins
 

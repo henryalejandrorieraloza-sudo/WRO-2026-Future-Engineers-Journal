@@ -104,7 +104,7 @@ The pillar position is computed with a **pinhole model**: `distance = FOCAL_PX �
 
 | Constant | Why check it |
 |---|---|
-| `FOCAL_PX` (50) | Half of the 100 px measured at 320 × 240. Reported correct by the team on 23 Nov; not independently re-measured at 160 × 120. It sets every distance in cm |
+| `FOCAL_PX` (50) | Half of the 100 px measured at 320 × 240. Reported correct by the team on 23 Nov; confirmed with the camera viewer at 160 × 120 (24 Nov 2026). It sets every distance in cm |
 | `X_CENTER_OFFSET` (6) | Halved from 12. Shows where a pillar straight ahead appears in the picture |
 | `BLOCK_MIN_PIXELS`, `MIN_BLOCKS`, `RED_MIN_PIXELS`, `GREEN_MIN_PIXELS` | Smaller pixel counts at QQVGA. Too low = noise pillars, too high = pillars missed far away |
 | `LINE_TOP_ROW`, `ORANGE_MIN_PIXELS`, `BLUE_MIN_PIXELS` | The lines are fewer pixels at QQVGA |

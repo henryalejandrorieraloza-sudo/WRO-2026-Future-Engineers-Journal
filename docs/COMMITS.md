@@ -45,7 +45,7 @@ The rules note that changes after the third commit may not be scored, so documen
 
 ## Current figures (24 Nov 2026)
 
-- `main` at `f3d1e0a` (24 Nov 2026, before the review of this day): **231 commits** (`git rev-list --count main`). **131** have the author name Claude, and **5** more are marked "Henry Riera (via Claude)".
+- `main` at `6985e72` (24 Nov 2026): **239 commits** (`git rev-list --count main`). **135** have the author name Claude, and **5** more are marked "Henry Riera (via Claude)".
 - Code (`.ino` + `.html`, all tracked files) at `3e13b68`: **348,149 bytes**. 1/5 of it = **69,629 bytes**.
 - First commit with code, `814ddcf`: **110,854 bytes = 31.8 %** of that code. The 1/5 rule is met.
 - These figures change after the final merge. Recount before the deadline with `git rev-list --count` and the byte totals above.
@@ -61,8 +61,6 @@ Status: **not sent yet, no answer yet.** Send this to the organisers and paste t
 > We are team X67 (Colegio Americano de Guayaquil, Ecuador). Our public repository is https://github.com/henryalejandrorieraloza-sudo/WRO-2026-Future-Engineers-Journal
 >
 > 1. **First commit.** Rule 7 asks that the first commit, not later than two months before the competition, contains at least 1/5 of the final code. The first commit in our history (`f3a9770`, 4 Oct 2026) contains only the engineering journal and the test log. The first commit with code (`814ddcf`, same day) contains 31 % of the final code. Is the commit with at least 1/5 of the code accepted as the first commit, or must the first commit itself contain it?
-> 2. **Link date.** Rule 7 asks for the repository link no later than three weeks before the competition. We sent it on 23 November 2026 and received confirmation. Is this late submission accepted, and does it affect the documentation score?
->
 > Could you also confirm the dates of the International Final? Our deadlines are calculated from 8 December 2026.
 >
 > Thank you,

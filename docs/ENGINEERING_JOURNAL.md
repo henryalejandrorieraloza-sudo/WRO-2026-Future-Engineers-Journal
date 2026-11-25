@@ -1517,7 +1517,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
 - [x] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(23 Nov: `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` are in `src`; `obstacle_go_out_of_parking` is there as a placeholder, see §22.3.)*
 - [x] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(23 Nov: both videos are done — Open `4p94mWkXhsk`, Obstacle `ccAdp2c7_7Y`.)*
-- [x] Send the repository link to the organisers. *(23 Nov: sent and receipt confirmed by the team.)*
+- [x] Send the repository link to the organisers. *(Sent on 7 Nov 2026 by the team's coach to the organiser in Ecuador, before the 17 Nov deadline.)*
 - [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring). *(23 Nov: code, README, journal and videos are in `main`; the last step is the scoring commit.)*
 - [ ] Print the README and this journal as the **hard copy** for the International Final (8–10 Dec 2026, San Juan).
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
@@ -1744,7 +1744,7 @@ The sketches in `src` were compared with the two sketches the team sent, with th
 |---|---|---|---|
 | Gyro scale | `obstacle_challenge` / `open_challenge` | `GYRO_SCALE = 1.007` | The 21 Nov hand turn gave `YAW_SCALE = 1.06` for `straight_pillars`. Check the yaw per corner in the final report |
 | Farthest pillar | camera v3.1 / v3.2 | 130 cm / 40 cm | v3.2 reads pillars up to 40 cm. Check that the pillars are not seen too late at the start of a straight |
-| Focal length | camera v3.2 | `FOCAL_PX = 50` | Half of the 320 × 240 value (100); reported correct by the team on 23 Nov 2026, not independently re-measured at 160 × 120 |
+| Focal length | camera v3.2 | `FOCAL_PX = 50` | Half of the 320 × 240 value (100); reported correct by the team on 23 Nov 2026, confirmed with the camera viewer at 160 × 120 (24 Nov 2026) |
 | Unused constants | `obstacle_challenge` | `MAX_FINAL_CM`, `STOP_OFFSET_CM`, `FALLBACK_CM` | Declared, never used. Removed on 24 Nov (v1.9.34); the v1.9.17 entry had wrongly said they were already removed |
 | Magenta walls | camera v3.2 | not in the message | The camera removes them from the pillars but does not send them, so parking at the end is not possible yet |
 | Parking start | `obstacle_go_out_of_parking` | no START button, `REVERSE_TARGET_TICKS = 1024` | Placeholder; the button and the encoder count are still to be added and measured |
@@ -1807,7 +1807,7 @@ Nothing in the code was changed in this phase.
 
 ### 22.1 What changed
 
-- **Organisers' link:** sent and receipt confirmed on 23 November.
+- **Organisers' link:** sent before 17 November by the team's coach to the organiser in Ecuador (sent on 7 Nov 2026); receipt confirmed.
 - **Final programs in `src`:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` (ESP32-S3-CAM) are the competition code. On 23 November the team tested `open_challenge` (run of 22 November, §19.2) and reports that `obstacle_challenge` works on the car, including the edge cases it checked. No lap, time or stop data was written down for the Obstacle run. The parking sketch is still a placeholder and was not tested (§22.3).
 - **Reverse corner turns (rule 9.21 / Appendix A.4):** on 23 November the team decided that they comply, because the back-up stays inside the same corner section where the direction changes (README §3.1). The earlier "to confirm" notes in §§17–21 are the history of that question.
 - **Documents:** the checklist in §16 is updated to the state of 23 November. The AI section (README §15) and the team paragraph were confirmed by the team and kept as written.
@@ -1923,7 +1923,7 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 
 ### 24.6 Still open (not stated as done)
 
-- Confirm which steering limits the Obstacle program should use (its code is 10 / 170 around a centre of 85); the decision needs a protractor check.
+- Steering limits of the Obstacle program: decided on 24 Nov 2026 to use the same 5 / 165 as the Open program (code and docs aligned).
 - A 100 cm run with the final code, to settle the encoder value (9.27 in the code, 16.1 measured on 28 Oct; Henry confirmed the 1.7× difference on 24 Nov).
 - More logged attempts in `docs/TESTS.md`: the Open table has 6 runs and the Obstacle table has 3 (times, direction, stop position), and a logged Open run with 1000 mm corridors.
 - The stopwatch speed at `RUN_PWM` 150 and 255, the 160 × 120 frame rate, the gyro drift at rest, the stall current.
