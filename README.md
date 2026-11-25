@@ -1069,7 +1069,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the history of the repository and the car. 
 
 ### 14.1 Submission checklist
 
-International Final: **8–10 December 2026, San Juan, Puerto Rico** (dates used by this team for the deadlines; to be confirmed against the organisers' announcement). Deadlines from rule 7, counted back from the first day of the competition (8 December): first commit 2 months before (8 Oct), second 1 month before (8 Nov), repository link 3 weeks before (17 Nov), third commit 2 weeks before (24 Nov).
+International Final: **8 December 2026, San Juan, Puerto Rico** (date confirmed by the team's coach; the deadlines below are counted from it). Deadlines from rule 7, counted back from the first day of the competition (8 December): first commit 2 months before (8 Oct), second 1 month before (8 Nov), repository link 3 weeks before (17 Nov), third commit 2 weeks before (24 Nov).
 
 | Requirement (rule 7) | Deadline | Status |
 |---|---|---|
