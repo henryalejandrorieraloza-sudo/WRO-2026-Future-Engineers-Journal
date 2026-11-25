@@ -2065,3 +2065,11 @@ START
 **To measure before coding:** encoder ticks per millimetre (push the car exactly 1 m), the steering turning radius at full lock, and where the opening appears for a 1000 mm and a 600 mm next corridor. With the side sensors reliable only up to ~45 cm (journal §12.4), Phase 2 must also be checked in a 1000 mm corridor, where the outer wall may be out of range right after the first turn — in that case the car holds the gyro heading until a wall is valid.
 
 </details>
+
+## 26. Corrections of 24 November 2026
+
+- The parking exit is no longer a separate sketch. It is the first stage of `obstacle_challenge`, started by the START button. Entries in §24 and earlier that name `obstacle_go_out_of_parking` describe the separate sketch, which is in the git history.
+- The Obstacle driver has no USB command input. The `g` and `s` commands of the earlier version were removed on 24 Nov (rules 11.6–11.7).
+- Distances of the Obstacle driver in the code: the front ToF at 40 cm starts each turn, and the rear ToF at 20 cm stops the back-up. The 50 cm and 40 cm values of the earlier 24 Nov sketch on `main` are not in the code now.
+- Round results of the three runs logged in `docs/TESTS.md` (47 of 62 points each) are the team's records; the journal keeps its earlier entries unchanged.
+

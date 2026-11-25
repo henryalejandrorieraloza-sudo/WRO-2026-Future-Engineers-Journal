@@ -42,3 +42,10 @@ The rules note that changes after the third commit may not be scored, so documen
 ## Size of the history
 
 200 commits on `main` at commit `3f30eca` (24 Nov 2026, `git rev-list --count main`), 110 of them by the Claude account and 5 more marked "Henry Riera (via Claude)" (see README §15). Merge commits from pull requests are included in the count.
+
+## Current figures (24 Nov 2026)
+
+- `main` at `3e13b68`: **219 commits**. **120** are authored by the Claude account (`noreply@anthropic.com`) and **5** more are marked "Henry Riera (via Claude)".
+- Code (`.ino` + `.html`, all tracked files) at `3e13b68`: **348,149 bytes**. 1/5 of it = **69,629 bytes**.
+- First commit with code, `814ddcf`: **110,854 bytes = 31.8 %** of that code. The 1/5 rule is met.
+- These figures change after the final merge. Recount before the deadline with `git rev-list --count` and the byte totals above.

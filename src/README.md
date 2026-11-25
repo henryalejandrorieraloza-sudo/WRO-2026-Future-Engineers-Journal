@@ -31,7 +31,7 @@ The full wiring, power budget and schematic are in [`../schemes`](../schemes/REA
 src/
 ├── hardware-tests/       Component tests (motor + encoder, steering servo, four TOF + gyroscope, camera)
 ├── open-challenge/       open_challenge: the Open Challenge program
-├── obstacle-challenge/   Obstacle Challenge: the driving program, the camera vision and the parking start
+├── obstacle-challenge/   Obstacle Challenge: the driving program (with the parking exit) and the camera vision
 └── tools/                Browser tools that run on a PC (camera viewer, scenario roulette)
 ```
 
@@ -66,8 +66,8 @@ The folder holds the three programs of the round, one per stage. Each has its ow
 
 | Folder | Board | Status | Description |
 |---|---|---|---|
-| [`obstacle_challenge`](obstacle-challenge/obstacle_challenge) | Nano | Uploaded 24 Nov (open challenge laps, pillar dodging and wall centring, v1). It replaces the 23 Nov version, which the team reported working on the car. To be validated on the track; lap times to be logged in `docs/TESTS.md` | **The driving program.** Follows the floor lines for three laps: the first line sets the direction (blue = left, orange = right), each corner is a 90° turn in reverse (gyro, front and rear ToF). Dodges red pillars on the right and green pillars on the left, using an odometry map of the straight. Centres between the side walls on straights without pillars. Stops inside the starting section after the last line. README: [obstacle_challenge/README.md](obstacle-challenge/obstacle_challenge/README.md) |
-| [`obstacle_camera_v3_2`](obstacle-challenge/obstacle_camera_v3_2) | ESP32-S3-CAM | Uploaded 24 Nov, replacing the 23 Nov version; to be validated on the car. `FOCAL_PX = 50` is not yet re-measured at 160 × 120. The 160 × 120 frame rate is still to be logged | **The vision.** 160 × 120 picture, camera settings locked after 5 s. Finds the closest red or green pillar and its distance ahead and to the side in cm (pinhole model), the magenta parking walls, and the orange and blue floor lines (long-and-thin test, white floor above the line). Sends one text line per picture to the Nano at 115200 baud. The Nano reads its first 12 fields. README: [obstacle_camera_v3_2/README.md](obstacle-challenge/obstacle_camera_v3_2/README.md) |
+| [`obstacle_challenge`](obstacle-challenge/obstacle_challenge) | Nano | Uploaded 24 Nov (open challenge laps, pillar dodging and wall centring, v1). It replaces the 23 Nov version, which the team reported working on the car. Validated on the car in the runs logged in `docs/TESTS.md` | **The driving program.** Follows the floor lines for three laps: the first line sets the direction (blue = left, orange = right), each corner is a 90° turn in reverse (gyro, front and rear ToF). Dodges red pillars on the right and green pillars on the left, using an odometry map of the straight. Centres between the side walls on straights without pillars. Stops inside the starting section after the last line. README: [obstacle_challenge/README.md](obstacle-challenge/obstacle_challenge/README.md) |
+| [`obstacle_camera_v3_2`](obstacle-challenge/obstacle_camera_v3_2) | ESP32-S3-CAM | Validated on the car in the runs logged in `docs/TESTS.md`. `FOCAL_PX = 50` is not yet re-measured at 160 × 120. The 160 × 120 frame rate is still to be logged | **The vision.** 160 × 120 picture, camera settings locked after 5 s. Finds the closest red or green pillar and its distance ahead and to the side in cm (pinhole model), the magenta parking walls, and the orange and blue floor lines (long-and-thin test, white floor above the line). Sends one text line per picture to the Nano at 115200 baud. The Nano reads its first 12 fields. README: [obstacle_camera_v3_2/README.md](obstacle-challenge/obstacle_camera_v3_2/README.md) |
 
 Parking at the end of the round (after the third lap) is not in the code yet; see [root README §9.7](../README.md#97-parking).
 

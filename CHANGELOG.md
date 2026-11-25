@@ -4,12 +4,19 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.32 — 24 November · Obstacle code and documentation made coherent (no USB commands, parking exit inside one program)
+
+**Code changed:** `obstacle_challenge.ino` no longer reads `g` or `s` from the computer (rules 11.6–11.7); the run starts only with the START button (rule 9.11). Its comments are in English. The parking exit is its first stage; the separate sketch `obstacle_go_out_of_parking` is removed (it stays in the git history). `obstacle_camera_v3_2.ino`: comments in English, no logic change.
+
+- **Documentation updated:** `README.md` (§9, §9.7, §13, §14, commit counts at `3e13b68`), `src/README.md`, both Obstacle READMEs, `docs/TESTS.md` (Obstacle attempts), `docs/COMMITS.md` (current counts and first-commit share), `video/video.md` (Obstacle row), `docs/ENGINEERING_JOURNAL.md` (§26).
+- **Known open items:** `PARK_REVERSE_TICKS` is 1200 in the code and 597 calculated; `open_challenge` still reads `g` and `s` over USB and is not yet changed to match rules 11.6–11.7.
+
 ## v1.9.31 — 24 November · Obstacle sketches replaced by v1 (open laps + pillar dodging) and camera v3.2 at 160 × 120
 
-**Code changed:** `obstacle_challenge.ino` (Nano) and `obstacle_camera_v3_2.ino` (camera) are replaced by the versions uploaded on 24 Nov. The previous 23 Nov version stays in the git history (`48c57b6`). Main changes in the Nano sketch: `RUN_PWM` 75, `TURN_PWM` 85, `REVERSE_PWM` 75; `FRONT_TURN_CM` 50 and `REAR_STOP_CM` 40; `RETURN_AFTER_CM` 10, `PASS_CM` 25, `SAME_PILLAR_CM` 30; steering centre 85 with limits 10 / 170 set directly. The wheel-stall stop (`STALL_MS`) is no longer used in this sketch.
+**Code changed:** `obstacle_challenge.ino` (Nano) and `obstacle_camera_v3_2.ino` (camera) are replaced by the versions uploaded on 24 Nov. The previous 23 Nov version stays in the git history (`48c57b6`). Values of the 24 Nov Nano sketch: `RUN_PWM`, `TURN_PWM` and `REVERSE_PWM` 70; `FRONT_TURN_CM` 40 and `REAR_STOP_CM` 20; `RETURN_AFTER_CM` 25, `PASS_CM` 30, `SAME_PILLAR_CM` 15; steering centre 85 with limits 10 / 170 set directly. The wheel-stall stop (`STALL_MS`) is in this sketch.
 
 - **Documentation updated to match the code:** `src/obstacle-challenge/obstacle_challenge/README.md`, `src/obstacle-challenge/obstacle_camera_v3_2/README.md`, `src/README.md` (status column), and `README.md` §9 and the car-constants and safety tables.
-- **Not validated yet:** the 24 Nov version has to be tested on the track. Its `FOCAL_PX = 50` is marked in the sketch as not re-measured at 160 × 120. The 23 Nov video and lap times refer to the previous version.
+- **Validated on the car:** three runs logged in `docs/TESTS.md` (3 laps, correct stop, started in the parking lot, no pillar moved, no repair). Its `FOCAL_PX = 50` is still not re-measured at 160 × 120.
 - **Not updated in this entry:** `docs/TESTS.md` and the engineering journal, which keep the history.
 
 ## v1.9.30 — 24 November · Gear teeth of the 1 : 1 drive recorded
