@@ -62,7 +62,7 @@ Later iterations (one-corner version, 12-turn loop, wall re-alignment) are docum
 
 ## 5. Obstacle Challenge (`obstacle-challenge/`)
 
-The folder holds the three programs of the round, one per stage. Each has its own README with the constants, the flow and the measurements. Earlier Obstacle sketches are in the git history, not in `main`.
+The folder holds the two driving programs of the round, one per challenge. Each has its own README with the constants, the flow and the measurements. Earlier Obstacle sketches are in the git history, not in `main`.
 
 | Folder | Board | Status | Description |
 |---|---|---|---|

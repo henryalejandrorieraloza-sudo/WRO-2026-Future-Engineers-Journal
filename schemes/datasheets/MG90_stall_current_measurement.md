@@ -49,7 +49,7 @@ Real: the servo's H-bridge and the wiring drop about 0.8 V (assumed, typical 0.5
 
 ## Consequence for the code
 
-The steering limits in the driving programs are `STEER_CENTER ± 80` = **5 / 165** ([`open_challenge`](../../src/open-challenge/open_challenge), [`obstacle_challenge`](../../src/obstacle-challenge/obstacle_challenge)). The left stop measured with `servo_test` is about 10 ([docs/TESTS.md](../../docs/TESTS.md)). If 10 is a mechanical stop, a command to 5 pushes the servo against it and it stalls at about 1.27 A for as long as the command lasts. The servo code has no stall timeout. This is documented as a risk; the code is not changed in this update.
+The steering limits are set per program. The Open Challenge ([`open_challenge`](../../src/open-challenge/open_challenge)) uses `STEER_CENTER ± 80` = **5 / 165**. The Obstacle Challenge ([`obstacle_challenge`](../../src/obstacle-challenge/obstacle_challenge)) uses `STEER_LEFT_MAX` = 10 and `STEER_RIGHT_MAX` = 170. The left stop measured with `servo_test` is about 10 ([docs/TESTS.md](../../docs/TESTS.md)). If 10 is a mechanical stop, a command to 5 (Open Challenge) pushes the servo against it and it stalls at about 1.27 A for as long as the command lasts. The servo code has no stall timeout. This is documented as a risk; the code is not changed in this update.
 
 ## Where it is used
 

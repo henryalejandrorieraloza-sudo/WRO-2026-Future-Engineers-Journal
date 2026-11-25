@@ -4,6 +4,17 @@ Versions of the car and of this repository. Dates are in 2026.
 
 _v1.9.18 groups the documentation work of 23 November (night, evening and day). v1.9.19 (24 November) is the documentation review before the scoring deadline; v1.9.20 (same day) makes the README easier to read._
 
+## v1.9.34 — 24 November · full read of the repository against the code
+
+**Corrected (comments, docs and unused declarations; no logic change):**
+- `obstacle_camera_v3_2.ino`: the comment for `SAFE_LAT_CM` says car half width 4.5 cm (was 4.25); the car is 9 cm wide.
+- `obstacle_challenge.ino`: removed the unused declarations `STOP_OFFSET_CM`, `FALLBACK_CM` and `MAX_FINAL_CM`.
+- `src/README.md`: the folder holds the two driving programs (was "three").
+- `schemes/datasheets/MG90_stall_current_measurement.md`: the Obstacle steering limits are 10 / 170 (the 5 / 165 values belong to the Open Challenge).
+- Root `README.md`: removed the "Pillar Vision Lab" name; the camera viewer is the tool.
+
+**Known, not changed:** the EasyEDA schematic in `schemes/schematic.png` labels the controller "ARDUINO NANO ESP32", while the code and the README use an Arduino Nano (ATmega328P). The image is not edited here.
+
 ## v1.9.33 — 24 November · README checked line by line against the code
 
 **Corrected in the README and the journal (no code change):**
