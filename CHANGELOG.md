@@ -6,7 +6,7 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day). 
 
 ## v1.9.35 — 24 November · Rubric review corrections (documentation only, no code change)
 
-- **Submission:** the repository link was sent on 23 Nov 2026, six days after the 17 Nov date. `README §14.1` now says so and no longer marks it as met. Whether the late link is accepted is pending; the question for the organisers is in `docs/COMMITS.md`.
+- **Submission:** the repository link was sent before the 17 Nov 2026 date, by the team's coach to the organiser in Ecuador (exact date to be added). `README §14.1` now marks it as met. The question for the organisers about the first commit is in `docs/COMMITS.md`.
 - **First commit:** `814ddcf` is the commit with at least 1/5 of the code; the first commit `f3a9770` has none. Marked as pending confirmation until the organisers answer.
 - **Commit counts:** 231 commits on `main` at `f3d1e0a` (131 with the author name Claude). `README §1`, `§15`, §14.1 and `docs/COMMITS.md` updated.
 - **README §9.6:** the reverse move ends when the rear ToF reads 20 cm, as in the code (`REAR_STOP_CM`), not 40 cm.
@@ -226,7 +226,7 @@ Rule used: the three programs that run on the car (`open_challenge`, `obstacle_c
 - **History marked:** the 8-reading window, the undo, the 1 s and 500 ms delays and the PD turn are documented as October design, not as the current code.
 - **Added:** a table of the limits and fallbacks of `obstacle_challenge` (README §9.10).
 - **Counts updated:** 144 commits, 69 by the Claude account, 28 STL files (26 printed and 2 tyre moulds).
-- **Status:** the organisers' link was sent and its receipt confirmed on 23 November.
+- **Status:** the organisers' link was sent before 17 November by the team's coach to the organiser in Ecuador (exact date to be added), and its receipt was confirmed.
 - **Test status:** the team compiled the three competition sketches in Arduino IDE 2.x on 23 November (no errors). `open_challenge` was tested (run of 22 November). The team reports that `obstacle_challenge` works on the car, including its edge cases; no numbers are recorded yet. The parking sketch is not tested.
 - **Systems thinking:** README §10.5 added: five chains of decisions from the engineering journal (sensor angle, steering, encoder, power, failures, reverse gear) and their effect on the current code. The I²C timeout (25 ms) and the parking note in §10.3 corrected.
 - **Comments only:** stale and duplicated comments in `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` rewritten (old values such as "was 320" or "HALVED from" removed, duplicated function headers merged). No code line changed (checked with `git diff`).

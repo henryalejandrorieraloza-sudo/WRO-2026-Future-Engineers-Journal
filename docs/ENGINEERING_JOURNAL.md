@@ -1517,7 +1517,7 @@ I checked the official WRO 2026 Future Engineers rules (PDF) to make sure our ap
 - [ ] Run the 3-lap loop on Scenario Roulette layouts and log every attempt; only increase the speed after 5 clean runs in a row.
 - [x] Put the **final competition programs** in the repository (Open Challenge and Obstacle Challenge, Nano + camera), with comments — rule 7 asks for the code of every programmed component. *(23 Nov: `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` are in `src`; `obstacle_go_out_of_parking` is there as a placeholder, see §22.3.)*
 - [x] Record **one YouTube video per challenge** with at least 30 s of autonomous driving (rule 7) and add the links to `video/video.md`. *(23 Nov: both videos are done — Open `4p94mWkXhsk`, Obstacle `ccAdp2c7_7Y`.)*
-- [x] Send the repository link to the organisers. *(23 Nov: sent and receipt confirmed by the team.)*
+- [x] Send the repository link to the organisers. *(Sent before 17 Nov by the team's coach to the organiser in Ecuador; exact date to be added.)*
 - [ ] Have everything important in the repository before **24 Nov 2026** (the commit used for scoring). *(23 Nov: code, README, journal and videos are in `main`; the last step is the scoring commit.)*
 - [ ] Print the README and this journal as the **hard copy** for the International Final (8–10 Dec 2026, San Juan).
 - [ ] Test the Open Challenge on the track and tune the jump threshold.
@@ -1807,7 +1807,7 @@ Nothing in the code was changed in this phase.
 
 ### 22.1 What changed
 
-- **Organisers' link:** sent and receipt confirmed on 23 November.
+- **Organisers' link:** sent before 17 November by the team's coach to the organiser in Ecuador (exact date to be added); receipt confirmed.
 - **Final programs in `src`:** `open_challenge`, `obstacle_challenge` and `obstacle_camera_v3_2` (ESP32-S3-CAM) are the competition code. On 23 November the team tested `open_challenge` (run of 22 November, §19.2) and reports that `obstacle_challenge` works on the car, including the edge cases it checked. No lap, time or stop data was written down for the Obstacle run. The parking sketch is still a placeholder and was not tested (§22.3).
 - **Reverse corner turns (rule 9.21 / Appendix A.4):** on 23 November the team decided that they comply, because the back-up stays inside the same corner section where the direction changes (README §3.1). The earlier "to confirm" notes in §§17–21 are the history of that question.
 - **Documents:** the checklist in §16 is updated to the state of 23 November. The AI section (README §15) and the team paragraph were confirmed by the team and kept as written.
