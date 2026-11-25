@@ -479,7 +479,7 @@ The settings are grouped at the top of the file in three blocks: run settings (`
 | Gyro calibration | 300 samples after 0.7 s settling | same | LED blinks while it runs |
 | TOF restart | Left and right only | Triggered by left and right; all four re-initialised | After 0.5 s without data from a side sensor |
 
-The Obstacle driver (`obstacle_challenge`) uses `STEER_LEFT_MAX` 10, `STEER_CENTER` 85 and `STEER_RIGHT_MAX` 170 (not re-measured). `servo_test` sweeps 10–170 on purpose to find the mechanical stops. The Open program uses 5 / 165, as above.
+The Obstacle driver (`obstacle_challenge`) uses `STEER_CENTER` 85 with hard-coded limits `STEER_LEFT_MAX` 10 and `STEER_RIGHT_MAX` 170. Their average is 90, not the centre 85; the limits are not 85 ± 80 (the Open program uses 5 / 165) and this is an open item in `docs/TESTS.md`. `servo_test` sweeps 10–170 on purpose to find the mechanical stops. The Open program uses 5 / 165, as above.
 
 ### 8.1 Earlier designs (moved to the journal)
 

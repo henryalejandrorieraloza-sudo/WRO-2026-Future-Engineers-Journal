@@ -1923,6 +1923,8 @@ Until v1.9.18 the README said the car could reach only about **12.6 cm/s** and c
 
 ### 24.6 Still open (not stated as done)
 
+- Confirm which steering limits the Obstacle program should use (its code is 10 / 170 around a centre of 85); the decision needs a protractor check.
+- A 100 cm run with the final code, to settle the encoder value (9.27 in the code, 16.1 measured on 28 Oct; Henry confirmed the 1.7× difference on 24 Nov).
 - More logged attempts in `docs/TESTS.md`: the Open table has 6 runs and the Obstacle table has 3 (times, direction, stop position), and a logged Open run with 1000 mm corridors.
 - The stopwatch speed at `RUN_PWM` 150 and 255, the 160 × 120 frame rate, the gyro drift at rest, the stall current.
 - The parking start: START button, measured reverse count, first track test.

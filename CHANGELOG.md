@@ -23,7 +23,8 @@ _v1.9.18 groups the documentation work of 23 November (night, evening and day). 
 
 **Not verified in this session (open):**
 - `TICKS_PER_CM`: 9.27 (21 Nov, motor running, 190 ticks over 20.5 cm) and 16.1 (28 Oct, a 100 cm run that read 97 cm) differ by about 1.7×. The code uses 9.27, counted on the rising edge of C1. A 100 cm run with the final code is needed.
-- Steering centre: 85 is used, but the protractor limits (10 and 170) have a midpoint of 90. The check is open in `docs/TESTS.md`.
+- Steering: the design centre is 85 with sides ±80 (Open: 5 / 165). The Obstacle program hard-codes 10 / 170, whose average is 90, not 85. Confirmed by Henry on 24 Nov; the decision and the re-measurement are open in `docs/TESTS.md`.
+- Encoder: the 9.27 against 16.1 ticks/cm difference (about 1.7×) is confirmed by Henry on 24 Nov. A 100 cm run with the final code is still to be done.
 - The schematic image still shows "Arduino Nano ESP32"; it is explained in a note, not redrawn in EasyEDA.
 - Nothing was compiled in this session.
 
