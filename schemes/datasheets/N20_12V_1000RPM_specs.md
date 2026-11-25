@@ -10,9 +10,9 @@ Drive motor used on the vehicle.
 
 This file replaces the earlier `N20_motors.pdf`, which described a different motor (6 V, 33 RPM). That PDF was removed from the repository on 23 Nov 2026; it stays in the git history.
 
-**Update (24 Nov 2026):** the winding resistance of the motor on the car was measured (**11.7 Ω**) and the stall current was calculated from it: **≈ 1.03 A** (range 0.95 to 1.20 A). See [N20_stall_current_measurement.md](N20_stall_current_measurement.md). **Counted on 24 Nov 2026:** motor output-shaft turns against wheel turns = **1 : 1** (no reduction in the differential). The internal gearbox ratio (≈ 17 : 1 from the encoder count) still needs the hand-turn check below.
+**Update (24 Nov 2026):** the winding resistance of the motor on the car was measured (**11.7 Ω**) and the stall current was calculated from it: **≈ 1.03 A** (range 0.95 to 1.20 A). See [N20_stall_current_measurement.md](N20_stall_current_measurement.md). **Counted on 24 Nov 2026:** motor output-shaft turns against wheel turns = **1 : 1** (no reduction in the differential). **The internal gearbox ratio is 17 : 1, counted by hand by the team's mechanic** (it matches the encoder: 119 ticks per wheel turn ÷ 7 ≈ 17).
 
-**Status (23 Nov 2026):** the gear ratio and the stall values of the motor on the car are **not yet confirmed for this ASIN**. The values below come from a datasheet of the same family, which is probably but not certainly the same motor. The team has to measure the ratio on the car (see "Measurements to take").
+**Status (23 Nov 2026, updated 24 Nov):** the gear ratio of the motor on the car is **17 : 1**, counted by hand by the team's mechanic. The values below come from a datasheet of the same family and were written for 1 : 30, so they do **not** apply to our motor as they are.
 
 ## Values from the Amazon listing (confirmed for this ASIN)
 
@@ -43,7 +43,7 @@ Source: SparkFun, "28633 datasheet N20 Motor With Encoder and Cable pair", for t
 |---|---|---|---|---|---|---|---|---|
 | 1:30 | 12 V | 0.06 A | 1000 RPM | 0.3 A | 681 RPM | 0.16 kg·cm | 0.7 A | 0.43 kg·cm |
 
-Two checks say that the 1:30 ratio in this table is **not yet proven** for our motor:
+The 1:30 ratio in this table **does not match** our motor. The hand count gives 17 : 1. Two checks showed the problem before the count:
 
 1. For 1000 RPM at the output shaft with 1:30, the motor would have to turn about 30 000 RPM. That is above what an N20 usually reaches at 12 V (estimate from common N20 listings, not from a source in this file).
 2. The encoder constant measured on the car is **9.27 ticks per cm** (`TICKS_PER_CM` in `open_challenge`). With the wheel at 41 mm (≈ 12.9 cm per turn), that is about **119 ticks per wheel turn**. At 1:30 with 7 PPR the count would be 210 (one edge), 420 (two edges) or 840 (four edges). None matches 119. Either the ratio is different, or the wheel diameter or the counting in the code is different. This has to be measured.
@@ -75,7 +75,7 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which did not matc
 
 ## Measurements to take
 
-1. **Gear ratio:** mark the rear wheel, turn it exactly 10 full turns by hand with the motor off, and count the encoder pulses from one channel (one edge) and, if the firmware counts both edges, from all of them. Divide the pulses per wheel turn by 7 for one edge, by 14 for two edges or by 28 for four edges, to get the ratio.
+1. ~~**Gear ratio**~~ Done 24 Nov: **17 : 1**, counted by hand by the team's mechanic. (Method for a repeat: mark the rear wheel, turn it exactly 10 full turns by hand with the motor off, and count the encoder pulses from one channel; divide the pulses per wheel turn by 7 for one edge, by 14 for two edges or by 28 for four edges.)
 2. **Stall current:** done indirectly on 24 Nov (winding resistance 11.7 Ω → 1.03 A, see [N20_stall_current_measurement.md](N20_stall_current_measurement.md)). Optional direct check: with a multimeter in series with the battery, hold the wheel for less than 0.5 s and read the peak. Do not hold it longer: the gears can break (the code stops the motor after `STALL_MS`).
 3. **No-load speed:** cronometer the time for 1 m with `RUN_PWM 150` and then with `RUN_PWM 255`.
 4. **Torque check:** push the car up a ramp of known slope with the motor at a known PWM, or measure the force with a spring scale on the wheel rim.
@@ -93,7 +93,7 @@ One seller (Zbotic, "GA12-N20") lists a stall current of 1 A, which did not matc
 
 ## To do
 
-1. ~~Motor-to-wheel ratio~~ Counted 1 : 1 on 24 Nov (motor gear and differential gear, 30 teeth each; one turn of one gives one turn of the other). Still to do: the hand-turn count of encoder pulses per wheel turn to confirm the internal ≈ 17 : 1 (see "Measurements to take").
+1. ~~Motor-to-wheel ratio~~ Counted 1 : 1 on 24 Nov (rear differential, 30 teeth each). ~~Internal gearbox ratio~~ Counted by hand by the team's mechanic: **17 : 1**.
 2. ~~Measure the stall current~~ Done 24 Nov (indirect, from the winding resistance: 1.03 A). Optional: confirm with a reading in series.
 3. ~~Replace `N20_motors.pdf` (6 V, 33 RPM, a different motor)~~ Done 23 Nov: the 6 V PDF was removed. Optional: save a copy of the product listing next to this file.
 4. Update `schemes/README.md` §4.2 and the encoder constants that depend on counts per output revolution, once the ratio is measured.
